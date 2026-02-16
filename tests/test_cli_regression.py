@@ -82,6 +82,43 @@ class TestCLIRegression(unittest.TestCase):
             self.assertEqual(proc.returncode, 0, msg=proc.stderr)
             self.assertIn("[ok]", proc.stdout)
 
+    def test_cli_fourier_sync_non_power_of_two_fft(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            in_path = tmp_path / "harmonic.wav"
+            input_audio, sr = write_stereo_tone(in_path, sr=22050, duration=0.6)
+
+            cmd = [
+                sys.executable,
+                str(CLI),
+                str(in_path),
+                "--fourier-sync",
+                "--n-fft",
+                "1500",
+                "--win-length",
+                "1500",
+                "--hop-size",
+                "375",
+                "--f0-min",
+                "70",
+                "--f0-max",
+                "500",
+                "--time-stretch",
+                "1.2",
+                "--overwrite",
+            ]
+            proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+            self.assertEqual(proc.returncode, 0, msg=proc.stderr)
+
+            out_path = tmp_path / "harmonic_pv.wav"
+            self.assertTrue(out_path.exists())
+            output_audio, out_sr = sf.read(out_path, always_2d=True)
+            self.assertEqual(out_sr, sr)
+            self.assertEqual(output_audio.shape[1], 2)
+
+            expected_len = int(round(input_audio.shape[0] * 1.2))
+            self.assertAlmostEqual(output_audio.shape[0], expected_len, delta=8)
+
     def test_regression_metrics_snapshot(self) -> None:
         from pvocode import VocoderConfig, phase_vocoder_time_stretch, resample_1d
 

@@ -5,8 +5,10 @@ import numpy as np
 from pvocode import (
     VocoderConfig,
     apply_formant_preservation,
+    build_fourier_sync_plan,
     estimate_f0_autocorrelation,
     phase_vocoder_time_stretch,
+    phase_vocoder_time_stretch_fourier_sync,
     resample_1d,
 )
 
@@ -118,6 +120,37 @@ class TestPhaseVocoderDSP(unittest.TestCase):
         c_pres = spectral_centroid(preserved, sr)
 
         self.assertLess(abs(c_pres - c_src), abs(c_shift - c_src))
+
+    def test_fourier_sync_non_power_of_two_frame_locking(self) -> None:
+        sr = 24000
+        t = np.arange(int(sr * 0.9)) / sr
+        x = 0.45 * np.sin(2 * np.pi * 180.0 * t) + 0.15 * np.sin(2 * np.pi * 360.0 * t)
+
+        cfg_sync = VocoderConfig(
+            n_fft=1500,
+            win_length=1500,
+            hop_size=375,
+            window="hann",
+            center=True,
+            phase_locking="identity",
+            transient_preserve=True,
+            transient_threshold=2.0,
+        )
+        plan = build_fourier_sync_plan(
+            signal=x,
+            sample_rate=sr,
+            config=cfg_sync,
+            f0_min_hz=80.0,
+            f0_max_hz=400.0,
+            min_fft=512,
+            max_fft=4096,
+            smooth_span=5,
+        )
+        self.assertGreater(plan.frame_lengths.size, 4)
+        self.assertTrue(np.any(plan.frame_lengths != cfg_sync.n_fft))
+
+        y = phase_vocoder_time_stretch_fourier_sync(x, 1.2, cfg_sync, plan)
+        self.assertEqual(y.size, int(round(x.size * 1.2)))
 
 
 if __name__ == "__main__":

@@ -62,6 +62,13 @@ class JobResult:
     pitch_ratio: float
 
 
+@dataclass(frozen=True)
+class FourierSyncPlan:
+    frame_lengths: np.ndarray
+    f0_track_hz: np.ndarray
+    reference_n_fft: int
+
+
 def db_to_amplitude(db: float) -> float:
     return 10.0 ** (db / 20.0)
 
@@ -166,6 +173,124 @@ def istft(
         output = force_length(output, expected_length)
 
     return output
+
+
+def scaled_win_length(base_win: int, base_fft: int, frame_len: int) -> int:
+    if base_fft <= 0:
+        return max(2, frame_len)
+    scaled = int(round(base_win * frame_len / base_fft))
+    return max(2, min(frame_len, scaled))
+
+
+def resize_spectrum_bins(spectrum: np.ndarray, target_bins: int) -> np.ndarray:
+    if target_bins <= 0:
+        raise ValueError("target_bins must be > 0")
+    if spectrum.size == target_bins:
+        return spectrum.astype(np.complex128, copy=True)
+    if spectrum.size == 0:
+        return np.zeros(target_bins, dtype=np.complex128)
+
+    x_old = np.linspace(0.0, 1.0, num=spectrum.size, endpoint=True)
+    x_new = np.linspace(0.0, 1.0, num=target_bins, endpoint=True)
+
+    mag = np.abs(spectrum)
+    phase = np.unwrap(np.angle(spectrum))
+    mag_new = np.interp(x_new, x_old, mag)
+    phase_new = np.interp(x_new, x_old, phase)
+    return mag_new * np.exp(1j * phase_new)
+
+
+def smooth_series(values: np.ndarray, span: int) -> np.ndarray:
+    if span <= 1 or values.size <= 2:
+        return values
+    kernel = np.ones(span, dtype=np.float64) / span
+    pad = span // 2
+    padded = np.pad(values, (pad, pad), mode="edge")
+    return np.convolve(padded, kernel, mode="valid")[: values.size]
+
+
+def fill_nan_with_nearest(values: np.ndarray, fallback: float) -> np.ndarray:
+    out = values.astype(np.float64, copy=True)
+    if out.size == 0:
+        return out
+    out[np.isnan(out)] = fallback
+    for idx in range(1, out.size):
+        if not np.isfinite(out[idx]):
+            out[idx] = out[idx - 1]
+    for idx in range(out.size - 2, -1, -1):
+        if not np.isfinite(out[idx]):
+            out[idx] = out[idx + 1]
+    out[~np.isfinite(out)] = fallback
+    return out
+
+
+def lock_fft_length_to_f0(
+    f0_hz: float,
+    sample_rate: int,
+    reference_fft: int,
+    min_fft: int,
+    max_fft: int,
+) -> int:
+    safe_f0 = max(float(f0_hz), 1e-6)
+    harmonic_bin = max(1, int(round(safe_f0 * reference_fft / sample_rate)))
+    locked = int(round(harmonic_bin * sample_rate / safe_f0))
+    return int(np.clip(max(16, locked), min_fft, max_fft))
+
+
+def build_fourier_sync_plan(
+    signal: np.ndarray,
+    sample_rate: int,
+    config: VocoderConfig,
+    f0_min_hz: float,
+    f0_max_hz: float,
+    min_fft: int,
+    max_fft: int,
+    smooth_span: int,
+) -> FourierSyncPlan:
+    framed, frame_count = pad_for_framing(signal, config.n_fft, config.hop_size, config.center)
+    if frame_count <= 0:
+        return FourierSyncPlan(
+            frame_lengths=np.array([config.n_fft], dtype=np.int64),
+            f0_track_hz=np.array([(f0_min_hz + f0_max_hz) * 0.5], dtype=np.float64),
+            reference_n_fft=max(config.n_fft, min_fft),
+        )
+
+    f0_track = np.full(frame_count, np.nan, dtype=np.float64)
+    for frame_idx in range(frame_count):
+        start = frame_idx * config.hop_size
+        frame = framed[start : start + config.n_fft]
+        if frame.size < 4:
+            continue
+        if float(np.sqrt(np.mean(frame * frame))) < 1e-6:
+            continue
+        try:
+            f0_track[frame_idx] = estimate_f0_autocorrelation(frame, sample_rate, f0_min_hz, f0_max_hz)
+        except Exception:
+            continue
+
+    finite_f0 = f0_track[np.isfinite(f0_track)]
+    fallback_f0 = float(np.median(finite_f0)) if finite_f0.size else (f0_min_hz + f0_max_hz) * 0.5
+    f0_track = fill_nan_with_nearest(f0_track, fallback=fallback_f0)
+    f0_track = smooth_series(f0_track, smooth_span)
+    f0_track = np.clip(f0_track, f0_min_hz, f0_max_hz)
+
+    min_fft = max(16, min_fft)
+    max_fft = max(min_fft, max_fft)
+    frame_lengths = np.array(
+        [
+            lock_fft_length_to_f0(
+                f0_hz=f0,
+                sample_rate=sample_rate,
+                reference_fft=config.n_fft,
+                min_fft=min_fft,
+                max_fft=max_fft,
+            )
+            for f0 in f0_track
+        ],
+        dtype=np.int64,
+    )
+    reference_n_fft = int(max(config.n_fft, int(np.max(frame_lengths))))
+    return FourierSyncPlan(frame_lengths=frame_lengths, f0_track_hz=f0_track, reference_n_fft=reference_n_fft)
 
 
 def compute_transient_flags(magnitude: np.ndarray, threshold_scale: float) -> np.ndarray:
@@ -280,6 +405,123 @@ def phase_vocoder_time_stretch(signal: np.ndarray, stretch: float, config: Vocod
 
     target_length = max(1, int(round(signal.size * stretch)))
     return istft(output_stft, config, expected_length=target_length)
+
+
+def phase_vocoder_time_stretch_fourier_sync(
+    signal: np.ndarray,
+    stretch: float,
+    config: VocoderConfig,
+    sync_plan: FourierSyncPlan,
+) -> np.ndarray:
+    if stretch <= 0:
+        raise ValueError("Stretch factor must be > 0")
+    if signal.size == 0:
+        return signal
+
+    framed, frame_count = pad_for_framing(signal, config.n_fft, config.hop_size, config.center)
+    if frame_count < 2:
+        target_len = max(1, int(round(signal.size * stretch)))
+        return force_length(signal.copy(), target_len)
+
+    if sync_plan.frame_lengths.size != frame_count:
+        src = np.linspace(0.0, 1.0, num=sync_plan.frame_lengths.size, endpoint=True)
+        dst = np.linspace(0.0, 1.0, num=frame_count, endpoint=True)
+        frame_lengths = np.interp(dst, src, sync_plan.frame_lengths.astype(np.float64))
+        frame_lengths = np.clip(np.round(frame_lengths), 16, None).astype(np.int64)
+    else:
+        frame_lengths = sync_plan.frame_lengths.astype(np.int64, copy=False)
+
+    ref_n_fft = int(max(sync_plan.reference_n_fft, config.n_fft, int(np.max(frame_lengths))))
+    ref_bins = ref_n_fft // 2 + 1
+    input_stft = np.empty((ref_bins, frame_count), dtype=np.complex128)
+
+    for frame_idx in range(frame_count):
+        n_fft_i = int(frame_lengths[frame_idx])
+        start = frame_idx * config.hop_size
+        frame = force_length(framed[start : start + n_fft_i], n_fft_i)
+        win_length_i = scaled_win_length(config.win_length, config.n_fft, n_fft_i)
+        window = make_window(config.window, n_fft_i, win_length_i)
+        spectrum = np.fft.rfft(frame * window, n=n_fft_i)
+        input_stft[:, frame_idx] = resize_spectrum_bins(spectrum, ref_bins)
+
+    out_frames = max(2, int(round(frame_count * stretch)))
+    time_steps = np.arange(out_frames, dtype=np.float64) / stretch
+    time_steps = np.clip(time_steps, 0.0, frame_count - 1.000001)
+
+    input_phase = np.angle(input_stft)
+    input_mag = np.abs(input_stft)
+    transient_flags = (
+        compute_transient_flags(input_mag, config.transient_threshold)
+        if config.transient_preserve
+        else np.zeros(frame_count, dtype=bool)
+    )
+
+    phase = input_phase[:, 0].copy()
+    omega = 2.0 * np.pi * config.hop_size * np.arange(ref_bins, dtype=np.float64) / ref_n_fft
+    output_stft = np.zeros((ref_bins, out_frames), dtype=np.complex128)
+    output_lengths = np.zeros(out_frames, dtype=np.int64)
+
+    for out_idx, t in enumerate(time_steps):
+        frame_idx = int(math.floor(t))
+        frac = t - frame_idx
+        right_idx = min(frame_idx + 1, frame_count - 1)
+
+        left = input_stft[:, frame_idx]
+        right = input_stft[:, right_idx]
+        left_phase = input_phase[:, frame_idx]
+        right_phase = input_phase[:, right_idx]
+
+        mag = (1.0 - frac) * np.abs(left) + frac * np.abs(right)
+        delta = principal_angle(right_phase - left_phase - omega)
+        synth_phase = phase + omega + delta
+
+        if config.transient_preserve:
+            transient_idx = min(frame_idx + (1 if frac >= 0.5 else 0), frame_count - 1)
+            if transient_flags[transient_idx]:
+                phase_blend = (1.0 - frac) * np.exp(1j * left_phase) + frac * np.exp(1j * right_phase)
+                synth_phase = np.angle(phase_blend)
+
+        if config.phase_locking == "identity":
+            analysis_phase = np.angle(
+                (1.0 - frac) * np.exp(1j * left_phase) + frac * np.exp(1j * right_phase)
+            )
+            synth_phase = apply_identity_phase_locking(synth_phase, analysis_phase, mag)
+
+        phase = synth_phase
+        output_stft[:, out_idx] = mag * np.exp(1j * phase)
+
+        n_left = int(frame_lengths[frame_idx])
+        n_right = int(frame_lengths[right_idx])
+        output_lengths[out_idx] = max(16, int(round((1.0 - frac) * n_left + frac * n_right)))
+
+    output_len = config.hop_size * max(0, out_frames - 1) + int(np.max(output_lengths))
+    output = np.zeros(output_len, dtype=np.float64)
+    weight = np.zeros(output_len, dtype=np.float64)
+
+    for frame_idx in range(out_frames):
+        n_fft_i = int(output_lengths[frame_idx])
+        bins_i = n_fft_i // 2 + 1
+        spec_i = resize_spectrum_bins(output_stft[:, frame_idx], bins_i)
+        frame = np.fft.irfft(spec_i, n=n_fft_i)
+        win_length_i = scaled_win_length(config.win_length, config.n_fft, n_fft_i)
+        window = make_window(config.window, n_fft_i, win_length_i)
+
+        start = frame_idx * config.hop_size
+        output[start : start + n_fft_i] += frame * window
+        weight[start : start + n_fft_i] += window * window
+
+    nz = weight > 1e-12
+    output[nz] /= weight[nz]
+
+    if config.center:
+        trim = config.n_fft // 2
+        if output.size > 2 * trim:
+            output = output[trim:-trim]
+        else:
+            output = np.zeros(0, dtype=np.float64)
+
+    target_length = max(1, int(round(signal.size * stretch)))
+    return force_length(output, target_length)
 
 
 def linear_resample_1d(signal: np.ndarray, output_samples: int) -> np.ndarray:
@@ -512,10 +754,34 @@ def process_file(
     if internal_stretch <= 0.0:
         raise ValueError("Computed internal stretch must be > 0")
 
+    sync_plan: FourierSyncPlan | None = None
+    if args.fourier_sync:
+        sync_source = audio[:, 0] if args.analysis_channel == "first" else np.mean(audio, axis=1)
+        sync_plan = build_fourier_sync_plan(
+            signal=sync_source,
+            sample_rate=sr,
+            config=config,
+            f0_min_hz=args.f0_min,
+            f0_max_hz=args.f0_max,
+            min_fft=args.fourier_sync_min_fft,
+            max_fft=args.fourier_sync_max_fft,
+            smooth_span=args.fourier_sync_smooth,
+        )
+
     processed_channels: list[np.ndarray] = []
     for ch in range(audio.shape[1]):
         source_ch = audio[:, ch]
-        stretched = phase_vocoder_time_stretch(audio[:, ch], internal_stretch, config)
+        if args.fourier_sync:
+            if sync_plan is None:  # pragma: no cover - defensive
+                raise RuntimeError("Fourier-sync plan is unavailable")
+            stretched = phase_vocoder_time_stretch_fourier_sync(
+                audio[:, ch],
+                internal_stretch,
+                config,
+                sync_plan,
+            )
+        else:
+            stretched = phase_vocoder_time_stretch(audio[:, ch], internal_stretch, config)
         if abs(pitch.ratio - 1.0) > 1e-10:
             pitch_len = max(1, int(round(stretched.size / pitch.ratio)))
             shifted = resample_1d(stretched, pitch_len, args.resample_mode)
@@ -567,10 +833,16 @@ def process_file(
             f"[info] {input_path.name}: channels={audio.shape[1]}, sr={sr}, "
             f"stretch={base_stretch:.6f}, pitch_ratio={pitch.ratio:.6f}, "
             f"internal_stretch={internal_stretch:.6f}, "
-            f"phase_locking={config.phase_locking}, pitch_mode={args.pitch_mode}"
+            f"phase_locking={config.phase_locking}, pitch_mode={args.pitch_mode}, "
+            f"fourier_sync={'on' if args.fourier_sync else 'off'}"
         )
         if pitch.source_f0_hz is not None:
             msg += f", detected_f0={pitch.source_f0_hz:.3f}Hz"
+        if sync_plan is not None and sync_plan.f0_track_hz.size:
+            msg += (
+                f", sync_f0_med={float(np.median(sync_plan.f0_track_hz)):.3f}Hz"
+                f", sync_fft_med={int(np.median(sync_plan.frame_lengths))}"
+            )
         print(msg)
 
     return JobResult(
@@ -633,6 +905,12 @@ def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> 
         parser.error("--formant-strength must be between 0.0 and 1.0")
     if args.formant_max_gain_db <= 0:
         parser.error("--formant-max-gain-db must be > 0")
+    if args.fourier_sync_min_fft < 16:
+        parser.error("--fourier-sync-min-fft must be >= 16")
+    if args.fourier_sync_max_fft < args.fourier_sync_min_fft:
+        parser.error("--fourier-sync-max-fft must be >= --fourier-sync-min-fft")
+    if args.fourier_sync_smooth <= 0:
+        parser.error("--fourier-sync-smooth must be > 0")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -705,6 +983,32 @@ def build_parser() -> argparse.ArgumentParser:
         type=float,
         default=2.0,
         help="Spectral-flux multiplier for transient detection (default: 2.0)",
+    )
+    stft_group.add_argument(
+        "--fourier-sync",
+        action="store_true",
+        help=(
+            "Enable fundamental frame locking. Uses generic short-time Fourier "
+            "transforms with per-frame FFT sizes locked to detected F0."
+        ),
+    )
+    stft_group.add_argument(
+        "--fourier-sync-min-fft",
+        type=int,
+        default=256,
+        help="Minimum frame FFT size for --fourier-sync (default: 256)",
+    )
+    stft_group.add_argument(
+        "--fourier-sync-max-fft",
+        type=int,
+        default=8192,
+        help="Maximum frame FFT size for --fourier-sync (default: 8192)",
+    )
+    stft_group.add_argument(
+        "--fourier-sync-smooth",
+        type=int,
+        default=5,
+        help="Smoothing span (frames) for prescanned F0 track in --fourier-sync (default: 5)",
     )
 
     time_group = parser.add_argument_group("Timing controls")

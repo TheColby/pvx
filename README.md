@@ -7,6 +7,7 @@ It supports:
 - Mono, stereo, or arbitrary channel counts
 - FFT/window/hop controls
 - Transient-preserving phase locking
+- Fourier-sync mode with fundamental frame locking
 - Time stretch by ratio or absolute target duration
 - Pitch shift by semitones, ratio, or target fundamental frequency
 - Formant-preserving pitch mode
@@ -16,9 +17,7 @@ It supports:
 ## Install
 
 ```bash
-python3 -m pip install numpy soundfile
-# optional, higher-quality FFT-based resampling path
-python3 -m pip install scipy
+python3 -m pip install -r requirements.txt
 ```
 
 ## Basic Usage
@@ -73,6 +72,14 @@ python3 pvocode.py stems/*.wav \
   --time-stretch 1.2 --pitch-shift-semitones -2
 ```
 
+Fourier-sync mode (non-power-of-two FFT and frame locking to F0):
+
+```bash
+python3 pvocode.py vocal.wav \
+  --fourier-sync --n-fft 1500 --win-length 1500 --hop-size 375 \
+  --f0-min 70 --f0-max 500 --time-stretch 1.25
+```
+
 Write FLAC outputs into another directory:
 
 ```bash
@@ -123,6 +130,9 @@ python3 pvocode.py input.wav --time-stretch 0.85 --dry-run --verbose
 - `--phase-locking`: `off` or `identity` phase locking
 - `--transient-preserve`: spectral-flux based transient phase resets
 - `--transient-threshold`: transient detection sensitivity
+- `--fourier-sync`: generic short-time Fourier mode with per-frame FFT locking to detected F0
+- `--fourier-sync-min-fft`, `--fourier-sync-max-fft`: bounds for per-frame FFT sizes in sync mode
+- `--fourier-sync-smooth`: smoothing span for prescanned F0 trajectory
 
 ### Time Controls
 
@@ -159,6 +169,31 @@ Related options:
 - Pitch shifting is implemented by combining phase-vocoder time scaling with resampling.
 - `--target-f0` uses autocorrelation and works best on monophonic, pitched signals.
 - Very transient-heavy material can benefit from larger FFT/hop tuning tradeoffs.
+- `--fourier-sync` assumes mostly harmonic content and performs a prescan to lock frame sizes so detected F0 maps to integer spectral bins.
+
+## Build Executables
+
+Install dependencies first:
+
+```bash
+python3 -m pip install -r requirements.txt
+```
+
+Build a single-file executable with PyInstaller:
+
+```bash
+python3 -m PyInstaller --onefile --name pvocode --collect-all soundfile pvocode.py
+```
+
+Build outputs:
+- macOS/Linux: `dist/pvocode`
+- Windows: `dist/pvocode.exe`
+
+Run the executable:
+
+```bash
+./dist/pvocode --help
+```
 
 ## Test Suite
 
