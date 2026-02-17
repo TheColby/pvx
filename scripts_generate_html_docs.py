@@ -1092,6 +1092,7 @@ def window_entries() -> list[dict[str, str]]:
             params = "none"
             formula = "W0"
             note = "Window supported by PVX."
+        pros, cons, usage = window_tradeoffs(name, family)
         entries.append(
             {
                 "name": name,
@@ -1099,9 +1100,140 @@ def window_entries() -> list[dict[str, str]]:
                 "params": params,
                 "formula": formula,
                 "note": note,
+                "pros": pros,
+                "cons": cons,
+                "usage": usage,
             }
         )
     return entries
+
+
+def window_tradeoffs(name: str, family: str) -> tuple[str, str, str]:
+    if name in {"hann", "hamming"}:
+        return (
+            "Balanced leakage suppression and frequency resolution.",
+            "Not optimal for amplitude metering or extreme sidelobe rejection.",
+            "Default choice for most PVX time-stretch and pitch-shift workflows.",
+        )
+    if name in {"boxcar", "rect"}:
+        return (
+            "Narrowest main lobe and maximal bin sharpness.",
+            "Highest sidelobes and strongest leakage/phasiness on non-bin-centered content.",
+            "Use only for controlled test tones or when leakage is acceptable.",
+        )
+    if name in {"blackman", "blackmanharris", "blackman_nuttall", "nuttall", "exact_blackman"}:
+        return (
+            "Strong sidelobe suppression for cleaner spectral separation.",
+            "Wider main lobe than Hann/Hamming.",
+            "Use for dense harmonic material when leakage artifacts dominate.",
+        )
+    if name == "flattop":
+        return (
+            "Very accurate amplitude estimation in FFT bins.",
+            "Very wide main lobe and reduced frequency discrimination.",
+            "Use for measurement-grade magnitude tracking, not fine pitch separation.",
+        )
+    if name == "kaiser":
+        return (
+            "Continuously tunable width/sidelobe tradeoff via beta.",
+            "Needs beta tuning; poor beta choices can over-blur or under-suppress sidelobes.",
+            "Use when you need explicit control over leakage versus resolution.",
+        )
+    if family == "Tukey":
+        return (
+            "Interpolates between rectangular and Hann behavior.",
+            "Behavior changes strongly with alpha and can be inconsistent across presets.",
+            "Use when you need a controllable flat center with soft edges.",
+        )
+    if family == "Gaussian":
+        return (
+            "Smooth bell taper with low ringing and predictable decay.",
+            "Frequency resolution changes noticeably with sigma.",
+            "Use sigma presets to tune transient locality versus spectral leakage.",
+        )
+    if family == "Generalized Gaussian":
+        return (
+            "Additional shape control beyond standard Gaussian.",
+            "Extra parameterization increases tuning complexity.",
+            "Use for research/tuning tasks where shoulder steepness matters.",
+        )
+    if family == "Exponential":
+        return (
+            "Simple edge decay with fast computation.",
+            "Can produce less-uniform center weighting than cosine families.",
+            "Use for experiments emphasizing center-heavy weighting.",
+        )
+    if family == "Cauchy / Lorentzian":
+        return (
+            "Heavy tails preserve more peripheral samples than Gaussian.",
+            "Tail energy can increase leakage relative to steeper tapers.",
+            "Use when you want softer attenuation of far-window samples.",
+        )
+    if family == "Cosine power":
+        return (
+            "Simple power parameter controls edge steepness.",
+            "Higher powers can overly narrow effective support.",
+            "Use to smoothly increase edge attenuation versus basic sine.",
+        )
+    if family == "Hann-Poisson":
+        return (
+            "Combines smooth Hann center with exponential edge suppression.",
+            "Can over-attenuate edges for high alpha values.",
+            "Use when you need stronger edge decay than Hann without full flattop cost.",
+        )
+    if family == "General Hamming":
+        return (
+            "Tunable Hamming-style cosine weighting.",
+            "Less standardized than classic Hann/Hamming choices.",
+            "Use to sweep sidelobe-vs-width behavior near Hamming family defaults.",
+        )
+    if family == "Triangular":
+        return (
+            "Cheap linear taper with intuitive behavior.",
+            "Higher sidelobes than stronger cosine-sum windows.",
+            "Use for low-cost processing or quick exploratory runs.",
+        )
+    if name == "bartlett_hann":
+        return (
+            "Moderate leakage suppression with lightweight computation.",
+            "Less common and less interpretable than standard Hann/Hamming.",
+            "Use as a middle-ground taper when Bartlett feels too sharp.",
+        )
+    if name == "parzen":
+        return (
+            "Smooth high-order taper with good sidelobe control.",
+            "Broader main lobe than lightweight windows.",
+            "Use for spectral denoising/analysis where sidelobe cleanup is critical.",
+        )
+    if name == "lanczos":
+        return (
+            "Sinc-derived shape with useful compromise behavior.",
+            "Can exhibit oscillatory spectral behavior versus cosine-sum defaults.",
+            "Use for interpolation-adjacent analysis experiments.",
+        )
+    if name == "welch":
+        return (
+            "Center-emphasizing parabola with simple form.",
+            "Not as strong at sidelobe suppression as Blackman-family windows.",
+            "Use when center weighting is desired with minimal complexity.",
+        )
+    if name in {"sine", "cosine"}:
+        return (
+            "Smooth endpoint behavior and straightforward implementation.",
+            "Less configurable than Kaiser/Tukey families.",
+            "Use for stable, low-complexity alternatives to Hann.",
+        )
+    if name == "bohman":
+        return (
+            "Continuous-slope taper with good qualitative leakage control.",
+            "Less common in audio tooling and harder to tune by intuition.",
+            "Use for exploratory spectral work needing smooth derivatives.",
+        )
+    return (
+        "Supported by PVX and compatible with the shared phase-vocoder path.",
+        "Tradeoffs depend on the specific shape parameters.",
+        "Start with Hann/Hamming, then compare this window if artifacts persist.",
+    )
 
 
 WINDOW_EQUATIONS_HTML = """
@@ -1768,7 +1900,8 @@ def render_windows_page() -> None:
     metrics_map = metrics_payload.get("windows", {}) if isinstance(metrics_payload, dict) else {}
 
     rows: list[str] = []
-    for entry in window_entries():
+    entries = window_entries()
+    for entry in entries:
         metrics = metrics_map.get(entry["name"], {})
         coherent_gain = metrics.get("coherent_gain", "n/a")
         enbw_bins = metrics.get("enbw_bins", "n/a")
@@ -1797,6 +1930,20 @@ def render_windows_page() -> None:
             f"<td>{peak_sidelobe_db if isinstance(peak_sidelobe_db, str) else f'{float(peak_sidelobe_db):.3f}'}</td>"
             f"<td>{plot_html}</td>"
             f"<td>{escape(entry['note'])}</td>"
+            f"<td>{escape(entry['pros'])}</td>"
+            f"<td>{escape(entry['cons'])}</td>"
+            f"<td>{escape(entry['usage'])}</td>"
+            "</tr>"
+        )
+
+    gallery_rows: list[str] = []
+    for entry in entries:
+        name = entry["name"]
+        gallery_rows.append(
+            "<tr>"
+            f"<td><code>{escape(name)}</code></td>"
+            f"<td><img src=\"../assets/windows/{escape(name)}_time.svg\" alt=\"{escape(name)} time-domain plot\" loading=\"lazy\" /></td>"
+            f"<td><img src=\"../assets/windows/{escape(name)}_freq.svg\" alt=\"{escape(name)} magnitude spectrum\" loading=\"lazy\" /></td>"
             "</tr>"
         )
 
@@ -1836,6 +1983,9 @@ def render_windows_page() -> None:
       <th>Peak sidelobe (dB)</th>
       <th>Plots</th>
       <th>Plain-English behavior</th>
+      <th>Pros</th>
+      <th>Cons</th>
+      <th>Usage advice</th>
     </tr>
   </thead>
   <tbody>
@@ -1843,6 +1993,28 @@ def render_windows_page() -> None:
   </tbody>
 </table>
 """.format(rows="".join(rows))
+    )
+    sections.append(
+        """
+<div class="card">
+  <h2>Complete Plot Gallery (All Windows)</h2>
+  <p class="small">
+    Time-domain and frequency-magnitude plots for every supported window.
+  </p>
+  <table>
+    <thead>
+      <tr>
+        <th>Window</th>
+        <th>Time-domain shape</th>
+        <th>Magnitude spectrum</th>
+      </tr>
+    </thead>
+    <tbody>
+      {rows}
+    </tbody>
+  </table>
+</div>
+""".format(rows="".join(gallery_rows))
     )
     breadcrumbs = (
         "<nav>"
