@@ -519,6 +519,12 @@ def generate_cookbook() -> None:
             "why": "Builds a richer timbre chain with no intermediate files.",
         },
         {
+            "category": "Pipelines",
+            "title": "Pitch-follow sidechain map (A controls B)",
+            "command": "python3 HPS-pitch-track.py A.wav | python3 pvxvoc.py B.wav --pitch-follow-stdin --pitch-conf-min 0.75 --pitch-lowconf-mode hold --time-stretch-factor 1.0 --output output.wav",
+            "why": "Tracks F0 contour from source A and applies it as a dynamic pitch-ratio control map on source B.",
+        },
+        {
             "category": "Mastering",
             "title": "Integrated loudness targeting with limiter",
             "command": "python3 pvxvoc.py mix.wav --time-stretch 1.0 --target-lufs -14 --compressor-threshold-db -20 --compressor-ratio 3 --limiter-threshold 0.98 --output-dir out --suffix _master",

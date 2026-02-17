@@ -2,10 +2,11 @@
 
 Comprehensive reference for every Python file in this repository.
 
-Total Python files documented: **194**
+Total Python files documented: **196**
 
 ## Contents
 
+- [`HPS-pitch-track.py`](#HPS-pitch-trackpy)
 - [`main.py`](#mainpy)
 - [`pvxalgorithms/__init__.py`](#pvxalgorithmsinitpy)
 - [`pvxalgorithms/base.py`](#pvxalgorithmsbasepy)
@@ -175,6 +176,7 @@ Total Python files documented: **194**
 - [`src/pvx/algorithms/time_scale_and_pitch_core/td_psola.py`](#srcpvxalgorithmstimescaleandpitchcoretdpsolapy)
 - [`src/pvx/algorithms/time_scale_and_pitch_core/wsola_waveform_similarity_overlap_add.py`](#srcpvxalgorithmstimescaleandpitchcorewsolawaveformsimilarityoverlapaddpy)
 - [`src/pvx/cli/__init__.py`](#srcpvxcliinitpy)
+- [`src/pvx/cli/hps_pitch_track.py`](#srcpvxclihpspitchtrackpy)
 - [`src/pvx/cli/main.py`](#srcpvxclimainpy)
 - [`src/pvx/cli/pvxconform.py`](#srcpvxclipvxconformpy)
 - [`src/pvx/cli/pvxdenoise.py`](#srcpvxclipvxdenoisepy)
@@ -200,6 +202,74 @@ Total Python files documented: **194**
 - [`tests/test_docs_pdf.py`](#teststestdocspdfpy)
 - [`tests/test_dsp.py`](#teststestdsppy)
 - [`tests/test_microtonal.py`](#teststestmicrotonalpy)
+
+## `HPS-pitch-track.py`
+
+**Purpose:** Compatibility wrapper for the HPS pitch tracker CLI.
+
+**Classes:** None
+**Functions:** None
+
+**Help commands:** `python3 HPS-pitch-track.py --help`
+
+### CLI Help Snapshot
+
+```text
+usage: HPS-pitch-track.py [-h] [--output OUTPUT] [--backend {auto,pyin,acf}]
+                          [--fmin FMIN] [--fmax FMAX]
+                          [--frame-length FRAME_LENGTH] [--hop-size HOP_SIZE]
+                          [--ratio-reference {median,mean,first,hz}]
+                          [--reference-hz REFERENCE_HZ]
+                          [--ratio-min RATIO_MIN] [--ratio-max RATIO_MAX]
+                          [--smooth-frames SMOOTH_FRAMES]
+                          [--confidence-floor CONFIDENCE_FLOOR]
+                          [--stretch STRETCH]
+                          [--verbosity {silent,quiet,normal,verbose,debug}]
+                          [-v] [--quiet] [--silent]
+                          input
+
+HPS/pyin-style pitch tracker that emits pvx control-map CSV to stdout.
+
+positional arguments:
+  input                 Input audio file path or '-' for stdin audio
+
+options:
+  -h, --help            show this help message and exit
+  --output OUTPUT       Output CSV path (default: '-' for stdout)
+  --backend {auto,pyin,acf}
+                        Pitch backend (default: auto -> pyin if available,
+                        else acf)
+  --fmin FMIN           Minimum F0 in Hz (default: 50)
+  --fmax FMAX           Maximum F0 in Hz (default: 1200)
+  --frame-length FRAME_LENGTH
+                        Frame length in samples (default: 2048)
+  --hop-size HOP_SIZE   Hop size in samples (default: 256)
+  --ratio-reference {median,mean,first,hz}
+                        Reference for emitted pitch_ratio values (default:
+                        median voiced f0).
+  --reference-hz REFERENCE_HZ
+                        Reference frequency in Hz when --ratio-reference hz.
+  --ratio-min RATIO_MIN
+                        Lower clamp for emitted pitch_ratio (default: 0.25).
+  --ratio-max RATIO_MAX
+                        Upper clamp for emitted pitch_ratio (default: 4.0).
+  --smooth-frames SMOOTH_FRAMES
+                        Smoothing window for pitch_ratio frames (default: 5).
+  --confidence-floor CONFIDENCE_FLOOR
+                        Set confidence below this floor to 0.0 (default: 0.0).
+  --stretch STRETCH     Emit constant stretch column value (default: 1.0).
+  --verbosity {silent,quiet,normal,verbose,debug}
+                        Console verbosity level
+  -v, --verbose         Increase verbosity (repeat for extra detail)
+  --quiet               Reduce output and hide status bars
+  --silent              Suppress all console output
+```
+
+### Module Docstring
+
+```text
+Compatibility wrapper for the HPS pitch tracker CLI.
+```
 
 ## `main.py`
 
@@ -1471,9 +1541,10 @@ src-layout migration.
 
 ```text
 usage: pvxvoc.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
-                 [--output-format OUTPUT_FORMAT] [--overwrite] [--dry-run]
-                 [--stdout] [--verbosity {silent,quiet,normal,verbose,debug}]
-                 [-v] [--quiet] [--silent] [--n-fft N_FFT]
+                 [--output-format OUTPUT_FORMAT] [--output OUTPUT]
+                 [--overwrite] [--dry-run] [--stdout]
+                 [--verbosity {silent,quiet,normal,verbose,debug}] [-v]
+                 [--quiet] [--silent] [--n-fft N_FFT]
                  [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
                  [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
                  [--kaiser-beta KAISER_BETA]
@@ -1495,6 +1566,11 @@ usage: pvxvoc.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
                  [--formant-lifter FORMANT_LIFTER]
                  [--formant-strength FORMANT_STRENGTH]
                  [--formant-max-gain-db FORMANT_MAX_GAIN_DB]
+                 [--pitch-map PITCH_MAP] [--pitch-map-stdin]
+                 [--pitch-follow-stdin] [--pitch-conf-min PITCH_CONF_MIN]
+                 [--pitch-lowconf-mode {hold,unity,interp}]
+                 [--pitch-map-smooth-ms PITCH_MAP_SMOOTH_MS]
+                 [--pitch-map-crossfade-ms PITCH_MAP_CROSSFADE_MS]
                  [--target-sample-rate TARGET_SAMPLE_RATE]
                  [--resample-mode {auto,fft,linear}]
                  [--normalize {none,peak,rms}] [--peak-dbfs PEAK_DBFS]
@@ -1537,20 +1613,11 @@ options:
   --output-format OUTPUT_FORMAT
                         Output format/extension (e.g. wav, flac, aiff).
                         Default: keep input extension.
+  --output OUTPUT       Explicit output file path (single-input mode only).
   --overwrite           Overwrite existing outputs
   --dry-run             Resolve settings without writing files
   --stdout              Write processed audio to stdout stream (for piping);
-                        requires exactly one input
-  --verbosity {silent,quiet,normal,verbose,debug}
-                        Console verbosity level
-  -v, --verbose         Increase verbosity (repeat for extra detail)
-  --quiet               Reduce output and hide status bars
-  --silent              Suppress all console output
-
-STFT / vocoder parameters:
-  --n-fft N_FFT         FFT size (default: 2048)
-  --win-length WIN_LENGTH
-                   
+                 
 ... [truncated]
 ```
 
@@ -5739,6 +5806,21 @@ I/O contract, and parameter-routing behavior.
 CLI entrypoints for pvx tools.
 ```
 
+## `src/pvx/cli/hps_pitch_track.py`
+
+**Purpose:** Track F0 and emit a pvx control-map CSV for pitch-follow pipelines.
+
+**Classes:** None
+**Functions:** `_read_audio`, `_acf_pitch_and_confidence`, `_estimate_reference_hz`, `_smooth`, `_track_pyin`, `_track_acf`, `build_parser`, `validate_args`, `_emit_csv`, `main`
+
+**Help commands:** `python3 src/pvx/cli/hps_pitch_track.py`, `python3 src/pvx/cli/hps_pitch_track.py --help`
+
+### Module Docstring
+
+```text
+Track F0 and emit a pvx control-map CSV for pitch-follow pipelines.
+```
+
 ## `src/pvx/cli/main.py`
 
 **Purpose:** Top-level project helper CLI.
@@ -5968,8 +6050,8 @@ Shared helpers for pvx DSP command-line tools.
 
 **Purpose:** Multi-channel phase vocoder CLI for time and pitch manipulation.
 
-**Classes:** `VocoderConfig`, `PitchConfig`, `JobResult`, `FourierSyncPlan`, `RuntimeConfig`, `ProgressBar`
-**Functions:** `add_console_args`, `console_level`, `is_quiet`, `is_silent`, `log_message`, `log_error`, `db_to_amplitude`, `cents_to_ratio`, `_eval_numeric_expr`, `parse_numeric_expression`, `parse_pitch_ratio_value`, `_has_cupy`, `_is_cupy_array`, `_array_module`, `_to_numpy`, `_to_runtime_array`, `_as_float`, `_as_bool`, `_i0`, `normalize_transform_name`, `transform_bin_count`, `_analysis_angular_velocity`, `_transform_requires_scipy`, `ensure_transform_backend_available`, `validate_transform_available`, `_resize_or_pad_1d`, `_onesided_to_full_spectrum`, `_forward_transform_numpy`, `_inverse_transform_numpy`, `_forward_transform`, `_inverse_transform`, `add_runtime_args`, `runtime_config`, `configure_runtime`, `configure_runtime_from_args`, `ensure_runtime_dependencies`, `principal_angle`, `_cosine_series_window`, `_bartlett_window`, `_bohman_window`, `_cosine_window`, `_sine_window`, `_triangular_window`, `_bartlett_hann_window`, `_tukey_window`, `_parzen_window`, `_lanczos_window`, `_welch_window`, `_gaussian_window`, `_general_gaussian_window`, `_exponential_window`, `_cauchy_window`, `_cosine_power_window`, `_hann_poisson_window`, `_general_hamming_window`, `_kaiser_window`, `make_window`, `pad_for_framing`, `stft`, `istft`, `scaled_win_length`, `resize_spectrum_bins`, `smooth_series`, `regularize_frame_lengths`, `fill_nan_with_nearest`, `lock_fft_length_to_f0`, `build_fourier_sync_plan`, `compute_transient_flags`, `find_spectral_peaks`, `apply_identity_phase_locking`, `phase_vocoder_time_stretch`, `phase_vocoder_time_stretch_fourier_sync`, `linear_resample_1d`, `resample_1d`, `force_length`, `estimate_f0_autocorrelation`, `normalize_audio`, `_envelope_coeff`, `_envelope_follower`, `_estimate_lufs_or_rms_db`, `_apply_compressor`, `_apply_expander`, `_apply_compander`, `_apply_limiter`, `_apply_soft_clip`, `add_mastering_args`, `validate_mastering_args`, `apply_mastering_chain`, `cepstral_envelope`, `apply_formant_preservation`, `choose_pitch_ratio`, `resolve_base_stretch`, `compute_output_path`, `_stream_format_name`, `_read_audio_input`, `_write_audio_output`, `process_file`, `force_length_multi`, `resample_multi`, `validate_args`, `build_parser`, `expand_inputs`, `main`
+**Classes:** `VocoderConfig`, `PitchConfig`, `ControlSegment`, `JobResult`, `FourierSyncPlan`, `AudioBlockResult`, `RuntimeConfig`, `ProgressBar`
+**Functions:** `add_console_args`, `console_level`, `is_quiet`, `is_silent`, `log_message`, `log_error`, `db_to_amplitude`, `cents_to_ratio`, `_eval_numeric_expr`, `parse_numeric_expression`, `parse_pitch_ratio_value`, `_has_cupy`, `_is_cupy_array`, `_array_module`, `_to_numpy`, `_to_runtime_array`, `_as_float`, `_as_bool`, `_i0`, `normalize_transform_name`, `transform_bin_count`, `_analysis_angular_velocity`, `_transform_requires_scipy`, `ensure_transform_backend_available`, `validate_transform_available`, `_resize_or_pad_1d`, `_onesided_to_full_spectrum`, `_forward_transform_numpy`, `_inverse_transform_numpy`, `_forward_transform`, `_inverse_transform`, `add_runtime_args`, `runtime_config`, `configure_runtime`, `configure_runtime_from_args`, `ensure_runtime_dependencies`, `principal_angle`, `_cosine_series_window`, `_bartlett_window`, `_bohman_window`, `_cosine_window`, `_sine_window`, `_triangular_window`, `_bartlett_hann_window`, `_tukey_window`, `_parzen_window`, `_lanczos_window`, `_welch_window`, `_gaussian_window`, `_general_gaussian_window`, `_exponential_window`, `_cauchy_window`, `_cosine_power_window`, `_hann_poisson_window`, `_general_hamming_window`, `_kaiser_window`, `make_window`, `pad_for_framing`, `stft`, `istft`, `scaled_win_length`, `resize_spectrum_bins`, `smooth_series`, `regularize_frame_lengths`, `fill_nan_with_nearest`, `lock_fft_length_to_f0`, `build_fourier_sync_plan`, `compute_transient_flags`, `find_spectral_peaks`, `apply_identity_phase_locking`, `phase_vocoder_time_stretch`, `phase_vocoder_time_stretch_fourier_sync`, `linear_resample_1d`, `resample_1d`, `force_length`, `estimate_f0_autocorrelation`, `normalize_audio`, `_envelope_coeff`, `_envelope_follower`, `_estimate_lufs_or_rms_db`, `_apply_compressor`, `_apply_expander`, `_apply_compander`, `_apply_limiter`, `_apply_soft_clip`, `add_mastering_args`, `validate_mastering_args`, `apply_mastering_chain`, `cepstral_envelope`, `apply_formant_preservation`, `choose_pitch_ratio`, `_parse_optional_float`, `parse_control_segments_csv`, `apply_control_confidence_policy`, `smooth_control_ratios`, `expand_control_segments`, `load_control_segments`, `process_audio_block`, `resolve_base_stretch`, `compute_output_path`, `_stream_format_name`, `_read_audio_input`, `_write_audio_output`, `concat_audio_chunks`, `process_file`, `force_length_multi`, `resample_multi`, `validate_args`, `build_parser`, `expand_inputs`, `main`
 
 **Help commands:** `python3 src/pvx/core/voc.py`, `python3 src/pvx/core/voc.py --help`
 
@@ -6044,7 +6126,7 @@ finite 2D output and implemented metadata status.
 **Purpose:** CLI regression tests for pvxvoc end-to-end workflows.
 
 **Classes:** `TestCLIRegression`
-**Functions:** `write_stereo_tone`
+**Functions:** `write_stereo_tone`, `write_mono_tone`
 
 **Help commands:** `python3 tests/test_cli_regression.py`
 

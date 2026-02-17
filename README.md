@@ -37,6 +37,7 @@ Primary tool entry points:
 - `pvxdeverb.py`: reverb-tail suppression.
 - `pvxretune.py`: monophonic scale retune.
 - `pvxlayer.py`: harmonic/percussive split and independent processing.
+- `HPS-pitch-track.py`: sidechain-friendly F0 tracker that emits `pvxvoc` control-map CSV (`start_sec,end_sec,stretch,pitch_ratio,confidence,f0_hz`).
 - `src/pvx/algorithms/`: canonical themed algorithm library with `123` DSP modules (time/pitch, transforms, separation, denoise, dereverb, dynamics, creative, granular, analysis, and spatial/multichannel).
 - `pvxalgorithms/`: compatibility shim package so legacy imports still work (`pvxalgorithms.*` -> `pvx.algorithms.*`).
 
@@ -660,6 +661,7 @@ Most `pvx*` scripts are intentionally aligned around one CLI contract for batch 
 | Input selection | `inputs` (positional) | Accepts one or more paths/globs | If no paths resolve, the parser exits with an error. |
 | Stdin input | `-` as input path | Reads audio bytes from stdin | Can be paired with `--stdout` (pipe through) or normal file output (writes `stdin_*`). |
 | Output location | `-o`, `--output-dir` | Writes beside source file when omitted | Applies to tools using shared I/O args. |
+| Explicit output file | `--output` (`pvxvoc.py`) | Writes to an exact file path | Single-input mode; useful for one-line sidechain commands. |
 | Stdout output | `--stdout` | Writes encoded audio bytes to stdout | Requires exactly one resolved input. |
 | Output naming | `--suffix`, `--output-format` | Appends tool suffix and optional extension override | Examples: `_harm`, `_denoise`, `_retune`. |
 | Overwrite policy | `--overwrite` | Allows replacing an existing output file | Without it, existing output is an error. |
@@ -682,6 +684,20 @@ For tools with explicit output paths (for example `pvxmorph.py`), use `-o -` or 
 python3 pvxmorph.py a.wav b.wav -o - \
   | python3 pvxformant.py - --mode preserve --stdout \
   | python3 pvxunison.py - --voices 5 --output-dir out --suffix _chain
+```
+
+Pitch-follow sidechain in one line (track `A.wav`, drive dynamic pitch on `B.wav`):
+
+```bash
+python3 HPS-pitch-track.py A.wav \
+  | python3 pvxvoc.py B.wav --pitch-follow-stdin --pitch-conf-min 0.75 --time-stretch-factor 1.0 --output output.wav
+```
+
+Equivalent file-based flow (keeps the map for inspection/reuse):
+
+```bash
+python3 HPS-pitch-track.py A.wav --output map.csv
+python3 pvxvoc.py B.wav --pitch-map map.csv --pitch-lowconf-mode hold --pitch-map-smooth-ms 20 --output output.wav
 ```
 
 ### Console Output and Verbosity
@@ -821,8 +837,12 @@ Use `pvxvoc.py` when you want maximum control and one-pass consistency for batch
 Key capabilities:
 
 - Multi-file + multi-channel processing.
-- Time stretch by ratio (`--time-stretch`) or absolute length (`--target-duration`).
+- Time stretch by ratio (`--time-stretch` or alias `--time-stretch-factor`) or absolute length (`--target-duration`).
 - Pitch by semitones, cents, ratio, or target F0 (`--target-f0`).
+- Dynamic, time-varying pitch/stretch control via CSV map (`--pitch-map`, `--pitch-map-stdin`, or shortcut `--pitch-follow-stdin`).
+- Confidence-aware sidechain map handling (`--pitch-conf-min`, `--pitch-lowconf-mode`) with optional ratio smoothing (`--pitch-map-smooth-ms`).
+- Segment-edge artifact control for map workflows (`--pitch-map-crossfade-ms`).
+- Single-file explicit output targeting (`--output`) for short one-line pipelines.
 - Formant-preserving pitch mode (`--pitch-mode formant-preserving`).
 - Transient-preserve + phase locking.
 - Fourier-sync mode (`--fourier-sync`) with fundamental frame locking.
@@ -845,6 +865,13 @@ Fourier-sync example:
 python3 pvxvoc.py vocal.wav \
   --fourier-sync --n-fft 1500 --win-length 1500 --hop-size 375 \
   --f0-min 70 --f0-max 500 --time-stretch 1.25
+```
+
+Dynamic map example (pipe tracker output directly into `pvxvoc.py`):
+
+```bash
+python3 HPS-pitch-track.py A.wav \
+  | python3 pvxvoc.py B.wav --pitch-follow-stdin --pitch-conf-min 0.8 --pitch-lowconf-mode hold --output B_follow.wav
 ```
 
 ### 2. `pvxfreeze.py`
@@ -1394,8 +1421,8 @@ Run example:
 
 ### Onefile vs Onedir
 
-- `--onefile`: single executable, easier distribution, slower startup.
-- `--onedir`: folder output, faster startup, easier debugging.
+- onefile mode: single executable, easier distribution, slower startup.
+- onedir mode: folder output, faster startup, easier debugging.
 
 Onedir example:
 

@@ -1,15 +1,33 @@
 # pvx CLI Flags Reference
 
-_Generated from commit `2327357` (commit date: 2026-02-17T11:46:01-05:00)._
+_Generated from commit `39eeaf2` (commit date: 2026-02-17T14:18:07-05:00)._
 
 This file enumerates long-form CLI flags discovered from argparse declarations in canonical pvx CLI sources.
 
-Total tool+flag entries: **140**
-Total unique long flags: **112**
+Total tool+flag entries: **162**
+Total unique long flags: **131**
 
 ## Unique Long Flags
 
-`--alpha`, `--analysis-channel`, `--chunk-ms`, `--clip`, `--compander-attack-ms`, `--compander-compress-ratio`, `--compander-expand-ratio`, `--compander-makeup-db`, `--compander-release-ms`, `--compander-threshold-db`, `--compressor-attack-ms`, `--compressor-makeup-db`, `--compressor-ratio`, `--compressor-release-ms`, `--compressor-threshold-db`, `--crossfade-ms`, `--cuda-device`, `--decay`, `--detune-cents`, `--device`, `--dry-mix`, `--dry-run`, `--duration`, `--expander-attack-ms`, `--expander-ratio`, `--expander-release-ms`, `--expander-threshold-db`, `--f0-max`, `--f0-min`, `--floor`, `--force-stereo`, `--formant-lifter`, `--formant-max-gain-db`, `--formant-shift-ratio`, `--formant-strength`, `--fourier-sync`, `--fourier-sync-max-fft`, `--fourier-sync-min-fft`, `--fourier-sync-smooth`, `--freeze-time`, `--gains`, `--hard-clip-level`, `--harmonic-gain`, `--harmonic-kernel`, `--harmonic-pitch-cents`, `--harmonic-pitch-semitones`, `--harmonic-stretch`, `--hop-size`, `--intervals`, `--intervals-cents`, `--kaiser-beta`, `--limiter-threshold`, `--list-algorithm-package`, `--list-tools`, `--map`, `--mode`, `--n-fft`, `--no-center`, `--no-progress`, `--noise-file`, `--noise-seconds`, `--normalize`, `--output`, `--output-dir`, `--output-format`, `--overlap-ms`, `--overwrite`, `--pans`, `--peak-dbfs`, `--percussive-gain`, `--percussive-kernel`, `--percussive-pitch-cents`, `--percussive-pitch-semitones`, `--percussive-stretch`, `--phase-locking`, `--pitch-mode`, `--pitch-shift-cents`, `--pitch-shift-ratio`, `--pitch-shift-semitones`, `--quiet`, `--random-phase`, `--reduction-db`, `--resample-mode`, `--rms-dbfs`, `--root`, `--scale`, `--scale-cents`, `--show-docs`, `--silent`, `--smooth`, `--soft-clip-drive`, `--soft-clip-level`, `--soft-clip-type`, `--stdout`, `--strength`, `--subtype`, `--suffix`, `--target-duration`, `--target-f0`, `--target-lufs`, `--target-pitch-shift-semitones`, `--target-sample-rate`, `--time-stretch`, `--transform`, `--transient-preserve`, `--transient-threshold`, `--verbose`, `--verbosity`, `--voices`, `--width`, `--win-length`, `--window`
+`--alpha`, `--analysis-channel`, `--backend`, `--chunk-ms`, `--clip`, `--compander-attack-ms`, `--compander-compress-ratio`, `--compander-expand-ratio`, `--compander-makeup-db`, `--compander-release-ms`, `--compander-threshold-db`, `--compressor-attack-ms`, `--compressor-makeup-db`, `--compressor-ratio`, `--compressor-release-ms`, `--compressor-threshold-db`, `--confidence-floor`, `--crossfade-ms`, `--cuda-device`, `--decay`, `--detune-cents`, `--device`, `--dry-mix`, `--dry-run`, `--duration`, `--expander-attack-ms`, `--expander-ratio`, `--expander-release-ms`, `--expander-threshold-db`, `--f0-max`, `--f0-min`, `--floor`, `--fmax`, `--fmin`, `--force-stereo`, `--formant-lifter`, `--formant-max-gain-db`, `--formant-shift-ratio`, `--formant-strength`, `--fourier-sync`, `--fourier-sync-max-fft`, `--fourier-sync-min-fft`, `--fourier-sync-smooth`, `--frame-length`, `--freeze-time`, `--gains`, `--hard-clip-level`, `--harmonic-gain`, `--harmonic-kernel`, `--harmonic-pitch-cents`, `--harmonic-pitch-semitones`, `--harmonic-stretch`, `--hop-size`, `--intervals`, `--intervals-cents`, `--kaiser-beta`, `--limiter-threshold`, `--list-algorithm-package`, `--list-tools`, `--map`, `--mode`, `--n-fft`, `--no-center`, `--no-progress`, `--noise-file`, `--noise-seconds`, `--normalize`, `--output`, `--output-dir`, `--output-format`, `--overlap-ms`, `--overwrite`, `--pans`, `--peak-dbfs`, `--percussive-gain`, `--percussive-kernel`, `--percussive-pitch-cents`, `--percussive-pitch-semitones`, `--percussive-stretch`, `--phase-locking`, `--pitch-conf-min`, `--pitch-follow-stdin`, `--pitch-lowconf-mode`, `--pitch-map`, `--pitch-map-crossfade-ms`, `--pitch-map-smooth-ms`, `--pitch-map-stdin`, `--pitch-mode`, `--pitch-shift-cents`, `--pitch-shift-ratio`, `--pitch-shift-semitones`, `--quiet`, `--random-phase`, `--ratio-max`, `--ratio-min`, `--ratio-reference`, `--reduction-db`, `--reference-hz`, `--resample-mode`, `--rms-dbfs`, `--root`, `--scale`, `--scale-cents`, `--show-docs`, `--silent`, `--smooth`, `--smooth-frames`, `--soft-clip-drive`, `--soft-clip-level`, `--soft-clip-type`, `--stdout`, `--strength`, `--stretch`, `--subtype`, `--suffix`, `--target-duration`, `--target-f0`, `--target-lufs`, `--target-pitch-shift-semitones`, `--target-sample-rate`, `--time-stretch`, `--time-stretch-factor`, `--transform`, `--transient-preserve`, `--transient-threshold`, `--verbose`, `--verbosity`, `--voices`, `--width`, `--win-length`, `--window`
+
+## `hps_pitch_track.py`
+
+| Flag | Required | Default | Choices | Action | Description | Source |
+| --- | --- | --- | --- | --- | --- | --- |
+| `--backend` | False | `auto` | `auto, pyin, acf` | `` | Pitch backend (default: auto -> pyin if available, else acf) | `src/pvx/cli/hps_pitch_track.py` |
+| `--confidence-floor` | False | `0.0` | `` | `` | Set confidence below this floor to 0.0 (default: 0.0). | `src/pvx/cli/hps_pitch_track.py` |
+| `--fmax` | False | `1200.0` | `` | `` | Maximum F0 in Hz (default: 1200) | `src/pvx/cli/hps_pitch_track.py` |
+| `--fmin` | False | `50.0` | `` | `` | Minimum F0 in Hz (default: 50) | `src/pvx/cli/hps_pitch_track.py` |
+| `--frame-length` | False | `2048` | `` | `` | Frame length in samples (default: 2048) | `src/pvx/cli/hps_pitch_track.py` |
+| `--hop-size` | False | `256` | `` | `` | Hop size in samples (default: 256) | `src/pvx/cli/hps_pitch_track.py` |
+| `--output` | False | `` | `` | `` | Output CSV path (default: '-' for stdout) | `src/pvx/cli/hps_pitch_track.py` |
+| `--ratio-max` | False | `4.0` | `` | `` | Upper clamp for emitted pitch_ratio (default: 4.0). | `src/pvx/cli/hps_pitch_track.py` |
+| `--ratio-min` | False | `0.25` | `` | `` | Lower clamp for emitted pitch_ratio (default: 0.25). | `src/pvx/cli/hps_pitch_track.py` |
+| `--ratio-reference` | False | `median` | `median, mean, first, hz` | `` | Reference for emitted pitch_ratio values (default: median voiced f0). | `src/pvx/cli/hps_pitch_track.py` |
+| `--reference-hz` | False | `` | `` | `` | Reference frequency in Hz when --ratio-reference hz. | `src/pvx/cli/hps_pitch_track.py` |
+| `--smooth-frames` | False | `5` | `` | `` | Smoothing window for pitch_ratio frames (default: 5). | `src/pvx/cli/hps_pitch_track.py` |
+| `--stretch` | False | `1.0` | `` | `` | Emit constant stretch column value (default: 1.0). | `src/pvx/cli/hps_pitch_track.py` |
 
 ## `main.py`
 
@@ -180,11 +198,19 @@ Total unique long flags: **112**
 | `--no-center` | False | `` | `` | `store_true` | Disable center padding in STFT/ISTFT | `src/pvx/core/voc.py` |
 | `--no-progress` | False | `` | `` | `store_true` |  | `src/pvx/core/voc.py` |
 | `--normalize` | False | `none` | `none, peak, rms` | `` | Output normalization mode | `src/pvx/core/voc.py` |
+| `--output` | False | `` | `` | `` | Explicit output file path (single-input mode only). | `src/pvx/core/voc.py` |
 | `--output-dir` | False | `` | `` | `` | Directory for output files (default: same directory as each input) | `src/pvx/core/voc.py` |
 | `--output-format` | False | `` | `` | `` | Output format/extension (e.g. wav, flac, aiff). Default: keep input extension. | `src/pvx/core/voc.py` |
 | `--overwrite` | False | `` | `` | `store_true` | Overwrite existing outputs | `src/pvx/core/voc.py` |
 | `--peak-dbfs` | False | `` | `` | `` | Target peak dBFS when --normalize peak | `src/pvx/core/voc.py` |
 | `--phase-locking` | False | `identity` | `off, identity` | `` | Inter-bin phase locking mode for transient fidelity (default: identity) | `src/pvx/core/voc.py` |
+| `--pitch-conf-min` | False | `0.0` | `` | `` | Minimum accepted map confidence (default: 0 disables gating). | `src/pvx/core/voc.py` |
+| `--pitch-follow-stdin` | False | `` | `` | `store_true` | Shortcut for --pitch-map-stdin (sidechain pitch-follow workflows). | `src/pvx/core/voc.py` |
+| `--pitch-lowconf-mode` | False | `hold` | `hold, unity, interp` | `` | Low-confidence map handling mode (default: hold). | `src/pvx/core/voc.py` |
+| `--pitch-map` | False | `` | `` | `` | CSV control map for time-varying stretch/pitch. Columns: start_sec,end_sec plus optional stretch,pitch_ratio/pitch_cents/pitch_semitones,confidence. Use '-' to read from stdin. | `src/pvx/core/voc.py` |
+| `--pitch-map-crossfade-ms` | False | `8.0` | `` | `` | Crossfade between processed map segments in milliseconds (default: 8.0). | `src/pvx/core/voc.py` |
+| `--pitch-map-smooth-ms` | False | `0.0` | `` | `` | Moving-average smoothing over map pitch ratios in milliseconds. | `src/pvx/core/voc.py` |
+| `--pitch-map-stdin` | False | `` | `` | `store_true` | Read control-map CSV from stdin. | `src/pvx/core/voc.py` |
 | `--pitch-mode` | False | `standard` | `standard, formant-preserving` | `` | Pitch mode: standard shift or formant-preserving correction (default: standard) | `src/pvx/core/voc.py` |
 | `--pitch-shift-cents` | False | `` | `` | `` | Pitch shift in cents (+1200 is one octave up) | `src/pvx/core/voc.py` |
 | `--pitch-shift-ratio` | False | `` | `` | `` | Pitch ratio (>1 up, <1 down). Accepts decimals (1.5), integer ratios (3/2), and expressions (2^(1/12)). | `src/pvx/core/voc.py` |
@@ -205,6 +231,7 @@ Total unique long flags: **112**
 | `--target-pitch-shift-semitones` | False | `` | `` | `` | Pitch shift in semitones (+12 is one octave up) | `src/pvx/core/voc.py` |
 | `--target-sample-rate` | False | `` | `` | `` | Output sample rate in Hz (default: keep input rate) | `src/pvx/core/voc.py` |
 | `--time-stretch` | False | `1.0` | `` | `` | Final duration multiplier (1.0=unchanged, 2.0=2x longer) | `src/pvx/core/voc.py` |
+| `--time-stretch-factor` | False | `1.0` | `` | `` | Final duration multiplier (1.0=unchanged, 2.0=2x longer) | `src/pvx/core/voc.py` |
 | `--transform` | False | `fft` | `` | `` | Per-frame transform backend for STFT/ISTFT paths (default: fft; options: fft, dft, czt, dct, dst, hartley) | `src/pvx/core/voc.py` |
 | `--transient-preserve` | False | `` | `` | `store_true` | Enable transient phase resets based on spectral flux | `src/pvx/core/voc.py` |
 | `--transient-threshold` | False | `2.0` | `` | `` | Spectral-flux multiplier for transient detection (default: 2.0) | `src/pvx/core/voc.py` |

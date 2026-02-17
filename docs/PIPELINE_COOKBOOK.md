@@ -1,6 +1,6 @@
 # pvx Pipeline Cookbook
 
-_Generated from commit `2327357` (commit date: 2026-02-17T11:46:01-05:00)._
+_Generated from commit `39eeaf2` (commit date: 2026-02-17T14:18:07-05:00)._
 
 Curated one-line workflows for practical chaining, mastering, microtonal processing, and batch operation.
 
@@ -103,6 +103,14 @@ python3 pvxmorph.py a.wav b.wav -o - | python3 pvxformant.py - --mode preserve -
 ```
 
 Why: Builds a richer timbre chain with no intermediate files.
+
+### Pitch-follow sidechain map (A controls B)
+
+```bash
+python3 HPS-pitch-track.py A.wav | python3 pvxvoc.py B.wav --pitch-follow-stdin --pitch-conf-min 0.75 --pitch-lowconf-mode hold --time-stretch-factor 1.0 --output output.wav
+```
+
+Why: Tracks F0 contour from source A and applies it as a dynamic pitch-ratio control map on source B.
 
 ## Spatial
 

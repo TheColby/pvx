@@ -31,6 +31,7 @@ pvxdenoise = "pvx.cli.pvxdenoise:main"
 pvxdeverb = "pvx.cli.pvxdeverb:main"
 pvxretune = "pvx.cli.pvxretune:main"
 pvxlayer = "pvx.cli.pvxlayer:main"
+hps-pitch-track = "pvx.cli.hps_pitch_track:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

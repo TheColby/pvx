@@ -12,6 +12,8 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import csv
+import io
 from pathlib import Path
 
 import numpy as np
@@ -20,6 +22,7 @@ import soundfile as sf
 
 ROOT = Path(__file__).resolve().parents[1]
 CLI = ROOT / "pvxvoc.py"
+HPS_CLI = ROOT / "HPS-pitch-track.py"
 
 
 def write_stereo_tone(path: Path, sr: int = 24000, duration: float = 0.5) -> tuple[np.ndarray, int]:
@@ -31,7 +34,86 @@ def write_stereo_tone(path: Path, sr: int = 24000, duration: float = 0.5) -> tup
     return audio, sr
 
 
+def write_mono_tone(path: Path, sr: int = 24000, duration: float = 0.5, freq_hz: float = 220.0) -> tuple[np.ndarray, int]:
+    t = np.arange(int(sr * duration)) / sr
+    audio = 0.35 * np.sin(2 * np.pi * freq_hz * t)
+    sf.write(path, audio, sr)
+    return audio.astype(np.float64), sr
+
+
 class TestCLIRegression(unittest.TestCase):
+    def test_hps_pitch_tracker_emits_control_map(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            in_path = tmp_path / "pitch_src.wav"
+            write_mono_tone(in_path, duration=0.55, freq_hz=245.0)
+
+            cmd = [
+                sys.executable,
+                str(HPS_CLI),
+                str(in_path),
+                "--backend",
+                "acf",
+                "--quiet",
+            ]
+            proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+            self.assertEqual(proc.returncode, 0, msg=proc.stderr)
+
+            rows = list(csv.DictReader(io.StringIO(proc.stdout)))
+            self.assertGreater(len(rows), 10)
+            first = rows[0]
+            self.assertIn("start_sec", first)
+            self.assertIn("end_sec", first)
+            self.assertIn("stretch", first)
+            self.assertIn("pitch_ratio", first)
+            self.assertIn("confidence", first)
+            self.assertGreater(float(first["pitch_ratio"]), 0.0)
+
+    def test_cli_pitch_map_stdin_pipeline(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            pitch_src = tmp_path / "a.wav"
+            proc_src = tmp_path / "b.wav"
+            write_mono_tone(pitch_src, duration=0.65, freq_hz=196.0)
+            input_audio, sr = write_stereo_tone(proc_src, duration=0.65)
+
+            track_cmd = [
+                sys.executable,
+                str(HPS_CLI),
+                str(pitch_src),
+                "--backend",
+                "acf",
+                "--quiet",
+            ]
+            track = subprocess.run(track_cmd, cwd=ROOT, capture_output=True, text=True)
+            self.assertEqual(track.returncode, 0, msg=track.stderr)
+            self.assertIn("pitch_ratio", track.stdout)
+
+            out_path = tmp_path / "follow.wav"
+            voc_cmd = [
+                sys.executable,
+                str(CLI),
+                str(proc_src),
+                "--pitch-follow-stdin",
+                "--pitch-conf-min",
+                "0.1",
+                "--time-stretch-factor",
+                "1.0",
+                "--output",
+                str(out_path),
+                "--overwrite",
+                "--quiet",
+            ]
+            voc = subprocess.run(voc_cmd, cwd=ROOT, input=track.stdout, capture_output=True, text=True)
+            self.assertEqual(voc.returncode, 0, msg=voc.stderr)
+            self.assertTrue(out_path.exists())
+
+            output_audio, out_sr = sf.read(out_path, always_2d=True)
+            self.assertEqual(out_sr, sr)
+            self.assertEqual(output_audio.shape[1], 2)
+            self.assertGreater(output_audio.shape[0], 0)
+            self.assertNotEqual(output_audio.shape[0], input_audio.shape[0])
+
     def test_cli_multi_channel_pitch_and_stretch(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
@@ -119,6 +201,33 @@ class TestCLIRegression(unittest.TestCase):
             self.assertEqual(out_sr, sr)
             self.assertEqual(output_audio.shape[1], 2)
             self.assertAlmostEqual(output_audio.shape[0], input_audio.shape[0], delta=4)
+
+    def test_cli_time_stretch_factor_alias(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            in_path = tmp_path / "alias.wav"
+            input_audio, sr = write_stereo_tone(in_path, duration=0.45)
+            out_path = tmp_path / "alias_out.wav"
+
+            cmd = [
+                sys.executable,
+                str(CLI),
+                str(in_path),
+                "--time-stretch-factor",
+                "1.12",
+                "--output",
+                str(out_path),
+                "--overwrite",
+                "--quiet",
+            ]
+            proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+            self.assertEqual(proc.returncode, 0, msg=proc.stderr)
+            self.assertTrue(out_path.exists())
+
+            output_audio, out_sr = sf.read(out_path, always_2d=True)
+            self.assertEqual(out_sr, sr)
+            expected_len = int(round(input_audio.shape[0] * 1.12))
+            self.assertAlmostEqual(output_audio.shape[0], expected_len, delta=6)
 
     def test_cli_pitch_shift_ratio_expression(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

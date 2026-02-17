@@ -34,6 +34,7 @@ CLI_HELP_CANDIDATES = {
     ROOT / "pvxdeverb.py",
     ROOT / "pvxretune.py",
     ROOT / "pvxlayer.py",
+    ROOT / "HPS-pitch-track.py",
 }
 
 

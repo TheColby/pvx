@@ -1,6 +1,6 @@
 {
-  "commit": "2327357",
-  "commit_date": "2026-02-17T11:46:01-05:00",
+  "commit": "39eeaf2",
+  "commit_date": "2026-02-17T14:18:07-05:00",
   "recipes": [
     {
       "category": "Phase-vocoder core",
@@ -79,6 +79,12 @@
       "command": "python3 pvxmorph.py a.wav b.wav -o - | python3 pvxformant.py - --mode preserve --stdout | python3 pvxunison.py - --voices 5 --detune-cents 8 --output-dir out --suffix _morph_stack",
       "title": "Morph -> formant -> unison",
       "why": "Builds a richer timbre chain with no intermediate files."
+    },
+    {
+      "category": "Pipelines",
+      "command": "python3 HPS-pitch-track.py A.wav | python3 pvxvoc.py B.wav --pitch-follow-stdin --pitch-conf-min 0.75 --pitch-lowconf-mode hold --time-stretch-factor 1.0 --output output.wav",
+      "title": "Pitch-follow sidechain map (A controls B)",
+      "why": "Tracks F0 contour from source A and applies it as a dynamic pitch-ratio control map on source B."
     },
     {
       "category": "Mastering",

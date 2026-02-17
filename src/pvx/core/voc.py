@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import csv
 import glob
 import io
 import math
@@ -107,6 +108,7 @@ TransformMode = Literal["fft", "dft", "czt", "dct", "dst", "hartley"]
 ResampleMode = Literal["auto", "fft", "linear"]
 PhaseLockMode = Literal["off", "identity"]
 DeviceMode = Literal["auto", "cpu", "cuda"]
+LowConfidenceMode = Literal["hold", "unity", "interp"]
 ProgressCallback = Callable[[int, int], None]
 
 TRANSFORM_CHOICES: tuple[TransformMode, ...] = ("fft", "dft", "czt", "dct", "dst", "hartley")
@@ -133,6 +135,15 @@ class PitchConfig:
 
 
 @dataclass(frozen=True)
+class ControlSegment:
+    start_sec: float
+    end_sec: float
+    stretch: float
+    pitch_ratio: float
+    confidence: float | None = None
+
+
+@dataclass(frozen=True)
 class JobResult:
     input_path: Path
     output_path: Path
@@ -150,6 +161,13 @@ class FourierSyncPlan:
     frame_lengths: np.ndarray
     f0_track_hz: np.ndarray
     reference_n_fft: int
+
+
+@dataclass(frozen=True)
+class AudioBlockResult:
+    audio: np.ndarray
+    internal_stretch: float
+    sync_plan: FourierSyncPlan | None
 
 
 @dataclass(frozen=True)
@@ -2086,6 +2104,409 @@ def choose_pitch_ratio(args: argparse.Namespace, signal: np.ndarray, sr: int) ->
     return PitchConfig(ratio=ratio, source_f0_hz=detected_f0)
 
 
+def _parse_optional_float(value: str | None) -> float | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    return float(text)
+
+
+def parse_control_segments_csv(
+    payload: str,
+    *,
+    default_stretch: float,
+    default_pitch_ratio: float,
+) -> list[ControlSegment]:
+    reader = csv.DictReader(io.StringIO(payload))
+    fields = [str(name).strip().lower() for name in (reader.fieldnames or [])]
+    if not fields:
+        raise ValueError("Control-map CSV is empty")
+    required = {"start_sec", "end_sec"}
+    if not required.issubset(fields):
+        raise ValueError("Control-map CSV must include: start_sec,end_sec")
+
+    stretch_keys = ("stretch", "time_stretch", "time-stretch", "time_stretch_factor", "time-stretch-factor")
+    ratio_keys = ("pitch_ratio",)
+    cents_keys = ("pitch_cents",)
+    semitone_keys = ("pitch_semitones",)
+    confidence_keys = ("confidence", "conf", "pitch_confidence", "f0_confidence")
+
+    segments: list[ControlSegment] = []
+    for row_index, row in enumerate(reader, start=2):
+        values: dict[str, str] = {}
+        for key, raw in row.items():
+            norm_key = str(key).strip().lower()
+            values[norm_key] = "" if raw is None else str(raw).strip()
+
+        start_raw = values.get("start_sec", "")
+        end_raw = values.get("end_sec", "")
+        if not start_raw or not end_raw:
+            raise ValueError(f"Control-map row {row_index}: start_sec and end_sec are required")
+
+        start_sec = float(start_raw)
+        end_sec = float(end_raw)
+        if end_sec <= start_sec:
+            continue
+
+        stretch_value: float | None = None
+        for key in stretch_keys:
+            stretch_value = _parse_optional_float(values.get(key))
+            if stretch_value is not None:
+                break
+        stretch = default_stretch if stretch_value is None else float(stretch_value)
+        if stretch <= 0.0:
+            raise ValueError(f"Control-map row {row_index}: stretch must be > 0")
+
+        ratio_text = ""
+        cents_text = ""
+        semitone_text = ""
+        for key in ratio_keys:
+            ratio_text = values.get(key, "").strip()
+            if ratio_text:
+                break
+        for key in cents_keys:
+            cents_text = values.get(key, "").strip()
+            if cents_text:
+                break
+        for key in semitone_keys:
+            semitone_text = values.get(key, "").strip()
+            if semitone_text:
+                break
+
+        populated = int(bool(ratio_text)) + int(bool(cents_text)) + int(bool(semitone_text))
+        if populated > 1:
+            raise ValueError(
+                f"Control-map row {row_index}: use only one of pitch_ratio, pitch_cents, or pitch_semitones"
+            )
+        if ratio_text:
+            pitch_ratio = parse_pitch_ratio_value(
+                ratio_text,
+                context=f"control-map row {row_index} pitch_ratio",
+            )
+        elif cents_text:
+            pitch_ratio = cents_to_ratio(float(cents_text))
+        elif semitone_text:
+            pitch_ratio = 2.0 ** (float(semitone_text) / 12.0)
+        else:
+            pitch_ratio = default_pitch_ratio
+        if pitch_ratio <= 0.0:
+            raise ValueError(f"Control-map row {row_index}: pitch ratio must be > 0")
+
+        confidence_value: float | None = None
+        for key in confidence_keys:
+            confidence_value = _parse_optional_float(values.get(key))
+            if confidence_value is not None:
+                break
+        if confidence_value is not None and not math.isfinite(confidence_value):
+            raise ValueError(f"Control-map row {row_index}: confidence must be finite")
+
+        segments.append(
+            ControlSegment(
+                start_sec=float(start_sec),
+                end_sec=float(end_sec),
+                stretch=float(stretch),
+                pitch_ratio=float(pitch_ratio),
+                confidence=confidence_value,
+            )
+        )
+
+    segments.sort(key=lambda seg: seg.start_sec)
+    return segments
+
+
+def apply_control_confidence_policy(
+    segments: list[ControlSegment],
+    *,
+    conf_min: float,
+    mode: LowConfidenceMode,
+    fallback_ratio: float,
+) -> list[ControlSegment]:
+    if not segments:
+        return []
+    if conf_min <= 0.0:
+        return segments
+
+    ratios = np.array([seg.pitch_ratio for seg in segments], dtype=np.float64)
+    conf = np.array(
+        [
+            1.0 if seg.confidence is None else float(seg.confidence)
+            for seg in segments
+        ],
+        dtype=np.float64,
+    )
+    valid = conf >= conf_min
+
+    if mode == "hold":
+        last = float(fallback_ratio)
+        for idx in range(ratios.size):
+            if valid[idx]:
+                last = float(ratios[idx])
+            else:
+                ratios[idx] = last
+    elif mode == "unity":
+        ratios[~valid] = 1.0
+    else:  # mode == "interp"
+        ratios = ratios.astype(np.float64, copy=True)
+        ratios[~valid] = np.nan
+        good_idx = np.flatnonzero(np.isfinite(ratios))
+        if good_idx.size:
+            x = np.arange(ratios.size, dtype=np.float64)
+            ratios = np.interp(x, good_idx.astype(np.float64), ratios[good_idx])
+        else:
+            ratios.fill(float(fallback_ratio))
+
+    out: list[ControlSegment] = []
+    for seg, ratio in zip(segments, ratios):
+        out.append(
+            ControlSegment(
+                start_sec=seg.start_sec,
+                end_sec=seg.end_sec,
+                stretch=seg.stretch,
+                pitch_ratio=float(max(1e-8, ratio)),
+                confidence=seg.confidence,
+            )
+        )
+    return out
+
+
+def smooth_control_ratios(segments: list[ControlSegment], *, smooth_ms: float) -> list[ControlSegment]:
+    if smooth_ms <= 0.0 or len(segments) < 3:
+        return segments
+
+    durations = np.array([max(1e-9, seg.end_sec - seg.start_sec) for seg in segments], dtype=np.float64)
+    median_duration = float(np.median(durations))
+    if median_duration <= 0.0:
+        return segments
+
+    window = int(round((smooth_ms / 1000.0) / median_duration))
+    if window <= 1:
+        return segments
+    if window % 2 == 0:
+        window += 1
+    window = min(window, max(3, len(segments) | 1))
+    if window <= 1:
+        return segments
+
+    ratios = np.array([seg.pitch_ratio for seg in segments], dtype=np.float64)
+    pad = window // 2
+    padded = np.pad(ratios, (pad, pad), mode="edge")
+    kernel = np.ones(window, dtype=np.float64) / float(window)
+    smoothed = np.convolve(padded, kernel, mode="valid")
+
+    out: list[ControlSegment] = []
+    for seg, ratio in zip(segments, smoothed):
+        out.append(
+            ControlSegment(
+                start_sec=seg.start_sec,
+                end_sec=seg.end_sec,
+                stretch=seg.stretch,
+                pitch_ratio=float(max(1e-8, ratio)),
+                confidence=seg.confidence,
+            )
+        )
+    return out
+
+
+def expand_control_segments(
+    segments: list[ControlSegment],
+    *,
+    total_seconds: float,
+    default_stretch: float,
+    default_pitch_ratio: float,
+) -> list[ControlSegment]:
+    total_seconds = max(0.0, float(total_seconds))
+    if total_seconds <= 0.0:
+        return []
+
+    ordered = sorted(segments, key=lambda seg: seg.start_sec)
+    merged: list[ControlSegment] = []
+    cursor = 0.0
+
+    for seg in ordered:
+        start = min(max(seg.start_sec, 0.0), total_seconds)
+        end = min(max(seg.end_sec, 0.0), total_seconds)
+        if end <= start:
+            continue
+        if end <= cursor:
+            continue
+        if start < cursor:
+            start = cursor
+        if start > cursor:
+            merged.append(
+                ControlSegment(
+                    start_sec=cursor,
+                    end_sec=start,
+                    stretch=default_stretch,
+                    pitch_ratio=default_pitch_ratio,
+                    confidence=1.0,
+                )
+            )
+        merged.append(
+            ControlSegment(
+                start_sec=start,
+                end_sec=end,
+                stretch=seg.stretch,
+                pitch_ratio=seg.pitch_ratio,
+                confidence=seg.confidence,
+            )
+        )
+        cursor = end
+
+    if cursor < total_seconds:
+        merged.append(
+            ControlSegment(
+                start_sec=cursor,
+                end_sec=total_seconds,
+                stretch=default_stretch,
+                pitch_ratio=default_pitch_ratio,
+                confidence=1.0,
+            )
+        )
+
+    if not merged:
+        merged.append(
+            ControlSegment(
+                start_sec=0.0,
+                end_sec=total_seconds,
+                stretch=default_stretch,
+                pitch_ratio=default_pitch_ratio,
+                confidence=1.0,
+            )
+        )
+    return merged
+
+
+def load_control_segments(
+    args: argparse.Namespace,
+    *,
+    default_stretch: float,
+    default_pitch_ratio: float,
+) -> list[ControlSegment]:
+    map_path = getattr(args, "pitch_map", None)
+    use_stdin = bool(getattr(args, "pitch_map_stdin", False)) or str(map_path) == "-"
+    payload: str
+    if use_stdin:
+        raw = sys.stdin.buffer.read()
+        if not raw:
+            raise ValueError("No control-map bytes received on stdin")
+        payload = raw.decode("utf-8-sig")
+    else:
+        assert map_path is not None
+        payload = Path(map_path).read_text(encoding="utf-8")
+
+    segments = parse_control_segments_csv(
+        payload,
+        default_stretch=default_stretch,
+        default_pitch_ratio=default_pitch_ratio,
+    )
+    if not segments:
+        return []
+
+    mode = str(getattr(args, "pitch_lowconf_mode", "hold")).strip().lower()
+    if mode not in {"hold", "unity", "interp"}:
+        raise ValueError(f"Unsupported low-confidence mode: {mode}")
+
+    segments = apply_control_confidence_policy(
+        segments,
+        conf_min=float(getattr(args, "pitch_conf_min", 0.0)),
+        mode=mode,  # type: ignore[arg-type]
+        fallback_ratio=default_pitch_ratio,
+    )
+    segments = smooth_control_ratios(
+        segments,
+        smooth_ms=float(getattr(args, "pitch_map_smooth_ms", 0.0)),
+    )
+    return segments
+
+
+def process_audio_block(
+    audio: np.ndarray,
+    sr: int,
+    args: argparse.Namespace,
+    config: VocoderConfig,
+    *,
+    stretch: float,
+    pitch_ratio: float,
+    progress_callback_factory: Callable[[float, float, str], ProgressCallback | None] | None = None,
+) -> AudioBlockResult:
+    internal_stretch = float(stretch * pitch_ratio)
+    if internal_stretch <= 0.0:
+        raise ValueError("Computed internal stretch must be > 0")
+
+    sync_plan: FourierSyncPlan | None = None
+    if args.fourier_sync:
+        sync_source = audio[:, 0] if args.analysis_channel == "first" else np.mean(audio, axis=1)
+        callback = (
+            None
+            if progress_callback_factory is None
+            else progress_callback_factory(0.10, 0.25, "f0 prescan")
+        )
+        sync_plan = build_fourier_sync_plan(
+            signal=sync_source,
+            sample_rate=sr,
+            config=config,
+            f0_min_hz=args.f0_min,
+            f0_max_hz=args.f0_max,
+            min_fft=args.fourier_sync_min_fft,
+            max_fft=args.fourier_sync_max_fft,
+            smooth_span=args.fourier_sync_smooth,
+            progress_callback=callback,
+        )
+
+    channel_start = 0.25 if args.fourier_sync else 0.10
+    channel_end = 0.88
+    processed_channels: list[np.ndarray] = []
+    for ch in range(audio.shape[1]):
+        sub_start = channel_start + (channel_end - channel_start) * (ch / audio.shape[1])
+        sub_end = channel_start + (channel_end - channel_start) * ((ch + 1) / audio.shape[1])
+        detail = f"channel {ch + 1}/{audio.shape[1]}"
+        callback = None if progress_callback_factory is None else progress_callback_factory(sub_start, sub_end, detail)
+        source_ch = audio[:, ch]
+        if args.fourier_sync:
+            if sync_plan is None:  # pragma: no cover - defensive
+                raise RuntimeError("Fourier-sync plan is unavailable")
+            stretched = phase_vocoder_time_stretch_fourier_sync(
+                source_ch,
+                internal_stretch,
+                config,
+                sync_plan,
+                progress_callback=callback,
+            )
+        else:
+            stretched = phase_vocoder_time_stretch(
+                source_ch,
+                internal_stretch,
+                config,
+                progress_callback=callback,
+            )
+
+        if abs(pitch_ratio - 1.0) > 1e-10:
+            pitch_len = max(1, int(round(stretched.size / pitch_ratio)))
+            shifted = resample_1d(stretched, pitch_len, args.resample_mode)
+        else:
+            shifted = stretched
+
+        if args.pitch_mode == "formant-preserving" and abs(pitch_ratio - 1.0) > 1e-10:
+            shifted = apply_formant_preservation(
+                source_ch,
+                shifted,
+                config,
+                lifter=args.formant_lifter,
+                strength=args.formant_strength,
+                max_gain_db=args.formant_max_gain_db,
+            )
+        processed_channels.append(shifted)
+
+    out_len = max(ch_data.size for ch_data in processed_channels)
+    out_audio = np.zeros((out_len, len(processed_channels)), dtype=np.float64)
+    for ch, ch_data in enumerate(processed_channels):
+        out_audio[: ch_data.size, ch] = ch_data
+
+    return AudioBlockResult(audio=out_audio, internal_stretch=internal_stretch, sync_plan=sync_plan)
+
+
 def resolve_base_stretch(args: argparse.Namespace, in_samples: int, sr: int) -> float:
     if args.target_duration is not None:
         return args.target_duration * sr / max(in_samples, 1)
@@ -2152,6 +2573,24 @@ def _write_audio_output(output_path: Path, audio: np.ndarray, sr: int, args: arg
     sf.write(str(output_path), audio, sr, subtype=args.subtype)
 
 
+def concat_audio_chunks(chunks: list[np.ndarray], *, sr: int, crossfade_ms: float) -> np.ndarray:
+    if not chunks:
+        return np.zeros((0, 1), dtype=np.float64)
+    if len(chunks) == 1:
+        return chunks[0]
+
+    fade = max(0, int(round(sr * max(0.0, crossfade_ms) / 1000.0)))
+    out = chunks[0]
+    for nxt in chunks[1:]:
+        if fade <= 0 or out.shape[0] < fade or nxt.shape[0] < fade:
+            out = np.vstack([out, nxt])
+            continue
+        w = np.linspace(0.0, 1.0, num=fade, endpoint=True)[:, None]
+        blend = out[-fade:, :] * (1.0 - w) + nxt[:fade, :] * w
+        out = np.vstack([out[:-fade, :], blend, nxt[fade:, :]])
+    return out
+
+
 def process_file(
     input_path: Path,
     args: argparse.Namespace,
@@ -2186,74 +2625,78 @@ def process_file(
     progress.set(0.08, "analyze")
     pitch = choose_pitch_ratio(args, audio, sr)
     base_stretch = resolve_base_stretch(args, audio.shape[0], sr)
+    use_control_map = bool(args.pitch_map is not None) or bool(args.pitch_map_stdin)
+    map_segments: list[ControlSegment] = []
     internal_stretch = base_stretch * pitch.ratio
-
-    if internal_stretch <= 0.0:
-        raise ValueError("Computed internal stretch must be > 0")
-
     sync_plan: FourierSyncPlan | None = None
-    if args.fourier_sync:
-        progress.set(0.10, "f0 prescan")
-        sync_source = audio[:, 0] if args.analysis_channel == "first" else np.mean(audio, axis=1)
-        sync_plan = build_fourier_sync_plan(
-            signal=sync_source,
-            sample_rate=sr,
-            config=config,
-            f0_min_hz=args.f0_min,
-            f0_max_hz=args.f0_max,
-            min_fft=args.fourier_sync_min_fft,
-            max_fft=args.fourier_sync_max_fft,
-            smooth_span=args.fourier_sync_smooth,
-            progress_callback=make_progress_callback(0.10, 0.25, "f0 prescan"),
+
+    if use_control_map:
+        progress.set(0.10, "map")
+        raw_segments = load_control_segments(
+            args,
+            default_stretch=base_stretch,
+            default_pitch_ratio=pitch.ratio,
         )
+        total_seconds = audio.shape[0] / float(sr)
+        map_segments = expand_control_segments(
+            raw_segments,
+            total_seconds=total_seconds,
+            default_stretch=base_stretch,
+            default_pitch_ratio=pitch.ratio,
+        )
+        if not map_segments:
+            raise ValueError("Control map produced no usable segments")
 
-    channel_start = 0.25 if args.fourier_sync else 0.10
-    channel_end = 0.88
-    processed_channels: list[np.ndarray] = []
-    for ch in range(audio.shape[1]):
-        sub_start = channel_start + (channel_end - channel_start) * (ch / audio.shape[1])
-        sub_end = channel_start + (channel_end - channel_start) * ((ch + 1) / audio.shape[1])
-        detail = f"channel {ch + 1}/{audio.shape[1]}"
-        source_ch = audio[:, ch]
-        if args.fourier_sync:
-            if sync_plan is None:  # pragma: no cover - defensive
-                raise RuntimeError("Fourier-sync plan is unavailable")
-            stretched = phase_vocoder_time_stretch_fourier_sync(
-                audio[:, ch],
-                internal_stretch,
+        chunk_list: list[np.ndarray] = []
+        for seg_idx, seg in enumerate(map_segments):
+            start = int(round(seg.start_sec * sr))
+            end = int(round(seg.end_sec * sr))
+            if end <= start:
+                continue
+            progress_fraction = 0.12 + 0.70 * (seg_idx / max(1, len(map_segments)))
+            progress.set(progress_fraction, f"segment {seg_idx + 1}/{len(map_segments)}")
+            piece = audio[start:end, :]
+            block = process_audio_block(
+                piece,
+                sr,
+                args,
                 config,
-                sync_plan,
-                progress_callback=make_progress_callback(sub_start, sub_end, detail),
+                stretch=seg.stretch,
+                pitch_ratio=seg.pitch_ratio,
             )
-        else:
-            stretched = phase_vocoder_time_stretch(
-                audio[:, ch],
-                internal_stretch,
-                config,
-                progress_callback=make_progress_callback(sub_start, sub_end, detail),
-            )
-        if abs(pitch.ratio - 1.0) > 1e-10:
-            pitch_len = max(1, int(round(stretched.size / pitch.ratio)))
-            shifted = resample_1d(stretched, pitch_len, args.resample_mode)
-        else:
-            shifted = stretched
+            chunk_list.append(block.audio)
 
-        if args.pitch_mode == "formant-preserving" and abs(pitch.ratio - 1.0) > 1e-10:
-            shifted = apply_formant_preservation(
-                source_ch,
-                shifted,
-                config,
-                lifter=args.formant_lifter,
-                strength=args.formant_strength,
-                max_gain_db=args.formant_max_gain_db,
+        progress.set(0.88, "assemble")
+        out_audio = concat_audio_chunks(
+            chunk_list,
+            sr=sr,
+            crossfade_ms=args.pitch_map_crossfade_ms,
+        )
+        if map_segments:
+            durations = np.array(
+                [max(1e-9, seg.end_sec - seg.start_sec) for seg in map_segments],
+                dtype=np.float64,
             )
-        processed_channels.append(shifted)
-
-    progress.set(0.90, "mix")
-    out_len = max(ch_data.size for ch_data in processed_channels)
-    out_audio = np.zeros((out_len, len(processed_channels)), dtype=np.float64)
-    for ch, ch_data in enumerate(processed_channels):
-        out_audio[: ch_data.size, ch] = ch_data
+            stretch_values = np.array([seg.stretch for seg in map_segments], dtype=np.float64)
+            pitch_values = np.array([seg.pitch_ratio for seg in map_segments], dtype=np.float64)
+            total_weight = float(np.sum(durations))
+            if total_weight > 0.0:
+                base_stretch = float(np.sum(stretch_values * durations) / total_weight)
+                pitch = PitchConfig(ratio=float(np.sum(pitch_values * durations) / total_weight))
+                internal_stretch = base_stretch * pitch.ratio
+    else:
+        block = process_audio_block(
+            audio,
+            sr,
+            args,
+            config,
+            stretch=base_stretch,
+            pitch_ratio=pitch.ratio,
+            progress_callback_factory=make_progress_callback,
+        )
+        out_audio = block.audio
+        internal_stretch = block.internal_stretch
+        sync_plan = block.sync_plan
 
     if args.target_duration is not None:
         exact_len = max(1, int(round(args.target_duration * sr)))
@@ -2269,6 +2712,12 @@ def process_file(
 
     if args.stdout:
         output_path = Path("-")
+    elif args.output is not None:
+        output_path = args.output
+        if output_path.exists() and not args.overwrite and not args.dry_run:
+            raise FileExistsError(
+                f"Output exists: {output_path}. Use --overwrite to replace it."
+            )
     else:
         source_path = Path("stdin.wav") if str(input_path) == "-" else input_path
         output_path = compute_output_path(source_path, args.output_dir, args.suffix, args.output_format)
@@ -2289,7 +2738,7 @@ def process_file(
             f"internal_stretch={internal_stretch:.6f}, "
             f"phase_locking={config.phase_locking}, pitch_mode={args.pitch_mode}, "
             f"fourier_sync={'on' if args.fourier_sync else 'off'}, "
-            f"device={rt.active_device}"
+            f"device={rt.active_device}, control_map={'on' if use_control_map else 'off'}"
         )
         if pitch.source_f0_hz is not None:
             msg += f", detected_f0={pitch.source_f0_hz:.3f}Hz"
@@ -2298,6 +2747,8 @@ def process_file(
                 f", sync_f0_med={float(np.median(sync_plan.f0_track_hz)):.3f}Hz"
                 f", sync_fft_med={int(np.median(sync_plan.frame_lengths))}"
             )
+        if map_segments:
+            msg += f", map_segments={len(map_segments)}"
         log_message(args, msg, min_level="verbose")
 
     progress.finish("done")
@@ -2332,6 +2783,9 @@ def resample_multi(audio: np.ndarray, output_samples: int, mode: ResampleMode) -
 
 
 def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
+    if args.pitch_follow_stdin:
+        args.pitch_map_stdin = True
+
     if args.n_fft <= 0:
         parser.error("--n-fft must be > 0")
     if args.win_length <= 0:
@@ -2344,8 +2798,20 @@ def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> 
         parser.error("--hop-size should be <= --win-length")
     if args.time_stretch <= 0:
         parser.error("--time-stretch must be > 0")
+    if args.output is not None and args.output_dir is not None:
+        parser.error("--output cannot be combined with --output-dir")
+    if args.output is not None and args.stdout:
+        parser.error("--output cannot be combined with --stdout")
     if args.target_duration is not None and args.target_duration <= 0:
         parser.error("--target-duration must be > 0")
+    if args.pitch_conf_min < 0.0:
+        parser.error("--pitch-conf-min must be >= 0")
+    if args.pitch_map_smooth_ms < 0.0:
+        parser.error("--pitch-map-smooth-ms must be >= 0")
+    if args.pitch_map_crossfade_ms < 0.0:
+        parser.error("--pitch-map-crossfade-ms must be >= 0")
+    if args.pitch_map_stdin and args.pitch_map is not None and str(args.pitch_map) != "-":
+        parser.error("--pitch-map-stdin cannot be combined with --pitch-map path")
     if args.pitch_shift_ratio is not None:
         try:
             args.pitch_shift_ratio = parse_pitch_ratio_value(
@@ -2378,6 +2844,8 @@ def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> 
         parser.error("--kaiser-beta must be >= 0")
     if args.cuda_device < 0:
         parser.error("--cuda-device must be >= 0")
+    if args.pitch_map is not None and str(args.pitch_map) != "-" and not args.pitch_map.exists():
+        parser.error(f"Control-map file not found: {args.pitch_map}")
     validate_transform_available(args.transform, parser)
     validate_mastering_args(args, parser)
 
@@ -2406,6 +2874,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--output-format",
         default=None,
         help="Output format/extension (e.g. wav, flac, aiff). Default: keep input extension.",
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=None,
+        help="Explicit output file path (single-input mode only).",
     )
     parser.add_argument("--overwrite", action="store_true", help="Overwrite existing outputs")
     parser.add_argument("--dry-run", action="store_true", help="Resolve settings without writing files")
@@ -2504,6 +2978,7 @@ def build_parser() -> argparse.ArgumentParser:
     time_group = parser.add_argument_group("Timing controls")
     time_group.add_argument(
         "--time-stretch",
+        "--time-stretch-factor",
         type=float,
         default=1.0,
         help="Final duration multiplier (1.0=unchanged, 2.0=2x longer)",
@@ -2587,6 +3062,50 @@ def build_parser() -> argparse.ArgumentParser:
         default=12.0,
         help="Max per-bin formant correction gain in dB (default: 12)",
     )
+    pitch_group.add_argument(
+        "--pitch-map",
+        type=Path,
+        default=None,
+        help=(
+            "CSV control map for time-varying stretch/pitch. "
+            "Columns: start_sec,end_sec plus optional stretch,pitch_ratio/pitch_cents/pitch_semitones,confidence. "
+            "Use '-' to read from stdin."
+        ),
+    )
+    pitch_group.add_argument(
+        "--pitch-map-stdin",
+        action="store_true",
+        help="Read control-map CSV from stdin.",
+    )
+    pitch_group.add_argument(
+        "--pitch-follow-stdin",
+        action="store_true",
+        help="Shortcut for --pitch-map-stdin (sidechain pitch-follow workflows).",
+    )
+    pitch_group.add_argument(
+        "--pitch-conf-min",
+        type=float,
+        default=0.0,
+        help="Minimum accepted map confidence (default: 0 disables gating).",
+    )
+    pitch_group.add_argument(
+        "--pitch-lowconf-mode",
+        choices=["hold", "unity", "interp"],
+        default="hold",
+        help="Low-confidence map handling mode (default: hold).",
+    )
+    pitch_group.add_argument(
+        "--pitch-map-smooth-ms",
+        type=float,
+        default=0.0,
+        help="Moving-average smoothing over map pitch ratios in milliseconds.",
+    )
+    pitch_group.add_argument(
+        "--pitch-map-crossfade-ms",
+        type=float,
+        default=8.0,
+        help="Crossfade between processed map segments in milliseconds (default: 8.0).",
+    )
 
     io_group = parser.add_argument_group("Resampling / output")
     io_group.add_argument(
@@ -2661,6 +3180,13 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--stdout requires exactly one resolved input")
     if args.stdout and args.output_dir is not None:
         parser.error("--output-dir cannot be used with --stdout")
+    if args.output is not None and len(input_paths) != 1:
+        parser.error("--output requires exactly one resolved input")
+    control_map_stdin = bool(args.pitch_map_stdin) or str(args.pitch_map) == "-"
+    if control_map_stdin and len(input_paths) != 1:
+        parser.error("Control-map stdin mode requires exactly one input file")
+    if control_map_stdin and stdin_count:
+        parser.error("stdin cannot be used for both audio input and control-map CSV")
 
     config = VocoderConfig(
         n_fft=args.n_fft,
@@ -2677,6 +3203,10 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.output_dir is not None:
         args.output_dir = args.output_dir.resolve()
+    if args.output is not None:
+        args.output = args.output.resolve()
+    if args.pitch_map is not None and str(args.pitch_map) != "-":
+        args.pitch_map = args.pitch_map.resolve()
 
     results: list[JobResult] = []
     failures: list[tuple[Path, Exception]] = []

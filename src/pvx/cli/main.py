@@ -41,9 +41,9 @@ def main(argv: list[str] | None = None) -> int:
     canonical_algorithm_dir = repo_root / "src" / "pvx" / "algorithms"
     legacy_shim_dir = repo_root / "pvxalgorithms"
 
-    print("pvx toolkit: use pvxvoc/pvxfreeze/pvxharmonize/.../pvxlayer")
+    print("pvx toolkit: use pvxvoc/pvxfreeze/pvxharmonize/.../pvxlayer and hps-pitch-track")
     if args.list_tools:
-        print("Tools: pvxvoc, pvxfreeze, pvxharmonize, pvxconform, pvxmorph, pvxwarp, pvxformant, pvxtransient, pvxunison, pvxdenoise, pvxdeverb, pvxretune, pvxlayer")
+        print("Tools: pvxvoc, pvxfreeze, pvxharmonize, pvxconform, pvxmorph, pvxwarp, pvxformant, pvxtransient, pvxunison, pvxdenoise, pvxdeverb, pvxretune, pvxlayer, hps-pitch-track")
     if args.list_algorithm_package:
         print(f"Algorithm package (canonical): {canonical_algorithm_dir}/")
         print(f"Algorithm registry (canonical): {canonical_algorithm_dir / 'registry.py'}")
