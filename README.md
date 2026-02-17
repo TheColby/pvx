@@ -113,7 +113,7 @@ Precedence notes:
 
 Window families include classic, cosine-sum, tapered, gaussian/generalized gaussian, exponential, cauchy, cosine-power, hann-poisson, and general-hamming variants.
 
-Representative window names: `hann`, `hamming`, `blackman_nuttall`, `triangular`, `tukey_0p25`, `parzen`, `lanczos`, `welch`, `gaussian_0p45`, `general_gaussian_3p0_0p35`, `exponential_0p5`, `cauchy_1p0`, `cosine_power_3`, `hann_poisson_1p0`, `general_hamming_0p80`, `kaiser`, `rect`.
+All supported windows: `hann`, `hamming`, `blackman`, `blackmanharris`, `nuttall`, `flattop`, `blackman_nuttall`, `exact_blackman`, `sine`, `bartlett`, `boxcar`, `triangular`, `bartlett_hann`, `tukey`, `tukey_0p1`, `tukey_0p25`, `tukey_0p75`, `tukey_0p9`, `parzen`, `lanczos`, `welch`, `gaussian_0p25`, `gaussian_0p35`, `gaussian_0p45`, `gaussian_0p55`, `gaussian_0p65`, `general_gaussian_1p5_0p35`, `general_gaussian_2p0_0p35`, `general_gaussian_3p0_0p35`, `general_gaussian_4p0_0p35`, `exponential_0p25`, `exponential_0p5`, `exponential_1p0`, `cauchy_0p5`, `cauchy_1p0`, `cauchy_2p0`, `cosine_power_2`, `cosine_power_3`, `cosine_power_4`, `hann_poisson_0p5`, `hann_poisson_1p0`, `hann_poisson_2p0`, `general_hamming_0p50`, `general_hamming_0p60`, `general_hamming_0p70`, `general_hamming_0p80`, `bohman`, `cosine`, `kaiser`, `rect`.
 
 Use `--help` on any `pvx*` tool to view the exact current window list.
 
