@@ -1,6 +1,6 @@
 {
-  "commit": "58b1a2e",
-  "commit_date": "2026-02-17T09:29:32-05:00",
+  "commit": "2327357",
+  "commit_date": "2026-02-17T11:46:01-05:00",
   "recipes": [
     {
       "category": "Phase-vocoder core",
@@ -13,6 +13,48 @@
       "command": "python3 pvxvoc.py lead.wav --pitch-shift-cents -23 --time-stretch 1.0 --output-dir out --suffix _cents",
       "title": "Independent cents retune",
       "why": "Applies precise microtonal offset without tempo change."
+    },
+    {
+      "category": "Transform selection",
+      "command": "python3 pvxvoc.py mix.wav --transform fft --time-stretch 1.07 --transient-preserve --phase-locking identity --output-dir out --suffix _fft",
+      "title": "Default production backend (FFT + transient protection)",
+      "why": "Use when you need the fastest and most stable general-purpose phase-vocoder path."
+    },
+    {
+      "category": "Transform selection",
+      "command": "python3 pvxvoc.py tone_sweep.wav --transform dft --time-stretch 1.00 --pitch-shift-semitones 0 --output-dir out --suffix _dft_ref",
+      "title": "Reference Fourier baseline using explicit DFT mode",
+      "why": "Useful for parity checks and controlled transform-comparison experiments."
+    },
+    {
+      "category": "Transform selection",
+      "command": "python3 pvxvoc.py archival_take.wav --transform czt --n-fft 1531 --win-length 1531 --hop-size 382 --time-stretch 1.03 --output-dir out --suffix _czt",
+      "title": "Prime-size frame experiment with CZT backend",
+      "why": "Alternative numerical path for awkward/prime frame sizes when validating edge cases."
+    },
+    {
+      "category": "Transform selection",
+      "command": "python3 pvxvoc.py strings.wav --transform dct --pitch-shift-cents -18 --soft-clip-level 0.95 --output-dir out --suffix _dct",
+      "title": "DCT timbral compaction for smooth harmonic material",
+      "why": "Real-basis coefficients can emphasize envelope-like structure for creative reshaping."
+    },
+    {
+      "category": "Transform selection",
+      "command": "python3 pvxvoc.py snare_loop.wav --transform dst --time-stretch 0.92 --phase-locking off --output-dir out --suffix _dst",
+      "title": "DST odd-symmetry color pass",
+      "why": "Provides an alternate real-basis artifact profile useful for creative percussive processing."
+    },
+    {
+      "category": "Transform selection",
+      "command": "python3 pvxvoc.py synth_pad.wav --transform hartley --time-stretch 1.30 --pitch-shift-semitones 3 --output-dir out --suffix _hartley",
+      "title": "Hartley real-basis exploratory render",
+      "why": "Compares Hartley-domain behavior against complex FFT phase-vocoder output."
+    },
+    {
+      "category": "Transform selection",
+      "command": "for t in fft dft czt dct dst hartley; do python3 pvxvoc.py voice.wav --transform \"$t\" --time-stretch 1.1 --output-dir out --suffix \"_$t\"; done",
+      "title": "A/B sweep of transform backends from shell loop",
+      "why": "Fast listening workflow for selecting the least-artifact transform on your source."
     },
     {
       "category": "Microtonal",

@@ -19,6 +19,7 @@ from pvx.core.common import (
     finalize_audio,
     log_error,
     log_message,
+    parse_pitch_ratio_value,
     read_audio,
     resolve_inputs,
     semitone_to_ratio,
@@ -41,7 +42,15 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Optional microtonal pitch shift in cents (added to --pitch-shift-semitones)",
     )
-    parser.add_argument("--pitch-shift-ratio", type=float, default=None)
+    parser.add_argument(
+        "--pitch-shift-ratio",
+        type=str,
+        default=None,
+        help=(
+            "Pitch ratio override. Accepts decimals (1.5), "
+            "integer ratios (3/2), and expressions (2^(1/12))."
+        ),
+    )
     parser.add_argument("--transient-threshold", type=float, default=1.6)
     parser.add_argument("--resample-mode", choices=["auto", "fft", "linear"], default="auto")
     return parser
@@ -56,8 +65,14 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--time-stretch must be > 0")
     if args.target_duration is not None and args.target_duration <= 0:
         parser.error("--target-duration must be > 0")
-    if args.pitch_shift_ratio is not None and args.pitch_shift_ratio <= 0:
-        parser.error("--pitch-shift-ratio must be > 0")
+    if args.pitch_shift_ratio is not None:
+        try:
+            args.pitch_shift_ratio = parse_pitch_ratio_value(
+                args.pitch_shift_ratio,
+                context="--pitch-shift-ratio",
+            )
+        except ValueError as exc:
+            parser.error(str(exc))
     if args.pitch_shift_ratio is not None and args.pitch_shift_cents is not None:
         parser.error("--pitch-shift-cents cannot be combined with --pitch-shift-ratio")
     if args.transient_threshold <= 0:

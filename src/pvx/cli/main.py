@@ -50,7 +50,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Compatibility shim package: {legacy_shim_dir}/")
     if args.show_docs:
         print(f"Python file help: {repo_root / 'docs' / 'PYTHON_FILE_HELP.md'}")
-        print(f"Algorithm params: {repo_root / 'docs' / 'PVX_ALGORITHM_PARAMS.md'}")
+        print(f"Algorithm params: {repo_root / 'docs' / 'pvx_ALGORITHM_PARAMS.md'}")
     if not (args.list_tools or args.list_algorithm_package or args.show_docs):
         print("Use --help for options.")
     return 0

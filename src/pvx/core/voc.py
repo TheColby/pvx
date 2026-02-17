@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import glob
 import io
 import math
@@ -27,6 +28,16 @@ try:
     from scipy.signal import resample as scipy_resample
 except Exception:  # pragma: no cover - optional dependency
     scipy_resample = None
+
+try:
+    from scipy import fft as scipy_fft
+except Exception:  # pragma: no cover - optional dependency
+    scipy_fft = None
+
+try:
+    from scipy.signal import czt as scipy_czt
+except Exception:  # pragma: no cover - optional dependency
+    scipy_czt = None
 
 try:
     import cupy as cp
@@ -92,10 +103,13 @@ WINDOW_CHOICES = (
 )
 
 WindowType = str
+TransformMode = Literal["fft", "dft", "czt", "dct", "dst", "hartley"]
 ResampleMode = Literal["auto", "fft", "linear"]
 PhaseLockMode = Literal["off", "identity"]
 DeviceMode = Literal["auto", "cpu", "cuda"]
 ProgressCallback = Callable[[int, int], None]
+
+TRANSFORM_CHOICES: tuple[TransformMode, ...] = ("fft", "dft", "czt", "dct", "dst", "hartley")
 
 
 @dataclass(frozen=True)
@@ -109,6 +123,7 @@ class VocoderConfig:
     transient_preserve: bool
     transient_threshold: float
     kaiser_beta: float = 14.0
+    transform: TransformMode = "fft"
 
 
 @dataclass(frozen=True)
@@ -340,6 +355,119 @@ def cents_to_ratio(cents: float) -> float:
     return 2.0 ** (cents / 1200.0)
 
 
+_RATIO_CONSTANTS: dict[str, float] = {
+    "pi": math.pi,
+    "e": math.e,
+    "tau": math.tau,
+}
+
+_RATIO_FUNCTIONS: dict[str, Callable[..., float]] = {
+    "sqrt": math.sqrt,
+    "exp": math.exp,
+    "log": math.log,
+    "log2": math.log2,
+    "log10": math.log10,
+    "sin": math.sin,
+    "cos": math.cos,
+    "tan": math.tan,
+}
+
+
+def _eval_numeric_expr(node: ast.AST) -> float:
+    if isinstance(node, ast.Constant):
+        value = node.value
+        if isinstance(value, bool):
+            raise ValueError("Boolean literals are not allowed")
+        if isinstance(value, (int, float)):
+            return float(value)
+        raise ValueError(f"Unsupported literal: {value!r}")
+
+    if isinstance(node, ast.BinOp):
+        lhs = _eval_numeric_expr(node.left)
+        rhs = _eval_numeric_expr(node.right)
+        if isinstance(node.op, ast.Add):
+            return lhs + rhs
+        if isinstance(node.op, ast.Sub):
+            return lhs - rhs
+        if isinstance(node.op, ast.Mult):
+            return lhs * rhs
+        if isinstance(node.op, ast.Div):
+            return lhs / rhs
+        if isinstance(node.op, ast.Pow):
+            return lhs**rhs
+        raise ValueError(f"Unsupported operator: {type(node.op).__name__}")
+
+    if isinstance(node, ast.UnaryOp):
+        value = _eval_numeric_expr(node.operand)
+        if isinstance(node.op, ast.UAdd):
+            return +value
+        if isinstance(node.op, ast.USub):
+            return -value
+        raise ValueError(f"Unsupported unary operator: {type(node.op).__name__}")
+
+    if isinstance(node, ast.Name):
+        if node.id in _RATIO_CONSTANTS:
+            return _RATIO_CONSTANTS[node.id]
+        raise ValueError(f"Unknown symbol: {node.id!r}")
+
+    if isinstance(node, ast.Call):
+        if node.keywords:
+            raise ValueError("Keyword arguments are not supported")
+        if not isinstance(node.func, ast.Name):
+            raise ValueError("Only simple math function names are supported")
+        fn_name = node.func.id
+        fn = _RATIO_FUNCTIONS.get(fn_name)
+        if fn is None:
+            raise ValueError(f"Unsupported function: {fn_name!r}")
+        args = [_eval_numeric_expr(arg) for arg in node.args]
+        return float(fn(*args))
+
+    raise ValueError(f"Unsupported expression token: {type(node).__name__}")
+
+
+def parse_numeric_expression(value: str, *, context: str = "value") -> float:
+    text = str(value).strip()
+    if not text:
+        raise ValueError(f"{context} cannot be empty")
+
+    normalized = text.replace("^", "**")
+    try:
+        tree = ast.parse(normalized, mode="eval")
+    except SyntaxError as exc:
+        raise ValueError(f"{context} is not a valid numeric expression: {value!r}") from exc
+
+    try:
+        out = float(_eval_numeric_expr(tree.body))
+    except ZeroDivisionError as exc:
+        raise ValueError(f"{context} contains division by zero: {value!r}") from exc
+    except OverflowError as exc:
+        raise ValueError(f"{context} overflowed while evaluating: {value!r}") from exc
+    except TypeError as exc:
+        raise ValueError(f"{context} is invalid: {value!r} ({exc})") from exc
+    except ValueError as exc:
+        raise ValueError(f"{context} is invalid: {value!r} ({exc})") from exc
+
+    if not math.isfinite(out):
+        raise ValueError(f"{context} must be finite: {value!r}")
+    return out
+
+
+def parse_pitch_ratio_value(value: str | float | int, *, context: str = "pitch ratio") -> float:
+    if isinstance(value, bool):
+        raise ValueError(f"{context} must be numeric")
+
+    if isinstance(value, (int, float)):
+        ratio = float(value)
+    else:
+        ratio = parse_numeric_expression(str(value), context=context)
+
+    if not math.isfinite(ratio):
+        raise ValueError(f"{context} must be finite")
+    if ratio <= 0.0:
+        raise ValueError(f"{context} must be > 0")
+    return ratio
+
+
 def _has_cupy() -> bool:
     return cp is not None
 
@@ -388,6 +516,189 @@ def _i0(value, *, xp=np):
     if xp is np:
         return i0_np
     return xp.asarray(i0_np)
+
+
+def normalize_transform_name(value: str | None) -> TransformMode:
+    name = str(value or "fft").strip().lower()
+    if name == "rfft":
+        name = "fft"
+    if name not in TRANSFORM_CHOICES:
+        raise ValueError(
+            f"Unsupported transform '{value}'. Choose from: {', '.join(TRANSFORM_CHOICES)}"
+        )
+    return name  # type: ignore[return-value]
+
+
+def transform_bin_count(n_fft: int, transform: TransformMode) -> int:
+    if transform in {"dct", "dst", "hartley"}:
+        return int(n_fft)
+    return int(n_fft // 2 + 1)
+
+
+def _analysis_angular_velocity(n_bins: int, n_fft: int, hop_size: int, transform: TransformMode, *, xp=np):
+    idx = xp.arange(n_bins, dtype=xp.float64)
+    if transform in {"dct", "dst", "hartley"}:
+        pivot = n_fft // 2
+        idx = xp.where(idx <= pivot, idx, idx - n_fft)
+    return 2.0 * np.pi * hop_size * idx / float(n_fft)
+
+
+def _transform_requires_scipy(transform: TransformMode) -> bool:
+    return transform in {"czt", "dct", "dst"}
+
+
+def ensure_transform_backend_available(transform: TransformMode) -> None:
+    if transform in {"dct", "dst"} and scipy_fft is None:
+        raise RuntimeError(
+            "Transform backend requires SciPy FFT routines. Install scipy to use --transform "
+            f"{transform}."
+        )
+    if transform == "czt" and scipy_czt is None:
+        raise RuntimeError(
+            "Transform backend requires scipy.signal.czt. Install scipy to use --transform czt."
+        )
+
+
+def validate_transform_available(
+    transform: str,
+    parser: argparse.ArgumentParser | None = None,
+) -> TransformMode:
+    try:
+        name = normalize_transform_name(transform)
+        ensure_transform_backend_available(name)
+        return name
+    except Exception as exc:
+        if parser is not None:
+            parser.error(str(exc))
+        raise
+
+
+def _resize_or_pad_1d(values, size: int, *, xp=np):
+    if values.size == size:
+        return values
+    if values.size > size:
+        return values[:size]
+    out = xp.zeros(size, dtype=values.dtype)
+    out[: values.size] = values
+    return out
+
+
+def _onesided_to_full_spectrum(spectrum, n_fft: int, *, xp=np):
+    bins = int(n_fft // 2 + 1)
+    spec = _resize_or_pad_1d(spectrum, bins, xp=xp).astype(xp.complex128, copy=False)
+    full = xp.zeros(n_fft, dtype=xp.complex128)
+    full[:bins] = spec
+    if n_fft > 1:
+        if n_fft % 2 == 0:
+            mirror_src = spec[1:-1]
+        else:
+            mirror_src = spec[1:]
+        if mirror_src.size:
+            full[bins:] = xp.conj(mirror_src[::-1])
+    return full
+
+
+def _forward_transform_numpy(frame: np.ndarray, n_fft: int, transform: TransformMode) -> np.ndarray:
+    if transform == "fft":
+        return np.fft.rfft(frame, n=n_fft).astype(np.complex128, copy=False)
+    if transform == "dft":
+        full = np.fft.fft(frame, n=n_fft).astype(np.complex128, copy=False)
+        return full[: n_fft // 2 + 1]
+    if transform == "czt":
+        ensure_transform_backend_available(transform)
+        assert scipy_czt is not None
+        full = scipy_czt(frame, m=n_fft)
+        return np.asarray(full[: n_fft // 2 + 1], dtype=np.complex128)
+    if transform == "dct":
+        ensure_transform_backend_available(transform)
+        assert scipy_fft is not None
+        coeff = scipy_fft.dct(frame, type=2, n=n_fft, norm="ortho")
+        return np.asarray(coeff, dtype=np.complex128)
+    if transform == "dst":
+        ensure_transform_backend_available(transform)
+        assert scipy_fft is not None
+        coeff = scipy_fft.dst(frame, type=2, n=n_fft, norm="ortho")
+        return np.asarray(coeff, dtype=np.complex128)
+    if transform == "hartley":
+        full = np.fft.fft(frame, n=n_fft).astype(np.complex128, copy=False)
+        return (full.real - full.imag).astype(np.complex128)
+    raise ValueError(f"Unsupported transform: {transform}")
+
+
+def _inverse_transform_numpy(spectrum: np.ndarray, n_fft: int, transform: TransformMode) -> np.ndarray:
+    if transform == "fft":
+        spec = _resize_or_pad_1d(spectrum, n_fft // 2 + 1, xp=np)
+        return np.fft.irfft(spec, n=n_fft).astype(np.float64, copy=False)
+    if transform in {"dft", "czt"}:
+        full = _onesided_to_full_spectrum(spectrum, n_fft, xp=np)
+        return np.fft.ifft(full, n=n_fft).real.astype(np.float64, copy=False)
+    if transform == "dct":
+        ensure_transform_backend_available(transform)
+        assert scipy_fft is not None
+        coeff = _resize_or_pad_1d(spectrum.real.astype(np.float64, copy=False), n_fft, xp=np)
+        return scipy_fft.idct(coeff, type=2, n=n_fft, norm="ortho").astype(np.float64, copy=False)
+    if transform == "dst":
+        ensure_transform_backend_available(transform)
+        assert scipy_fft is not None
+        coeff = _resize_or_pad_1d(spectrum.real.astype(np.float64, copy=False), n_fft, xp=np)
+        return scipy_fft.idst(coeff, type=2, n=n_fft, norm="ortho").astype(np.float64, copy=False)
+    if transform == "hartley":
+        coeff = _resize_or_pad_1d(spectrum.real.astype(np.float64, copy=False), n_fft, xp=np)
+        full = np.fft.fft(coeff, n=n_fft)
+        return ((full.real - full.imag) / float(n_fft)).astype(np.float64, copy=False)
+    raise ValueError(f"Unsupported transform: {transform}")
+
+
+def _forward_transform(frame, n_fft: int, transform: TransformMode, *, xp=np):
+    if xp is np:
+        return _forward_transform_numpy(
+            np.asarray(frame, dtype=np.float64),
+            n_fft,
+            transform,
+        )
+    if _transform_requires_scipy(transform):
+        out = _forward_transform_numpy(
+            np.asarray(_to_numpy(frame), dtype=np.float64),
+            n_fft,
+            transform,
+        )
+        return xp.asarray(out)
+    if transform == "fft":
+        return xp.fft.rfft(frame, n=n_fft).astype(xp.complex128, copy=False)
+    if transform == "dft":
+        full = xp.fft.fft(frame, n=n_fft).astype(xp.complex128, copy=False)
+        return full[: n_fft // 2 + 1]
+    if transform == "hartley":
+        full = xp.fft.fft(frame, n=n_fft).astype(xp.complex128, copy=False)
+        return (full.real - full.imag).astype(xp.complex128, copy=False)
+    raise ValueError(f"Unsupported transform: {transform}")
+
+
+def _inverse_transform(spectrum, n_fft: int, transform: TransformMode, *, xp=np):
+    if xp is np:
+        return _inverse_transform_numpy(
+            np.asarray(spectrum, dtype=np.complex128),
+            n_fft,
+            transform,
+        )
+    if _transform_requires_scipy(transform):
+        out = _inverse_transform_numpy(
+            np.asarray(_to_numpy(spectrum), dtype=np.complex128),
+            n_fft,
+            transform,
+        )
+        return xp.asarray(out)
+    if transform == "fft":
+        spec = _resize_or_pad_1d(spectrum, n_fft // 2 + 1, xp=xp)
+        return xp.fft.irfft(spec, n=n_fft).astype(xp.float64, copy=False)
+    if transform in {"dft", "czt"}:
+        full = _onesided_to_full_spectrum(spectrum, n_fft, xp=xp)
+        return xp.fft.ifft(full, n=n_fft).real.astype(xp.float64, copy=False)
+    if transform == "hartley":
+        coeff = _resize_or_pad_1d(spectrum.real.astype(xp.float64, copy=False), n_fft, xp=xp)
+        full = xp.fft.fft(coeff, n=n_fft)
+        return ((full.real - full.imag) / float(n_fft)).astype(xp.float64, copy=False)
+    raise ValueError(f"Unsupported transform: {transform}")
 
 
 def add_runtime_args(parser: argparse.ArgumentParser) -> None:
@@ -799,6 +1110,7 @@ def stft(signal: np.ndarray, config: VocoderConfig):
     bridge_to_cuda = _RUNTIME_CONFIG.active_device == "cuda" and not _is_cupy_array(signal)
     work_signal = _to_runtime_array(signal) if bridge_to_cuda else signal
     xp = _array_module(work_signal)
+    transform = normalize_transform_name(config.transform)
 
     work_signal, frame_count = pad_for_framing(work_signal, config.n_fft, config.hop_size, config.center)
     window = make_window(
@@ -808,12 +1120,13 @@ def stft(signal: np.ndarray, config: VocoderConfig):
         kaiser_beta=config.kaiser_beta,
         xp=xp,
     )
-    spectrum = xp.empty((config.n_fft // 2 + 1, frame_count), dtype=xp.complex128)
+    n_bins = transform_bin_count(config.n_fft, transform)
+    spectrum = xp.empty((n_bins, frame_count), dtype=xp.complex128)
 
     for frame_idx in range(frame_count):
         start = frame_idx * config.hop_size
         frame = work_signal[start : start + config.n_fft]
-        spectrum[:, frame_idx] = xp.fft.rfft(frame * window)
+        spectrum[:, frame_idx] = _forward_transform(frame * window, config.n_fft, transform, xp=xp)
 
     if bridge_to_cuda:
         return _to_numpy(spectrum)
@@ -828,6 +1141,7 @@ def istft(
     bridge_to_cuda = _RUNTIME_CONFIG.active_device == "cuda" and not _is_cupy_array(spectrum)
     work_spectrum = _to_runtime_array(spectrum) if bridge_to_cuda else spectrum
     xp = _array_module(work_spectrum)
+    transform = normalize_transform_name(config.transform)
 
     n_frames = work_spectrum.shape[1]
     output_len = config.n_fft + config.hop_size * max(0, n_frames - 1)
@@ -843,7 +1157,7 @@ def istft(
 
     for frame_idx in range(n_frames):
         start = frame_idx * config.hop_size
-        frame = xp.fft.irfft(work_spectrum[:, frame_idx], n=config.n_fft)
+        frame = _inverse_transform(work_spectrum[:, frame_idx], config.n_fft, transform, xp=xp)
         output[start : start + config.n_fft] += frame * window
         weight[start : start + config.n_fft] += window * window
 
@@ -1078,6 +1392,7 @@ def phase_vocoder_time_stretch(
     bridge_to_cuda = _RUNTIME_CONFIG.active_device == "cuda" and not _is_cupy_array(signal)
     work_signal = _to_runtime_array(signal) if bridge_to_cuda else signal
     xp = _array_module(work_signal)
+    transform = normalize_transform_name(config.transform)
 
     input_stft = stft(work_signal, config)
     n_bins, n_frames = input_stft.shape
@@ -1099,7 +1414,7 @@ def phase_vocoder_time_stretch(
     )
 
     phase = input_phase[:, 0].copy()
-    omega = 2.0 * np.pi * config.hop_size * xp.arange(n_bins, dtype=xp.float64) / config.n_fft
+    omega = _analysis_angular_velocity(n_bins, config.n_fft, config.hop_size, transform, xp=xp)
     output_stft = xp.zeros((n_bins, out_frames), dtype=xp.complex128)
     if progress_callback is not None:
         progress_callback(0, out_frames)
@@ -1157,6 +1472,7 @@ def phase_vocoder_time_stretch_fourier_sync(
     bridge_to_cuda = _RUNTIME_CONFIG.active_device == "cuda" and not _is_cupy_array(signal)
     work_signal = _to_runtime_array(signal) if bridge_to_cuda else signal
     xp = _array_module(work_signal)
+    transform = normalize_transform_name(config.transform)
 
     framed, frame_count = pad_for_framing(work_signal, config.n_fft, config.hop_size, config.center)
     if frame_count < 2:
@@ -1176,7 +1492,7 @@ def phase_vocoder_time_stretch_fourier_sync(
     total_steps = frame_count + out_frames + out_frames
 
     ref_n_fft = int(max(sync_plan.reference_n_fft, config.n_fft, int(np.max(frame_lengths))))
-    ref_bins = ref_n_fft // 2 + 1
+    ref_bins = transform_bin_count(ref_n_fft, transform)
     input_stft = xp.empty((ref_bins, frame_count), dtype=xp.complex128)
     if progress_callback is not None:
         progress_callback(0, total_steps)
@@ -1193,7 +1509,7 @@ def phase_vocoder_time_stretch_fourier_sync(
             kaiser_beta=config.kaiser_beta,
             xp=xp,
         )
-        spectrum = xp.fft.rfft(frame * window, n=n_fft_i)
+        spectrum = _forward_transform(frame * window, n_fft_i, transform, xp=xp)
         input_stft[:, frame_idx] = resize_spectrum_bins(spectrum, ref_bins)
         if progress_callback is not None and (frame_idx == frame_count - 1 or (frame_idx % 8) == 0):
             progress_callback(frame_idx + 1, total_steps)
@@ -1210,7 +1526,7 @@ def phase_vocoder_time_stretch_fourier_sync(
     )
 
     phase = input_phase[:, 0].copy()
-    omega = 2.0 * np.pi * config.hop_size * xp.arange(ref_bins, dtype=xp.float64) / ref_n_fft
+    omega = _analysis_angular_velocity(ref_bins, ref_n_fft, config.hop_size, transform, xp=xp)
     output_stft = xp.zeros((ref_bins, out_frames), dtype=xp.complex128)
     output_lengths = np.zeros(out_frames, dtype=np.int64)
     completed_steps = 0
@@ -1258,9 +1574,9 @@ def phase_vocoder_time_stretch_fourier_sync(
 
     for frame_idx in range(out_frames):
         n_fft_i = int(output_lengths[frame_idx])
-        bins_i = n_fft_i // 2 + 1
+        bins_i = transform_bin_count(n_fft_i, transform)
         spec_i = resize_spectrum_bins(output_stft[:, frame_idx], bins_i)
-        frame = xp.fft.irfft(spec_i, n=n_fft_i)
+        frame = _inverse_transform(spec_i, n_fft_i, transform, xp=xp)
         win_length_i = scaled_win_length(config.win_length, config.n_fft, n_fft_i)
         window = make_window(
             config.window,
@@ -1746,7 +2062,8 @@ def apply_formant_preservation(
 
 def choose_pitch_ratio(args: argparse.Namespace, signal: np.ndarray, sr: int) -> PitchConfig:
     if args.pitch_shift_ratio is not None:
-        return PitchConfig(ratio=args.pitch_shift_ratio)
+        ratio = parse_pitch_ratio_value(args.pitch_shift_ratio, context="--pitch-shift-ratio")
+        return PitchConfig(ratio=ratio)
 
     if args.pitch_shift_semitones is not None:
         return PitchConfig(ratio=2.0 ** (args.pitch_shift_semitones / 12.0))
@@ -2029,8 +2346,14 @@ def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> 
         parser.error("--time-stretch must be > 0")
     if args.target_duration is not None and args.target_duration <= 0:
         parser.error("--target-duration must be > 0")
-    if args.pitch_shift_ratio is not None and args.pitch_shift_ratio <= 0:
-        parser.error("--pitch-shift-ratio must be > 0")
+    if args.pitch_shift_ratio is not None:
+        try:
+            args.pitch_shift_ratio = parse_pitch_ratio_value(
+                args.pitch_shift_ratio,
+                context="--pitch-shift-ratio",
+            )
+        except ValueError as exc:
+            parser.error(str(exc))
     if args.target_f0 is not None and args.target_f0 <= 0:
         parser.error("--target-f0 must be > 0")
     if args.f0_min <= 0 or args.f0_max <= 0 or args.f0_min >= args.f0_max:
@@ -2055,6 +2378,7 @@ def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> 
         parser.error("--kaiser-beta must be >= 0")
     if args.cuda_device < 0:
         parser.error("--cuda-device must be >= 0")
+    validate_transform_available(args.transform, parser)
     validate_mastering_args(args, parser)
 
 
@@ -2117,6 +2441,15 @@ def build_parser() -> argparse.ArgumentParser:
         type=float,
         default=14.0,
         help="Kaiser window beta parameter used when --window kaiser (default: 14.0)",
+    )
+    stft_group.add_argument(
+        "--transform",
+        choices=list(TRANSFORM_CHOICES),
+        default="fft",
+        help=(
+            "Per-frame transform backend for STFT/ISTFT paths "
+            "(default: fft; options: fft, dft, czt, dct, dst, hartley)"
+        ),
     )
     stft_group.add_argument(
         "--no-center",
@@ -2199,9 +2532,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     pitch_mutex.add_argument(
         "--pitch-shift-ratio",
-        type=float,
+        type=str,
         default=None,
-        help="Pitch ratio (>1 up, <1 down)",
+        help=(
+            "Pitch ratio (>1 up, <1 down). Accepts decimals (1.5), "
+            "integer ratios (3/2), and expressions (2^(1/12))."
+        ),
     )
     pitch_mutex.add_argument(
         "--target-f0",
@@ -2332,6 +2668,7 @@ def main(argv: list[str] | None = None) -> int:
         hop_size=args.hop_size,
         window=args.window,
         kaiser_beta=args.kaiser_beta,
+        transform=normalize_transform_name(args.transform),
         center=not args.no_center,
         phase_locking=args.phase_locking,
         transient_preserve=args.transient_preserve,

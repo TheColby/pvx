@@ -1,6 +1,6 @@
-# PVX Benchmarks
+# pvx Benchmarks
 
-_Generated from commit `58b1a2e` (commit date: 2026-02-17T09:29:32-05:00)._
+_Generated from commit `2327357` (commit date: 2026-02-17T11:46:01-05:00)._
 
 Reproducible benchmark summary for core STFT+ISTFT path across CPU/CUDA/Apple-Silicon-native contexts.
 

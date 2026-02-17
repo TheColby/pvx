@@ -2,13 +2,13 @@
   {
     "term": "Fourier transform",
     "category": "Core DSP Math",
-    "description": "Transforms a signal from time domain to frequency domain. In PVX workflows this directly affects spectral resolution, leakage behavior, and overlap-add reconstruction accuracy in STFT-based processing.",
+    "description": "Transforms a signal from time domain to frequency domain. In pvx workflows this directly affects spectral resolution, leakage behavior, and overlap-add reconstruction accuracy in STFT-based processing.",
     "url": "https://en.wikipedia.org/wiki/Fourier_transform"
   },
   {
     "term": "Fast Fourier transform (FFT)",
     "category": "Core DSP Math",
-    "description": "Efficient algorithm for computing the discrete Fourier transform. Its computational efficiency is critical because PVX repeatedly computes FFTs frame-by-frame across channels and files.",
+    "description": "Efficient algorithm for computing the discrete Fourier transform. Its computational efficiency is critical because pvx repeatedly computes FFTs frame-by-frame across channels and files.",
     "url": "https://en.wikipedia.org/wiki/Fast_Fourier_transform"
   },
   {
@@ -38,7 +38,7 @@
   {
     "term": "Blackman window",
     "category": "Core DSP Math",
-    "description": "Cosine-sum window with stronger sidelobe suppression. In PVX workflows this directly affects spectral resolution, leakage behavior, and overlap-add reconstruction accuracy in STFT-based processing.",
+    "description": "Cosine-sum window with stronger sidelobe suppression. In pvx workflows this directly affects spectral resolution, leakage behavior, and overlap-add reconstruction accuracy in STFT-based processing.",
     "url": "https://en.wikipedia.org/wiki/Window_function"
   },
   {
@@ -50,7 +50,7 @@
   {
     "term": "Spectral leakage",
     "category": "Core DSP Math",
-    "description": "Energy spread across bins due to finite-duration analysis windows. In PVX workflows this directly affects spectral resolution, leakage behavior, and overlap-add reconstruction accuracy in STFT-based processing.",
+    "description": "Energy spread across bins due to finite-duration analysis windows. In pvx workflows this directly affects spectral resolution, leakage behavior, and overlap-add reconstruction accuracy in STFT-based processing.",
     "url": "https://en.wikipedia.org/wiki/Spectral_leakage"
   },
   {
@@ -62,37 +62,37 @@
   {
     "term": "Nyquist frequency",
     "category": "Core DSP Math",
-    "description": "Half the sample rate; highest representable frequency in sampled audio. In PVX workflows this directly affects spectral resolution, leakage behavior, and overlap-add reconstruction accuracy in STFT-based processing.",
+    "description": "Half the sample rate; highest representable frequency in sampled audio. In pvx workflows this directly affects spectral resolution, leakage behavior, and overlap-add reconstruction accuracy in STFT-based processing.",
     "url": "https://en.wikipedia.org/wiki/Nyquist_frequency"
   },
   {
     "term": "Overlap-add (OLA)",
     "category": "Core DSP Math",
-    "description": "Frame-based reconstruction by summing overlapped windowed segments. In PVX workflows this directly affects spectral resolution, leakage behavior, and overlap-add reconstruction accuracy in STFT-based processing.",
+    "description": "Frame-based reconstruction by summing overlapped windowed segments. In pvx workflows this directly affects spectral resolution, leakage behavior, and overlap-add reconstruction accuracy in STFT-based processing.",
     "url": "https://en.wikipedia.org/wiki/Overlap%E2%80%93add_method"
   },
   {
     "term": "Convolution",
     "category": "Core DSP Math",
-    "description": "Linear filtering operation in time domain equivalent to multiplication in frequency domain. In PVX workflows this directly affects spectral resolution, leakage behavior, and overlap-add reconstruction accuracy in STFT-based processing.",
+    "description": "Linear filtering operation in time domain equivalent to multiplication in frequency domain. In pvx workflows this directly affects spectral resolution, leakage behavior, and overlap-add reconstruction accuracy in STFT-based processing.",
     "url": "https://en.wikipedia.org/wiki/Convolution"
   },
   {
     "term": "Linear phase",
     "category": "Core DSP Math",
-    "description": "Filter phase response that preserves waveform shape of band-limited signals. In PVX workflows this directly affects spectral resolution, leakage behavior, and overlap-add reconstruction accuracy in STFT-based processing.",
+    "description": "Filter phase response that preserves waveform shape of band-limited signals. In pvx workflows this directly affects spectral resolution, leakage behavior, and overlap-add reconstruction accuracy in STFT-based processing.",
     "url": "https://en.wikipedia.org/wiki/Linear_phase"
   },
   {
     "term": "Minimum phase",
     "category": "Core DSP Math",
-    "description": "System with minimum group delay for a given magnitude response. In PVX workflows this directly affects spectral resolution, leakage behavior, and overlap-add reconstruction accuracy in STFT-based processing.",
+    "description": "System with minimum group delay for a given magnitude response. In pvx workflows this directly affects spectral resolution, leakage behavior, and overlap-add reconstruction accuracy in STFT-based processing.",
     "url": "https://en.wikipedia.org/wiki/Minimum_phase"
   },
   {
     "term": "Phase vocoder",
     "category": "Phase and Time-Scale DSP",
-    "description": "STFT-based time-scale/pitch framework using phase propagation. It underpins most PVX core transforms by decoupling time-scale and pitch behavior through phase-consistent spectral resynthesis.",
+    "description": "STFT-based time-scale/pitch framework using phase propagation. It underpins most pvx core transforms by decoupling time-scale and pitch behavior through phase-consistent spectral resynthesis.",
     "url": "https://en.wikipedia.org/wiki/Phase_vocoder"
   },
   {
@@ -110,7 +110,7 @@
   {
     "term": "Identity phase locking",
     "category": "Phase and Time-Scale DSP",
-    "description": "Phase-locking variant that follows dominant peaks. In PVX this concept determines how frames are aligned, phases are propagated, and transients are preserved during time-stretch and pitch operations.",
+    "description": "Phase-locking variant that follows dominant peaks. In pvx this concept determines how frames are aligned, phases are propagated, and transients are preserved during time-stretch and pitch operations.",
     "url": "https://scholar.google.com/scholar?q=identity+phase+locking"
   },
   {
@@ -140,13 +140,13 @@
   {
     "term": "Granular synthesis",
     "category": "Phase and Time-Scale DSP",
-    "description": "Sound synthesis/modification using short grains. In PVX this concept determines how frames are aligned, phases are propagated, and transients are preserved during time-stretch and pitch operations.",
+    "description": "Sound synthesis/modification using short grains. In pvx this concept determines how frames are aligned, phases are propagated, and transients are preserved during time-stretch and pitch operations.",
     "url": "https://en.wikipedia.org/wiki/Granular_synthesis"
   },
   {
     "term": "Time warp map",
     "category": "Phase and Time-Scale DSP",
-    "description": "Piecewise mapping from output time to input time. In PVX this concept determines how frames are aligned, phases are propagated, and transients are preserved during time-stretch and pitch operations.",
+    "description": "Piecewise mapping from output time to input time. In pvx this concept determines how frames are aligned, phases are propagated, and transients are preserved during time-stretch and pitch operations.",
     "url": "https://scholar.google.com/scholar?q=nonlinear+time+warping+audio"
   },
   {
@@ -170,7 +170,7 @@
   {
     "term": "RAPT",
     "category": "Pitch and Intonation",
-    "description": "Robust algorithm for pitch tracking. In PVX retune pipelines this governs pitch-target decisions, microtonal mapping behavior, and the stability of note-to-note correction.",
+    "description": "Robust algorithm for pitch tracking. In pvx retune pipelines this governs pitch-target decisions, microtonal mapping behavior, and the stability of note-to-note correction.",
     "url": "https://scholar.google.com/scholar?q=RAPT+pitch+tracking"
   },
   {
@@ -182,13 +182,13 @@
   {
     "term": "Harmonic product spectrum",
     "category": "Pitch and Intonation",
-    "description": "Downsample-and-multiply spectrum for F0 evidence. In PVX retune pipelines this governs pitch-target decisions, microtonal mapping behavior, and the stability of note-to-note correction.",
+    "description": "Downsample-and-multiply spectrum for F0 evidence. In pvx retune pipelines this governs pitch-target decisions, microtonal mapping behavior, and the stability of note-to-note correction.",
     "url": "https://scholar.google.com/scholar?q=harmonic+product+spectrum+pitch"
   },
   {
     "term": "Subharmonic summation",
     "category": "Pitch and Intonation",
-    "description": "Weighted subharmonic summation for F0 estimation. In PVX retune pipelines this governs pitch-target decisions, microtonal mapping behavior, and the stability of note-to-note correction.",
+    "description": "Weighted subharmonic summation for F0 estimation. In pvx retune pipelines this governs pitch-target decisions, microtonal mapping behavior, and the stability of note-to-note correction.",
     "url": "https://scholar.google.com/scholar?q=subharmonic+summation+pitch"
   },
   {
@@ -260,7 +260,7 @@
   {
     "term": "Chirplet transform",
     "category": "Time-Frequency Transforms",
-    "description": "Transform using chirped atoms. In PVX transform modules this shapes the tradeoff between time localization, frequency precision, and invertibility of analysis/resynthesis steps.",
+    "description": "Transform using chirped atoms. In pvx transform modules this shapes the tradeoff between time localization, frequency precision, and invertibility of analysis/resynthesis steps.",
     "url": "https://en.wikipedia.org/wiki/Chirplet_transform"
   },
   {
@@ -272,7 +272,7 @@
   {
     "term": "Multiresolution analysis",
     "category": "Time-Frequency Transforms",
-    "description": "Nested subspace structure for multi-scale representations. In PVX transform modules this shapes the tradeoff between time localization, frequency precision, and invertibility of analysis/resynthesis steps.",
+    "description": "Nested subspace structure for multi-scale representations. In pvx transform modules this shapes the tradeoff between time localization, frequency precision, and invertibility of analysis/resynthesis steps.",
     "url": "https://en.wikipedia.org/wiki/Multiresolution_analysis"
   },
   {
@@ -284,7 +284,7 @@
   {
     "term": "ICA",
     "category": "Separation and Decomposition",
-    "description": "Blind source separation based on statistical independence. In PVX decomposition workflows this assumption controls source isolation quality, bleed rejection, and the interpretability of separated components.",
+    "description": "Blind source separation based on statistical independence. In pvx decomposition workflows this assumption controls source isolation quality, bleed rejection, and the interpretability of separated components.",
     "url": "https://en.wikipedia.org/wiki/Independent_component_analysis"
   },
   {
@@ -296,25 +296,25 @@
   {
     "term": "Tensor decomposition",
     "category": "Separation and Decomposition",
-    "description": "Higher-order extension of matrix factorization. In PVX decomposition workflows this assumption controls source isolation quality, bleed rejection, and the interpretability of separated components.",
+    "description": "Higher-order extension of matrix factorization. In pvx decomposition workflows this assumption controls source isolation quality, bleed rejection, and the interpretability of separated components.",
     "url": "https://en.wikipedia.org/wiki/Tensor_decomposition"
   },
   {
     "term": "CP decomposition",
     "category": "Separation and Decomposition",
-    "description": "Canonical polyadic tensor decomposition. In PVX decomposition workflows this assumption controls source isolation quality, bleed rejection, and the interpretability of separated components.",
+    "description": "Canonical polyadic tensor decomposition. In pvx decomposition workflows this assumption controls source isolation quality, bleed rejection, and the interpretability of separated components.",
     "url": "https://en.wikipedia.org/wiki/Tensor_rank_decomposition"
   },
   {
     "term": "Tucker decomposition",
     "category": "Separation and Decomposition",
-    "description": "Core tensor with mode matrices factorization. In PVX decomposition workflows this assumption controls source isolation quality, bleed rejection, and the interpretability of separated components.",
+    "description": "Core tensor with mode matrices factorization. In pvx decomposition workflows this assumption controls source isolation quality, bleed rejection, and the interpretability of separated components.",
     "url": "https://en.wikipedia.org/wiki/Tucker_decomposition"
   },
   {
     "term": "U-Net",
     "category": "Separation and Decomposition",
-    "description": "Encoder-decoder CNN with skip connections. In PVX decomposition workflows this assumption controls source isolation quality, bleed rejection, and the interpretability of separated components.",
+    "description": "Encoder-decoder CNN with skip connections. In pvx decomposition workflows this assumption controls source isolation quality, bleed rejection, and the interpretability of separated components.",
     "url": "https://en.wikipedia.org/wiki/U-Net"
   },
   {
@@ -332,7 +332,7 @@
   {
     "term": "Spectral subtraction",
     "category": "Denoising and Restoration",
-    "description": "Subtracts estimated noise spectrum from noisy signal. In PVX restoration chains this controls denoise or dereverb strength versus artifact risk, helping balance intelligibility and texture retention.",
+    "description": "Subtracts estimated noise spectrum from noisy signal. In pvx restoration chains this controls denoise or dereverb strength versus artifact risk, helping balance intelligibility and texture retention.",
     "url": "https://en.wikipedia.org/wiki/Spectral_subtraction"
   },
   {
@@ -350,37 +350,37 @@
   {
     "term": "Minimum statistics",
     "category": "Denoising and Restoration",
-    "description": "Noise tracking from low percentile/minimum spectral statistics. In PVX restoration chains this controls denoise or dereverb strength versus artifact risk, helping balance intelligibility and texture retention.",
+    "description": "Noise tracking from low percentile/minimum spectral statistics. In pvx restoration chains this controls denoise or dereverb strength versus artifact risk, helping balance intelligibility and texture retention.",
     "url": "https://scholar.google.com/scholar?q=minimum+statistics+noise+estimation"
   },
   {
     "term": "RNNoise",
     "category": "Denoising and Restoration",
-    "description": "Hybrid recurrent neural + DSP speech denoiser. In PVX restoration chains this controls denoise or dereverb strength versus artifact risk, helping balance intelligibility and texture retention.",
+    "description": "Hybrid recurrent neural + DSP speech denoiser. In pvx restoration chains this controls denoise or dereverb strength versus artifact risk, helping balance intelligibility and texture retention.",
     "url": "https://github.com/xiph/rnnoise"
   },
   {
     "term": "Diffusion model",
     "category": "Denoising and Restoration",
-    "description": "Generative model based on iterative denoising processes. In PVX restoration chains this controls denoise or dereverb strength versus artifact risk, helping balance intelligibility and texture retention.",
+    "description": "Generative model based on iterative denoising processes. In pvx restoration chains this controls denoise or dereverb strength versus artifact risk, helping balance intelligibility and texture retention.",
     "url": "https://en.wikipedia.org/wiki/Diffusion_model"
   },
   {
     "term": "Declip",
     "category": "Denoising and Restoration",
-    "description": "Reconstruction of clipped waveform segments. In PVX restoration chains this controls denoise or dereverb strength versus artifact risk, helping balance intelligibility and texture retention.",
+    "description": "Reconstruction of clipped waveform segments. In pvx restoration chains this controls denoise or dereverb strength versus artifact risk, helping balance intelligibility and texture retention.",
     "url": "https://scholar.google.com/scholar?q=audio+declipping+sparse+reconstruction"
   },
   {
     "term": "Declick",
     "category": "Denoising and Restoration",
-    "description": "Removal of impulsive click artifacts. In PVX restoration chains this controls denoise or dereverb strength versus artifact risk, helping balance intelligibility and texture retention.",
+    "description": "Removal of impulsive click artifacts. In pvx restoration chains this controls denoise or dereverb strength versus artifact risk, helping balance intelligibility and texture retention.",
     "url": "https://scholar.google.com/scholar?q=audio+declicking"
   },
   {
     "term": "Dereverberation",
     "category": "Denoising and Restoration",
-    "description": "Suppression of late reverberation components. In PVX restoration chains this controls denoise or dereverb strength versus artifact risk, helping balance intelligibility and texture retention.",
+    "description": "Suppression of late reverberation components. In pvx restoration chains this controls denoise or dereverb strength versus artifact risk, helping balance intelligibility and texture retention.",
     "url": "https://en.wikipedia.org/wiki/Reverberation"
   },
   {
@@ -392,13 +392,13 @@
   {
     "term": "Blind deconvolution",
     "category": "Denoising and Restoration",
-    "description": "Joint estimation of source and room/filter response. In PVX restoration chains this controls denoise or dereverb strength versus artifact risk, helping balance intelligibility and texture retention.",
+    "description": "Joint estimation of source and room/filter response. In pvx restoration chains this controls denoise or dereverb strength versus artifact risk, helping balance intelligibility and texture retention.",
     "url": "https://en.wikipedia.org/wiki/Blind_deconvolution"
   },
   {
     "term": "Direct-to-reverberant ratio (DRR)",
     "category": "Denoising and Restoration",
-    "description": "Ratio of direct sound energy to reverberant energy. In PVX restoration chains this controls denoise or dereverb strength versus artifact risk, helping balance intelligibility and texture retention.",
+    "description": "Ratio of direct sound energy to reverberant energy. In pvx restoration chains this controls denoise or dereverb strength versus artifact risk, helping balance intelligibility and texture retention.",
     "url": "https://scholar.google.com/scholar?q=direct-to-reverberant+ratio"
   },
   {
@@ -416,7 +416,7 @@
   {
     "term": "Compander",
     "category": "Dynamics and Mastering",
-    "description": "Combined compressor and expander behavior. In PVX mastering stages this affects loudness compliance, peak containment, and perceived punch versus transparency across final renders.",
+    "description": "Combined compressor and expander behavior. In pvx mastering stages this affects loudness compliance, peak containment, and perceived punch versus transparency across final renders.",
     "url": "https://en.wikipedia.org/wiki/Companding"
   },
   {
@@ -452,13 +452,13 @@
   {
     "term": "Hard clipping",
     "category": "Dynamics and Mastering",
-    "description": "Abrupt saturation by truncating waveform beyond threshold. In PVX mastering stages this affects loudness compliance, peak containment, and perceived punch versus transparency across final renders.",
+    "description": "Abrupt saturation by truncating waveform beyond threshold. In pvx mastering stages this affects loudness compliance, peak containment, and perceived punch versus transparency across final renders.",
     "url": "https://en.wikipedia.org/wiki/Clipping_(audio)"
   },
   {
     "term": "Soft clipping",
     "category": "Dynamics and Mastering",
-    "description": "Smooth saturation curve reducing harsh distortion. In PVX mastering stages this affects loudness compliance, peak containment, and perceived punch versus transparency across final renders.",
+    "description": "Smooth saturation curve reducing harsh distortion. In pvx mastering stages this affects loudness compliance, peak containment, and perceived punch versus transparency across final renders.",
     "url": "https://en.wikipedia.org/wiki/Waveshaper"
   },
   {
@@ -476,13 +476,13 @@
   {
     "term": "Formant",
     "category": "Creative Spectral Effects",
-    "description": "Resonance region of spectral envelope. In PVX creative processing this primarily controls intentional timbral coloration and motion, not transparent corrective behavior.",
+    "description": "Resonance region of spectral envelope. In pvx creative processing this primarily controls intentional timbral coloration and motion, not transparent corrective behavior.",
     "url": "https://en.wikipedia.org/wiki/Formant"
   },
   {
     "term": "Resonator",
     "category": "Creative Spectral Effects",
-    "description": "Filter structure emphasizing a narrow band. In PVX creative processing this primarily controls intentional timbral coloration and motion, not transparent corrective behavior.",
+    "description": "Filter structure emphasizing a narrow band. In pvx creative processing this primarily controls intentional timbral coloration and motion, not transparent corrective behavior.",
     "url": "https://en.wikipedia.org/wiki/Resonance"
   },
   {
@@ -494,19 +494,19 @@
   {
     "term": "Amplitude modulation (AM)",
     "category": "Creative Spectral Effects",
-    "description": "Modulating signal amplitude by a control waveform. In PVX creative processing this primarily controls intentional timbral coloration and motion, not transparent corrective behavior.",
+    "description": "Modulating signal amplitude by a control waveform. In pvx creative processing this primarily controls intentional timbral coloration and motion, not transparent corrective behavior.",
     "url": "https://en.wikipedia.org/wiki/Amplitude_modulation"
   },
   {
     "term": "Frequency modulation (FM)",
     "category": "Creative Spectral Effects",
-    "description": "Modulating oscillator frequency by another signal. In PVX creative processing this primarily controls intentional timbral coloration and motion, not transparent corrective behavior.",
+    "description": "Modulating oscillator frequency by another signal. In pvx creative processing this primarily controls intentional timbral coloration and motion, not transparent corrective behavior.",
     "url": "https://en.wikipedia.org/wiki/Frequency_modulation_synthesis"
   },
   {
     "term": "LFO",
     "category": "Creative Spectral Effects",
-    "description": "Low-frequency oscillator used for modulation. In PVX creative processing this primarily controls intentional timbral coloration and motion, not transparent corrective behavior.",
+    "description": "Low-frequency oscillator used for modulation. In pvx creative processing this primarily controls intentional timbral coloration and motion, not transparent corrective behavior.",
     "url": "https://en.wikipedia.org/wiki/Low-frequency_oscillation"
   },
   {
@@ -518,7 +518,7 @@
   {
     "term": "Delay-and-sum beamformer",
     "category": "Spatial Audio and Multichannel",
-    "description": "Align-and-average array beamformer. In PVX multichannel workflows this directly influences localization cues, interchannel coherence, and translation to speaker or headphone playback.",
+    "description": "Align-and-average array beamformer. In pvx multichannel workflows this directly influences localization cues, interchannel coherence, and translation to speaker or headphone playback.",
     "url": "https://en.wikipedia.org/wiki/Beamforming"
   },
   {
@@ -530,13 +530,13 @@
   {
     "term": "Generalized sidelobe canceller (GSC)",
     "category": "Spatial Audio and Multichannel",
-    "description": "Adaptive beamforming with blocking matrix branch. In PVX multichannel workflows this directly influences localization cues, interchannel coherence, and translation to speaker or headphone playback.",
+    "description": "Adaptive beamforming with blocking matrix branch. In pvx multichannel workflows this directly influences localization cues, interchannel coherence, and translation to speaker or headphone playback.",
     "url": "https://scholar.google.com/scholar?q=generalized+sidelobe+canceller"
   },
   {
     "term": "Superdirective beamforming",
     "category": "Spatial Audio and Multichannel",
-    "description": "Beamforming with sharpened directivity often with regularization. In PVX multichannel workflows this directly influences localization cues, interchannel coherence, and translation to speaker or headphone playback.",
+    "description": "Beamforming with sharpened directivity often with regularization. In pvx multichannel workflows this directly influences localization cues, interchannel coherence, and translation to speaker or headphone playback.",
     "url": "https://scholar.google.com/scholar?q=superdirective+beamforming"
   },
   {
@@ -548,7 +548,7 @@
   {
     "term": "GCC-PHAT",
     "category": "Spatial Audio and Multichannel",
-    "description": "Time-delay estimation using phase transform weighting. In PVX multichannel workflows this directly influences localization cues, interchannel coherence, and translation to speaker or headphone playback.",
+    "description": "Time-delay estimation using phase transform weighting. In pvx multichannel workflows this directly influences localization cues, interchannel coherence, and translation to speaker or headphone playback.",
     "url": "https://scholar.google.com/scholar?q=GCC-PHAT"
   },
   {
@@ -560,13 +560,13 @@
   {
     "term": "First-order ambisonics (FOA)",
     "category": "Spatial Audio and Multichannel",
-    "description": "4-channel WXYZ ambisonic format. In PVX multichannel workflows this directly influences localization cues, interchannel coherence, and translation to speaker or headphone playback.",
+    "description": "4-channel WXYZ ambisonic format. In pvx multichannel workflows this directly influences localization cues, interchannel coherence, and translation to speaker or headphone playback.",
     "url": "https://en.wikipedia.org/wiki/Ambisonics"
   },
   {
     "term": "Higher-order ambisonics (HOA)",
     "category": "Spatial Audio and Multichannel",
-    "description": "Ambisonics beyond first order for higher spatial resolution. In PVX multichannel workflows this directly influences localization cues, interchannel coherence, and translation to speaker or headphone playback.",
+    "description": "Ambisonics beyond first order for higher spatial resolution. In pvx multichannel workflows this directly influences localization cues, interchannel coherence, and translation to speaker or headphone playback.",
     "url": "https://en.wikipedia.org/wiki/Ambisonics"
   },
   {
@@ -578,19 +578,19 @@
   {
     "term": "HRTF",
     "category": "Spatial Audio and Multichannel",
-    "description": "Head-related transfer function per source direction. In PVX multichannel workflows this directly influences localization cues, interchannel coherence, and translation to speaker or headphone playback.",
+    "description": "Head-related transfer function per source direction. In pvx multichannel workflows this directly influences localization cues, interchannel coherence, and translation to speaker or headphone playback.",
     "url": "https://en.wikipedia.org/wiki/Head-related_transfer_function"
   },
   {
     "term": "Interaural time difference (ITD)",
     "category": "Spatial Audio and Multichannel",
-    "description": "Arrival-time difference cue for localization. In PVX multichannel workflows this directly influences localization cues, interchannel coherence, and translation to speaker or headphone playback.",
+    "description": "Arrival-time difference cue for localization. In pvx multichannel workflows this directly influences localization cues, interchannel coherence, and translation to speaker or headphone playback.",
     "url": "https://en.wikipedia.org/wiki/Interaural_time_difference"
   },
   {
     "term": "Interaural level difference (ILD)",
     "category": "Spatial Audio and Multichannel",
-    "description": "Level difference cue for localization. In PVX multichannel workflows this directly influences localization cues, interchannel coherence, and translation to speaker or headphone playback.",
+    "description": "Level difference cue for localization. In pvx multichannel workflows this directly influences localization cues, interchannel coherence, and translation to speaker or headphone playback.",
     "url": "https://en.wikipedia.org/wiki/Sound_localization"
   },
   {
@@ -608,49 +608,49 @@
   {
     "term": "Mid/side processing",
     "category": "Spatial Audio and Multichannel",
-    "description": "Stereo representation as sum (mid) and difference (side). In PVX multichannel workflows this directly influences localization cues, interchannel coherence, and translation to speaker or headphone playback.",
+    "description": "Stereo representation as sum (mid) and difference (side). In pvx multichannel workflows this directly influences localization cues, interchannel coherence, and translation to speaker or headphone playback.",
     "url": "https://en.wikipedia.org/wiki/Joint_encoding#M/S_stereo_coding"
   },
   {
     "term": "Crosstalk cancellation",
     "category": "Spatial Audio and Multichannel",
-    "description": "Loudspeaker technique reducing opposite-ear leakage. In PVX multichannel workflows this directly influences localization cues, interchannel coherence, and translation to speaker or headphone playback.",
+    "description": "Loudspeaker technique reducing opposite-ear leakage. In pvx multichannel workflows this directly influences localization cues, interchannel coherence, and translation to speaker or headphone playback.",
     "url": "https://scholar.google.com/scholar?q=transaural+crosstalk+cancellation"
   },
   {
     "term": "Diffuse field",
     "category": "Spatial Audio and Multichannel",
-    "description": "Sound field with many uncorrelated incoming directions. In PVX multichannel workflows this directly influences localization cues, interchannel coherence, and translation to speaker or headphone playback.",
+    "description": "Sound field with many uncorrelated incoming directions. In pvx multichannel workflows this directly influences localization cues, interchannel coherence, and translation to speaker or headphone playback.",
     "url": "https://scholar.google.com/scholar?q=diffuse+sound+field"
   },
   {
     "term": "Room impulse response (RIR)",
     "category": "Spatial Audio and Multichannel",
-    "description": "Acoustic response from source impulse to receiver. In PVX multichannel workflows this directly influences localization cues, interchannel coherence, and translation to speaker or headphone playback.",
+    "description": "Acoustic response from source impulse to receiver. In pvx multichannel workflows this directly influences localization cues, interchannel coherence, and translation to speaker or headphone playback.",
     "url": "https://en.wikipedia.org/wiki/Impulse_response"
   },
   {
     "term": "Onset detection",
     "category": "Analysis and QA",
-    "description": "Detection of transient musical events. In PVX analysis and automation tools this determines feature reliability and how confidently metrics can drive downstream decisions.",
+    "description": "Detection of transient musical events. In pvx analysis and automation tools this determines feature reliability and how confidently metrics can drive downstream decisions.",
     "url": "https://en.wikipedia.org/wiki/Onset_(music)"
   },
   {
     "term": "Beat tracking",
     "category": "Analysis and QA",
-    "description": "Estimating temporal pulse positions from audio. In PVX analysis and automation tools this determines feature reliability and how confidently metrics can drive downstream decisions.",
+    "description": "Estimating temporal pulse positions from audio. In pvx analysis and automation tools this determines feature reliability and how confidently metrics can drive downstream decisions.",
     "url": "https://en.wikipedia.org/wiki/Beat_tracking"
   },
   {
     "term": "Chord estimation",
     "category": "Analysis and QA",
-    "description": "Inferring harmonic labels from tonal features. In PVX analysis and automation tools this determines feature reliability and how confidently metrics can drive downstream decisions.",
+    "description": "Inferring harmonic labels from tonal features. In pvx analysis and automation tools this determines feature reliability and how confidently metrics can drive downstream decisions.",
     "url": "https://scholar.google.com/scholar?q=automatic+chord+estimation"
   },
   {
     "term": "Structure segmentation",
     "category": "Analysis and QA",
-    "description": "Dividing music into sections like verse/chorus. In PVX analysis and automation tools this determines feature reliability and how confidently metrics can drive downstream decisions.",
+    "description": "Dividing music into sections like verse/chorus. In pvx analysis and automation tools this determines feature reliability and how confidently metrics can drive downstream decisions.",
     "url": "https://scholar.google.com/scholar?q=music+structure+segmentation"
   },
   {

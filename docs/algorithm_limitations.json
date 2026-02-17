@@ -1,6 +1,6 @@
 {
-  "commit": "58b1a2e",
-  "commit_date": "2026-02-17T09:29:32-05:00",
+  "commit": "2327357",
+  "commit_date": "2026-02-17T11:46:01-05:00",
   "group_limits": {
     "analysis_qa_and_automation": {
       "assumption": "Feature extraction settings align with domain (speech vs music etc.).",
@@ -916,7 +916,7 @@
         "assumptions": "Channel geometry/order and timing metadata are correct.",
         "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
         "module": "pvx.algorithms.spatial_and_multichannel.phase_vocoder_spatial.pvx_directional_spectral_warp",
-        "name": "PVX directional spectral warp",
+        "name": "pvx directional spectral warp",
         "theme": "Spatial and Multichannel",
         "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
       },
@@ -925,7 +925,7 @@
         "assumptions": "Channel geometry/order and timing metadata are correct.",
         "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
         "module": "pvx.algorithms.spatial_and_multichannel.phase_vocoder_spatial.pvx_interaural_coherence_shaping",
-        "name": "PVX interaural coherence shaping",
+        "name": "pvx interaural coherence shaping",
         "theme": "Spatial and Multichannel",
         "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
       },
@@ -934,7 +934,7 @@
         "assumptions": "Channel geometry/order and timing metadata are correct.",
         "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
         "module": "pvx.algorithms.spatial_and_multichannel.phase_vocoder_spatial.pvx_interchannel_phase_locking",
-        "name": "PVX interchannel phase locking",
+        "name": "pvx interchannel phase locking",
         "theme": "Spatial and Multichannel",
         "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
       },
@@ -943,7 +943,7 @@
         "assumptions": "Channel geometry/order and timing metadata are correct.",
         "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
         "module": "pvx.algorithms.spatial_and_multichannel.phase_vocoder_spatial.pvx_multichannel_time_alignment",
-        "name": "PVX multichannel time alignment",
+        "name": "pvx multichannel time alignment",
         "theme": "Spatial and Multichannel",
         "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
       },
@@ -952,7 +952,7 @@
         "assumptions": "Channel geometry/order and timing metadata are correct.",
         "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
         "module": "pvx.algorithms.spatial_and_multichannel.phase_vocoder_spatial.pvx_spatial_freeze_and_trajectory",
-        "name": "PVX spatial freeze and trajectory",
+        "name": "pvx spatial freeze and trajectory",
         "theme": "Spatial and Multichannel",
         "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
       },
@@ -961,7 +961,7 @@
         "assumptions": "Channel geometry/order and timing metadata are correct.",
         "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
         "module": "pvx.algorithms.spatial_and_multichannel.phase_vocoder_spatial.pvx_spatial_transient_preservation",
-        "name": "PVX spatial transient preservation",
+        "name": "pvx spatial transient preservation",
         "theme": "Spatial and Multichannel",
         "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
       },

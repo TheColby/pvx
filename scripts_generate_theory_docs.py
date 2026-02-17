@@ -76,7 +76,7 @@ def window_entries() -> list[dict[str, str]]:
             family = "Sinusoidal"
             params = "none"
             formula = "W2"
-            note = "Implemented identically to sine in PVX."
+            note = "Implemented identically to sine in pvx."
         elif name == "bartlett":
             family = "Triangular"
             params = "none"
@@ -172,7 +172,7 @@ def window_entries() -> list[dict[str, str]]:
             family = "Other"
             params = "none"
             formula = "W0"
-            note = "Window supported by PVX."
+            note = "Window supported by pvx."
         pros, cons, usage = window_tradeoffs(name, family)
         entries.append(
             {
@@ -194,7 +194,7 @@ def window_tradeoffs(name: str, family: str) -> tuple[str, str, str]:
         return (
             "Balanced leakage suppression and frequency resolution.",
             "Not optimal for amplitude metering or extreme sidelobe rejection.",
-            "Default choice for most PVX time-stretch and pitch-shift workflows.",
+            "Default choice for most pvx time-stretch and pitch-shift workflows.",
         )
     if name in {"boxcar", "rect"}:
         return (
@@ -311,7 +311,7 @@ def window_tradeoffs(name: str, family: str) -> tuple[str, str, str]:
             "Use for exploratory spectral work needing smooth derivatives.",
         )
     return (
-        "Supported by PVX and compatible with the shared phase-vocoder path.",
+        "Supported by pvx and compatible with the shared phase-vocoder path.",
         "Tradeoffs depend on the specific shape parameters.",
         "Start with Hann/Hamming, then compare this window if artifacts persist.",
     )
@@ -470,10 +470,10 @@ def generate_window_assets_and_metrics(entries: list[dict[str, str]]) -> dict[st
 
 def write_math_foundations() -> None:
     lines: list[str] = []
-    lines.append("# PVX Mathematical Foundations")
+    lines.append("# pvx Mathematical Foundations")
     lines.append("")
     lines.extend(generated_stamp_lines())
-    lines.append("This document explains the core signal-processing equations used by PVX, with plain-English interpretation.")
+    lines.append("This document explains the core signal-processing equations used by pvx, with plain-English interpretation.")
     lines.append("All equations are written in GitHub-renderable LaTeX and are intended to render directly in normal GitHub Markdown view.")
     lines.append("")
     lines.append("## Notation")
@@ -485,6 +485,7 @@ def write_math_foundations() -> None:
     lines.append("- Frequency-bin index: $k$")
     lines.append("- Frame phase: $\\phi_t[k]$")
     lines.append("- Bin-center angular frequency: $\\omega_k=2\\pi k/N$")
+    lines.append("- Selected transform backend: $m \\in \\{\\text{fft},\\text{dft},\\text{czt},\\text{dct},\\text{dst},\\text{hartley}\\}$")
     lines.append("")
     lines.append("## 1. STFT Analysis and Synthesis")
     lines.append("")
@@ -504,10 +505,71 @@ def write_math_foundations() -> None:
     lines.append("")
     lines.append("Plain English: reconstructed frames are overlap-added, then normalized by accumulated window energy.")
     lines.append("")
-    lines.append("## 2. Phase-Vocoder Frequency and Phase Update")
+    lines.append("## 2. Transform Backend Families and Tradeoffs")
+    lines.append("")
+    lines.append("pvx allows selecting the per-frame transform with `--transform` in STFT/ISTFT paths.")
+    lines.append("The same overlap-add framework is used, but per-bin meaning and phase behavior differ by transform family.")
+    lines.append("")
+    lines.append("Complex Fourier family (`fft`, `dft`):")
     lines.append("")
     lines.append("$$")
-    lines.append("\\Delta\\phi_t[k]=\\operatorname{princarg}\\left(\\phi_t[k]-\\phi_{t-1}[k]-\\omega_kH_a\\right)")
+    lines.append("X_t[k]=\\sum_{n=0}^{N-1} x_t[n]e^{-j2\\pi kn/N},\\qquad")
+    lines.append("x_t[n]=\\frac{1}{N}\\sum_{k=0}^{N-1}X_t[k]e^{j2\\pi kn/N}")
+    lines.append("$$")
+    lines.append("")
+    lines.append("Chirp-Z (`czt`, Bluestein-style contour):")
+    lines.append("")
+    lines.append("$$")
+    lines.append("X_t[k]=\\sum_{n=0}^{N-1}x_t[n]A^{-n}W^{nk}")
+    lines.append("$$")
+    lines.append("")
+    lines.append("With pvx defaults $A=1$ and $W=e^{-j2\\pi/N}$, CZT matches DFT samples but uses a different numerical path.")
+    lines.append("")
+    lines.append("DCT-II / IDCT-II (`dct`):")
+    lines.append("")
+    lines.append("$$")
+    lines.append("C_t[k]=\\alpha_k\\sum_{n=0}^{N-1}x_t[n]\\cos\\left(\\frac{\\pi}{N}(n+\\tfrac{1}{2})k\\right)")
+    lines.append("$$")
+    lines.append("")
+    lines.append("DST-II / IDST-II (`dst`):")
+    lines.append("")
+    lines.append("$$")
+    lines.append("S_t[k]=\\beta_k\\sum_{n=0}^{N-1}x_t[n]\\sin\\left(\\frac{\\pi}{N}(n+\\tfrac{1}{2})(k+1)\\right)")
+    lines.append("$$")
+    lines.append("")
+    lines.append("Discrete Hartley (`hartley`):")
+    lines.append("")
+    lines.append("$$")
+    lines.append("H_t[k]=\\sum_{n=0}^{N-1}x_t[n]\\,\\mathrm{cas}\\left(\\frac{2\\pi kn}{N}\\right),\\quad")
+    lines.append("\\mathrm{cas}(\\theta)=\\cos(\\theta)+\\sin(\\theta)")
+    lines.append("$$")
+    lines.append("")
+    lines.append("| Transform | Strengths | Tradeoffs | Recommended use cases |")
+    lines.append("| --- | --- | --- | --- |")
+    lines.append("| `fft` | Fastest common path, stable, native one-sided complex bins, best CUDA coverage. | Needs careful window/hop tuning for extreme nonstationarity. | Default for most time-stretch, pitch-shift, and batch processing. |")
+    lines.append("| `dft` | Canonical Fourier definition, deterministic parity baseline versus FFT implementations. | Usually slower than `fft`, little practical quality advantage in normal runs. | Cross-checking, verification, or research comparisons. |")
+    lines.append("| `czt` | Useful alternative numerical path for awkward frame sizes; can be robust for prime/non-power sizes. | Requires SciPy; typically CPU-only and slower than FFT. | Edge-case frame-size experiments and diagnostic reruns. |")
+    lines.append("| `dct` | Real-valued compact basis with strong energy compaction for smooth envelopes. | Loses explicit complex phase; less transparent for strict phase-coherent resynthesis. | Spectral shaping, denoise-like creative processing, coefficient-domain experiments. |")
+    lines.append("| `dst` | Real-valued odd-symmetry basis; emphasizes different boundary behavior than DCT. | Same phase limitations as DCT; content-dependent coloration. | Creative timbre variants and odd-symmetry analysis experiments. |")
+    lines.append("| `hartley` | Real transform using `cas`, often helpful for CPU-friendly exploratory analysis. | Different bin semantics vs complex STFT; can alter artifact profile. | Alternative real-basis phase-vocoder experiments and pedagogical comparisons. |")
+    lines.append("")
+    lines.append("Plain English: choose `fft` first, then move to other transforms when you specifically need different numerical behavior, basis structure, or artifact character.")
+    lines.append("")
+    lines.append("### Sample Transform Use Cases")
+    lines.append("")
+    lines.append("```bash")
+    lines.append("python3 pvxvoc.py dialog.wav --transform fft --time-stretch 1.08 --transient-preserve --output-dir out")
+    lines.append("python3 pvxvoc.py test_tones.wav --transform dft --time-stretch 1.00 --output-dir out")
+    lines.append("python3 pvxvoc.py archival_take.wav --transform czt --n-fft 1536 --win-length 1536 --hop-size 384 --output-dir out")
+    lines.append("python3 pvxvoc.py strings.wav --transform dct --pitch-shift-cents -17 --soft-clip-level 0.94 --output-dir out")
+    lines.append("python3 pvxvoc.py percussion.wav --transform dst --time-stretch 0.92 --output-dir out")
+    lines.append("python3 pvxvoc.py synth.wav --transform hartley --phase-locking off --time-stretch 1.30 --output-dir out")
+    lines.append("```")
+    lines.append("")
+    lines.append("## 3. Phase-Vocoder Frequency and Phase Update")
+    lines.append("")
+    lines.append("$$")
+    lines.append("\\Delta\\phi_t[k]=\\mathrm{princarg}\\left(\\phi_t[k]-\\phi_{t-1}[k]-\\omega_kH_a\\right)")
     lines.append("$$")
     lines.append("$$")
     lines.append("\\hat{\\omega}_t[k]=\\omega_k+\\frac{\\Delta\\phi_t[k]}{H_a}")
@@ -516,9 +578,9 @@ def write_math_foundations() -> None:
     lines.append("\\hat{\\phi}_t[k]=\\hat{\\phi}_{t-1}[k]+\\hat{\\omega}_t[k]H_s")
     lines.append("$$")
     lines.append("")
-    lines.append("Plain English: PVX estimates true per-bin frequency from wrapped phase deviation, then re-accumulates phase at the synthesis hop.")
+    lines.append("Plain English: pvx estimates true per-bin frequency from wrapped phase deviation, then re-accumulates phase at the synthesis hop.")
     lines.append("")
-    lines.append("## 3. Time Stretch and Pitch Ratio")
+    lines.append("## 4. Time Stretch and Pitch Ratio")
     lines.append("")
     lines.append("Pitch shift ratio from semitones/cents:")
     lines.append("")
@@ -528,9 +590,9 @@ def write_math_foundations() -> None:
     lines.append("")
     lines.append("Plain English: semitone and cent controls map to the same multiplicative ratio.")
     lines.append("")
-    lines.append("## 4. Microtonal Retune Mapping")
+    lines.append("## 5. Microtonal Retune Mapping")
     lines.append("")
-    lines.append("For a detected frequency $f$, PVX scale-aware retuning chooses the nearest permitted scale target $f_{\\text{scale}}$ and applies:")
+    lines.append("For a detected frequency $f$, pvx scale-aware retuning chooses the nearest permitted scale target $f_{\\text{scale}}$ and applies:")
     lines.append("")
     lines.append("$$")
     lines.append("\\Delta s = 12\\log_2\\left(\\frac{f_{\\text{scale}}}{f}\\right)")
@@ -538,7 +600,7 @@ def write_math_foundations() -> None:
     lines.append("")
     lines.append("Plain English: each frame is shifted only as much as needed to land on the selected microtonal scale degree.")
     lines.append("")
-    lines.append("## 5. Loudness and Dynamics")
+    lines.append("## 6. Loudness and Dynamics")
     lines.append("")
     lines.append("LUFS target gain:")
     lines.append("")
@@ -557,7 +619,7 @@ def write_math_foundations() -> None:
     lines.append("")
     lines.append("Plain English: level is reduced above threshold $T$ by ratio $R$, then makeup/loudness stages may be applied.")
     lines.append("")
-    lines.append("## 6. Spatial and Multichannel Core Equations")
+    lines.append("## 7. Spatial and Multichannel Core Equations")
     lines.append("")
     lines.append("Delay-and-sum beamforming:")
     lines.append("")
@@ -577,7 +639,7 @@ def write_math_foundations() -> None:
     lines.append("W=\\frac{s}{\\sqrt{2}},\\quad X=s\\cos\\theta\\cos\\varphi,\\quad Y=s\\sin\\theta\\cos\\varphi,\\quad Z=s\\sin\\varphi")
     lines.append("$$")
     lines.append("")
-    lines.append("Plain English: PVX spatial modules combine array steering, covariance-weighted beamforming, and ambisonic transforms with phase-consistent DSP.")
+    lines.append("Plain English: pvx spatial modules combine array steering, covariance-weighted beamforming, and ambisonic transforms with phase-consistent DSP.")
     lines.append("")
     (DOCS_DIR / "MATHEMATICAL_FOUNDATIONS.md").write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
 
@@ -587,10 +649,10 @@ def write_window_reference() -> None:
     metrics_by_name = generate_window_assets_and_metrics(entries)
 
     lines: list[str] = []
-    lines.append("# PVX Window Reference")
+    lines.append("# pvx Window Reference")
     lines.append("")
     lines.extend(generated_stamp_lines())
-    lines.append(f"PVX currently supports **{len(entries)}** analysis windows. This file defines each one mathematically and explains it in plain English.")
+    lines.append(f"pvx currently supports **{len(entries)}** analysis windows. This file defines each one mathematically and explains it in plain English.")
     lines.append("")
     lines.append("## Notation")
     lines.append("")
@@ -636,7 +698,7 @@ def write_window_reference() -> None:
     lines.append("\\end{cases}")
     lines.append("$$")
     lines.append("")
-    lines.append("Special cases in PVX: $\\alpha\\le 0$ gives rectangular behavior, and $\\alpha\\ge 1$ collapses to Hann.")
+    lines.append("Special cases in pvx: $\\alpha\\le 0$ gives rectangular behavior, and $\\alpha\\ge 1$ collapses to Hann.")
     lines.append("")
     lines.append("**(W7) Parzen**")
     lines.append("")
@@ -651,7 +713,7 @@ def write_window_reference() -> None:
     lines.append("")
     lines.append("**(W8) Lanczos**")
     lines.append("")
-    lines.append("$$w[n]=\\operatorname{sinc}\\left(\\frac{2n}{N-1}-1\\right)$$")
+    lines.append("$$w[n]=\\mathrm{sinc}\\left(\\frac{2n}{N-1}-1\\right)$$")
     lines.append("")
     lines.append("**(W9) Welch**")
     lines.append("")
@@ -693,7 +755,7 @@ def write_window_reference() -> None:
     lines.append("")
     lines.append("$$w[n]=\\frac{I_0\\left(\\beta\\sqrt{1-r_n^2}\\right)}{I_0(\\beta)},\\quad r_n=\\frac{n-m}{m}$$")
     lines.append("")
-    lines.append("Each supported PVX window maps to one of the formula families above with the per-window constants shown below.")
+    lines.append("Each supported pvx window maps to one of the formula families above with the per-window constants shown below.")
     lines.append("")
     lines.append("## Quantitative Metrics")
     lines.append("")

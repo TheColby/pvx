@@ -130,12 +130,12 @@ Total algorithms: 123
 - `spatial_and_multichannel/ambisonics_and_immersive/spherical_harmonic_diffuse_enhancement.py`: Spherical-harmonic diffuse enhancement
 - `spatial_and_multichannel/ambisonics_and_immersive/hoa_order_truncation_and_upmix.py`: HOA order truncation and upmix
 - `spatial_and_multichannel/ambisonics_and_immersive/spatial_room_impulse_convolution.py`: Spatial room impulse convolution
-- `spatial_and_multichannel/phase_vocoder_spatial/pvx_interchannel_phase_locking.py`: PVX interchannel phase locking
-- `spatial_and_multichannel/phase_vocoder_spatial/pvx_spatial_transient_preservation.py`: PVX spatial transient preservation
-- `spatial_and_multichannel/phase_vocoder_spatial/pvx_interaural_coherence_shaping.py`: PVX interaural coherence shaping
-- `spatial_and_multichannel/phase_vocoder_spatial/pvx_directional_spectral_warp.py`: PVX directional spectral warp
-- `spatial_and_multichannel/phase_vocoder_spatial/pvx_multichannel_time_alignment.py`: PVX multichannel time alignment
-- `spatial_and_multichannel/phase_vocoder_spatial/pvx_spatial_freeze_and_trajectory.py`: PVX spatial freeze and trajectory
+- `spatial_and_multichannel/phase_vocoder_spatial/pvx_interchannel_phase_locking.py`: pvx interchannel phase locking
+- `spatial_and_multichannel/phase_vocoder_spatial/pvx_spatial_transient_preservation.py`: pvx spatial transient preservation
+- `spatial_and_multichannel/phase_vocoder_spatial/pvx_interaural_coherence_shaping.py`: pvx interaural coherence shaping
+- `spatial_and_multichannel/phase_vocoder_spatial/pvx_directional_spectral_warp.py`: pvx directional spectral warp
+- `spatial_and_multichannel/phase_vocoder_spatial/pvx_multichannel_time_alignment.py`: pvx multichannel time alignment
+- `spatial_and_multichannel/phase_vocoder_spatial/pvx_spatial_freeze_and_trajectory.py`: pvx spatial freeze and trajectory
 - `spatial_and_multichannel/multichannel_restoration/multichannel_wiener_postfilter.py`: Multichannel Wiener postfilter
 - `spatial_and_multichannel/multichannel_restoration/coherence_based_dereverb_multichannel.py`: Coherence-based dereverb (multichannel)
 - `spatial_and_multichannel/multichannel_restoration/multichannel_noise_psd_tracking.py`: Multichannel noise PSD tracking

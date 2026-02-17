@@ -16,6 +16,7 @@ import numpy as np
 import soundfile as sf
 
 from pvx.core.voc import (
+    TRANSFORM_CHOICES,
     VocoderConfig,
     WINDOW_CHOICES,
     add_mastering_args,
@@ -26,8 +27,10 @@ from pvx.core.voc import (
     ensure_runtime_dependencies,
     expand_inputs,
     force_length,
+    parse_pitch_ratio_value,
     phase_vocoder_time_stretch,
     resample_1d,
+    validate_transform_available,
     validate_mastering_args,
 )
 
@@ -218,6 +221,15 @@ def add_vocoder_args(
         default=14.0,
         help="Kaiser window beta parameter used when --window kaiser (default: 14.0)",
     )
+    parser.add_argument(
+        "--transform",
+        choices=list(TRANSFORM_CHOICES),
+        default="fft",
+        help=(
+            "Per-frame transform backend for STFT/ISTFT paths "
+            "(default: fft; options: fft, dft, czt, dct, dst, hartley)"
+        ),
+    )
     parser.add_argument("--no-center", action="store_true", help="Disable centered framing")
     add_runtime_args(parser)
 
@@ -239,6 +251,7 @@ def build_vocoder_config(
         transient_preserve=transient_preserve,
         transient_threshold=transient_threshold,
         kaiser_beta=args.kaiser_beta,
+        transform=args.transform,
     )
 
 
@@ -257,6 +270,7 @@ def validate_vocoder_args(args: argparse.Namespace, parser: argparse.ArgumentPar
         parser.error("--kaiser-beta must be >= 0")
     if args.cuda_device < 0:
         parser.error("--cuda-device must be >= 0")
+    validate_transform_available(args.transform, parser)
     validate_mastering_args(args, parser)
 
 
@@ -443,13 +457,14 @@ def read_segment_csv(path: Path, *, has_pitch: bool) -> list[SegmentSpec]:
                         f"CSV row {row_idx}: multiple pitch fields set. Use only one of pitch_ratio, pitch_cents, pitch_semitones."
                     )
                 if ratio_text:
-                    pitch_ratio = float(ratio_text)
+                    pitch_ratio = parse_pitch_ratio_value(
+                        ratio_text,
+                        context=f"CSV row {row_idx} pitch_ratio",
+                    )
                 elif cents_text:
                     pitch_ratio = cents_to_ratio(float(cents_text))
                 else:
                     pitch_ratio = semitone_to_ratio(float(semitones_text))
-                if pitch_ratio <= 0:
-                    raise ValueError(f"CSV row {row_idx}: pitch ratio must be positive")
             segments.append(SegmentSpec(start_s=start_s, end_s=end_s, stretch=stretch, pitch_ratio=pitch_ratio))
 
     segments.sort(key=lambda seg: seg.start_s)

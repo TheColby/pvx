@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""PVX spatial freeze and trajectory.
+"""pvx spatial freeze and trajectory.
 
 Comprehensive module help:
 - Theme: Spatial and Multichannel
@@ -30,12 +30,12 @@ if __package__ is None or __package__ == "":
 from pvx.algorithms.base import AlgorithmResult, run_algorithm
 
 ALGORITHM_ID = 'spatial_and_multichannel.pvx_spatial_freeze_and_trajectory'
-ALGORITHM_NAME = 'PVX spatial freeze and trajectory'
+ALGORITHM_NAME = 'pvx spatial freeze and trajectory'
 THEME = 'Spatial and Multichannel'
 
 
 def process(audio: np.ndarray, sample_rate: int, **params: Any) -> AlgorithmResult:
-    """Run PVX spatial freeze and trajectory on the provided audio buffer.
+    """Run pvx spatial freeze and trajectory on the provided audio buffer.
 
     Parameters:
     - audio: np.ndarray, shape (samples,) or (samples, channels)
@@ -70,7 +70,7 @@ def module_help_text() -> str:
         "  - Input audio can be mono or multichannel; mono is promoted to (N,1).\n"
         "  - Output is AlgorithmResult(audio, sample_rate, metadata).\n"
         "  - metadata includes algorithm_id, theme, status, params, notes, and extras.\n\n"
-        "For detailed per-algorithm parameter reference, see docs/PVX_ALGORITHM_PARAMS.md.\n"
+        "For detailed per-algorithm parameter reference, see docs/pvx_ALGORITHM_PARAMS.md.\n"
     )
 
 

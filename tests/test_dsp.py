@@ -10,6 +10,7 @@ import unittest
 import numpy as np
 
 from pvxvoc import (
+    TRANSFORM_CHOICES,
     WINDOW_CHOICES,
     VocoderConfig,
     apply_formant_preservation,
@@ -184,6 +185,28 @@ class TestPhaseVocoderDSP(unittest.TestCase):
                 phase_locking="off",
                 transient_preserve=False,
                 transient_threshold=2.0,
+            )
+            y = phase_vocoder_time_stretch(x, stretch, cfg)
+            self.assertEqual(y.size, int(round(x.size * stretch)))
+            self.assertTrue(np.all(np.isfinite(y)))
+
+    def test_all_transform_backends_supported(self) -> None:
+        sr = 12000
+        t = np.arange(int(sr * 0.2)) / sr
+        x = 0.25 * np.sin(2 * np.pi * 261.63 * t) + 0.1 * np.sin(2 * np.pi * 523.25 * t)
+        stretch = 1.08
+
+        for transform in TRANSFORM_CHOICES:
+            cfg = VocoderConfig(
+                n_fft=256,
+                win_length=256,
+                hop_size=64,
+                window="hann",
+                center=True,
+                phase_locking="off",
+                transient_preserve=False,
+                transient_threshold=2.0,
+                transform=transform,
             )
             y = phase_vocoder_time_stretch(x, stretch, cfg)
             self.assertEqual(y.size, int(round(x.size * stretch)))

@@ -70,7 +70,7 @@ def module_help_text() -> str:
         "  - Input audio can be mono or multichannel; mono is promoted to (N,1).\n"
         "  - Output is AlgorithmResult(audio, sample_rate, metadata).\n"
         "  - metadata includes algorithm_id, theme, status, params, notes, and extras.\n\n"
-        "For detailed per-algorithm parameter reference, see docs/PVX_ALGORITHM_PARAMS.md.\n"
+        "For detailed per-algorithm parameter reference, see docs/pvx_ALGORITHM_PARAMS.md.\n"
     )
 
 

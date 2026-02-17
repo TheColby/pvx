@@ -187,10 +187,10 @@ def generate_cli_flags_reference() -> None:
     unique_flags = sorted({str(row["flag"]) for row in rows})
 
     lines: list[str] = []
-    lines.append("# PVX CLI Flags Reference")
+    lines.append("# pvx CLI Flags Reference")
     lines.append("")
     lines.extend(generated_stamp_lines())
-    lines.append("This file enumerates long-form CLI flags discovered from argparse declarations in canonical PVX CLI sources.")
+    lines.append("This file enumerates long-form CLI flags discovered from argparse declarations in canonical pvx CLI sources.")
     lines.append("")
     lines.append(f"Total tool+flag entries: **{len(rows)}**")
     lines.append(f"Total unique long flags: **{len(unique_flags)}**")
@@ -388,7 +388,7 @@ def generate_algorithm_limitations() -> None:
         )
 
     lines: list[str] = []
-    lines.append("# PVX Algorithm Limitations and Applicability")
+    lines.append("# pvx Algorithm Limitations and Applicability")
     lines.append("")
     lines.extend(generated_stamp_lines())
     lines.append("This document summarizes assumptions, likely failure modes, and practical exclusion cases for each algorithm group and algorithm module.")
@@ -451,6 +451,48 @@ def generate_cookbook() -> None:
             "title": "Independent cents retune",
             "command": "python3 pvxvoc.py lead.wav --pitch-shift-cents -23 --time-stretch 1.0 --output-dir out --suffix _cents",
             "why": "Applies precise microtonal offset without tempo change.",
+        },
+        {
+            "category": "Transform selection",
+            "title": "Default production backend (FFT + transient protection)",
+            "command": "python3 pvxvoc.py mix.wav --transform fft --time-stretch 1.07 --transient-preserve --phase-locking identity --output-dir out --suffix _fft",
+            "why": "Use when you need the fastest and most stable general-purpose phase-vocoder path.",
+        },
+        {
+            "category": "Transform selection",
+            "title": "Reference Fourier baseline using explicit DFT mode",
+            "command": "python3 pvxvoc.py tone_sweep.wav --transform dft --time-stretch 1.00 --pitch-shift-semitones 0 --output-dir out --suffix _dft_ref",
+            "why": "Useful for parity checks and controlled transform-comparison experiments.",
+        },
+        {
+            "category": "Transform selection",
+            "title": "Prime-size frame experiment with CZT backend",
+            "command": "python3 pvxvoc.py archival_take.wav --transform czt --n-fft 1531 --win-length 1531 --hop-size 382 --time-stretch 1.03 --output-dir out --suffix _czt",
+            "why": "Alternative numerical path for awkward/prime frame sizes when validating edge cases.",
+        },
+        {
+            "category": "Transform selection",
+            "title": "DCT timbral compaction for smooth harmonic material",
+            "command": "python3 pvxvoc.py strings.wav --transform dct --pitch-shift-cents -18 --soft-clip-level 0.95 --output-dir out --suffix _dct",
+            "why": "Real-basis coefficients can emphasize envelope-like structure for creative reshaping.",
+        },
+        {
+            "category": "Transform selection",
+            "title": "DST odd-symmetry color pass",
+            "command": "python3 pvxvoc.py snare_loop.wav --transform dst --time-stretch 0.92 --phase-locking off --output-dir out --suffix _dst",
+            "why": "Provides an alternate real-basis artifact profile useful for creative percussive processing.",
+        },
+        {
+            "category": "Transform selection",
+            "title": "Hartley real-basis exploratory render",
+            "command": "python3 pvxvoc.py synth_pad.wav --transform hartley --time-stretch 1.30 --pitch-shift-semitones 3 --output-dir out --suffix _hartley",
+            "why": "Compares Hartley-domain behavior against complex FFT phase-vocoder output.",
+        },
+        {
+            "category": "Transform selection",
+            "title": "A/B sweep of transform backends from shell loop",
+            "command": "for t in fft dft czt dct dst hartley; do python3 pvxvoc.py voice.wav --transform \"$t\" --time-stretch 1.1 --output-dir out --suffix \"_$t\"; done",
+            "why": "Fast listening workflow for selecting the least-artifact transform on your source.",
         },
         {
             "category": "Microtonal",
@@ -519,7 +561,7 @@ def generate_cookbook() -> None:
         by_cat.setdefault(recipe["category"], []).append(recipe)
 
     lines: list[str] = []
-    lines.append("# PVX Pipeline Cookbook")
+    lines.append("# pvx Pipeline Cookbook")
     lines.append("")
     lines.extend(generated_stamp_lines())
     lines.append("Curated one-line workflows for practical chaining, mastering, microtonal processing, and batch operation.")
@@ -558,7 +600,7 @@ def generate_cookbook() -> None:
 
 def generate_architecture_doc() -> None:
     lines: list[str] = []
-    lines.append("# PVX Architecture")
+    lines.append("# pvx Architecture")
     lines.append("")
     lines.extend(generated_stamp_lines())
     lines.append("System architecture for runtime processing, algorithm dispatch, and documentation pipelines.")
@@ -790,7 +832,7 @@ def generate_benchmarks(run_benchmarks: bool) -> None:
         payload = json.loads(bench_json_path.read_text(encoding="utf-8"))
 
     lines: list[str] = []
-    lines.append("# PVX Benchmarks")
+    lines.append("# pvx Benchmarks")
     lines.append("")
     lines.extend(generated_stamp_lines())
     lines.append("Reproducible benchmark summary for core STFT+ISTFT path across CPU/CUDA/Apple-Silicon-native contexts.")
@@ -920,7 +962,7 @@ def generate_citation_docs() -> None:
             )
 
     lines: list[str] = []
-    lines.append("# PVX Citation Quality Report")
+    lines.append("# pvx Citation Quality Report")
     lines.append("")
     lines.extend(generated_stamp_lines())
     lines.append("This report classifies bibliography URLs by citation quality and highlights entries still using search-index links.")
@@ -985,7 +1027,7 @@ def generate_citation_docs() -> None:
 
 def generate_docs_contract() -> None:
     lines: list[str] = []
-    lines.append("# PVX Documentation Contribution Contract")
+    lines.append("# pvx Documentation Contribution Contract")
     lines.append("")
     lines.extend(generated_stamp_lines())
     lines.append("Any code change that affects behavior, parameters, algorithms, windows, outputs, or references must update generated documentation in the same PR.")
@@ -1018,7 +1060,7 @@ def generate_docs_contract() -> None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Generate advanced PVX documentation artifacts")
+    parser = argparse.ArgumentParser(description="Generate advanced pvx documentation artifacts")
     parser.add_argument(
         "--run-benchmarks",
         action="store_true",

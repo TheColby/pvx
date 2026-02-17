@@ -1,6 +1,6 @@
-# PVX Pipeline Cookbook
+# pvx Pipeline Cookbook
 
-_Generated from commit `58b1a2e` (commit date: 2026-02-17T09:29:32-05:00)._
+_Generated from commit `2327357` (commit date: 2026-02-17T11:46:01-05:00)._
 
 Curated one-line workflows for practical chaining, mastering, microtonal processing, and batch operation.
 
@@ -113,6 +113,64 @@ python3 -m pvx.algorithms.spatial_and_multichannel.imaging_and_panning.vbap_adap
 ```
 
 Why: Demonstrates algorithm-level spatial module invocation.
+
+## Transform selection
+
+### Default production backend (FFT + transient protection)
+
+```bash
+python3 pvxvoc.py mix.wav --transform fft --time-stretch 1.07 --transient-preserve --phase-locking identity --output-dir out --suffix _fft
+```
+
+Why: Use when you need the fastest and most stable general-purpose phase-vocoder path.
+
+### Reference Fourier baseline using explicit DFT mode
+
+```bash
+python3 pvxvoc.py tone_sweep.wav --transform dft --time-stretch 1.00 --pitch-shift-semitones 0 --output-dir out --suffix _dft_ref
+```
+
+Why: Useful for parity checks and controlled transform-comparison experiments.
+
+### Prime-size frame experiment with CZT backend
+
+```bash
+python3 pvxvoc.py archival_take.wav --transform czt --n-fft 1531 --win-length 1531 --hop-size 382 --time-stretch 1.03 --output-dir out --suffix _czt
+```
+
+Why: Alternative numerical path for awkward/prime frame sizes when validating edge cases.
+
+### DCT timbral compaction for smooth harmonic material
+
+```bash
+python3 pvxvoc.py strings.wav --transform dct --pitch-shift-cents -18 --soft-clip-level 0.95 --output-dir out --suffix _dct
+```
+
+Why: Real-basis coefficients can emphasize envelope-like structure for creative reshaping.
+
+### DST odd-symmetry color pass
+
+```bash
+python3 pvxvoc.py snare_loop.wav --transform dst --time-stretch 0.92 --phase-locking off --output-dir out --suffix _dst
+```
+
+Why: Provides an alternate real-basis artifact profile useful for creative percussive processing.
+
+### Hartley real-basis exploratory render
+
+```bash
+python3 pvxvoc.py synth_pad.wav --transform hartley --time-stretch 1.30 --pitch-shift-semitones 3 --output-dir out --suffix _hartley
+```
+
+Why: Compares Hartley-domain behavior against complex FFT phase-vocoder output.
+
+### A/B sweep of transform backends from shell loop
+
+```bash
+for t in fft dft czt dct dst hartley; do python3 pvxvoc.py voice.wav --transform "$t" --time-stretch 1.1 --output-dir out --suffix "_$t"; done
+```
+
+Why: Fast listening workflow for selecting the least-artifact transform on your source.
 
 ## Notes
 

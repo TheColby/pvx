@@ -50,7 +50,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
             "Conform audio to a CSV map. CSV columns: start_sec,end_sec,stretch,"
-            " and one pitch field: pitch_semitones or pitch_cents or pitch_ratio"
+            " and one pitch field: pitch_semitones or pitch_cents or pitch_ratio "
+            "(pitch_ratio accepts decimals, fractions like 3/2, or expressions like 2^(1/12))"
         )
     )
     add_common_io_args(parser, default_suffix="_conform")

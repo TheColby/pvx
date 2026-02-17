@@ -1,6 +1,6 @@
 {
-  "commit": "58b1a2e",
-  "commit_date": "2026-02-17T09:29:32-05:00",
+  "commit": "2327357",
+  "commit_date": "2026-02-17T11:46:01-05:00",
   "entries": [
     {
       "action": "store_true",
@@ -600,7 +600,7 @@
       "choices": [],
       "default": null,
       "flag": "--pitch-shift-ratio",
-      "help": "",
+      "help": "Pitch ratio override. Accepts decimals (1.5), integer ratios (3/2), and expressions (2^(1/12)).",
       "required": false,
       "source": "src/pvx/cli/pvxtransient.py",
       "tool": "pvxtransient.py"
@@ -1175,7 +1175,7 @@
       "choices": [],
       "default": null,
       "flag": "--pitch-shift-ratio",
-      "help": "Pitch ratio (>1 up, <1 down)",
+      "help": "Pitch ratio (>1 up, <1 down). Accepts decimals (1.5), integer ratios (3/2), and expressions (2^(1/12)).",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -1354,6 +1354,16 @@
       "default": 1.0,
       "flag": "--time-stretch",
       "help": "Final duration multiplier (1.0=unchanged, 2.0=2x longer)",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": "fft",
+      "flag": "--transform",
+      "help": "Per-frame transform backend for STFT/ISTFT paths (default: fft; options: fft, dft, czt, dct, dst, hartley)",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -1557,6 +1567,7 @@
     "--target-pitch-shift-semitones",
     "--target-sample-rate",
     "--time-stretch",
+    "--transform",
     "--transient-preserve",
     "--transient-threshold",
     "--verbose",

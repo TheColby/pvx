@@ -26,7 +26,7 @@
   <main class="wrap">
 <div class="card">
   <p>
-    Mathematical summary of the core signal-processing model used across PVX.
+    Mathematical summary of the core signal-processing model used across pvx.
     Equations are rendered with MathJax when this page is opened in a normal browser.
   </p>
   <p class="small">
@@ -48,12 +48,85 @@
 
 
 <div class="card">
+  <h2>Transform Backend Selection (<code>--transform</code>)</h2>
+  <p>
+    pvx lets you choose the per-frame transform backend used in analysis/resynthesis:
+    <code>fft</code>, <code>dft</code>, <code>czt</code>, <code>dct</code>, <code>dst</code>, and <code>hartley</code>.
+  </p>
+  <p><strong>Fourier family (<code>fft</code>, <code>dft</code>):</strong></p>
+  <p>$$X_t[k]=\sum_{n=0}^{N-1} x_t[n]e^{-j2\pi kn/N},\qquad x_t[n]=\frac{1}{N}\sum_{k=0}^{N-1}X_t[k]e^{j2\pi kn/N}$$</p>
+  <p><strong>Chirp-Z (<code>czt</code>):</strong> $$X_t[k]=\sum_{n=0}^{N-1}x_t[n]A^{-n}W^{nk}$$</p>
+  <p class="small">With pvx defaults $A=1$ and $W=e^{-j2\pi/N}$, CZT samples the DFT contour via a different numerical path.</p>
+  <p><strong>DCT-II (<code>dct</code>):</strong> $$C_t[k]=\alpha_k\sum_{n=0}^{N-1}x_t[n]\cos\left(\frac{\pi}{N}(n+\tfrac{1}{2})k\right)$$</p>
+  <p><strong>DST-II (<code>dst</code>):</strong> $$S_t[k]=\beta_k\sum_{n=0}^{N-1}x_t[n]\sin\left(\frac{\pi}{N}(n+\tfrac{1}{2})(k+1)\right)$$</p>
+  <p><strong>Hartley (<code>hartley</code>):</strong> $$H_t[k]=\sum_{n=0}^{N-1}x_t[n]\,\mathrm{cas}\left(\frac{2\pi kn}{N}\right),\ \mathrm{cas}(\theta)=\cos\theta+\sin\theta$$</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Transform</th>
+        <th>Why use it</th>
+        <th>Tradeoffs</th>
+        <th>Example use case</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>fft</code></td>
+        <td>Fastest and most robust default; best runtime and CUDA support.</td>
+        <td>Typical STFT leakage/time-resolution tradeoffs still apply.</td>
+        <td>General production stretch/pitch workflows.</td>
+      </tr>
+      <tr>
+        <td><code>dft</code></td>
+        <td>Reference Fourier baseline for transform parity checks.</td>
+        <td>Usually slower than <code>fft</code> with little audible benefit.</td>
+        <td>Verification and algorithm A/B testing.</td>
+      </tr>
+      <tr>
+        <td><code>czt</code></td>
+        <td>Alternative numerical path for awkward or prime frame sizes.</td>
+        <td>Requires SciPy; generally slower and CPU-oriented.</td>
+        <td>Edge-case frame-size validation and diagnostics.</td>
+      </tr>
+      <tr>
+        <td><code>dct</code></td>
+        <td>Real-basis energy compaction, useful for envelope-focused shaping.</td>
+        <td>No explicit complex phase bins; less transparent for strict phase coherence.</td>
+        <td>Creative timbre shaping and coefficient-domain experiments.</td>
+      </tr>
+      <tr>
+        <td><code>dst</code></td>
+        <td>Odd-symmetry real-basis alternative with distinct coloration.</td>
+        <td>Same phase limitations as DCT; artifacts are content-dependent.</td>
+        <td>Experimental percussive/spectral texture variants.</td>
+      </tr>
+      <tr>
+        <td><code>hartley</code></td>
+        <td>Real transform with Fourier-related basis for exploratory comparisons.</td>
+        <td>Different bin semantics from complex STFT can change artifact character.</td>
+        <td>Pedagogical and creative real-domain phase-vocoder tests.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Sample use cases</h3>
+  <pre><code>python3 pvxvoc.py dialog.wav --transform fft --time-stretch 1.08 --transient-preserve --output-dir out
+python3 pvxvoc.py tone_sweep.wav --transform dft --time-stretch 1.00 --output-dir out
+python3 pvxvoc.py archival_take.wav --transform czt --n-fft 1531 --win-length 1531 --hop-size 382 --output-dir out
+python3 pvxvoc.py strings.wav --transform dct --pitch-shift-cents -17 --output-dir out
+python3 pvxvoc.py percussion.wav --transform dst --time-stretch 0.92 --phase-locking off --output-dir out
+python3 pvxvoc.py synth_pad.wav --transform hartley --time-stretch 1.30 --output-dir out</code></pre>
+</div>
+
+
+<div class="card">
   <h2>Phase-Vocoder Propagation</h2>
-  <p>$$\Delta\phi_t[k]=\operatorname{princarg}\Big(\phi_t[k]-\phi_{t-1}[k]-\omega_kH_a\Big)$$</p>
+  <p>$$\Delta\phi_t[k]=\mathrm{princarg}\Big(\phi_t[k]-\phi_{t-1}[k]-\omega_kH_a\Big)$$</p>
   <p>$$\hat{\omega}_t[k]=\omega_k+\frac{\Delta\phi_t[k]}{H_a}$$</p>
   <p>$$\hat{\phi}_t[k]=\hat{\phi}_{t-1}[k]+\hat{\omega}_t[k]H_s$$</p>
   <p class="small">
-    PVX uses these relationships to estimate true instantaneous frequency and
+    pvx uses these relationships to estimate true instantaneous frequency and
     re-accumulate phase under a new synthesis hop.
   </p>
 </div>
@@ -86,15 +159,15 @@
   <p><strong>MVDR weights:</strong> $$\mathbf{w}=\frac{\mathbf{R}^{-1}\mathbf{d}}{\mathbf{d}^H\mathbf{R}^{-1}\mathbf{d}}$$</p>
   <p><strong>FOA encode (WXYZ):</strong> $$W=\frac{s}{\sqrt{2}},\ X=s\cos\theta\cos\varphi,\ Y=s\sin\theta\cos\varphi,\ Z=s\sin\varphi$$</p>
   <p class="small">
-    PVX spatial modules combine beamforming, ambisonic transformations, and phase-vocoder-consistent
+    pvx spatial modules combine beamforming, ambisonic transformations, and phase-vocoder-consistent
     multichannel processing for robust chain composition.
   </p>
 </div>
 </main>
   <footer class="site-footer">
     <div class="wrap">
-      Generated by <code>scripts_generate_html_docs.py</code> from commit <code>73af302</code>
-      (commit date: 2026-02-17T11:13:12-05:00).
+      Generated by <code>scripts_generate_html_docs.py</code> from commit <code>2327357</code>
+      (commit date: 2026-02-17T11:46:01-05:00).
     </div>
   </footer>
 </body>

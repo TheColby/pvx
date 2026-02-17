@@ -155,7 +155,7 @@ def extract_algorithm_params(base_path: Path) -> dict[str, list[str]]:
 def generate_algorithm_param_doc() -> None:
     params = extract_algorithm_params(ROOT / "src" / "pvx" / "algorithms" / "base.py")
     lines: list[str] = []
-    lines.append("# PVX Algorithm Parameter Reference")
+    lines.append("# pvx Algorithm Parameter Reference")
     lines.append("")
     lines.append("This file lists per-algorithm parameter keys consumed by `pvx.algorithms.base.run_algorithm()` dispatch.")
     lines.append("Legacy import alias `pvxalgorithms.base.run_algorithm()` is still available for compatibility.")
@@ -171,7 +171,7 @@ def generate_algorithm_param_doc() -> None:
                 lines.append(f"- `{key}`")
         lines.append("")
 
-    (DOCS_DIR / "PVX_ALGORITHM_PARAMS.md").write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+    (DOCS_DIR / "pvx_ALGORITHM_PARAMS.md").write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
 
 
 def generate_python_help_doc() -> None:
@@ -203,7 +203,7 @@ def generate_python_help_doc() -> None:
             lines.append(f"**Algorithm ID:** `{info['algorithm_id']}`")
             lines.append(f"**Theme:** `{info['theme']}`")
             lines.append("**Primary API:** `process(audio, sample_rate, **params) -> AlgorithmResult`")
-            lines.append("**Parameter docs:** see `/Users/cleider/dev/pvx/docs/PVX_ALGORITHM_PARAMS.md`.")
+            lines.append("**Parameter docs:** see `/Users/cleider/dev/pvx/docs/pvx_ALGORITHM_PARAMS.md`.")
             lines.append("")
 
         lines.append(f"**Classes:** {', '.join('`'+c+'`' for c in info['classes']) if info['classes'] else 'None'}")

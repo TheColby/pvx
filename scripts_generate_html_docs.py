@@ -3,7 +3,8 @@
 
 from __future__ import annotations
 
-from collections import OrderedDict
+import ast
+from collections import Counter, OrderedDict
 from html import escape
 import json
 from pathlib import Path
@@ -16,6 +17,7 @@ ROOT = Path(__file__).resolve().parent
 SRC_DIR = ROOT / "src"
 DOCS_HTML_DIR = ROOT / "docs" / "html"
 GROUPS_DIR = DOCS_HTML_DIR / "groups"
+README_PATH = ROOT / "README.md"
 GLOSSARY_PATH = ROOT / "docs" / "technical_glossary.json"
 EXTRA_PAPERS_PATH = ROOT / "docs" / "papers_extra.json"
 WINDOW_METRICS_PATH = ROOT / "docs" / "window_metrics.json"
@@ -24,6 +26,8 @@ LIMITATIONS_PATH = ROOT / "docs" / "algorithm_limitations.json"
 COOKBOOK_PATH = ROOT / "docs" / "pipeline_cookbook.json"
 BENCHMARKS_PATH = ROOT / "docs" / "benchmarks" / "latest.json"
 CITATION_QUALITY_PATH = ROOT / "docs" / "citation_quality.json"
+README_ALGO_BEGIN = "<!-- BEGIN ALGORITHM CATALOG -->"
+README_ALGO_END = "<!-- END ALGORITHM CATALOG -->"
 
 sys.path.insert(0, str(SRC_DIR))
 from pvx.algorithms.registry import ALGORITHM_REGISTRY  # noqa: E402
@@ -995,7 +999,7 @@ def window_entries() -> list[dict[str, str]]:
             family = "Sinusoidal"
             params = "none"
             formula = "W2"
-            note = "Same implementation as sine window in PVX."
+            note = "Same implementation as sine window in pvx."
         elif name == "bartlett":
             family = "Triangular"
             params = "none"
@@ -1010,7 +1014,7 @@ def window_entries() -> list[dict[str, str]]:
             family = "Rectangular"
             params = "none"
             formula = "W0"
-            note = "Alias of boxcar in PVX."
+            note = "Alias of boxcar in pvx."
         elif name == "triangular":
             family = "Triangular"
             params = "none"
@@ -1091,7 +1095,7 @@ def window_entries() -> list[dict[str, str]]:
             family = "Other"
             params = "none"
             formula = "W0"
-            note = "Window supported by PVX."
+            note = "Window supported by pvx."
         pros, cons, usage = window_tradeoffs(name, family)
         entries.append(
             {
@@ -1113,7 +1117,7 @@ def window_tradeoffs(name: str, family: str) -> tuple[str, str, str]:
         return (
             "Balanced leakage suppression and frequency resolution.",
             "Not optimal for amplitude metering or extreme sidelobe rejection.",
-            "Default choice for most PVX time-stretch and pitch-shift workflows.",
+            "Default choice for most pvx time-stretch and pitch-shift workflows.",
         )
     if name in {"boxcar", "rect"}:
         return (
@@ -1230,7 +1234,7 @@ def window_tradeoffs(name: str, family: str) -> tuple[str, str, str]:
             "Use for exploratory spectral work needing smooth derivatives.",
         )
     return (
-        "Supported by PVX and compatible with the shared phase-vocoder path.",
+        "Supported by pvx and compatible with the shared phase-vocoder path.",
         "Tradeoffs depend on the specific shape parameters.",
         "Start with Hann/Hamming, then compare this window if artifacts persist.",
     )
@@ -1255,14 +1259,14 @@ WINDOW_EQUATIONS_HTML = """
   1, & \\frac{\\alpha}{2}\\le x<1-\\frac{\\alpha}{2} \\\\
   \\frac{1}{2}\\left(1+\\cos\\left(\\pi\\left(\\frac{2x}{\\alpha}-\\frac{2}{\\alpha}+1\\right)\\right)\\right), & 1-\\frac{\\alpha}{2}\\le x\\le 1
   \\end{cases}$$</p>
-  <p class="small">PVX special cases: $\\alpha\\le 0$ is rectangular and $\\alpha\\ge 1$ becomes Hann.</p>
+  <p class="small">pvx special cases: $\\alpha\\le 0$ is rectangular and $\\alpha\\ge 1$ becomes Hann.</p>
   <p><strong>(W7) Parzen:</strong></p>
   <p>$$u=\\left|\\frac{2n}{N-1}-1\\right|,\\quad w[n]=\\begin{cases}
   1-6u^2+6u^3, & 0\\le u\\le \\frac{1}{2} \\\\
   2(1-u)^3, & \\frac{1}{2}<u\\le 1 \\\\
   0, & u>1
   \\end{cases}$$</p>
-  <p><strong>(W8) Lanczos:</strong> $$w[n]=\\operatorname{sinc}\\left(\\frac{2n}{N-1}-1\\right)$$</p>
+  <p><strong>(W8) Lanczos:</strong> $$w[n]=\\mathrm{sinc}\\left(\\frac{2n}{N-1}-1\\right)$$</p>
   <p><strong>(W9) Welch:</strong> $$w[n]=\\max\\left(1-x_n^2,0\\right)$$</p>
   <p><strong>(W10) Gaussian:</strong> $$w[n]=\\exp\\left(-\\frac{1}{2}\\left(\\frac{n-m}{\\sigma}\\right)^2\\right),\\ \\sigma=r_\\sigma m$$</p>
   <p><strong>(W11) General Gaussian:</strong> $$w[n]=\\exp\\left(-\\frac{1}{2}\\left|\\frac{n-m}{\\sigma}\\right|^{2p}\\right)$$</p>
@@ -1277,23 +1281,102 @@ WINDOW_EQUATIONS_HTML = """
 </div>
 """.strip()
 
-def extract_algorithm_params(base_path: Path) -> dict[str, list[str]]:
+def _split_top_level_once(text: str, delimiter: str = ",") -> tuple[str, str | None]:
+    depth = 0
+    quote: str | None = None
+    escaped = False
+    for idx, ch in enumerate(text):
+        if quote is not None:
+            if escaped:
+                escaped = False
+                continue
+            if ch == "\\":
+                escaped = True
+                continue
+            if ch == quote:
+                quote = None
+            continue
+        if ch in ("'", '"'):
+            quote = ch
+            continue
+        if ch in "([{":
+            depth += 1
+            continue
+        if ch in ")]}":
+            depth = max(0, depth - 1)
+            continue
+        if ch == delimiter and depth == 0:
+            return text[:idx], text[idx + 1 :]
+    return text, None
+
+
+def _extract_params_get_calls(line: str) -> list[tuple[str, str | None]]:
+    calls: list[tuple[str, str | None]] = []
+    marker = "params.get("
+    search_pos = 0
+    while True:
+        start = line.find(marker, search_pos)
+        if start < 0:
+            break
+        i = start + len(marker)
+        depth = 1
+        quote: str | None = None
+        escaped = False
+        while i < len(line):
+            ch = line[i]
+            if quote is not None:
+                if escaped:
+                    escaped = False
+                elif ch == "\\":
+                    escaped = True
+                elif ch == quote:
+                    quote = None
+                i += 1
+                continue
+            if ch in ("'", '"'):
+                quote = ch
+                i += 1
+                continue
+            if ch == "(":
+                depth += 1
+            elif ch == ")":
+                depth -= 1
+                if depth == 0:
+                    break
+            i += 1
+
+        if i >= len(line):
+            break
+        inner = line[start + len(marker) : i].strip()
+        left, right = _split_top_level_once(inner, ",")
+        key = left.strip().strip('"').strip("'")
+        default = right.strip() if right is not None else None
+        if key:
+            calls.append((key, default))
+        search_pos = i + 1
+    return calls
+
+
+def extract_algorithm_param_specs(base_path: Path) -> tuple[dict[str, list[str]], dict[str, dict[str, str]]]:
     text = base_path.read_text(encoding="utf-8")
-    mapping: dict[str, list[str]] = {}
     lines = text.splitlines()
+    key_map: dict[str, list[str]] = {}
+    default_map: dict[str, dict[str, str]] = {}
 
     current_slug: str | None = None
-    bucket: list[str] = []
+    keys_bucket: list[str] = []
+    defaults_bucket: dict[str, str] = {}
 
     def commit() -> None:
-        nonlocal current_slug, bucket
+        nonlocal current_slug, keys_bucket, defaults_bucket
         if current_slug is None:
             return
         dedup: list[str] = []
-        for item in bucket:
+        for item in keys_bucket:
             if item not in dedup:
                 dedup.append(item)
-        mapping[current_slug] = dedup
+        key_map[current_slug] = dedup
+        default_map[current_slug] = dict(defaults_bucket)
 
     for line in lines:
         line_s = line.strip()
@@ -1301,19 +1384,115 @@ def extract_algorithm_params(base_path: Path) -> dict[str, list[str]]:
             if current_slug is not None:
                 commit()
             current_slug = line_s.split('"')[1]
-            bucket = []
-        if "params.get(" in line_s and current_slug is not None:
-            try:
-                name = line_s.split("params.get(", 1)[1].split(")", 1)[0]
-                key = name.split(",", 1)[0].strip().strip('"').strip("'")
-                if key:
-                    bucket.append(key)
-            except Exception:
-                continue
+            keys_bucket = []
+            defaults_bucket = {}
+            continue
+        if current_slug is None or "params.get(" not in line_s:
+            continue
+        for key, default in _extract_params_get_calls(line_s):
+            keys_bucket.append(key)
+            if default is not None and key not in defaults_bucket:
+                defaults_bucket[key] = default
 
     if current_slug is not None:
         commit()
-    return mapping
+    return key_map, default_map
+
+
+def extract_algorithm_params(base_path: Path) -> dict[str, list[str]]:
+    key_map, _ = extract_algorithm_param_specs(base_path)
+    return key_map
+
+
+def extract_module_cli_flags(module_path: Path) -> list[str]:
+    try:
+        tree = ast.parse(module_path.read_text(encoding="utf-8"))
+    except Exception:
+        return []
+    flags: list[str] = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+        if not isinstance(node.func, ast.Attribute) or node.func.attr != "add_argument":
+            continue
+        for arg in node.args:
+            if isinstance(arg, ast.Constant) and isinstance(arg.value, str) and arg.value.startswith("--"):
+                flag = str(arg.value).strip()
+                if flag and flag not in flags:
+                    flags.append(flag)
+    return flags
+
+
+def collect_algorithm_module_flags(groups: OrderedDict[str, list[tuple[str, dict[str, str]]]]) -> dict[str, list[str]]:
+    by_slug: dict[str, list[str]] = {}
+    for items in groups.values():
+        for algorithm_id, meta in items:
+            _, slug = algorithm_id.split(".", 1)
+            module_path = ROOT / "src" / Path(*str(meta["module"]).split(".")) .with_suffix(".py")
+            by_slug[slug] = extract_module_cli_flags(module_path)
+    return by_slug
+
+
+def sample_value_from_default(key: str, default_expr: str | None) -> str:
+    if default_expr is not None:
+        return default_expr.strip()
+    key_l = key.lower()
+    if key_l == "scale_cents":
+        return "[0.0, 200.0, 400.0, 500.0, 700.0, 900.0, 1100.0]"
+    if key_l.endswith("_hz"):
+        return "440.0"
+    if "seed" in key_l:
+        return "1307"
+    if key_l.startswith(("is_", "has_", "use_", "enable_", "apply_")):
+        return "True"
+    if "channels" in key_l:
+        return "2"
+    if any(token in key_l for token in ("path", "file", "name")):
+        return "\"example\""
+    if any(token in key_l for token in ("ratio", "amount", "strength", "mix", "depth")):
+        return "1.0"
+    if any(token in key_l for token in ("threshold", "floor", "gain", "db", "ms")):
+        return "0.0"
+    return "<value>"
+
+
+def format_sample_params(keys: list[str], defaults: dict[str, str], *, max_items: int = 6) -> str:
+    if not keys:
+        return "{}"
+    parts: list[str] = []
+    for key in keys[:max_items]:
+        value = sample_value_from_default(key, defaults.get(key))
+        parts.append(f"{key}={value}")
+    if len(keys) > max_items:
+        parts.append("...")
+    return "{" + ", ".join(parts) + "}"
+
+
+def compute_unique_cli_flags(
+    params: dict[str, list[str]],
+    module_flags_by_slug: dict[str, list[str]],
+) -> dict[str, list[str]]:
+    key_counts: Counter[str] = Counter()
+    for keys in params.values():
+        key_counts.update(keys)
+
+    module_flag_counts: Counter[str] = Counter()
+    for flags in module_flags_by_slug.values():
+        module_flag_counts.update(flags)
+
+    result: dict[str, list[str]] = {}
+    for slug, keys in params.items():
+        unique: list[str] = []
+        for flag in module_flags_by_slug.get(slug, []):
+            if module_flag_counts.get(flag, 0) == 1 and flag not in unique:
+                unique.append(flag)
+        for key in keys:
+            if key_counts.get(key, 0) == 1:
+                flag = f"--{key.replace('_', '-')}"
+                if flag not in unique:
+                    unique.append(flag)
+        result[slug] = unique
+    return result
 
 
 def grouped_algorithms() -> OrderedDict[str, list[tuple[str, dict[str, str]]]]:
@@ -1672,7 +1851,7 @@ def render_papers_page() -> None:
 <div class=\"card\">
   <p>
     This bibliography collects foundational and directly related literature that informed
-    PVX's phase-vocoder-centric architecture and the broader DSP algorithm roadmap.
+    pvx's phase-vocoder-centric architecture and the broader DSP algorithm roadmap.
   </p>
   <p>
     Total references: <strong>{count}</strong> across <strong>{categories}</strong> categories.
@@ -1742,7 +1921,7 @@ def render_glossary_page() -> None:
         """
 <div class=\"card\">
   <p>
-    Linked glossary for core concepts used throughout PVX algorithms, CLIs, and research docs.
+    Linked glossary for core concepts used throughout pvx algorithms, CLIs, and research docs.
     Entries include concise definitions plus external references (Wikipedia, standards pages,
     project docs, and canonical papers).
   </p>
@@ -1801,7 +1980,7 @@ def render_math_page() -> None:
         """
 <div class=\"card\">
   <p>
-    Mathematical summary of the core signal-processing model used across PVX.
+    Mathematical summary of the core signal-processing model used across pvx.
     Equations are rendered with MathJax when this page is opened in a normal browser.
   </p>
   <p class=\"small\">
@@ -1827,12 +2006,87 @@ def render_math_page() -> None:
     sections.append(
         """
 <div class=\"card\">
+  <h2>Transform Backend Selection (<code>--transform</code>)</h2>
+  <p>
+    pvx lets you choose the per-frame transform backend used in analysis/resynthesis:
+    <code>fft</code>, <code>dft</code>, <code>czt</code>, <code>dct</code>, <code>dst</code>, and <code>hartley</code>.
+  </p>
+  <p><strong>Fourier family (<code>fft</code>, <code>dft</code>):</strong></p>
+  <p>$$X_t[k]=\\sum_{n=0}^{N-1} x_t[n]e^{-j2\\pi kn/N},\\qquad x_t[n]=\\frac{1}{N}\\sum_{k=0}^{N-1}X_t[k]e^{j2\\pi kn/N}$$</p>
+  <p><strong>Chirp-Z (<code>czt</code>):</strong> $$X_t[k]=\\sum_{n=0}^{N-1}x_t[n]A^{-n}W^{nk}$$</p>
+  <p class=\"small\">With pvx defaults $A=1$ and $W=e^{-j2\\pi/N}$, CZT samples the DFT contour via a different numerical path.</p>
+  <p><strong>DCT-II (<code>dct</code>):</strong> $$C_t[k]=\\alpha_k\\sum_{n=0}^{N-1}x_t[n]\\cos\\left(\\frac{\\pi}{N}(n+\\tfrac{1}{2})k\\right)$$</p>
+  <p><strong>DST-II (<code>dst</code>):</strong> $$S_t[k]=\\beta_k\\sum_{n=0}^{N-1}x_t[n]\\sin\\left(\\frac{\\pi}{N}(n+\\tfrac{1}{2})(k+1)\\right)$$</p>
+  <p><strong>Hartley (<code>hartley</code>):</strong> $$H_t[k]=\\sum_{n=0}^{N-1}x_t[n]\\,\\mathrm{cas}\\left(\\frac{2\\pi kn}{N}\\right),\\ \\mathrm{cas}(\\theta)=\\cos\\theta+\\sin\\theta$$</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Transform</th>
+        <th>Why use it</th>
+        <th>Tradeoffs</th>
+        <th>Example use case</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>fft</code></td>
+        <td>Fastest and most robust default; best runtime and CUDA support.</td>
+        <td>Typical STFT leakage/time-resolution tradeoffs still apply.</td>
+        <td>General production stretch/pitch workflows.</td>
+      </tr>
+      <tr>
+        <td><code>dft</code></td>
+        <td>Reference Fourier baseline for transform parity checks.</td>
+        <td>Usually slower than <code>fft</code> with little audible benefit.</td>
+        <td>Verification and algorithm A/B testing.</td>
+      </tr>
+      <tr>
+        <td><code>czt</code></td>
+        <td>Alternative numerical path for awkward or prime frame sizes.</td>
+        <td>Requires SciPy; generally slower and CPU-oriented.</td>
+        <td>Edge-case frame-size validation and diagnostics.</td>
+      </tr>
+      <tr>
+        <td><code>dct</code></td>
+        <td>Real-basis energy compaction, useful for envelope-focused shaping.</td>
+        <td>No explicit complex phase bins; less transparent for strict phase coherence.</td>
+        <td>Creative timbre shaping and coefficient-domain experiments.</td>
+      </tr>
+      <tr>
+        <td><code>dst</code></td>
+        <td>Odd-symmetry real-basis alternative with distinct coloration.</td>
+        <td>Same phase limitations as DCT; artifacts are content-dependent.</td>
+        <td>Experimental percussive/spectral texture variants.</td>
+      </tr>
+      <tr>
+        <td><code>hartley</code></td>
+        <td>Real transform with Fourier-related basis for exploratory comparisons.</td>
+        <td>Different bin semantics from complex STFT can change artifact character.</td>
+        <td>Pedagogical and creative real-domain phase-vocoder tests.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Sample use cases</h3>
+  <pre><code>python3 pvxvoc.py dialog.wav --transform fft --time-stretch 1.08 --transient-preserve --output-dir out
+python3 pvxvoc.py tone_sweep.wav --transform dft --time-stretch 1.00 --output-dir out
+python3 pvxvoc.py archival_take.wav --transform czt --n-fft 1531 --win-length 1531 --hop-size 382 --output-dir out
+python3 pvxvoc.py strings.wav --transform dct --pitch-shift-cents -17 --output-dir out
+python3 pvxvoc.py percussion.wav --transform dst --time-stretch 0.92 --phase-locking off --output-dir out
+python3 pvxvoc.py synth_pad.wav --transform hartley --time-stretch 1.30 --output-dir out</code></pre>
+</div>
+"""
+    )
+    sections.append(
+        """
+<div class=\"card\">
   <h2>Phase-Vocoder Propagation</h2>
-  <p>$$\\Delta\\phi_t[k]=\\operatorname{princarg}\\Big(\\phi_t[k]-\\phi_{t-1}[k]-\\omega_kH_a\\Big)$$</p>
+  <p>$$\\Delta\\phi_t[k]=\\mathrm{princarg}\\Big(\\phi_t[k]-\\phi_{t-1}[k]-\\omega_kH_a\\Big)$$</p>
   <p>$$\\hat{\\omega}_t[k]=\\omega_k+\\frac{\\Delta\\phi_t[k]}{H_a}$$</p>
   <p>$$\\hat{\\phi}_t[k]=\\hat{\\phi}_{t-1}[k]+\\hat{\\omega}_t[k]H_s$$</p>
   <p class=\"small\">
-    PVX uses these relationships to estimate true instantaneous frequency and
+    pvx uses these relationships to estimate true instantaneous frequency and
     re-accumulate phase under a new synthesis hop.
   </p>
 </div>
@@ -1871,7 +2125,7 @@ def render_math_page() -> None:
   <p><strong>MVDR weights:</strong> $$\\mathbf{w}=\\frac{\\mathbf{R}^{-1}\\mathbf{d}}{\\mathbf{d}^H\\mathbf{R}^{-1}\\mathbf{d}}$$</p>
   <p><strong>FOA encode (WXYZ):</strong> $$W=\\frac{s}{\\sqrt{2}},\\ X=s\\cos\\theta\\cos\\varphi,\\ Y=s\\sin\\theta\\cos\\varphi,\\ Z=s\\sin\\varphi$$</p>
   <p class=\"small\">
-    PVX spatial modules combine beamforming, ambisonic transformations, and phase-vocoder-consistent
+    pvx spatial modules combine beamforming, ambisonic transformations, and phase-vocoder-consistent
     multichannel processing for robust chain composition.
   </p>
 </div>
@@ -1952,7 +2206,7 @@ def render_windows_page() -> None:
         f"""
 <div class=\"card\">
   <p>
-    Complete PVX analysis-window reference. This page covers all <strong>{len(voc_core.WINDOW_CHOICES)}</strong>
+    Complete pvx analysis-window reference. This page covers all <strong>{len(voc_core.WINDOW_CHOICES)}</strong>
     supported windows from <code>pvx.core.voc.WINDOW_CHOICES</code>, with formula-family mapping and practical interpretation.
   </p>
   <p class=\"small\">

@@ -1,8 +1,8 @@
-# PVX Window Reference
+# pvx Window Reference
 
-_Generated from commit `a2d5649` (commit date: 2026-02-17T11:08:46-05:00)._
+_Generated from commit `2327357` (commit date: 2026-02-17T11:46:01-05:00)._
 
-PVX currently supports **50** analysis windows. This file defines each one mathematically and explains it in plain English.
+pvx currently supports **50** analysis windows. This file defines each one mathematically and explains it in plain English.
 
 ## Notation
 
@@ -48,7 +48,7 @@ w[n]=\begin{cases}
 \end{cases}
 $$
 
-Special cases in PVX: $\alpha\le 0$ gives rectangular behavior, and $\alpha\ge 1$ collapses to Hann.
+Special cases in pvx: $\alpha\le 0$ gives rectangular behavior, and $\alpha\ge 1$ collapses to Hann.
 
 **(W7) Parzen**
 
@@ -63,7 +63,7 @@ $$
 
 **(W8) Lanczos**
 
-$$w[n]=\operatorname{sinc}\left(\frac{2n}{N-1}-1\right)$$
+$$w[n]=\mathrm{sinc}\left(\frac{2n}{N-1}-1\right)$$
 
 **(W9) Welch**
 
@@ -105,7 +105,7 @@ $$x=\left|\frac{2n}{N-1}-1\right|,\quad w[n]=(1-x)\cos(\pi x)+\frac{\sin(\pi x)}
 
 $$w[n]=\frac{I_0\left(\beta\sqrt{1-r_n^2}\right)}{I_0(\beta)},\quad r_n=\frac{n-m}{m}$$
 
-Each supported PVX window maps to one of the formula families above with the per-window constants shown below.
+Each supported pvx window maps to one of the formula families above with the per-window constants shown below.
 
 ## Quantitative Metrics
 
@@ -119,8 +119,8 @@ Each supported PVX window maps to one of the formula families above with the per
 
 | Window | Family | Parameters | Formula | Coherent gain | ENBW (bins) | Scalloping loss (dB) | Main-lobe width (bins) | Peak sidelobe (dB) | Plots | Pros | Cons | Usage advice |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- | --- | --- | --- |
-| `hann` | Cosine series | `coeffs=(0.5, -0.5)` | W1 | 0.499756 | 1.500733 | -1.422 | 4.000 | -31.468 | [time](assets/windows/hann_time.svg) / [freq](assets/windows/hann_freq.svg) | Balanced leakage suppression and frequency resolution. | Not optimal for amplitude metering or extreme sidelobe rejection. | Default choice for most PVX time-stretch and pitch-shift workflows. |
-| `hamming` | Cosine series | `coeffs=(0.54, -0.46)` | W1 | 0.539775 | 1.363305 | -1.750 | 4.000 | -42.675 | [time](assets/windows/hamming_time.svg) / [freq](assets/windows/hamming_freq.svg) | Balanced leakage suppression and frequency resolution. | Not optimal for amplitude metering or extreme sidelobe rejection. | Default choice for most PVX time-stretch and pitch-shift workflows. |
+| `hann` | Cosine series | `coeffs=(0.5, -0.5)` | W1 | 0.499756 | 1.500733 | -1.422 | 4.000 | -31.468 | [time](assets/windows/hann_time.svg) / [freq](assets/windows/hann_freq.svg) | Balanced leakage suppression and frequency resolution. | Not optimal for amplitude metering or extreme sidelobe rejection. | Default choice for most pvx time-stretch and pitch-shift workflows. |
+| `hamming` | Cosine series | `coeffs=(0.54, -0.46)` | W1 | 0.539775 | 1.363305 | -1.750 | 4.000 | -42.675 | [time](assets/windows/hamming_time.svg) / [freq](assets/windows/hamming_freq.svg) | Balanced leakage suppression and frequency resolution. | Not optimal for amplitude metering or extreme sidelobe rejection. | Default choice for most pvx time-stretch and pitch-shift workflows. |
 | `blackman` | Cosine series | `coeffs=(0.42, -0.5, 0.08)` | W1 | 0.419795 | 1.727601 | -1.098 | 6.000 | -58.109 | [time](assets/windows/blackman_time.svg) / [freq](assets/windows/blackman_freq.svg) | Strong sidelobe suppression for cleaner spectral separation. | Wider main lobe than Hann/Hamming. | Use for dense harmonic material when leakage artifacts dominate. |
 | `blackmanharris` | Cosine series | `coeffs=(0.35875, -0.48829, 0.14128, -0.01168)` | W1 | 0.358575 | 2.005332 | -0.825 | 8.000 | -92.011 | [time](assets/windows/blackmanharris_time.svg) / [freq](assets/windows/blackmanharris_freq.svg) | Strong sidelobe suppression for cleaner spectral separation. | Wider main lobe than Hann/Hamming. | Use for dense harmonic material when leakage artifacts dominate. |
 | `nuttall` | Cosine series | `coeffs=(0.355768, -0.487396, 0.144232, -0.012604)` | W1 | 0.355594 | 2.022220 | -0.811 | 8.000 | -93.325 | [time](assets/windows/nuttall_time.svg) / [freq](assets/windows/nuttall_freq.svg) | Strong sidelobe suppression for cleaner spectral separation. | Wider main lobe than Hann/Hamming. | Use for dense harmonic material when leakage artifacts dominate. |

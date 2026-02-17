@@ -529,32 +529,32 @@ ALGORITHM_REGISTRY = {
         'module': 'pvx.algorithms.spatial_and_multichannel.ambisonics_and_immersive.spatial_room_impulse_convolution',
     },
     'spatial_and_multichannel.pvx_interchannel_phase_locking': {
-        'name': 'PVX interchannel phase locking',
+        'name': 'pvx interchannel phase locking',
         'theme': 'Spatial and Multichannel',
         'module': 'pvx.algorithms.spatial_and_multichannel.phase_vocoder_spatial.pvx_interchannel_phase_locking',
     },
     'spatial_and_multichannel.pvx_spatial_transient_preservation': {
-        'name': 'PVX spatial transient preservation',
+        'name': 'pvx spatial transient preservation',
         'theme': 'Spatial and Multichannel',
         'module': 'pvx.algorithms.spatial_and_multichannel.phase_vocoder_spatial.pvx_spatial_transient_preservation',
     },
     'spatial_and_multichannel.pvx_interaural_coherence_shaping': {
-        'name': 'PVX interaural coherence shaping',
+        'name': 'pvx interaural coherence shaping',
         'theme': 'Spatial and Multichannel',
         'module': 'pvx.algorithms.spatial_and_multichannel.phase_vocoder_spatial.pvx_interaural_coherence_shaping',
     },
     'spatial_and_multichannel.pvx_directional_spectral_warp': {
-        'name': 'PVX directional spectral warp',
+        'name': 'pvx directional spectral warp',
         'theme': 'Spatial and Multichannel',
         'module': 'pvx.algorithms.spatial_and_multichannel.phase_vocoder_spatial.pvx_directional_spectral_warp',
     },
     'spatial_and_multichannel.pvx_multichannel_time_alignment': {
-        'name': 'PVX multichannel time alignment',
+        'name': 'pvx multichannel time alignment',
         'theme': 'Spatial and Multichannel',
         'module': 'pvx.algorithms.spatial_and_multichannel.phase_vocoder_spatial.pvx_multichannel_time_alignment',
     },
     'spatial_and_multichannel.pvx_spatial_freeze_and_trajectory': {
-        'name': 'PVX spatial freeze and trajectory',
+        'name': 'pvx spatial freeze and trajectory',
         'theme': 'Spatial and Multichannel',
         'module': 'pvx.algorithms.spatial_and_multichannel.phase_vocoder_spatial.pvx_spatial_freeze_and_trajectory',
     },

@@ -120,6 +120,57 @@ class TestCLIRegression(unittest.TestCase):
             self.assertEqual(output_audio.shape[1], 2)
             self.assertAlmostEqual(output_audio.shape[0], input_audio.shape[0], delta=4)
 
+    def test_cli_pitch_shift_ratio_expression(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            in_path = tmp_path / "ratio_expr.wav"
+            input_audio, sr = write_stereo_tone(in_path, duration=0.35)
+
+            cmd = [
+                sys.executable,
+                str(CLI),
+                str(in_path),
+                "--pitch-shift-ratio",
+                "2^(1/12)",
+                "--overwrite",
+            ]
+            proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+            self.assertEqual(proc.returncode, 0, msg=proc.stderr)
+
+            out_path = tmp_path / "ratio_expr_pv.wav"
+            self.assertTrue(out_path.exists())
+            output_audio, out_sr = sf.read(out_path, always_2d=True)
+            self.assertEqual(out_sr, sr)
+            self.assertEqual(output_audio.shape[1], 2)
+            self.assertAlmostEqual(output_audio.shape[0], input_audio.shape[0], delta=4)
+
+    def test_cli_transform_switch_dct(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            in_path = tmp_path / "dct.wav"
+            input_audio, sr = write_stereo_tone(in_path, duration=0.3)
+
+            cmd = [
+                sys.executable,
+                str(CLI),
+                str(in_path),
+                "--transform",
+                "dct",
+                "--time-stretch",
+                "1.05",
+                "--overwrite",
+            ]
+            proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+            self.assertEqual(proc.returncode, 0, msg=proc.stderr)
+
+            out_path = tmp_path / "dct_pv.wav"
+            self.assertTrue(out_path.exists())
+            output_audio, out_sr = sf.read(out_path, always_2d=True)
+            self.assertEqual(out_sr, sr)
+            self.assertEqual(output_audio.shape[1], 2)
+            expected_len = int(round(input_audio.shape[0] * 1.05))
+            self.assertAlmostEqual(output_audio.shape[0], expected_len, delta=4)
+
     def test_cli_fourier_sync_non_power_of_two_fft(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
