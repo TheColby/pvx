@@ -1,3 +1,10 @@
+"""Regression smoke tests for all generated pvx algorithm modules.
+
+This test verifies that every algorithm listed in `pvxalgorithms.registry`
+is importable and can process a synthetic stereo signal while returning
+finite 2D output and implemented metadata status.
+"""
+
 import importlib
 import unittest
 

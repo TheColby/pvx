@@ -1,3 +1,10 @@
+"""DSP unit tests for core vocoder and analysis primitives.
+
+These tests validate transform length behavior, F0 estimation, transient
+handling, formant-preserving correction, Fourier-sync operation, runtime
+selection, and support for all registered analysis windows.
+"""
+
 import unittest
 
 import numpy as np

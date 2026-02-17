@@ -59,6 +59,33 @@ Use `--device auto` (default), `--device cpu`, or `--device cuda` plus `--cuda-d
 python3 pvxvoc.py test.wav --time-stretch 1.25 --pitch-shift-semitones 3
 ```
 
+## Comprehensive Python Documentation and Help
+
+`pvx` now ships a full, generated Python-file documentation set that covers every `.py` file in the repository.
+
+Documentation artifacts:
+
+- `docs/PYTHON_FILE_HELP.md`: exhaustive per-file reference and help index.
+  - Current coverage: all `130` Python files in this repository.
+  - Includes purpose, top-level symbols, help commands, and CLI help snapshots where applicable.
+- `docs/PVX_ALGORITHM_PARAMS.md`: per-algorithm parameter keys consumed by `pvxalgorithms.base` dispatch.
+- `ALGORITHM_INVENTORY.md`: themed inventory of all algorithm modules.
+
+Help access patterns:
+
+| File type | How to get help |
+| --- | --- |
+| Main pvx tool CLIs (`pvxvoc.py`, `pvxfreeze.py`, etc.) | `python3 <tool>.py --help` |
+| Top-level navigator | `python3 main.py --help` |
+| Algorithm modules (`pvxalgorithms/.../*.py`) | `python3 <path/to/module.py> --help` or `python3 -m pvxalgorithms.<theme>.<module> --help` |
+| Test modules | `python3 tests/<file>.py` or `python3 -m unittest ...` |
+
+Regenerate docs after code changes:
+
+```bash
+python3 scripts_generate_python_docs.py
+```
+
 ## Shared Conventions (Most Tools)
 
 Most `pvx*` scripts are intentionally aligned around one CLI contract for batch audio workflows.  

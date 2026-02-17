@@ -1,3 +1,13 @@
+"""CLI regression tests for pvxvoc end-to-end workflows.
+
+Coverage includes:
+- baseline multi-channel pitch/time behavior
+- dry-run behavior with existing outputs
+- microtonal cents-shift CLI path
+- non-power-of-two Fourier-sync mode
+- a numeric DSP snapshot metric for drift detection
+"""
+
 import subprocess
 import sys
 import tempfile

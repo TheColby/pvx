@@ -1,3 +1,9 @@
+"""Microtonal feature tests across CSV mapping, retune, and CLI pitch paths.
+
+Ensures cents/ratio/semitone mapping behavior remains stable and that
+microtonal pitch controls produce expected conversion outputs.
+"""
+
 import tempfile
 import unittest
 from pathlib import Path
