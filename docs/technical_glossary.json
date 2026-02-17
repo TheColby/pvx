@@ -1,0 +1,680 @@
+[
+  {
+    "term": "Fourier transform",
+    "category": "Core DSP Math",
+    "description": "Transforms a signal from time domain to frequency domain.",
+    "url": "https://en.wikipedia.org/wiki/Fourier_transform"
+  },
+  {
+    "term": "Fast Fourier transform (FFT)",
+    "category": "Core DSP Math",
+    "description": "Efficient algorithm for computing the discrete Fourier transform.",
+    "url": "https://en.wikipedia.org/wiki/Fast_Fourier_transform"
+  },
+  {
+    "term": "Inverse FFT (IFFT)",
+    "category": "Core DSP Math",
+    "description": "Inverse operation that reconstructs time-domain samples from spectral bins.",
+    "url": "https://en.wikipedia.org/wiki/Fast_Fourier_transform"
+  },
+  {
+    "term": "Window function",
+    "category": "Core DSP Math",
+    "description": "Tapering function applied before spectral analysis to control leakage.",
+    "url": "https://en.wikipedia.org/wiki/Window_function"
+  },
+  {
+    "term": "Hann window",
+    "category": "Core DSP Math",
+    "description": "Raised cosine window commonly used in STFT analysis.",
+    "url": "https://en.wikipedia.org/wiki/Window_function"
+  },
+  {
+    "term": "Hamming window",
+    "category": "Core DSP Math",
+    "description": "Cosine-sum window with reduced nearest sidelobe amplitude.",
+    "url": "https://en.wikipedia.org/wiki/Window_function"
+  },
+  {
+    "term": "Blackman window",
+    "category": "Core DSP Math",
+    "description": "Cosine-sum window with stronger sidelobe suppression.",
+    "url": "https://en.wikipedia.org/wiki/Window_function"
+  },
+  {
+    "term": "Kaiser window",
+    "category": "Core DSP Math",
+    "description": "Parametric window controlled by beta parameter.",
+    "url": "https://en.wikipedia.org/wiki/Kaiser_window"
+  },
+  {
+    "term": "Spectral leakage",
+    "category": "Core DSP Math",
+    "description": "Energy spread across bins due to finite-duration analysis windows.",
+    "url": "https://en.wikipedia.org/wiki/Spectral_leakage"
+  },
+  {
+    "term": "Aliasing",
+    "category": "Core DSP Math",
+    "description": "Frequency-domain folding caused by undersampling.",
+    "url": "https://en.wikipedia.org/wiki/Aliasing"
+  },
+  {
+    "term": "Nyquist frequency",
+    "category": "Core DSP Math",
+    "description": "Half the sample rate; highest representable frequency in sampled audio.",
+    "url": "https://en.wikipedia.org/wiki/Nyquist_frequency"
+  },
+  {
+    "term": "Overlap-add (OLA)",
+    "category": "Core DSP Math",
+    "description": "Frame-based reconstruction by summing overlapped windowed segments.",
+    "url": "https://en.wikipedia.org/wiki/Overlap%E2%80%93add_method"
+  },
+  {
+    "term": "Convolution",
+    "category": "Core DSP Math",
+    "description": "Linear filtering operation in time domain equivalent to multiplication in frequency domain.",
+    "url": "https://en.wikipedia.org/wiki/Convolution"
+  },
+  {
+    "term": "Linear phase",
+    "category": "Core DSP Math",
+    "description": "Filter phase response that preserves waveform shape of band-limited signals.",
+    "url": "https://en.wikipedia.org/wiki/Linear_phase"
+  },
+  {
+    "term": "Minimum phase",
+    "category": "Core DSP Math",
+    "description": "System with minimum group delay for a given magnitude response.",
+    "url": "https://en.wikipedia.org/wiki/Minimum_phase"
+  },
+  {
+    "term": "Phase vocoder",
+    "category": "Phase and Time-Scale DSP",
+    "description": "STFT-based time-scale/pitch framework using phase propagation.",
+    "url": "https://en.wikipedia.org/wiki/Phase_vocoder"
+  },
+  {
+    "term": "Transient preservation",
+    "category": "Phase and Time-Scale DSP",
+    "description": "Strategies that protect attacks during spectral time modification.",
+    "url": "https://en.wikipedia.org/wiki/Transient_(acoustics)"
+  },
+  {
+    "term": "Phase locking",
+    "category": "Phase and Time-Scale DSP",
+    "description": "Locking neighboring bin phases to preserve local waveform structure.",
+    "url": "https://scholar.google.com/scholar?q=phase+locking+in+phase+vocoder"
+  },
+  {
+    "term": "Identity phase locking",
+    "category": "Phase and Time-Scale DSP",
+    "description": "Phase-locking variant that follows dominant peaks.",
+    "url": "https://scholar.google.com/scholar?q=identity+phase+locking"
+  },
+  {
+    "term": "WSOLA",
+    "category": "Phase and Time-Scale DSP",
+    "description": "Waveform-similarity overlap-add time-scale modification.",
+    "url": "https://en.wikipedia.org/wiki/Audio_time_stretching_and_pitch_scaling"
+  },
+  {
+    "term": "TD-PSOLA",
+    "category": "Phase and Time-Scale DSP",
+    "description": "Time-domain pitch-synchronous overlap-add technique.",
+    "url": "https://en.wikipedia.org/wiki/Audio_time_stretching_and_pitch_scaling"
+  },
+  {
+    "term": "LP-PSOLA",
+    "category": "Phase and Time-Scale DSP",
+    "description": "Linear-prediction-assisted PSOLA variant.",
+    "url": "https://scholar.google.com/scholar?q=LP-PSOLA"
+  },
+  {
+    "term": "HPSS",
+    "category": "Phase and Time-Scale DSP",
+    "description": "Harmonic-percussive source separation in TF domain.",
+    "url": "https://scholar.google.com/scholar?q=harmonic+percussive+source+separation"
+  },
+  {
+    "term": "Granular synthesis",
+    "category": "Phase and Time-Scale DSP",
+    "description": "Sound synthesis/modification using short grains.",
+    "url": "https://en.wikipedia.org/wiki/Granular_synthesis"
+  },
+  {
+    "term": "Time warp map",
+    "category": "Phase and Time-Scale DSP",
+    "description": "Piecewise mapping from output time to input time.",
+    "url": "https://scholar.google.com/scholar?q=nonlinear+time+warping+audio"
+  },
+  {
+    "term": "Formant preservation",
+    "category": "Phase and Time-Scale DSP",
+    "description": "Preservation of spectral envelope while pitch is changed.",
+    "url": "https://en.wikipedia.org/wiki/Formant"
+  },
+  {
+    "term": "YIN",
+    "category": "Pitch and Intonation",
+    "description": "Fundamental-frequency estimator using difference-function minima.",
+    "url": "https://librosa.org/doc/main/generated/librosa.yin.html"
+  },
+  {
+    "term": "pYIN",
+    "category": "Pitch and Intonation",
+    "description": "Probabilistic extension of YIN with voicing model.",
+    "url": "https://librosa.org/doc/main/generated/librosa.pyin.html"
+  },
+  {
+    "term": "RAPT",
+    "category": "Pitch and Intonation",
+    "description": "Robust algorithm for pitch tracking.",
+    "url": "https://scholar.google.com/scholar?q=RAPT+pitch+tracking"
+  },
+  {
+    "term": "SWIPE",
+    "category": "Pitch and Intonation",
+    "description": "Sawtooth-waveform inspired pitch estimator.",
+    "url": "https://doi.org/10.1121/1.2951592"
+  },
+  {
+    "term": "Harmonic product spectrum",
+    "category": "Pitch and Intonation",
+    "description": "Downsample-and-multiply spectrum for F0 evidence.",
+    "url": "https://scholar.google.com/scholar?q=harmonic+product+spectrum+pitch"
+  },
+  {
+    "term": "Subharmonic summation",
+    "category": "Pitch and Intonation",
+    "description": "Weighted subharmonic summation for F0 estimation.",
+    "url": "https://scholar.google.com/scholar?q=subharmonic+summation+pitch"
+  },
+  {
+    "term": "Cents",
+    "category": "Pitch and Intonation",
+    "description": "Logarithmic pitch interval unit (1200 cents per octave).",
+    "url": "https://en.wikipedia.org/wiki/Cent_(music)"
+  },
+  {
+    "term": "Equal temperament",
+    "category": "Pitch and Intonation",
+    "description": "Tuning system dividing octave into equal semitone ratios.",
+    "url": "https://en.wikipedia.org/wiki/Equal_temperament"
+  },
+  {
+    "term": "Just intonation",
+    "category": "Pitch and Intonation",
+    "description": "Tuning based on low-integer frequency ratios.",
+    "url": "https://en.wikipedia.org/wiki/Just_intonation"
+  },
+  {
+    "term": "Scala scale format",
+    "category": "Pitch and Intonation",
+    "description": "Text format for microtonal scales.",
+    "url": "https://www.huygens-fokker.org/scala/"
+  },
+  {
+    "term": "MIDI Tuning Standard",
+    "category": "Pitch and Intonation",
+    "description": "Specification for non-12TET tuning in MIDI systems.",
+    "url": "https://en.wikipedia.org/wiki/MIDI_tuning_standard"
+  },
+  {
+    "term": "Portamento",
+    "category": "Pitch and Intonation",
+    "description": "Continuous slide between notes.",
+    "url": "https://en.wikipedia.org/wiki/Portamento"
+  },
+  {
+    "term": "Constant-Q transform (CQT)",
+    "category": "Time-Frequency Transforms",
+    "description": "Transform with logarithmic center frequencies and constant Q.",
+    "url": "https://en.wikipedia.org/wiki/Constant-Q_transform"
+  },
+  {
+    "term": "Variable-Q transform (VQT)",
+    "category": "Time-Frequency Transforms",
+    "description": "Generalized CQT with variable Q and bandwidth behavior.",
+    "url": "https://scholar.google.com/scholar?q=variable-Q+transform+audio"
+  },
+  {
+    "term": "NSGT",
+    "category": "Time-Frequency Transforms",
+    "description": "Nonstationary Gabor transform with invertible adaptive filter banks.",
+    "url": "https://scholar.google.com/scholar?q=nonstationary+gabor+transform"
+  },
+  {
+    "term": "Reassigned spectrogram",
+    "category": "Time-Frequency Transforms",
+    "description": "Sharper TF representation by moving energy to local centroids.",
+    "url": "https://en.wikipedia.org/wiki/Reassignment_method"
+  },
+  {
+    "term": "Synchrosqueezing",
+    "category": "Time-Frequency Transforms",
+    "description": "Post-processing that concentrates TF energy along ridges.",
+    "url": "https://en.wikipedia.org/wiki/Wavelet_transform#Synchrosqueezing_transform"
+  },
+  {
+    "term": "Chirplet transform",
+    "category": "Time-Frequency Transforms",
+    "description": "Transform using chirped atoms.",
+    "url": "https://en.wikipedia.org/wiki/Chirplet_transform"
+  },
+  {
+    "term": "Wavelet packet",
+    "category": "Time-Frequency Transforms",
+    "description": "Hierarchical wavelet decomposition of both low/high branches.",
+    "url": "https://en.wikipedia.org/wiki/Wavelet_packet_decomposition"
+  },
+  {
+    "term": "Multiresolution analysis",
+    "category": "Time-Frequency Transforms",
+    "description": "Nested subspace structure for multi-scale representations.",
+    "url": "https://en.wikipedia.org/wiki/Multiresolution_analysis"
+  },
+  {
+    "term": "NMF",
+    "category": "Separation and Decomposition",
+    "description": "Nonnegative factorization of matrices into parts-based components.",
+    "url": "https://en.wikipedia.org/wiki/Non-negative_matrix_factorization"
+  },
+  {
+    "term": "ICA",
+    "category": "Separation and Decomposition",
+    "description": "Blind source separation based on statistical independence.",
+    "url": "https://en.wikipedia.org/wiki/Independent_component_analysis"
+  },
+  {
+    "term": "RPCA",
+    "category": "Separation and Decomposition",
+    "description": "Low-rank + sparse decomposition robust to outliers.",
+    "url": "https://en.wikipedia.org/wiki/Robust_principal_component_analysis"
+  },
+  {
+    "term": "Tensor decomposition",
+    "category": "Separation and Decomposition",
+    "description": "Higher-order extension of matrix factorization.",
+    "url": "https://en.wikipedia.org/wiki/Tensor_decomposition"
+  },
+  {
+    "term": "CP decomposition",
+    "category": "Separation and Decomposition",
+    "description": "Canonical polyadic tensor decomposition.",
+    "url": "https://en.wikipedia.org/wiki/Tensor_rank_decomposition"
+  },
+  {
+    "term": "Tucker decomposition",
+    "category": "Separation and Decomposition",
+    "description": "Core tensor with mode matrices factorization.",
+    "url": "https://en.wikipedia.org/wiki/Tucker_decomposition"
+  },
+  {
+    "term": "U-Net",
+    "category": "Separation and Decomposition",
+    "description": "Encoder-decoder CNN with skip connections.",
+    "url": "https://en.wikipedia.org/wiki/U-Net"
+  },
+  {
+    "term": "Demucs",
+    "category": "Separation and Decomposition",
+    "description": "Deep waveform-domain music source separation architecture.",
+    "url": "https://github.com/facebookresearch/demucs"
+  },
+  {
+    "term": "Wiener filter",
+    "category": "Denoising and Restoration",
+    "description": "MMSE linear estimator for noisy observations.",
+    "url": "https://en.wikipedia.org/wiki/Wiener_filter"
+  },
+  {
+    "term": "Spectral subtraction",
+    "category": "Denoising and Restoration",
+    "description": "Subtracts estimated noise spectrum from noisy signal.",
+    "url": "https://en.wikipedia.org/wiki/Spectral_subtraction"
+  },
+  {
+    "term": "MMSE-STSA",
+    "category": "Denoising and Restoration",
+    "description": "MMSE short-time spectral amplitude estimator.",
+    "url": "https://scholar.google.com/scholar?q=MMSE-STSA"
+  },
+  {
+    "term": "Log-MMSE",
+    "category": "Denoising and Restoration",
+    "description": "Log-spectral MMSE enhancement estimator.",
+    "url": "https://scholar.google.com/scholar?q=Log-MMSE+speech+enhancement"
+  },
+  {
+    "term": "Minimum statistics",
+    "category": "Denoising and Restoration",
+    "description": "Noise tracking from low percentile/minimum spectral statistics.",
+    "url": "https://scholar.google.com/scholar?q=minimum+statistics+noise+estimation"
+  },
+  {
+    "term": "RNNoise",
+    "category": "Denoising and Restoration",
+    "description": "Hybrid recurrent neural + DSP speech denoiser.",
+    "url": "https://github.com/xiph/rnnoise"
+  },
+  {
+    "term": "Diffusion model",
+    "category": "Denoising and Restoration",
+    "description": "Generative model based on iterative denoising processes.",
+    "url": "https://en.wikipedia.org/wiki/Diffusion_model"
+  },
+  {
+    "term": "Declip",
+    "category": "Denoising and Restoration",
+    "description": "Reconstruction of clipped waveform segments.",
+    "url": "https://scholar.google.com/scholar?q=audio+declipping+sparse+reconstruction"
+  },
+  {
+    "term": "Declick",
+    "category": "Denoising and Restoration",
+    "description": "Removal of impulsive click artifacts.",
+    "url": "https://scholar.google.com/scholar?q=audio+declicking"
+  },
+  {
+    "term": "Dereverberation",
+    "category": "Denoising and Restoration",
+    "description": "Suppression of late reverberation components.",
+    "url": "https://en.wikipedia.org/wiki/Reverberation"
+  },
+  {
+    "term": "Weighted prediction error (WPE)",
+    "category": "Denoising and Restoration",
+    "description": "Multi-channel dereverb by delayed linear prediction.",
+    "url": "https://nara-wpe.readthedocs.io/en/latest/"
+  },
+  {
+    "term": "Blind deconvolution",
+    "category": "Denoising and Restoration",
+    "description": "Joint estimation of source and room/filter response.",
+    "url": "https://en.wikipedia.org/wiki/Blind_deconvolution"
+  },
+  {
+    "term": "Direct-to-reverberant ratio (DRR)",
+    "category": "Denoising and Restoration",
+    "description": "Ratio of direct sound energy to reverberant energy.",
+    "url": "https://scholar.google.com/scholar?q=direct-to-reverberant+ratio"
+  },
+  {
+    "term": "Compressor",
+    "category": "Dynamics and Mastering",
+    "description": "Dynamic range processor that reduces gain above threshold.",
+    "url": "https://en.wikipedia.org/wiki/Dynamic_range_compression"
+  },
+  {
+    "term": "Expander",
+    "category": "Dynamics and Mastering",
+    "description": "Dynamic processor that reduces gain below threshold.",
+    "url": "https://en.wikipedia.org/wiki/Expander_(audio)"
+  },
+  {
+    "term": "Compander",
+    "category": "Dynamics and Mastering",
+    "description": "Combined compressor and expander behavior.",
+    "url": "https://en.wikipedia.org/wiki/Companding"
+  },
+  {
+    "term": "Limiter",
+    "category": "Dynamics and Mastering",
+    "description": "High-ratio compressor preventing peaks from exceeding threshold.",
+    "url": "https://en.wikipedia.org/wiki/Dynamic_range_compression"
+  },
+  {
+    "term": "True peak",
+    "category": "Dynamics and Mastering",
+    "description": "Peak estimate including inter-sample overs.",
+    "url": "https://en.wikipedia.org/wiki/Peak_programme_meter"
+  },
+  {
+    "term": "LUFS",
+    "category": "Dynamics and Mastering",
+    "description": "Loudness unit relative to full scale.",
+    "url": "https://en.wikipedia.org/wiki/LKFS"
+  },
+  {
+    "term": "ITU-R BS.1770",
+    "category": "Dynamics and Mastering",
+    "description": "International loudness measurement recommendation.",
+    "url": "https://www.itu.int/rec/R-REC-BS.1770"
+  },
+  {
+    "term": "EBU R128",
+    "category": "Dynamics and Mastering",
+    "description": "European loudness standard for production and broadcast.",
+    "url": "https://tech.ebu.ch/publications/r128"
+  },
+  {
+    "term": "Hard clipping",
+    "category": "Dynamics and Mastering",
+    "description": "Abrupt saturation by truncating waveform beyond threshold.",
+    "url": "https://en.wikipedia.org/wiki/Clipping_(audio)"
+  },
+  {
+    "term": "Soft clipping",
+    "category": "Dynamics and Mastering",
+    "description": "Smooth saturation curve reducing harsh distortion.",
+    "url": "https://en.wikipedia.org/wiki/Waveshaper"
+  },
+  {
+    "term": "Cross synthesis",
+    "category": "Creative Spectral Effects",
+    "description": "Combining spectral magnitude and phase or envelopes across signals.",
+    "url": "https://en.wikipedia.org/wiki/Cross-synthesis"
+  },
+  {
+    "term": "Spectral freezing",
+    "category": "Creative Spectral Effects",
+    "description": "Holding a short-time spectrum and resynthesizing over time.",
+    "url": "https://scholar.google.com/scholar?q=spectral+freeze+effect"
+  },
+  {
+    "term": "Formant",
+    "category": "Creative Spectral Effects",
+    "description": "Resonance region of spectral envelope.",
+    "url": "https://en.wikipedia.org/wiki/Formant"
+  },
+  {
+    "term": "Resonator",
+    "category": "Creative Spectral Effects",
+    "description": "Filter structure emphasizing a narrow band.",
+    "url": "https://en.wikipedia.org/wiki/Resonance"
+  },
+  {
+    "term": "Ring modulation",
+    "category": "Creative Spectral Effects",
+    "description": "Multiplication by a carrier to produce sidebands.",
+    "url": "https://en.wikipedia.org/wiki/Ring_modulation"
+  },
+  {
+    "term": "Amplitude modulation (AM)",
+    "category": "Creative Spectral Effects",
+    "description": "Modulating signal amplitude by a control waveform.",
+    "url": "https://en.wikipedia.org/wiki/Amplitude_modulation"
+  },
+  {
+    "term": "Frequency modulation (FM)",
+    "category": "Creative Spectral Effects",
+    "description": "Modulating oscillator frequency by another signal.",
+    "url": "https://en.wikipedia.org/wiki/Frequency_modulation_synthesis"
+  },
+  {
+    "term": "LFO",
+    "category": "Creative Spectral Effects",
+    "description": "Low-frequency oscillator used for modulation.",
+    "url": "https://en.wikipedia.org/wiki/Low-frequency_oscillation"
+  },
+  {
+    "term": "Beamforming",
+    "category": "Spatial Audio and Multichannel",
+    "description": "Spatial filtering using multiple microphones/loudspeakers.",
+    "url": "https://en.wikipedia.org/wiki/Beamforming"
+  },
+  {
+    "term": "Delay-and-sum beamformer",
+    "category": "Spatial Audio and Multichannel",
+    "description": "Align-and-average array beamformer.",
+    "url": "https://en.wikipedia.org/wiki/Beamforming"
+  },
+  {
+    "term": "MVDR beamformer",
+    "category": "Spatial Audio and Multichannel",
+    "description": "Minimum variance distortionless response beamforming.",
+    "url": "https://en.wikipedia.org/wiki/Minimum_variance_distortionless_response"
+  },
+  {
+    "term": "Generalized sidelobe canceller (GSC)",
+    "category": "Spatial Audio and Multichannel",
+    "description": "Adaptive beamforming with blocking matrix branch.",
+    "url": "https://scholar.google.com/scholar?q=generalized+sidelobe+canceller"
+  },
+  {
+    "term": "Superdirective beamforming",
+    "category": "Spatial Audio and Multichannel",
+    "description": "Beamforming with sharpened directivity often with regularization.",
+    "url": "https://scholar.google.com/scholar?q=superdirective+beamforming"
+  },
+  {
+    "term": "Direction of arrival (DoA)",
+    "category": "Spatial Audio and Multichannel",
+    "description": "Estimated source direction from array measurements.",
+    "url": "https://en.wikipedia.org/wiki/Direction_of_arrival"
+  },
+  {
+    "term": "GCC-PHAT",
+    "category": "Spatial Audio and Multichannel",
+    "description": "Time-delay estimation using phase transform weighting.",
+    "url": "https://scholar.google.com/scholar?q=GCC-PHAT"
+  },
+  {
+    "term": "Ambisonics",
+    "category": "Spatial Audio and Multichannel",
+    "description": "3D audio representation using spherical harmonics.",
+    "url": "https://en.wikipedia.org/wiki/Ambisonics"
+  },
+  {
+    "term": "First-order ambisonics (FOA)",
+    "category": "Spatial Audio and Multichannel",
+    "description": "4-channel WXYZ ambisonic format.",
+    "url": "https://en.wikipedia.org/wiki/Ambisonics"
+  },
+  {
+    "term": "Higher-order ambisonics (HOA)",
+    "category": "Spatial Audio and Multichannel",
+    "description": "Ambisonics beyond first order for higher spatial resolution.",
+    "url": "https://en.wikipedia.org/wiki/Ambisonics"
+  },
+  {
+    "term": "Binaural rendering",
+    "category": "Spatial Audio and Multichannel",
+    "description": "Headphone rendering preserving spatial localization cues.",
+    "url": "https://en.wikipedia.org/wiki/Binaural_recording"
+  },
+  {
+    "term": "HRTF",
+    "category": "Spatial Audio and Multichannel",
+    "description": "Head-related transfer function per source direction.",
+    "url": "https://en.wikipedia.org/wiki/Head-related_transfer_function"
+  },
+  {
+    "term": "Interaural time difference (ITD)",
+    "category": "Spatial Audio and Multichannel",
+    "description": "Arrival-time difference cue for localization.",
+    "url": "https://en.wikipedia.org/wiki/Interaural_time_difference"
+  },
+  {
+    "term": "Interaural level difference (ILD)",
+    "category": "Spatial Audio and Multichannel",
+    "description": "Level difference cue for localization.",
+    "url": "https://en.wikipedia.org/wiki/Sound_localization"
+  },
+  {
+    "term": "VBAP",
+    "category": "Spatial Audio and Multichannel",
+    "description": "Vector-base amplitude panning for loudspeaker arrays.",
+    "url": "https://scholar.google.com/scholar?q=VBAP+vector+base+amplitude+panning"
+  },
+  {
+    "term": "DBAP",
+    "category": "Spatial Audio and Multichannel",
+    "description": "Distance-based amplitude panning.",
+    "url": "https://scholar.google.com/scholar?q=distance+based+amplitude+panning+DBAP"
+  },
+  {
+    "term": "Mid/side processing",
+    "category": "Spatial Audio and Multichannel",
+    "description": "Stereo representation as sum (mid) and difference (side).",
+    "url": "https://en.wikipedia.org/wiki/Joint_encoding#M/S_stereo_coding"
+  },
+  {
+    "term": "Crosstalk cancellation",
+    "category": "Spatial Audio and Multichannel",
+    "description": "Loudspeaker technique reducing opposite-ear leakage.",
+    "url": "https://scholar.google.com/scholar?q=transaural+crosstalk+cancellation"
+  },
+  {
+    "term": "Diffuse field",
+    "category": "Spatial Audio and Multichannel",
+    "description": "Sound field with many uncorrelated incoming directions.",
+    "url": "https://scholar.google.com/scholar?q=diffuse+sound+field"
+  },
+  {
+    "term": "Room impulse response (RIR)",
+    "category": "Spatial Audio and Multichannel",
+    "description": "Acoustic response from source impulse to receiver.",
+    "url": "https://en.wikipedia.org/wiki/Impulse_response"
+  },
+  {
+    "term": "Onset detection",
+    "category": "Analysis and QA",
+    "description": "Detection of transient musical events.",
+    "url": "https://en.wikipedia.org/wiki/Onset_(music)"
+  },
+  {
+    "term": "Beat tracking",
+    "category": "Analysis and QA",
+    "description": "Estimating temporal pulse positions from audio.",
+    "url": "https://en.wikipedia.org/wiki/Beat_tracking"
+  },
+  {
+    "term": "Chord estimation",
+    "category": "Analysis and QA",
+    "description": "Inferring harmonic labels from tonal features.",
+    "url": "https://scholar.google.com/scholar?q=automatic+chord+estimation"
+  },
+  {
+    "term": "Structure segmentation",
+    "category": "Analysis and QA",
+    "description": "Dividing music into sections like verse/chorus.",
+    "url": "https://scholar.google.com/scholar?q=music+structure+segmentation"
+  },
+  {
+    "term": "Bayesian optimization",
+    "category": "Analysis and QA",
+    "description": "Global optimization of expensive objective functions.",
+    "url": "https://en.wikipedia.org/wiki/Bayesian_optimization"
+  },
+  {
+    "term": "PESQ",
+    "category": "Analysis and QA",
+    "description": "Perceptual Evaluation of Speech Quality metric.",
+    "url": "https://en.wikipedia.org/wiki/Perceptual_Evaluation_of_Speech_Quality"
+  },
+  {
+    "term": "STOI",
+    "category": "Analysis and QA",
+    "description": "Short-Time Objective Intelligibility measure.",
+    "url": "https://scholar.google.com/scholar?q=STOI+speech+intelligibility"
+  },
+  {
+    "term": "ViSQOL",
+    "category": "Analysis and QA",
+    "description": "Virtual Speech Quality Objective Listener metric family.",
+    "url": "https://scholar.google.com/scholar?q=ViSQOL"
+  }
+]

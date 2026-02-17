@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Binaural HRTF rendering.
+"""Generalized sidelobe canceller.
 
 Comprehensive module help:
 - Theme: Spatial and Multichannel
-- Algorithm ID: spatial_and_multichannel.binaural_hrtf_rendering
+- Algorithm ID: spatial_and_multichannel.generalized_sidelobe_canceller
 - Primary API: process(audio, sample_rate, **params) -> AlgorithmResult
 - Backend: delegates to pvx.algorithms.base.run_algorithm()
 
@@ -22,17 +22,20 @@ from typing import Any
 import numpy as np
 
 if __package__ is None or __package__ == "":
-    sys.path.append(str(Path(__file__).resolve().parents[3]))
+    for _parent in Path(__file__).resolve().parents:
+        if (_parent / "pvx").is_dir():
+            sys.path.append(str(_parent))
+            break
 
 from pvx.algorithms.base import AlgorithmResult, run_algorithm
 
-ALGORITHM_ID = 'spatial_and_multichannel.binaural_hrtf_rendering'
-ALGORITHM_NAME = 'Binaural HRTF rendering'
+ALGORITHM_ID = 'spatial_and_multichannel.generalized_sidelobe_canceller'
+ALGORITHM_NAME = 'Generalized sidelobe canceller'
 THEME = 'Spatial and Multichannel'
 
 
 def process(audio: np.ndarray, sample_rate: int, **params: Any) -> AlgorithmResult:
-    """Run Binaural HRTF rendering on the provided audio buffer.
+    """Run Generalized sidelobe canceller on the provided audio buffer.
 
     Parameters:
     - audio: np.ndarray, shape (samples,) or (samples, channels)

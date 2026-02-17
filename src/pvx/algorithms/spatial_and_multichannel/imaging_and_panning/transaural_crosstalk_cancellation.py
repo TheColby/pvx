@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Mid/Side adaptive widening.
+"""Transaural crosstalk cancellation.
 
 Comprehensive module help:
 - Theme: Spatial and Multichannel
-- Algorithm ID: spatial_and_multichannel.mid_side_adaptive_widening
+- Algorithm ID: spatial_and_multichannel.transaural_crosstalk_cancellation
 - Primary API: process(audio, sample_rate, **params) -> AlgorithmResult
 - Backend: delegates to pvx.algorithms.base.run_algorithm()
 
@@ -22,17 +22,20 @@ from typing import Any
 import numpy as np
 
 if __package__ is None or __package__ == "":
-    sys.path.append(str(Path(__file__).resolve().parents[3]))
+    for _parent in Path(__file__).resolve().parents:
+        if (_parent / "pvx").is_dir():
+            sys.path.append(str(_parent))
+            break
 
 from pvx.algorithms.base import AlgorithmResult, run_algorithm
 
-ALGORITHM_ID = 'spatial_and_multichannel.mid_side_adaptive_widening'
-ALGORITHM_NAME = 'Mid/Side adaptive widening'
+ALGORITHM_ID = 'spatial_and_multichannel.transaural_crosstalk_cancellation'
+ALGORITHM_NAME = 'Transaural crosstalk cancellation'
 THEME = 'Spatial and Multichannel'
 
 
 def process(audio: np.ndarray, sample_rate: int, **params: Any) -> AlgorithmResult:
-    """Run Mid/Side adaptive widening on the provided audio buffer.
+    """Run Transaural crosstalk cancellation on the provided audio buffer.
 
     Parameters:
     - audio: np.ndarray, shape (samples,) or (samples, channels)

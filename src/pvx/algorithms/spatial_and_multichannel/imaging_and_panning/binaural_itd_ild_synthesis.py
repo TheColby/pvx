@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Upmix/downmix with phase-coherent routing.
+"""Binaural ITD/ILD synthesis.
 
 Comprehensive module help:
 - Theme: Spatial and Multichannel
-- Algorithm ID: spatial_and_multichannel.upmix_downmix_with_phase_coherent_routing
+- Algorithm ID: spatial_and_multichannel.binaural_itd_ild_synthesis
 - Primary API: process(audio, sample_rate, **params) -> AlgorithmResult
 - Backend: delegates to pvx.algorithms.base.run_algorithm()
 
@@ -22,17 +22,20 @@ from typing import Any
 import numpy as np
 
 if __package__ is None or __package__ == "":
-    sys.path.append(str(Path(__file__).resolve().parents[3]))
+    for _parent in Path(__file__).resolve().parents:
+        if (_parent / "pvx").is_dir():
+            sys.path.append(str(_parent))
+            break
 
 from pvx.algorithms.base import AlgorithmResult, run_algorithm
 
-ALGORITHM_ID = 'spatial_and_multichannel.upmix_downmix_with_phase_coherent_routing'
-ALGORITHM_NAME = 'Upmix/downmix with phase-coherent routing'
+ALGORITHM_ID = 'spatial_and_multichannel.binaural_itd_ild_synthesis'
+ALGORITHM_NAME = 'Binaural ITD/ILD synthesis'
 THEME = 'Spatial and Multichannel'
 
 
 def process(audio: np.ndarray, sample_rate: int, **params: Any) -> AlgorithmResult:
-    """Run Upmix/downmix with phase-coherent routing on the provided audio buffer.
+    """Run Binaural ITD/ILD synthesis on the provided audio buffer.
 
     Parameters:
     - audio: np.ndarray, shape (samples,) or (samples, channels)

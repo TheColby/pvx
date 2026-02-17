@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import io
 import sys
 import time
 from dataclasses import dataclass
@@ -17,15 +18,17 @@ import soundfile as sf
 from pvx.core.voc import (
     VocoderConfig,
     WINDOW_CHOICES,
+    add_mastering_args,
     add_runtime_args,
+    apply_mastering_chain,
     configure_runtime_from_args,
     compute_output_path,
     ensure_runtime_dependencies,
     expand_inputs,
     force_length,
-    normalize_audio,
     phase_vocoder_time_stretch,
     resample_1d,
+    validate_mastering_args,
 )
 
 
@@ -106,7 +109,8 @@ def log_message(
     required = _VERBOSITY_TO_LEVEL[min_level]
     if console_level(args) < required:
         return
-    stream = sys.stderr if error else sys.stdout
+    stream_to_stdout = bool(getattr(args, "stdout", False))
+    stream = sys.stderr if error or stream_to_stdout else sys.stdout
     print(message, file=stream)
 
 
@@ -167,17 +171,23 @@ def build_status_bar(args: argparse.Namespace, label: str, total: int) -> Status
 
 
 def add_common_io_args(parser: argparse.ArgumentParser, default_suffix: str) -> None:
-    parser.add_argument("inputs", nargs="+", help="Input files or glob patterns")
+    parser.add_argument(
+        "inputs",
+        nargs="+",
+        help="Input files/globs or '-' for stdin",
+    )
     parser.add_argument("-o", "--output-dir", type=Path, default=None, help="Output directory")
     parser.add_argument("--suffix", default=default_suffix, help=f"Output filename suffix (default: {default_suffix})")
     parser.add_argument("--output-format", default=None, help="Output extension/format")
+    parser.add_argument(
+        "--stdout",
+        action="store_true",
+        help="Write processed audio to stdout stream (for piping); requires exactly one input",
+    )
     parser.add_argument("--overwrite", action="store_true", help="Overwrite existing outputs")
     parser.add_argument("--dry-run", action="store_true", help="Resolve and print, but do not write files")
     add_console_args(parser)
-    parser.add_argument("--normalize", choices=["none", "peak", "rms"], default="none", help="Output normalization")
-    parser.add_argument("--peak-dbfs", type=float, default=-1.0, help="Target peak dBFS for peak normalization")
-    parser.add_argument("--rms-dbfs", type=float, default=-18.0, help="Target RMS dBFS for RMS normalization")
-    parser.add_argument("--clip", action="store_true", help="Hard clip output to [-1, 1]")
+    add_mastering_args(parser)
     parser.add_argument("--subtype", default=None, help="libsndfile subtype (PCM_16, PCM_24, FLOAT, etc)")
 
 
@@ -247,39 +257,90 @@ def validate_vocoder_args(args: argparse.Namespace, parser: argparse.ArgumentPar
         parser.error("--kaiser-beta must be >= 0")
     if args.cuda_device < 0:
         parser.error("--cuda-device must be >= 0")
+    validate_mastering_args(args, parser)
 
 
-def resolve_inputs(patterns: Iterable[str], parser: argparse.ArgumentParser) -> list[Path]:
+def resolve_inputs(
+    patterns: Iterable[str],
+    parser: argparse.ArgumentParser,
+    args: argparse.Namespace | None = None,
+) -> list[Path]:
     paths = expand_inputs(patterns)
     if not paths:
         parser.error("No readable files found from provided inputs")
+    stdin_count = sum(1 for p in paths if str(p) == "-")
+    if stdin_count > 1:
+        parser.error("Input '-' (stdin) may only be specified once")
+    if stdin_count and len(paths) != 1:
+        parser.error("Input '-' (stdin) cannot be combined with additional input files")
+    if args is not None and bool(getattr(args, "stdout", False)) and len(paths) != 1:
+        parser.error("--stdout requires exactly one resolved input")
     return paths
 
 
 def read_audio(path: Path) -> tuple[np.ndarray, int]:
-    audio, sr = sf.read(str(path), always_2d=True)
+    if str(path) == "-":
+        payload = sys.stdin.buffer.read()
+        if not payload:
+            raise ValueError("No audio bytes received on stdin")
+        audio, sr = sf.read(io.BytesIO(payload), always_2d=True)
+    else:
+        audio, sr = sf.read(str(path), always_2d=True)
     return audio.astype(np.float64, copy=False), int(sr)
 
 
-def finalize_audio(audio: np.ndarray, args: argparse.Namespace) -> np.ndarray:
-    out = normalize_audio(audio, args.normalize, args.peak_dbfs, args.rms_dbfs)
-    if args.clip:
-        out = np.clip(out, -1.0, 1.0)
-    return out
+def finalize_audio(audio: np.ndarray, sample_rate: int, args: argparse.Namespace) -> np.ndarray:
+    return apply_mastering_chain(audio, int(sample_rate), args)
 
 
 def write_output(path: Path, audio: np.ndarray, sr: int, args: argparse.Namespace) -> None:
-    if path.exists() and not args.overwrite and not args.dry_run:
+    to_stdout = bool(getattr(args, "stdout", False)) or str(path) == "-"
+    dry_run = bool(getattr(args, "dry_run", False))
+    overwrite = bool(getattr(args, "overwrite", False))
+    subtype = getattr(args, "subtype", None)
+    output_format = getattr(args, "output_format", None)
+
+    if to_stdout:
+        if dry_run:
+            return
+        stream_fmt = _stream_format_name(output_format)
+        buffer = io.BytesIO()
+        sf.write(buffer, audio, sr, format=stream_fmt, subtype=subtype)
+        sys.stdout.buffer.write(buffer.getvalue())
+        sys.stdout.buffer.flush()
+        return
+
+    if path.exists() and not overwrite and not dry_run:
         raise FileExistsError(f"Output exists: {path} (use --overwrite to replace)")
-    if args.dry_run:
+    if dry_run:
         return
     path.parent.mkdir(parents=True, exist_ok=True)
-    sf.write(str(path), audio, sr, subtype=args.subtype)
+    sf.write(str(path), audio, sr, subtype=subtype)
 
 
 def default_output_path(input_path: Path, args: argparse.Namespace) -> Path:
     output_dir = args.output_dir.resolve() if args.output_dir is not None else None
-    return compute_output_path(input_path, output_dir, args.suffix, args.output_format)
+    source = Path("stdin.wav") if str(input_path) == "-" else input_path
+    return compute_output_path(source, output_dir, args.suffix, args.output_format)
+
+
+def _stream_format_name(output_format: str | None) -> str:
+    ext = (output_format or "wav").lower().lstrip(".")
+    mapping = {
+        "wav": "WAV",
+        "flac": "FLAC",
+        "aif": "AIFF",
+        "aiff": "AIFF",
+        "ogg": "OGG",
+        "oga": "OGG",
+        "caf": "CAF",
+    }
+    if ext in mapping:
+        return mapping[ext]
+    raise ValueError(
+        f"Unsupported stream output format '{output_format}'. "
+        "Use --output-format with one of: wav, flac, aiff, ogg, caf."
+    )
 
 
 def parse_float_list(value: str, *, allow_empty: bool = False) -> list[float]:

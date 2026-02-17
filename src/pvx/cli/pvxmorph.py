@@ -18,9 +18,9 @@ from pvx.core.common import (
     log_message,
     read_audio,
     validate_vocoder_args,
+    write_output,
 )
-from pvx.core.voc import force_length, istft, normalize_audio, resample_1d, stft
-import soundfile as sf
+from pvx.core.voc import add_mastering_args, apply_mastering_chain, force_length, istft, resample_1d, stft
 
 
 def match_channels(audio: np.ndarray, channels: int) -> np.ndarray:
@@ -69,14 +69,21 @@ def morph_pair(
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Morph two audio files in the STFT domain")
-    parser.add_argument("input_a", type=Path, help="Input A")
-    parser.add_argument("input_b", type=Path, help="Input B")
+    parser.add_argument("input_a", type=Path, help="Input A path or '-' for stdin")
+    parser.add_argument("input_b", type=Path, help="Input B path or '-' for stdin")
     parser.add_argument("-o", "--output", type=Path, default=None, help="Output file path")
+    parser.add_argument(
+        "--stdout",
+        action="store_true",
+        help="Write processed audio to stdout stream (for piping); equivalent to -o -",
+    )
+    parser.add_argument(
+        "--output-format",
+        default=None,
+        help="Output extension/format; for --stdout defaults to wav",
+    )
     parser.add_argument("--alpha", type=float, default=0.5, help="Morph amount 0..1 (0=A, 1=B)")
-    parser.add_argument("--normalize", choices=["none", "peak", "rms"], default="none")
-    parser.add_argument("--peak-dbfs", type=float, default=-1.0)
-    parser.add_argument("--rms-dbfs", type=float, default=-18.0)
-    parser.add_argument("--clip", action="store_true")
+    add_mastering_args(parser)
     parser.add_argument("--subtype", default=None)
     parser.add_argument("--overwrite", action="store_true")
     add_console_args(parser)
@@ -91,6 +98,12 @@ def main(argv: list[str] | None = None) -> int:
     validate_vocoder_args(args, parser)
     if not (0.0 <= args.alpha <= 1.0):
         parser.error("--alpha must be between 0 and 1")
+    if str(args.input_a) == "-" and str(args.input_b) == "-":
+        parser.error("At most one morph input may be '-' (stdin)")
+    if args.output is not None and str(args.output) == "-":
+        args.stdout = True
+    if args.stdout and args.output is not None and str(args.output) != "-":
+        parser.error("Use either --stdout (or -o -) or an explicit output file path, not both")
 
     config = build_vocoder_config(args, phase_locking="off", transient_preserve=False)
     status = build_status_bar(args, "pvxmorph", 1)
@@ -105,16 +118,16 @@ def main(argv: list[str] | None = None) -> int:
             b = rb
 
         out = morph_pair(a, b, sr_a, config, args.alpha)
-        out = normalize_audio(out, args.normalize, args.peak_dbfs, args.rms_dbfs)
-        if args.clip:
-            out = np.clip(out, -1.0, 1.0)
+        out = apply_mastering_chain(out, sr_a, args)
 
-        out_path = args.output if args.output is not None else args.input_a.with_name(f"{args.input_a.stem}_morph.wav")
-        if out_path.exists() and not args.overwrite:
-            raise FileExistsError(f"Output exists: {out_path} (use --overwrite)")
-
-        out_path.parent.mkdir(parents=True, exist_ok=True)
-        sf.write(str(out_path), out, sr_a, subtype=args.subtype)
+        if args.stdout:
+            out_path = Path("-")
+        elif args.output is not None:
+            out_path = args.output
+        else:
+            base = Path("stdin.wav") if str(args.input_a) == "-" else args.input_a
+            out_path = base.with_name(f"{base.stem}_morph.wav")
+        write_output(out_path, out, sr_a, args)
         log_message(args, f"[ok] {args.input_a} + {args.input_b} -> {out_path}", min_level="verbose")
         status.step(1, out_path.name)
         status.finish("done")

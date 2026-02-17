@@ -1,6 +1,6 @@
 # Generated Algorithm Inventory
 
-Total algorithms: 95
+Total algorithms: 123
 
 ## Time-Scale and Pitch Core
 - `time_scale_and_pitch_core/wsola_waveform_similarity_overlap_add.py`: WSOLA (Waveform Similarity Overlap-Add)
@@ -81,16 +81,6 @@ Total algorithms: 95
 - `dynamics_and_loudness/true_peak_limiting.py`: True-peak limiting
 - `dynamics_and_loudness/lufs_target_mastering_chain.py`: LUFS-target mastering chain
 
-## Spatial and Multichannel
-- `spatial_and_multichannel/mid_side_adaptive_widening.py`: Mid/Side adaptive widening
-- `spatial_and_multichannel/binaural_hrtf_rendering.py`: Binaural HRTF rendering
-- `spatial_and_multichannel/ambisonics_encode_decode.py`: Ambisonics encode/decode
-- `spatial_and_multichannel/mvdr_beamforming.py`: MVDR beamforming
-- `spatial_and_multichannel/gsc_beamforming.py`: GSC beamforming
-- `spatial_and_multichannel/gcc_phat_localization.py`: GCC-PHAT localization
-- `spatial_and_multichannel/stereo_decorrelation_for_width.py`: Stereo decorrelation for width
-- `spatial_and_multichannel/upmix_downmix_with_phase_coherent_routing.py`: Upmix/downmix with phase-coherent routing
-
 ## Creative Spectral Effects
 - `creative_spectral_effects/cross_synthesis_vocoder.py`: Cross-synthesis vocoder
 - `creative_spectral_effects/spectral_convolution_effects.py`: Spectral convolution effects
@@ -120,3 +110,41 @@ Total algorithms: 95
 - `analysis_qa_and_automation/pesq_stoi_visqol_quality_metrics.py`: PESQ/STOI/VISQOL quality metrics
 - `analysis_qa_and_automation/auto_parameter_tuning_bayesian_optimization.py`: Auto-parameter tuning (Bayesian optimization)
 - `analysis_qa_and_automation/batch_preset_recommendation_based_on_source_features.py`: Batch preset recommendation based on source features
+
+## Spatial and Multichannel
+- `spatial_and_multichannel/imaging_and_panning/vbap_adaptive_panning.py`: VBAP adaptive panning
+- `spatial_and_multichannel/imaging_and_panning/dbap_distance_based_amplitude_panning.py`: DBAP (distance-based amplitude panning)
+- `spatial_and_multichannel/imaging_and_panning/binaural_itd_ild_synthesis.py`: Binaural ITD/ILD synthesis
+- `spatial_and_multichannel/imaging_and_panning/transaural_crosstalk_cancellation.py`: Transaural crosstalk cancellation
+- `spatial_and_multichannel/imaging_and_panning/stereo_width_frequency_dependent_control.py`: Stereo width (frequency-dependent control)
+- `spatial_and_multichannel/imaging_and_panning/phase_aligned_mid_side_field_rotation.py`: Phase-aligned mid/side field rotation
+- `spatial_and_multichannel/beamforming_and_directionality/delay_and_sum_beamforming.py`: Delay-and-sum beamforming
+- `spatial_and_multichannel/beamforming_and_directionality/mvdr_beamformer_wideband.py`: MVDR beamformer (wideband)
+- `spatial_and_multichannel/beamforming_and_directionality/generalized_sidelobe_canceller.py`: Generalized sidelobe canceller
+- `spatial_and_multichannel/beamforming_and_directionality/superdirective_beamformer.py`: Superdirective beamformer
+- `spatial_and_multichannel/beamforming_and_directionality/diffuse_field_coherence_masking.py`: Diffuse-field coherence masking
+- `spatial_and_multichannel/beamforming_and_directionality/direction_of_arrival_grid_tracking.py`: Direction-of-arrival grid tracking
+- `spatial_and_multichannel/ambisonics_and_immersive/first_order_ambisonic_encode_decode.py`: First-order ambisonic encode/decode
+- `spatial_and_multichannel/ambisonics_and_immersive/higher_order_ambisonic_rotation.py`: Higher-order ambisonic rotation
+- `spatial_and_multichannel/ambisonics_and_immersive/ambisonic_binaural_rendering.py`: Ambisonic binaural rendering
+- `spatial_and_multichannel/ambisonics_and_immersive/spherical_harmonic_diffuse_enhancement.py`: Spherical-harmonic diffuse enhancement
+- `spatial_and_multichannel/ambisonics_and_immersive/hoa_order_truncation_and_upmix.py`: HOA order truncation and upmix
+- `spatial_and_multichannel/ambisonics_and_immersive/spatial_room_impulse_convolution.py`: Spatial room impulse convolution
+- `spatial_and_multichannel/phase_vocoder_spatial/pvx_interchannel_phase_locking.py`: PVX interchannel phase locking
+- `spatial_and_multichannel/phase_vocoder_spatial/pvx_spatial_transient_preservation.py`: PVX spatial transient preservation
+- `spatial_and_multichannel/phase_vocoder_spatial/pvx_interaural_coherence_shaping.py`: PVX interaural coherence shaping
+- `spatial_and_multichannel/phase_vocoder_spatial/pvx_directional_spectral_warp.py`: PVX directional spectral warp
+- `spatial_and_multichannel/phase_vocoder_spatial/pvx_multichannel_time_alignment.py`: PVX multichannel time alignment
+- `spatial_and_multichannel/phase_vocoder_spatial/pvx_spatial_freeze_and_trajectory.py`: PVX spatial freeze and trajectory
+- `spatial_and_multichannel/multichannel_restoration/multichannel_wiener_postfilter.py`: Multichannel Wiener postfilter
+- `spatial_and_multichannel/multichannel_restoration/coherence_based_dereverb_multichannel.py`: Coherence-based dereverb (multichannel)
+- `spatial_and_multichannel/multichannel_restoration/multichannel_noise_psd_tracking.py`: Multichannel noise PSD tracking
+- `spatial_and_multichannel/multichannel_restoration/phase_consistent_multichannel_denoise.py`: Phase-consistent multichannel denoise
+- `spatial_and_multichannel/multichannel_restoration/microphone_array_calibration_tones.py`: Microphone-array calibration tones
+- `spatial_and_multichannel/multichannel_restoration/cross_channel_click_pop_repair.py`: Cross-channel click/pop repair
+- `spatial_and_multichannel/creative_spatial_fx/rotating_speaker_doppler_field.py`: Rotating-speaker Doppler field
+- `spatial_and_multichannel/creative_spatial_fx/binaural_motion_trajectory_designer.py`: Binaural motion trajectory designer
+- `spatial_and_multichannel/creative_spatial_fx/stochastic_spatial_diffusion_cloud.py`: Stochastic spatial diffusion cloud
+- `spatial_and_multichannel/creative_spatial_fx/decorrelated_reverb_upmix.py`: Decorrelated reverb upmix
+- `spatial_and_multichannel/creative_spatial_fx/spectral_spatial_granulator.py`: Spectral spatial granulator
+- `spatial_and_multichannel/creative_spatial_fx/spatial_freeze_resynthesis.py`: Spatial freeze resynthesis

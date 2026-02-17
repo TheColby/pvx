@@ -82,7 +82,7 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--freeze-time must be >= 0")
 
     config = build_vocoder_config(args, phase_locking="off", transient_preserve=False)
-    paths = resolve_inputs(args.inputs, parser)
+    paths = resolve_inputs(args.inputs, parser, args)
     status = build_status_bar(args, "pvxfreeze", len(paths))
 
     failures = 0
@@ -106,7 +106,7 @@ def main(argv: list[str] | None = None) -> int:
             for idx, ch in enumerate(out_channels):
                 out[: ch.size, idx] = ch
 
-            out = finalize_audio(out, args)
+            out = finalize_audio(out, sr, args)
             out_path = default_output_path(path, args)
             write_output(out_path, out, sr, args)
             log_message(args, f"[ok] {path} -> {out_path} | ch={out.shape[1]}, dur={out.shape[0]/sr:.3f}s", min_level="verbose")

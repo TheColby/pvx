@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""GCC-PHAT localization.
+"""Delay-and-sum beamforming.
 
 Comprehensive module help:
 - Theme: Spatial and Multichannel
-- Algorithm ID: spatial_and_multichannel.gcc_phat_localization
+- Algorithm ID: spatial_and_multichannel.delay_and_sum_beamforming
 - Primary API: process(audio, sample_rate, **params) -> AlgorithmResult
 - Backend: delegates to pvx.algorithms.base.run_algorithm()
 
@@ -22,17 +22,20 @@ from typing import Any
 import numpy as np
 
 if __package__ is None or __package__ == "":
-    sys.path.append(str(Path(__file__).resolve().parents[3]))
+    for _parent in Path(__file__).resolve().parents:
+        if (_parent / "pvx").is_dir():
+            sys.path.append(str(_parent))
+            break
 
 from pvx.algorithms.base import AlgorithmResult, run_algorithm
 
-ALGORITHM_ID = 'spatial_and_multichannel.gcc_phat_localization'
-ALGORITHM_NAME = 'GCC-PHAT localization'
+ALGORITHM_ID = 'spatial_and_multichannel.delay_and_sum_beamforming'
+ALGORITHM_NAME = 'Delay-and-sum beamforming'
 THEME = 'Spatial and Multichannel'
 
 
 def process(audio: np.ndarray, sample_rate: int, **params: Any) -> AlgorithmResult:
-    """Run GCC-PHAT localization on the provided audio buffer.
+    """Run Delay-and-sum beamforming on the provided audio buffer.
 
     Parameters:
     - audio: np.ndarray, shape (samples,) or (samples, channels)

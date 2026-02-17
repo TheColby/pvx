@@ -318,46 +318,6 @@ ALGORITHM_REGISTRY = {
         'theme': 'Dynamics and Loudness',
         'module': 'pvx.algorithms.dynamics_and_loudness.lufs_target_mastering_chain',
     },
-    'spatial_and_multichannel.mid_side_adaptive_widening': {
-        'name': 'Mid/Side adaptive widening',
-        'theme': 'Spatial and Multichannel',
-        'module': 'pvx.algorithms.spatial_and_multichannel.mid_side_adaptive_widening',
-    },
-    'spatial_and_multichannel.binaural_hrtf_rendering': {
-        'name': 'Binaural HRTF rendering',
-        'theme': 'Spatial and Multichannel',
-        'module': 'pvx.algorithms.spatial_and_multichannel.binaural_hrtf_rendering',
-    },
-    'spatial_and_multichannel.ambisonics_encode_decode': {
-        'name': 'Ambisonics encode/decode',
-        'theme': 'Spatial and Multichannel',
-        'module': 'pvx.algorithms.spatial_and_multichannel.ambisonics_encode_decode',
-    },
-    'spatial_and_multichannel.mvdr_beamforming': {
-        'name': 'MVDR beamforming',
-        'theme': 'Spatial and Multichannel',
-        'module': 'pvx.algorithms.spatial_and_multichannel.mvdr_beamforming',
-    },
-    'spatial_and_multichannel.gsc_beamforming': {
-        'name': 'GSC beamforming',
-        'theme': 'Spatial and Multichannel',
-        'module': 'pvx.algorithms.spatial_and_multichannel.gsc_beamforming',
-    },
-    'spatial_and_multichannel.gcc_phat_localization': {
-        'name': 'GCC-PHAT localization',
-        'theme': 'Spatial and Multichannel',
-        'module': 'pvx.algorithms.spatial_and_multichannel.gcc_phat_localization',
-    },
-    'spatial_and_multichannel.stereo_decorrelation_for_width': {
-        'name': 'Stereo decorrelation for width',
-        'theme': 'Spatial and Multichannel',
-        'module': 'pvx.algorithms.spatial_and_multichannel.stereo_decorrelation_for_width',
-    },
-    'spatial_and_multichannel.upmix_downmix_with_phase_coherent_routing': {
-        'name': 'Upmix/downmix with phase-coherent routing',
-        'theme': 'Spatial and Multichannel',
-        'module': 'pvx.algorithms.spatial_and_multichannel.upmix_downmix_with_phase_coherent_routing',
-    },
     'creative_spectral_effects.cross_synthesis_vocoder': {
         'name': 'Cross-synthesis vocoder',
         'theme': 'Creative Spectral Effects',
@@ -477,6 +437,186 @@ ALGORITHM_REGISTRY = {
         'name': 'Batch preset recommendation based on source features',
         'theme': 'Analysis, QA, and Automation',
         'module': 'pvx.algorithms.analysis_qa_and_automation.batch_preset_recommendation_based_on_source_features',
+    },
+    'spatial_and_multichannel.vbap_adaptive_panning': {
+        'name': 'VBAP adaptive panning',
+        'theme': 'Spatial and Multichannel',
+        'module': 'pvx.algorithms.spatial_and_multichannel.imaging_and_panning.vbap_adaptive_panning',
+    },
+    'spatial_and_multichannel.dbap_distance_based_amplitude_panning': {
+        'name': 'DBAP (distance-based amplitude panning)',
+        'theme': 'Spatial and Multichannel',
+        'module': 'pvx.algorithms.spatial_and_multichannel.imaging_and_panning.dbap_distance_based_amplitude_panning',
+    },
+    'spatial_and_multichannel.binaural_itd_ild_synthesis': {
+        'name': 'Binaural ITD/ILD synthesis',
+        'theme': 'Spatial and Multichannel',
+        'module': 'pvx.algorithms.spatial_and_multichannel.imaging_and_panning.binaural_itd_ild_synthesis',
+    },
+    'spatial_and_multichannel.transaural_crosstalk_cancellation': {
+        'name': 'Transaural crosstalk cancellation',
+        'theme': 'Spatial and Multichannel',
+        'module': 'pvx.algorithms.spatial_and_multichannel.imaging_and_panning.transaural_crosstalk_cancellation',
+    },
+    'spatial_and_multichannel.stereo_width_frequency_dependent_control': {
+        'name': 'Stereo width (frequency-dependent control)',
+        'theme': 'Spatial and Multichannel',
+        'module': 'pvx.algorithms.spatial_and_multichannel.imaging_and_panning.stereo_width_frequency_dependent_control',
+    },
+    'spatial_and_multichannel.phase_aligned_mid_side_field_rotation': {
+        'name': 'Phase-aligned mid/side field rotation',
+        'theme': 'Spatial and Multichannel',
+        'module': 'pvx.algorithms.spatial_and_multichannel.imaging_and_panning.phase_aligned_mid_side_field_rotation',
+    },
+    'spatial_and_multichannel.delay_and_sum_beamforming': {
+        'name': 'Delay-and-sum beamforming',
+        'theme': 'Spatial and Multichannel',
+        'module': 'pvx.algorithms.spatial_and_multichannel.beamforming_and_directionality.delay_and_sum_beamforming',
+    },
+    'spatial_and_multichannel.mvdr_beamformer_wideband': {
+        'name': 'MVDR beamformer (wideband)',
+        'theme': 'Spatial and Multichannel',
+        'module': 'pvx.algorithms.spatial_and_multichannel.beamforming_and_directionality.mvdr_beamformer_wideband',
+    },
+    'spatial_and_multichannel.generalized_sidelobe_canceller': {
+        'name': 'Generalized sidelobe canceller',
+        'theme': 'Spatial and Multichannel',
+        'module': 'pvx.algorithms.spatial_and_multichannel.beamforming_and_directionality.generalized_sidelobe_canceller',
+    },
+    'spatial_and_multichannel.superdirective_beamformer': {
+        'name': 'Superdirective beamformer',
+        'theme': 'Spatial and Multichannel',
+        'module': 'pvx.algorithms.spatial_and_multichannel.beamforming_and_directionality.superdirective_beamformer',
+    },
+    'spatial_and_multichannel.diffuse_field_coherence_masking': {
+        'name': 'Diffuse-field coherence masking',
+        'theme': 'Spatial and Multichannel',
+        'module': 'pvx.algorithms.spatial_and_multichannel.beamforming_and_directionality.diffuse_field_coherence_masking',
+    },
+    'spatial_and_multichannel.direction_of_arrival_grid_tracking': {
+        'name': 'Direction-of-arrival grid tracking',
+        'theme': 'Spatial and Multichannel',
+        'module': 'pvx.algorithms.spatial_and_multichannel.beamforming_and_directionality.direction_of_arrival_grid_tracking',
+    },
+    'spatial_and_multichannel.first_order_ambisonic_encode_decode': {
+        'name': 'First-order ambisonic encode/decode',
+        'theme': 'Spatial and Multichannel',
+        'module': 'pvx.algorithms.spatial_and_multichannel.ambisonics_and_immersive.first_order_ambisonic_encode_decode',
+    },
+    'spatial_and_multichannel.higher_order_ambisonic_rotation': {
+        'name': 'Higher-order ambisonic rotation',
+        'theme': 'Spatial and Multichannel',
+        'module': 'pvx.algorithms.spatial_and_multichannel.ambisonics_and_immersive.higher_order_ambisonic_rotation',
+    },
+    'spatial_and_multichannel.ambisonic_binaural_rendering': {
+        'name': 'Ambisonic binaural rendering',
+        'theme': 'Spatial and Multichannel',
+        'module': 'pvx.algorithms.spatial_and_multichannel.ambisonics_and_immersive.ambisonic_binaural_rendering',
+    },
+    'spatial_and_multichannel.spherical_harmonic_diffuse_enhancement': {
+        'name': 'Spherical-harmonic diffuse enhancement',
+        'theme': 'Spatial and Multichannel',
+        'module': 'pvx.algorithms.spatial_and_multichannel.ambisonics_and_immersive.spherical_harmonic_diffuse_enhancement',
+    },
+    'spatial_and_multichannel.hoa_order_truncation_and_upmix': {
+        'name': 'HOA order truncation and upmix',
+        'theme': 'Spatial and Multichannel',
+        'module': 'pvx.algorithms.spatial_and_multichannel.ambisonics_and_immersive.hoa_order_truncation_and_upmix',
+    },
+    'spatial_and_multichannel.spatial_room_impulse_convolution': {
+        'name': 'Spatial room impulse convolution',
+        'theme': 'Spatial and Multichannel',
+        'module': 'pvx.algorithms.spatial_and_multichannel.ambisonics_and_immersive.spatial_room_impulse_convolution',
+    },
+    'spatial_and_multichannel.pvx_interchannel_phase_locking': {
+        'name': 'PVX interchannel phase locking',
+        'theme': 'Spatial and Multichannel',
+        'module': 'pvx.algorithms.spatial_and_multichannel.phase_vocoder_spatial.pvx_interchannel_phase_locking',
+    },
+    'spatial_and_multichannel.pvx_spatial_transient_preservation': {
+        'name': 'PVX spatial transient preservation',
+        'theme': 'Spatial and Multichannel',
+        'module': 'pvx.algorithms.spatial_and_multichannel.phase_vocoder_spatial.pvx_spatial_transient_preservation',
+    },
+    'spatial_and_multichannel.pvx_interaural_coherence_shaping': {
+        'name': 'PVX interaural coherence shaping',
+        'theme': 'Spatial and Multichannel',
+        'module': 'pvx.algorithms.spatial_and_multichannel.phase_vocoder_spatial.pvx_interaural_coherence_shaping',
+    },
+    'spatial_and_multichannel.pvx_directional_spectral_warp': {
+        'name': 'PVX directional spectral warp',
+        'theme': 'Spatial and Multichannel',
+        'module': 'pvx.algorithms.spatial_and_multichannel.phase_vocoder_spatial.pvx_directional_spectral_warp',
+    },
+    'spatial_and_multichannel.pvx_multichannel_time_alignment': {
+        'name': 'PVX multichannel time alignment',
+        'theme': 'Spatial and Multichannel',
+        'module': 'pvx.algorithms.spatial_and_multichannel.phase_vocoder_spatial.pvx_multichannel_time_alignment',
+    },
+    'spatial_and_multichannel.pvx_spatial_freeze_and_trajectory': {
+        'name': 'PVX spatial freeze and trajectory',
+        'theme': 'Spatial and Multichannel',
+        'module': 'pvx.algorithms.spatial_and_multichannel.phase_vocoder_spatial.pvx_spatial_freeze_and_trajectory',
+    },
+    'spatial_and_multichannel.multichannel_wiener_postfilter': {
+        'name': 'Multichannel Wiener postfilter',
+        'theme': 'Spatial and Multichannel',
+        'module': 'pvx.algorithms.spatial_and_multichannel.multichannel_restoration.multichannel_wiener_postfilter',
+    },
+    'spatial_and_multichannel.coherence_based_dereverb_multichannel': {
+        'name': 'Coherence-based dereverb (multichannel)',
+        'theme': 'Spatial and Multichannel',
+        'module': 'pvx.algorithms.spatial_and_multichannel.multichannel_restoration.coherence_based_dereverb_multichannel',
+    },
+    'spatial_and_multichannel.multichannel_noise_psd_tracking': {
+        'name': 'Multichannel noise PSD tracking',
+        'theme': 'Spatial and Multichannel',
+        'module': 'pvx.algorithms.spatial_and_multichannel.multichannel_restoration.multichannel_noise_psd_tracking',
+    },
+    'spatial_and_multichannel.phase_consistent_multichannel_denoise': {
+        'name': 'Phase-consistent multichannel denoise',
+        'theme': 'Spatial and Multichannel',
+        'module': 'pvx.algorithms.spatial_and_multichannel.multichannel_restoration.phase_consistent_multichannel_denoise',
+    },
+    'spatial_and_multichannel.microphone_array_calibration_tones': {
+        'name': 'Microphone-array calibration tones',
+        'theme': 'Spatial and Multichannel',
+        'module': 'pvx.algorithms.spatial_and_multichannel.multichannel_restoration.microphone_array_calibration_tones',
+    },
+    'spatial_and_multichannel.cross_channel_click_pop_repair': {
+        'name': 'Cross-channel click/pop repair',
+        'theme': 'Spatial and Multichannel',
+        'module': 'pvx.algorithms.spatial_and_multichannel.multichannel_restoration.cross_channel_click_pop_repair',
+    },
+    'spatial_and_multichannel.rotating_speaker_doppler_field': {
+        'name': 'Rotating-speaker Doppler field',
+        'theme': 'Spatial and Multichannel',
+        'module': 'pvx.algorithms.spatial_and_multichannel.creative_spatial_fx.rotating_speaker_doppler_field',
+    },
+    'spatial_and_multichannel.binaural_motion_trajectory_designer': {
+        'name': 'Binaural motion trajectory designer',
+        'theme': 'Spatial and Multichannel',
+        'module': 'pvx.algorithms.spatial_and_multichannel.creative_spatial_fx.binaural_motion_trajectory_designer',
+    },
+    'spatial_and_multichannel.stochastic_spatial_diffusion_cloud': {
+        'name': 'Stochastic spatial diffusion cloud',
+        'theme': 'Spatial and Multichannel',
+        'module': 'pvx.algorithms.spatial_and_multichannel.creative_spatial_fx.stochastic_spatial_diffusion_cloud',
+    },
+    'spatial_and_multichannel.decorrelated_reverb_upmix': {
+        'name': 'Decorrelated reverb upmix',
+        'theme': 'Spatial and Multichannel',
+        'module': 'pvx.algorithms.spatial_and_multichannel.creative_spatial_fx.decorrelated_reverb_upmix',
+    },
+    'spatial_and_multichannel.spectral_spatial_granulator': {
+        'name': 'Spectral spatial granulator',
+        'theme': 'Spatial and Multichannel',
+        'module': 'pvx.algorithms.spatial_and_multichannel.creative_spatial_fx.spectral_spatial_granulator',
+    },
+    'spatial_and_multichannel.spatial_freeze_resynthesis': {
+        'name': 'Spatial freeze resynthesis',
+        'theme': 'Spatial and Multichannel',
+        'module': 'pvx.algorithms.spatial_and_multichannel.creative_spatial_fx.spatial_freeze_resynthesis',
     },
 }
 

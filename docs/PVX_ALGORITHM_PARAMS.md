@@ -10,8 +10,10 @@ Use these keys as `**params` when calling module `process(audio, sample_rate, **
 ## `am_fm_ring_modulation_blocks`
 - `freq_hz`
 
-## `ambisonics_encode_decode`
-- `angle_deg`
+## `ambisonic_binaural_rendering`
+- `head_itd_ms`
+- `head_ild_db`
+- `azimuth_deg`
 
 ## `auto_parameter_tuning_bayesian_optimization`
 - `target_centroid`
@@ -22,8 +24,16 @@ Use these keys as `**params` when calling module `process(audio, sample_rate, **
 ## `beat_synchronous_time_warping`
 - `stretch`
 
-## `binaural_hrtf_rendering`
+## `binaural_itd_ild_synthesis`
 - `azimuth_deg`
+- `itd_max_ms`
+- `ild_db`
+
+## `binaural_motion_trajectory_designer`
+- `trajectory`
+- `trajectory_hz`
+- `width`
+- `itd_ms`
 
 ## `blind_deconvolution_dereverb`
 - No algorithm-specific keys (uses generic/default path).
@@ -37,11 +47,24 @@ Use these keys as `**params` when calling module `process(audio, sample_rate, **
 ## `clip_hum_buzz_artifact_detection`
 - No algorithm-specific keys (uses generic/default path).
 
+## `coherence_based_dereverb_multichannel`
+- `coherence_threshold`
+- `decay`
+
 ## `crepe_style_neural_f0`
 - No algorithm-specific keys (uses generic/default path).
 
+## `cross_channel_click_pop_repair`
+- `spike_threshold`
+
 ## `cross_synthesis_vocoder`
 - No algorithm-specific keys (uses generic/default path).
+
+## `dbap_distance_based_amplitude_panning`
+- `output_channels`
+- `source_x`
+- `source_y`
+- `rolloff`
 
 ## `declick_decrackle_median_wavelet_interpolation`
 - `spike_threshold`
@@ -49,11 +72,33 @@ Use these keys as `**params` when calling module `process(audio, sample_rate, **
 ## `declip_via_sparse_reconstruction`
 - `clip_threshold`
 
+## `decorrelated_reverb_upmix`
+- `output_channels`
+- `decay_s`
+- `rir_length`
+- `mix`
+- `seed`
+
+## `delay_and_sum_beamforming`
+- `steer_deg`
+- `spacing_m`
+- `sound_speed`
+
 ## `demucs_style_stem_separation_backend`
 - No algorithm-specific keys (uses generic/default path).
 
+## `diffuse_field_coherence_masking`
+- `coherence_threshold`
+- `floor`
+
 ## `diffusion_based_speech_audio_denoise`
 - No algorithm-specific keys (uses generic/default path).
+
+## `direction_of_arrival_grid_tracking`
+- `spacing_m`
+- `sound_speed`
+- `frame`
+- `hop`
 
 ## `drr_guided_dereverb`
 - No algorithm-specific keys (uses generic/default path).
@@ -63,6 +108,10 @@ Use these keys as `**params` when calling module `process(audio, sample_rate, **
 
 ## `envelope_followed_modulation_routing`
 - `depth`
+
+## `first_order_ambisonic_encode_decode`
+- `azimuth_deg`
+- `elevation_deg`
 
 ## `formant_lfo_modulation`
 - `lfo_hz`
@@ -74,8 +123,11 @@ Use these keys as `**params` when calling module `process(audio, sample_rate, **
 - `grain`
 - `start`
 
-## `gcc_phat_localization`
-- No algorithm-specific keys (uses generic/default path).
+## `generalized_sidelobe_canceller`
+- `mu`
+- `steer_deg`
+- `spacing_m`
+- `sound_speed`
 
 ## `grain_cloud_pitch_textures`
 - `seed`
@@ -86,15 +138,18 @@ Use these keys as `**params` when calling module `process(audio, sample_rate, **
 ## `granular_time_stretch_engine`
 - `stretch`
 
-## `gsc_beamforming`
-- No algorithm-specific keys (uses generic/default path).
-
 ## `harmonic_percussive_split_tsm`
 - `harmonic_stretch`
 - `percussive_stretch`
 
 ## `harmonic_product_spectrum_hps`
 - No algorithm-specific keys (uses generic/default path).
+
+## `higher_order_ambisonic_rotation`
+- `yaw_deg`
+
+## `hoa_order_truncation_and_upmix`
+- `target_channels`
 
 ## `ica_bss_for_multichannel_stems`
 - No algorithm-specific keys (uses generic/default path).
@@ -123,8 +178,9 @@ Use these keys as `**params` when calling module `process(audio, sample_rate, **
 ## `lufs_target_mastering_chain`
 - `target_lufs`
 
-## `mid_side_adaptive_widening`
-- `width`
+## `microphone_array_calibration_tones`
+- `tone_hz`
+- `apply_correction`
 
 ## `minimum_statistics_noise_tracking`
 - No algorithm-specific keys (uses generic/default path).
@@ -144,8 +200,18 @@ Use these keys as `**params` when calling module `process(audio, sample_rate, **
 ## `multi_window_stft_fusion`
 - No algorithm-specific keys (uses generic/default path).
 
-## `mvdr_beamforming`
-- No algorithm-specific keys (uses generic/default path).
+## `multichannel_noise_psd_tracking`
+- `alpha`
+- `floor`
+
+## `multichannel_wiener_postfilter`
+- `noise_floor`
+
+## `mvdr_beamformer_wideband`
+- `steer_deg`
+- `spacing_m`
+- `sound_speed`
+- `diag_load`
 
 ## `neural_dereverb_module`
 - No algorithm-specific keys (uses generic/default path).
@@ -164,6 +230,13 @@ Use these keys as `**params` when calling module `process(audio, sample_rate, **
 ## `pesq_stoi_visqol_quality_metrics`
 - No algorithm-specific keys (uses generic/default path).
 
+## `phase_aligned_mid_side_field_rotation`
+- `rotation_deg`
+
+## `phase_consistent_multichannel_denoise`
+- `reduction_db`
+- `floor`
+
 ## `phase_randomization_textures`
 - `strength`
 
@@ -173,6 +246,28 @@ Use these keys as `**params` when calling module `process(audio, sample_rate, **
 
 ## `probabilistic_latent_component_separation`
 - No algorithm-specific keys (uses generic/default path).
+
+## `pvx_directional_spectral_warp`
+- `warp_amount`
+- `azimuth_deg`
+
+## `pvx_interaural_coherence_shaping`
+- `coherence_target`
+
+## `pvx_interchannel_phase_locking`
+- `lock_strength`
+
+## `pvx_multichannel_time_alignment`
+- `max_lag`
+
+## `pvx_spatial_freeze_and_trajectory`
+- `frame_ratio`
+- `orbit_hz`
+
+## `pvx_spatial_transient_preservation`
+- `transient_threshold`
+- `phase_smooth`
+- `preserve_amount`
 
 ## `pyin`
 - No algorithm-specific keys (uses generic/default path).
@@ -195,6 +290,11 @@ Use these keys as `**params` when calling module `process(audio, sample_rate, **
 ## `room_impulse_inverse_filtering`
 - No algorithm-specific keys (uses generic/default path).
 
+## `rotating_speaker_doppler_field`
+- `output_channels`
+- `rotation_hz`
+- `depth_ms`
+
 ## `rpca_hpss`
 - No algorithm-specific keys (uses generic/default path).
 
@@ -206,6 +306,16 @@ Use these keys as `**params` when calling module `process(audio, sample_rate, **
 
 ## `sinusoidal_residual_transient_decomposition`
 - No algorithm-specific keys (uses generic/default path).
+
+## `spatial_freeze_resynthesis`
+- `output_channels`
+- `frame_ratio`
+- `phase_drift`
+
+## `spatial_room_impulse_convolution`
+- `decay_s`
+- `rir_length`
+- `seed`
 
 ## `spectral_blur_smear`
 - No algorithm-specific keys (uses generic/default path).
@@ -225,17 +335,41 @@ Use these keys as `**params` when calling module `process(audio, sample_rate, **
 ## `spectral_freeze_banks`
 - `frame_ratio`
 
+## `spectral_spatial_granulator`
+- `output_channels`
+- `grain`
+- `spread_semitones`
+- `density`
+- `seed`
+
 ## `spectral_tremolo`
 - `lfo_hz`
 
-## `stereo_decorrelation_for_width`
-- `delay_samples`
+## `spherical_harmonic_diffuse_enhancement`
+- `diffuse_mix`
+
+## `stereo_width_frequency_dependent_control`
+- `width_low`
+- `width_high`
+- `crossover_hz`
+
+## `stochastic_spatial_diffusion_cloud`
+- `output_channels`
+- `diffusion`
+- `max_delay_ms`
+- `seed`
 
 ## `structure_segmentation_verse_chorus_sections`
 - No algorithm-specific keys (uses generic/default path).
 
 ## `subharmonic_summation`
 - No algorithm-specific keys (uses generic/default path).
+
+## `superdirective_beamformer`
+- `steer_deg`
+- `spacing_m`
+- `sound_speed`
+- `aperture`
 
 ## `swipe`
 - No algorithm-specific keys (uses generic/default path).
@@ -253,6 +387,10 @@ Use these keys as `**params` when calling module `process(audio, sample_rate, **
 ## `time_varying_cents_maps`
 - `cents_curve`
 
+## `transaural_crosstalk_cancellation`
+- `cancellation`
+- `delay_ms`
+
 ## `transient_shaping`
 - `attack_boost`
 
@@ -262,11 +400,13 @@ Use these keys as `**params` when calling module `process(audio, sample_rate, **
 ## `u_net_vocal_accompaniment_split`
 - No algorithm-specific keys (uses generic/default path).
 
-## `upmix_downmix_with_phase_coherent_routing`
-- `mode`
-
 ## `upward_compression`
 - `threshold_db`
+
+## `vbap_adaptive_panning`
+- `output_channels`
+- `azimuth_deg`
+- `width`
 
 ## `vibrato_preserving_correction`
 - `strength`

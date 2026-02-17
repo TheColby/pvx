@@ -77,6 +77,22 @@ code {
   color: #d7eef2;
   font-size: 0.95rem;
 }
+.small {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.pill {
+  display: inline-block;
+  border: 1px solid #b6cad3;
+  background: #edf5f9;
+  border-radius: 999px;
+  padding: 2px 10px;
+  margin: 2px 6px 2px 0;
+  font-size: 0.82rem;
+}
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
 @media (max-width: 900px) {
   table { display: block; overflow-x: auto; white-space: nowrap; }
 }

@@ -6,7 +6,9 @@ from __future__ import annotations
 from collections import OrderedDict
 from datetime import datetime, timezone
 from html import escape
+import json
 from pathlib import Path
+import re
 from urllib.parse import quote_plus
 import sys
 
@@ -14,6 +16,8 @@ ROOT = Path(__file__).resolve().parent
 SRC_DIR = ROOT / "src"
 DOCS_HTML_DIR = ROOT / "docs" / "html"
 GROUPS_DIR = DOCS_HTML_DIR / "groups"
+GLOSSARY_PATH = ROOT / "docs" / "technical_glossary.json"
+EXTRA_PAPERS_PATH = ROOT / "docs" / "papers_extra.json"
 
 sys.path.insert(0, str(SRC_DIR))
 from pvx.algorithms.registry import ALGORITHM_REGISTRY  # noqa: E402
@@ -579,6 +583,308 @@ PAPERS: list[dict[str, str]] = [
 ]
 
 
+DEFAULT_GLOSSARY: list[dict[str, str]] = [
+    {
+        "term": "Phase vocoder",
+        "category": "Phase and Time-Scale DSP",
+        "description": "Frequency-domain method for time-stretching/pitch-shifting via STFT phase propagation.",
+        "url": "https://en.wikipedia.org/wiki/Phase_vocoder",
+    },
+    {
+        "term": "Short-time Fourier transform (STFT)",
+        "category": "Phase and Time-Scale DSP",
+        "description": "Windowed Fourier transform used for local time-frequency analysis.",
+        "url": "https://en.wikipedia.org/wiki/Short-time_Fourier_transform",
+    },
+    {
+        "term": "WSOLA",
+        "category": "Phase and Time-Scale DSP",
+        "description": "Time-domain overlap-add method that aligns waveform-similar grains.",
+        "url": "https://en.wikipedia.org/wiki/Audio_time_stretching_and_pitch_scaling",
+    },
+    {
+        "term": "PSOLA",
+        "category": "Phase and Time-Scale DSP",
+        "description": "Pitch-synchronous overlap-add family for speech/music pitch modification.",
+        "url": "https://en.wikipedia.org/wiki/Audio_time_stretching_and_pitch_scaling",
+    },
+    {
+        "term": "Constant-Q transform (CQT)",
+        "category": "Time-Frequency Transforms",
+        "description": "Log-frequency transform with constant Q-factor per bin.",
+        "url": "https://en.wikipedia.org/wiki/Constant-Q_transform",
+    },
+    {
+        "term": "Wavelet transform",
+        "category": "Time-Frequency Transforms",
+        "description": "Multi-resolution analysis with scalable wavelet atoms.",
+        "url": "https://en.wikipedia.org/wiki/Wavelet",
+    },
+    {
+        "term": "Synchrosqueezing",
+        "category": "Time-Frequency Transforms",
+        "description": "Reassignment-like method that sharpens time-frequency ridges.",
+        "url": "https://en.wikipedia.org/wiki/Wavelet_transform#Synchrosqueezing_transform",
+    },
+    {
+        "term": "YIN",
+        "category": "Pitch Detection",
+        "description": "Difference-function-based F0 estimator for monophonic signals.",
+        "url": "https://librosa.org/doc/main/generated/librosa.yin.html",
+    },
+    {
+        "term": "pYIN",
+        "category": "Pitch Detection",
+        "description": "Probabilistic extension of YIN with voicing estimation.",
+        "url": "https://librosa.org/doc/main/generated/librosa.pyin.html",
+    },
+    {
+        "term": "SWIPE",
+        "category": "Pitch Detection",
+        "description": "Sawtooth-inspired frequency-domain fundamental estimator.",
+        "url": "https://doi.org/10.1121/1.2951592",
+    },
+    {
+        "term": "NMF",
+        "category": "Separation and Decomposition",
+        "description": "Nonnegative matrix factorization for source decomposition.",
+        "url": "https://en.wikipedia.org/wiki/Non-negative_matrix_factorization",
+    },
+    {
+        "term": "ICA",
+        "category": "Separation and Decomposition",
+        "description": "Independent component analysis for blind source separation.",
+        "url": "https://en.wikipedia.org/wiki/Independent_component_analysis",
+    },
+    {
+        "term": "RPCA",
+        "category": "Separation and Decomposition",
+        "description": "Robust PCA decomposition into low-rank and sparse components.",
+        "url": "https://en.wikipedia.org/wiki/Robust_principal_component_analysis",
+    },
+    {
+        "term": "Wiener filter",
+        "category": "Denoising and Dereverb",
+        "description": "Minimum mean-square error linear estimator.",
+        "url": "https://en.wikipedia.org/wiki/Wiener_filter",
+    },
+    {
+        "term": "MMSE-STSA",
+        "category": "Denoising and Dereverb",
+        "description": "Minimum-mean-square-error short-time spectral amplitude estimator.",
+        "url": scholar("MMSE short-time spectral amplitude estimator"),
+    },
+    {
+        "term": "Log-MMSE",
+        "category": "Denoising and Dereverb",
+        "description": "Log-spectral MMSE speech enhancement estimator.",
+        "url": scholar("log-MMSE speech enhancement"),
+    },
+    {
+        "term": "Weighted prediction error (WPE)",
+        "category": "Denoising and Dereverb",
+        "description": "Long-term linear prediction framework for dereverberation.",
+        "url": "https://nara-wpe.readthedocs.io/en/latest/",
+    },
+    {
+        "term": "LUFS / ITU-R BS.1770",
+        "category": "Dynamics and Loudness",
+        "description": "Loudness unit framework and measurement recommendation used in mastering.",
+        "url": "https://en.wikipedia.org/wiki/LKFS",
+    },
+    {
+        "term": "EBU R128",
+        "category": "Dynamics and Loudness",
+        "description": "Broadcast loudness normalization recommendation aligned to BS.1770.",
+        "url": "https://tech.ebu.ch/publications/r128",
+    },
+    {
+        "term": "Multiband compression",
+        "category": "Dynamics and Loudness",
+        "description": "Band-split compression with independent dynamics per band.",
+        "url": "https://en.wikipedia.org/wiki/Audio_compressor#Multiband_compression",
+    },
+    {
+        "term": "Ring modulation",
+        "category": "Creative Effects",
+        "description": "Multiplicative modulation creating sidebands at sum/difference frequencies.",
+        "url": "https://en.wikipedia.org/wiki/Ring_modulation",
+    },
+    {
+        "term": "Ambisonics",
+        "category": "Spatial Audio",
+        "description": "Spherical-harmonic representation of a 3D sound field.",
+        "url": "https://en.wikipedia.org/wiki/Ambisonics",
+    },
+    {
+        "term": "Binaural audio",
+        "category": "Spatial Audio",
+        "description": "Two-channel rendering that preserves direction cues for headphones.",
+        "url": "https://en.wikipedia.org/wiki/Binaural_recording",
+    },
+    {
+        "term": "HRTF",
+        "category": "Spatial Audio",
+        "description": "Head-related transfer function used in binaural rendering.",
+        "url": "https://en.wikipedia.org/wiki/Head-related_transfer_function",
+    },
+    {
+        "term": "Interaural time difference (ITD)",
+        "category": "Spatial Audio",
+        "description": "Localization cue based on left-right arrival-time differences.",
+        "url": "https://en.wikipedia.org/wiki/Interaural_time_difference",
+    },
+    {
+        "term": "Interaural level difference (ILD)",
+        "category": "Spatial Audio",
+        "description": "Localization cue based on left-right level differences.",
+        "url": "https://en.wikipedia.org/wiki/Sound_localization",
+    },
+    {
+        "term": "MVDR beamformer",
+        "category": "Spatial Audio",
+        "description": "Minimum variance distortionless response array beamformer.",
+        "url": "https://en.wikipedia.org/wiki/Minimum_variance_distortionless_response",
+    },
+    {
+        "term": "Generalized sidelobe canceller (GSC)",
+        "category": "Spatial Audio",
+        "description": "Adaptive beamforming architecture with quiescent and blocking paths.",
+        "url": scholar("generalized sidelobe canceller"),
+    },
+    {
+        "term": "GCC-PHAT",
+        "category": "Spatial Audio",
+        "description": "Generalized cross-correlation with PHAT weighting for delay estimation.",
+        "url": scholar("GCC-PHAT"),
+    },
+    {
+        "term": "VBAP",
+        "category": "Spatial Audio",
+        "description": "Vector-base amplitude panning across loudspeaker triplets/pairs.",
+        "url": scholar("VBAP vector base amplitude panning"),
+    },
+    {
+        "term": "DBAP",
+        "category": "Spatial Audio",
+        "description": "Distance-based amplitude panning driven by source-speaker distance.",
+        "url": scholar("distance-based amplitude panning DBAP"),
+    },
+]
+
+
+def slugify(text: str) -> str:
+    value = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
+    return value or "item"
+
+
+def dedupe_papers(papers: list[dict[str, str]]) -> list[dict[str, str]]:
+    seen: set[tuple[str, str, str]] = set()
+    output: list[dict[str, str]] = []
+    for paper in papers:
+        key = (
+            paper.get("category", "").strip().lower(),
+            paper.get("year", "").strip(),
+            paper.get("title", "").strip().lower(),
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        output.append(paper)
+    return output
+
+
+def load_extra_papers() -> list[dict[str, str]]:
+    if not EXTRA_PAPERS_PATH.exists():
+        return []
+    try:
+        payload = json.loads(EXTRA_PAPERS_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        return []
+    if not isinstance(payload, list):
+        return []
+    records: list[dict[str, str]] = []
+    for item in payload:
+        if not isinstance(item, dict):
+            continue
+        if not {"category", "authors", "year", "title", "venue", "url"}.issubset(item):
+            continue
+        records.append({k: str(item[k]) for k in ("category", "authors", "year", "title", "venue", "url")})
+    return records
+
+
+def load_glossary() -> list[dict[str, str]]:
+    payload: list[dict[str, str]] = []
+    if GLOSSARY_PATH.exists():
+        try:
+            loaded = json.loads(GLOSSARY_PATH.read_text(encoding="utf-8"))
+            if isinstance(loaded, list):
+                for item in loaded:
+                    if not isinstance(item, dict):
+                        continue
+                    if not {"term", "category", "description", "url"}.issubset(item):
+                        continue
+                    payload.append({k: str(item[k]) for k in ("term", "category", "description", "url")})
+        except Exception:
+            payload = []
+    if not payload:
+        payload = list(DEFAULT_GLOSSARY)
+    seen: set[str] = set()
+    out: list[dict[str, str]] = []
+    for entry in payload:
+        term_key = entry["term"].strip().lower()
+        if term_key in seen:
+            continue
+        seen.add(term_key)
+        out.append(entry)
+    return out
+
+
+PAPERS = dedupe_papers(PAPERS + load_extra_papers())
+TECHNICAL_GLOSSARY = load_glossary()
+GLOSSARY_LOOKUP = {entry["term"].lower(): entry for entry in TECHNICAL_GLOSSARY}
+
+
+def infer_glossary_terms(*texts: str, limit: int = 6) -> list[dict[str, str]]:
+    haystack = " ".join(texts).lower()
+    norm_haystack = re.sub(r"[^a-z0-9]+", " ", haystack)
+    matches: list[dict[str, str]] = []
+    for entry in TECHNICAL_GLOSSARY:
+        term = entry["term"]
+        token = term.lower()
+        token_norm = re.sub(r"[^a-z0-9]+", " ", token).strip()
+        if not token_norm:
+            continue
+        if re.search(rf"\b{re.escape(token_norm)}\b", norm_haystack):
+            matches.append(entry)
+            continue
+        # Support acronym-style terms (e.g., GCC-PHAT, MVDR, LUFS) without
+        # matching arbitrary substrings inside unrelated words.
+        compact = re.sub(r"[^a-z0-9]+", "", token)
+        if compact and len(compact) <= 8 and re.search(rf"\b{re.escape(compact)}\b", norm_haystack):
+            matches.append(entry)
+    dedup: list[dict[str, str]] = []
+    seen: set[str] = set()
+    for entry in matches:
+        key = entry["term"].lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        dedup.append(entry)
+        if len(dedup) >= limit:
+            break
+    return dedup
+
+
+def glossary_links_html(entries: list[dict[str, str]], *, page_prefix: str = "") -> str:
+    if not entries:
+        return "None"
+    return ", ".join(
+        f"<a href=\"{page_prefix}glossary.html#{escape(slugify(entry['term']))}\">{escape(entry['term'])}</a>"
+        for entry in entries
+    )
+
+
 def extract_algorithm_params(base_path: Path) -> dict[str, list[str]]:
     text = base_path.read_text(encoding="utf-8")
     mapping: dict[str, list[str]] = {}
@@ -734,6 +1040,22 @@ code {
   color: #d7eef2;
   font-size: 0.95rem;
 }
+.small {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.pill {
+  display: inline-block;
+  border: 1px solid #b6cad3;
+  background: #edf5f9;
+  border-radius: 999px;
+  padding: 2px 10px;
+  margin: 2px 6px 2px 0;
+  font-size: 0.82rem;
+}
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
 @media (max-width: 900px) {
   table { display: block; overflow-x: auto; white-space: nowrap; }
 }
@@ -744,6 +1066,7 @@ code {
 def render_index(groups: OrderedDict[str, list[tuple[str, dict[str, str]]]], params: dict[str, list[str]]) -> None:
     total_algorithms = sum(len(items) for items in groups.values())
     total_param_keys = len({k for values in params.values() for k in values})
+    unique_concepts = len(TECHNICAL_GLOSSARY)
     content_parts: list[str] = []
 
     content_parts.append(
@@ -761,18 +1084,30 @@ def render_index(groups: OrderedDict[str, list[tuple[str, dict[str, str]]]], par
     <li><strong>{total_algorithms}</strong> algorithms</li>
     <li><strong>{group_count}</strong> folders/themes</li>
     <li><strong>{param_count}</strong> distinct algorithm parameter keys in dispatch</li>
+    <li><strong>{glossary_count}</strong> linked technical glossary concepts</li>
+    <li><strong>{paper_count}</strong> bibliography references</li>
   </ul>
 </div>
-""".format(total_algorithms=total_algorithms, group_count=len(groups), param_count=total_param_keys)
+""".format(
+            total_algorithms=total_algorithms,
+            group_count=len(groups),
+            param_count=total_param_keys,
+            glossary_count=unique_concepts,
+            paper_count=len(PAPERS),
+        )
     )
 
     content_parts.append(
-        """
+        f"""
 <div class=\"card\">
   <p>
-    <a href=\"papers.html\"><strong>Research bibliography (dozens of papers)</strong></a>
+    <a href=\"papers.html\"><strong>Research bibliography ({len(PAPERS)} references)</strong></a>
     - foundational and directly related literature for phase vocoder, time-scale/pitch,
-    time-frequency transforms, separation, denoising, and spatial processing.
+    time-frequency transforms, separation, denoising, dereverberation, spatial audio, and mastering workflows.
+  </p>
+  <p>
+    <a href=\"glossary.html\"><strong>Linked technical glossary ({unique_concepts} terms)</strong></a>
+    - quick definitions and external references (Wikipedia, standards pages, docs, and papers).
   </p>
 </div>
 """
@@ -813,35 +1148,52 @@ def render_index(groups: OrderedDict[str, list[tuple[str, dict[str, str]]]], par
         "pvx HTML Documentation",
         "\n".join(content_parts),
         css_path="style.css",
-        breadcrumbs="<p class=\"kicker\">Index of grouped algorithm docs and bibliography</p>",
+        breadcrumbs="<p class=\"kicker\">Index of grouped algorithm docs, linked glossary, and bibliography</p>",
     )
     (DOCS_HTML_DIR / "index.html").write_text(html, encoding="utf-8")
+
+
+def module_path_from_meta(meta: dict[str, str]) -> str:
+    return "src/" + meta["module"].replace(".", "/") + ".py"
 
 
 def render_group_pages(groups: OrderedDict[str, list[tuple[str, dict[str, str]]]], params: dict[str, list[str]]) -> None:
     for folder, items in groups.items():
         theme = items[0][1]["theme"] if items else folder
         rows: list[str] = []
+        subgroup_counts: OrderedDict[str, int] = OrderedDict()
         for algorithm_id, meta in items:
             _, slug = algorithm_id.split(".", 1)
-            module_path = f"src/pvx/algorithms/{folder}/{slug}.py"
+            module_path = module_path_from_meta(meta)
+            module_parts = meta["module"].split(".")
+            subgroup = module_parts[-2] if len(module_parts) > 4 else "core"
+            subgroup_counts[subgroup] = subgroup_counts.get(subgroup, 0) + 1
             keys = params.get(slug, [])
             key_text = ", ".join(f"<code>{escape(k)}</code>" for k in keys) if keys else "None (generic/default path)"
+            concepts = infer_glossary_terms(algorithm_id, meta["name"], subgroup, theme, limit=6)
             rows.append(
                 "<tr>"
                 f"<td><code>{escape(algorithm_id)}</code></td>"
                 f"<td>{escape(meta['name'])}</td>"
+                f"<td><code>{escape(subgroup)}</code></td>"
                 f"<td><code>{escape(module_path)}</code></td>"
                 f"<td>{key_text}</td>"
+                f"<td>{glossary_links_html(concepts, page_prefix='../')}</td>"
                 "</tr>"
             )
+
+        subgroup_pills = " ".join(
+            f"<span class=\"pill\"><span class=\"mono\">{escape(name)}</span> ({count})</span>"
+            for name, count in subgroup_counts.items()
+        )
 
         content = (
             f"<div class=\"card\"><p><strong>Theme:</strong> {escape(theme)}</p>"
             f"<p><strong>Folder:</strong> <code>{escape(folder)}</code> | <strong>Algorithms:</strong> {len(items)}</p>"
+            f"<p><strong>Subgroups:</strong> {subgroup_pills or '<span class=\"small\">None</span>'}</p>"
             "</div>"
             "<table>"
-            "<thead><tr><th>Algorithm ID</th><th>Name</th><th>Module Path</th><th>Parameter keys</th></tr></thead>"
+            "<thead><tr><th>Algorithm ID</th><th>Name</th><th>Subgroup</th><th>Module Path</th><th>Parameter keys</th><th>Concept links</th></tr></thead>"
             f"<tbody>{''.join(rows)}</tbody>"
             "</table>"
         )
@@ -849,7 +1201,8 @@ def render_group_pages(groups: OrderedDict[str, list[tuple[str, dict[str, str]]]
         breadcrumbs = (
             "<nav>"
             "<a href=\"../index.html\">Home</a> | "
-            "<a href=\"../papers.html\">Research papers</a>"
+            "<a href=\"../papers.html\">Research papers</a> | "
+            "<a href=\"../glossary.html\">Technical glossary</a>"
             "</nav>"
         )
         html = html_page(
@@ -872,26 +1225,29 @@ def render_papers_page() -> None:
 <div class=\"card\">
   <p>
     This bibliography collects foundational and directly related literature that informed
-    the formulation of this repository's phase-vocoder-centric architecture and the broader
-    DSP algorithm roadmap.
+    PVX's phase-vocoder-centric architecture and the broader DSP algorithm roadmap.
   </p>
   <p>
-    Total references: <strong>{count}</strong>
+    Total references: <strong>{count}</strong> across <strong>{categories}</strong> categories.
+  </p>
+  <p class=\"small\">
+    Links point to DOI pages, publisher archives, arXiv, standards documents, project docs,
+    or Google Scholar queries where an official landing page can vary by publisher access.
   </p>
 </div>
-""".format(count=len(PAPERS))
+""".format(count=len(PAPERS), categories=len(by_category))
     )
 
     toc_items = "".join(
-        f"<li><a href=\"#{escape(category.lower().replace(' ', '-').replace(',', '').replace('/', '-'))}\">{escape(category)}</a></li>"
+        f"<li><a href=\"#{escape(slugify(category))}\">{escape(category)} ({len(by_category[category])})</a></li>"
         for category in by_category
     )
     sections.append(f"<div class=\"card\"><h2>Categories</h2><ul>{toc_items}</ul></div>")
 
     for category, papers in by_category.items():
-        anchor = category.lower().replace(" ", "-").replace(",", "").replace("/", "-")
+        anchor = slugify(category)
         rows = []
-        for p in papers:
+        for p in sorted(papers, key=lambda item: (item.get("year", ""), item.get("title", "")), reverse=True):
             rows.append(
                 "<tr>"
                 f"<td>{escape(p['year'])}</td>"
@@ -911,7 +1267,8 @@ def render_papers_page() -> None:
 
     breadcrumbs = (
         "<nav>"
-        "<a href=\"index.html\">Home</a>"
+        "<a href=\"index.html\">Home</a> | "
+        "<a href=\"glossary.html\">Technical glossary</a>"
         "</nav>"
     )
     html = html_page(
@@ -923,9 +1280,71 @@ def render_papers_page() -> None:
     (DOCS_HTML_DIR / "papers.html").write_text(html, encoding="utf-8")
 
 
+def render_glossary_page() -> None:
+    by_category: OrderedDict[str, list[dict[str, str]]] = OrderedDict()
+    for entry in TECHNICAL_GLOSSARY:
+        by_category.setdefault(entry["category"], []).append(entry)
+
+    sections: list[str] = []
+    sections.append(
+        """
+<div class=\"card\">
+  <p>
+    Linked glossary for core concepts used throughout PVX algorithms, CLIs, and research docs.
+    Entries include concise definitions plus external references (Wikipedia, standards pages,
+    project docs, and canonical papers).
+  </p>
+  <p>
+    Total terms: <strong>{count}</strong> across <strong>{categories}</strong> categories.
+  </p>
+</div>
+""".format(count=len(TECHNICAL_GLOSSARY), categories=len(by_category))
+    )
+
+    toc = "".join(
+        f"<li><a href=\"#{escape(slugify(category))}\">{escape(category)} ({len(entries)})</a></li>"
+        for category, entries in by_category.items()
+    )
+    sections.append(f"<div class=\"card\"><h2>Categories</h2><ul>{toc}</ul></div>")
+
+    for category, entries in by_category.items():
+        rows: list[str] = []
+        for entry in sorted(entries, key=lambda item: item["term"].lower()):
+            rows.append(
+                "<tr>"
+                f"<td id=\"{escape(slugify(entry['term']))}\">{escape(entry['term'])}</td>"
+                f"<td>{escape(entry['description'])}</td>"
+                f"<td><a href=\"{escape(entry['url'])}\" target=\"_blank\" rel=\"noopener\">Reference</a></td>"
+                "</tr>"
+            )
+        sections.append(
+            f"<h2 id=\"{escape(slugify(category))}\">{escape(category)}</h2>"
+            "<table>"
+            "<thead><tr><th>Term</th><th>Description</th><th>External link</th></tr></thead>"
+            f"<tbody>{''.join(rows)}</tbody>"
+            "</table>"
+        )
+
+    breadcrumbs = (
+        "<nav>"
+        "<a href=\"index.html\">Home</a> | "
+        "<a href=\"papers.html\">Research papers</a>"
+        "</nav>"
+    )
+    html = html_page(
+        "pvx Technical Glossary",
+        "\n".join(sections),
+        css_path="style.css",
+        breadcrumbs=breadcrumbs,
+    )
+    (DOCS_HTML_DIR / "glossary.html").write_text(html, encoding="utf-8")
+
+
 def main() -> int:
     DOCS_HTML_DIR.mkdir(parents=True, exist_ok=True)
     GROUPS_DIR.mkdir(parents=True, exist_ok=True)
+    for stale_group_page in GROUPS_DIR.glob("*.html"):
+        stale_group_page.unlink()
 
     params = extract_algorithm_params(ROOT / "src" / "pvx" / "algorithms" / "base.py")
     groups = grouped_algorithms()
@@ -934,6 +1353,7 @@ def main() -> int:
     render_index(groups, params)
     render_group_pages(groups, params)
     render_papers_page()
+    render_glossary_page()
     return 0
 
 

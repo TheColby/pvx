@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import glob
+import io
 import math
 import sys
 import time
@@ -321,7 +322,8 @@ def is_silent(args: argparse.Namespace) -> bool:
 def log_message(args: argparse.Namespace, message: str, *, min_level: str = "normal", error: bool = False) -> None:
     if console_level(args) < _VERBOSITY_TO_LEVEL[min_level]:
         return
-    print(message, file=sys.stderr if error else sys.stdout)
+    stream_to_stdout = bool(getattr(args, "stdout", False))
+    print(message, file=sys.stderr if error or stream_to_stdout else sys.stdout)
 
 
 def log_error(args: argparse.Namespace, message: str) -> None:
@@ -1418,6 +1420,258 @@ def normalize_audio(
     raise ValueError(f"Unknown normalization mode: {mode}")
 
 
+def _envelope_coeff(sample_rate: int, ms: float) -> float:
+    tau = max(0.01, float(ms)) / 1000.0
+    return float(np.exp(-1.0 / max(1.0, sample_rate * tau)))
+
+
+def _envelope_follower(signal_1d: np.ndarray, sample_rate: int, attack_ms: float, release_ms: float) -> np.ndarray:
+    attack = _envelope_coeff(sample_rate, attack_ms)
+    release = _envelope_coeff(sample_rate, release_ms)
+    env = np.zeros(signal_1d.size, dtype=np.float64)
+    state = 0.0
+    for idx, sample in enumerate(np.abs(signal_1d)):
+        coef = attack if sample > state else release
+        state = coef * state + (1.0 - coef) * sample
+        env[idx] = state
+    return env
+
+
+def _estimate_lufs_or_rms_db(audio: np.ndarray, sample_rate: int) -> float:
+    mono = np.mean(np.asarray(audio, dtype=np.float64), axis=1)
+    if mono.size == 0:
+        return -120.0
+    try:
+        import pyloudnorm as pyln  # type: ignore
+
+        meter = pyln.Meter(sample_rate)
+        value = float(meter.integrated_loudness(mono))
+        if np.isfinite(value):
+            return value
+    except Exception:
+        pass
+    rms = float(np.sqrt(np.mean(mono * mono) + 1e-12))
+    return float(20.0 * np.log10(rms + 1e-12))
+
+
+def _apply_compressor(
+    audio: np.ndarray,
+    sample_rate: int,
+    threshold_db: float,
+    ratio: float,
+    attack_ms: float,
+    release_ms: float,
+    makeup_db: float,
+) -> np.ndarray:
+    threshold = db_to_amplitude(threshold_db)
+    ratio = max(1.0, float(ratio))
+    out = np.asarray(audio, dtype=np.float64).copy()
+    for ch in range(out.shape[1]):
+        x = out[:, ch]
+        env = _envelope_follower(x, sample_rate, attack_ms, release_ms)
+        gain = np.ones_like(env)
+        over = env > threshold
+        gain[over] = (threshold + (env[over] - threshold) / ratio) / (env[over] + 1e-12)
+        out[:, ch] = x * gain
+    out *= db_to_amplitude(makeup_db)
+    return out
+
+
+def _apply_expander(
+    audio: np.ndarray,
+    sample_rate: int,
+    threshold_db: float,
+    ratio: float,
+    attack_ms: float,
+    release_ms: float,
+) -> np.ndarray:
+    threshold = db_to_amplitude(threshold_db)
+    ratio = max(1.0, float(ratio))
+    out = np.asarray(audio, dtype=np.float64).copy()
+    for ch in range(out.shape[1]):
+        x = out[:, ch]
+        env = _envelope_follower(x, sample_rate, attack_ms, release_ms)
+        gain = np.ones_like(env)
+        under = env < threshold
+        gain[under] = np.power(np.maximum(env[under], 1e-12) / threshold, ratio - 1.0)
+        out[:, ch] = x * gain
+    return out
+
+
+def _apply_compander(
+    audio: np.ndarray,
+    sample_rate: int,
+    threshold_db: float,
+    compress_ratio: float,
+    expand_ratio: float,
+    attack_ms: float,
+    release_ms: float,
+    makeup_db: float,
+) -> np.ndarray:
+    threshold = db_to_amplitude(threshold_db)
+    comp = max(1.0, float(compress_ratio))
+    expand = max(1.0, float(expand_ratio))
+    out = np.asarray(audio, dtype=np.float64).copy()
+    for ch in range(out.shape[1]):
+        x = out[:, ch]
+        env = _envelope_follower(x, sample_rate, attack_ms, release_ms)
+        gain = np.ones_like(env)
+        over = env > threshold
+        under = env < threshold
+        gain[over] = (threshold + (env[over] - threshold) / comp) / (env[over] + 1e-12)
+        gain[under] = np.power(np.maximum(env[under], 1e-12) / threshold, expand - 1.0)
+        out[:, ch] = x * gain
+    out *= db_to_amplitude(makeup_db)
+    return out
+
+
+def _apply_limiter(audio: np.ndarray, threshold: float) -> np.ndarray:
+    out = np.asarray(audio, dtype=np.float64).copy()
+    peak = float(np.max(np.abs(out))) if out.size else 0.0
+    if peak <= threshold:
+        return out
+    return out * (threshold / (peak + 1e-12))
+
+
+def _apply_soft_clip(audio: np.ndarray, level: float, clip_type: str, drive: float) -> np.ndarray:
+    out = np.asarray(audio, dtype=np.float64).copy()
+    lvl = max(1e-6, float(level))
+    drv = max(1e-6, float(drive))
+    x = (out / lvl) * drv
+    kind = clip_type.lower()
+    if kind == "tanh":
+        y = np.tanh(x) / np.tanh(drv)
+    elif kind == "arctan":
+        denom = np.arctan((np.pi * 0.5) * drv)
+        y = np.arctan((np.pi * 0.5) * x) / max(1e-12, denom)
+    elif kind == "cubic":
+        z = np.clip(x, -1.0, 1.0)
+        y = 1.5 * z - 0.5 * z * z * z
+    else:
+        raise ValueError(f"Unsupported soft clip type: {clip_type}")
+    return lvl * y
+
+
+def add_mastering_args(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--normalize", choices=["none", "peak", "rms"], default="none", help="Output normalization mode")
+    parser.add_argument("--peak-dbfs", type=float, default=-1.0, help="Target peak dBFS when --normalize peak")
+    parser.add_argument("--rms-dbfs", type=float, default=-18.0, help="Target RMS dBFS when --normalize rms")
+    parser.add_argument("--target-lufs", type=float, default=None, help="Integrated loudness target in LUFS")
+    parser.add_argument("--compressor-threshold-db", type=float, default=None, help="Enable compressor above threshold dBFS")
+    parser.add_argument("--compressor-ratio", type=float, default=4.0, help="Compressor ratio (>=1)")
+    parser.add_argument("--compressor-attack-ms", type=float, default=10.0, help="Compressor attack time in ms")
+    parser.add_argument("--compressor-release-ms", type=float, default=120.0, help="Compressor release time in ms")
+    parser.add_argument("--compressor-makeup-db", type=float, default=0.0, help="Compressor makeup gain in dB")
+    parser.add_argument("--expander-threshold-db", type=float, default=None, help="Enable downward expander below threshold dBFS")
+    parser.add_argument("--expander-ratio", type=float, default=2.0, help="Expander ratio (>=1)")
+    parser.add_argument("--expander-attack-ms", type=float, default=5.0, help="Expander attack time in ms")
+    parser.add_argument("--expander-release-ms", type=float, default=120.0, help="Expander release time in ms")
+    parser.add_argument("--compander-threshold-db", type=float, default=None, help="Enable compander threshold in dBFS")
+    parser.add_argument("--compander-compress-ratio", type=float, default=3.0, help="Compander compression ratio (>=1)")
+    parser.add_argument("--compander-expand-ratio", type=float, default=1.8, help="Compander expansion ratio (>=1)")
+    parser.add_argument("--compander-attack-ms", type=float, default=8.0, help="Compander attack time in ms")
+    parser.add_argument("--compander-release-ms", type=float, default=120.0, help="Compander release time in ms")
+    parser.add_argument("--compander-makeup-db", type=float, default=0.0, help="Compander makeup gain in dB")
+    parser.add_argument("--limiter-threshold", type=float, default=None, help="Peak limiter threshold in linear full-scale")
+    parser.add_argument("--soft-clip-level", type=float, default=None, help="Soft clip output ceiling in linear full-scale")
+    parser.add_argument("--soft-clip-type", choices=["tanh", "arctan", "cubic"], default="tanh", help="Soft clip transfer type")
+    parser.add_argument("--soft-clip-drive", type=float, default=1.0, help="Soft clip drive amount (>0)")
+    parser.add_argument("--hard-clip-level", type=float, default=None, help="Hard clip level in linear full-scale")
+    parser.add_argument("--clip", action="store_true", help="Legacy alias: hard clip at +/-1.0 when set")
+
+
+def validate_mastering_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
+    if args.target_lufs is not None and not np.isfinite(args.target_lufs):
+        parser.error("--target-lufs must be finite")
+    if args.compressor_ratio < 1.0:
+        parser.error("--compressor-ratio must be >= 1")
+    if args.expander_ratio < 1.0:
+        parser.error("--expander-ratio must be >= 1")
+    if args.compander_compress_ratio < 1.0:
+        parser.error("--compander-compress-ratio must be >= 1")
+    if args.compander_expand_ratio < 1.0:
+        parser.error("--compander-expand-ratio must be >= 1")
+    for field in (
+        "compressor_attack_ms",
+        "compressor_release_ms",
+        "expander_attack_ms",
+        "expander_release_ms",
+        "compander_attack_ms",
+        "compander_release_ms",
+    ):
+        if getattr(args, field) <= 0.0:
+            parser.error(f"--{field.replace('_', '-')} must be > 0")
+    if args.limiter_threshold is not None and args.limiter_threshold <= 0.0:
+        parser.error("--limiter-threshold must be > 0")
+    if args.soft_clip_level is not None and args.soft_clip_level <= 0.0:
+        parser.error("--soft-clip-level must be > 0")
+    if args.soft_clip_drive <= 0.0:
+        parser.error("--soft-clip-drive must be > 0")
+    if args.hard_clip_level is not None and args.hard_clip_level <= 0.0:
+        parser.error("--hard-clip-level must be > 0")
+
+
+def apply_mastering_chain(audio: np.ndarray, sample_rate: int, args: argparse.Namespace) -> np.ndarray:
+    out = np.asarray(audio, dtype=np.float64)
+    if out.ndim == 1:
+        out = out[:, None]
+    out = out.copy()
+
+    if args.expander_threshold_db is not None:
+        out = _apply_expander(
+            out,
+            sample_rate,
+            args.expander_threshold_db,
+            args.expander_ratio,
+            args.expander_attack_ms,
+            args.expander_release_ms,
+        )
+
+    if args.compressor_threshold_db is not None:
+        out = _apply_compressor(
+            out,
+            sample_rate,
+            args.compressor_threshold_db,
+            args.compressor_ratio,
+            args.compressor_attack_ms,
+            args.compressor_release_ms,
+            args.compressor_makeup_db,
+        )
+
+    if args.compander_threshold_db is not None:
+        out = _apply_compander(
+            out,
+            sample_rate,
+            args.compander_threshold_db,
+            args.compander_compress_ratio,
+            args.compander_expand_ratio,
+            args.compander_attack_ms,
+            args.compander_release_ms,
+            args.compander_makeup_db,
+        )
+
+    out = normalize_audio(out, args.normalize, args.peak_dbfs, args.rms_dbfs)
+
+    if args.target_lufs is not None:
+        current = _estimate_lufs_or_rms_db(out, sample_rate)
+        if np.isfinite(current):
+            out *= db_to_amplitude(args.target_lufs - current)
+
+    if args.limiter_threshold is not None:
+        out = _apply_limiter(out, float(args.limiter_threshold))
+
+    if args.soft_clip_level is not None:
+        out = _apply_soft_clip(out, args.soft_clip_level, args.soft_clip_type, args.soft_clip_drive)
+
+    hard_clip_level = args.hard_clip_level
+    if hard_clip_level is None and bool(getattr(args, "clip", False)):
+        hard_clip_level = 1.0
+    if hard_clip_level is not None:
+        out = np.clip(out, -abs(float(hard_clip_level)), abs(float(hard_clip_level)))
+
+    return out
+
+
 def cepstral_envelope(magnitude, lifter: int):
     xp = _array_module(magnitude)
     n_bins = magnitude.size
@@ -1534,6 +1788,53 @@ def compute_output_path(
     return base_dir / f"{input_path.stem}{suffix}.{ext}"
 
 
+def _stream_format_name(output_format: str | None, output_path: Path | None = None) -> str:
+    if output_format:
+        ext = output_format.lower().lstrip(".")
+    elif output_path is not None and str(output_path) != "-" and output_path.suffix:
+        ext = output_path.suffix.lower().lstrip(".")
+    else:
+        ext = "wav"
+    mapping = {
+        "wav": "WAV",
+        "flac": "FLAC",
+        "aif": "AIFF",
+        "aiff": "AIFF",
+        "ogg": "OGG",
+        "oga": "OGG",
+        "caf": "CAF",
+    }
+    if ext in mapping:
+        return mapping[ext]
+    raise ValueError(
+        f"Unsupported stream output format '{output_format}'. "
+        "Use --output-format with one of: wav, flac, aiff, ogg, caf."
+    )
+
+
+def _read_audio_input(input_path: Path) -> tuple[np.ndarray, int]:
+    if str(input_path) == "-":
+        payload = sys.stdin.buffer.read()
+        if not payload:
+            raise ValueError("No audio bytes received on stdin")
+        audio, sr = sf.read(io.BytesIO(payload), always_2d=True)
+    else:
+        audio, sr = sf.read(str(input_path), always_2d=True)
+    return audio.astype(np.float64, copy=False), int(sr)
+
+
+def _write_audio_output(output_path: Path, audio: np.ndarray, sr: int, args: argparse.Namespace) -> None:
+    if bool(getattr(args, "stdout", False)) or str(output_path) == "-":
+        stream_fmt = _stream_format_name(getattr(args, "output_format", None), output_path=output_path)
+        buffer = io.BytesIO()
+        sf.write(buffer, audio, sr, format=stream_fmt, subtype=args.subtype)
+        sys.stdout.buffer.write(buffer.getvalue())
+        sys.stdout.buffer.flush()
+        return
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    sf.write(str(output_path), audio, sr, subtype=args.subtype)
+
+
 def process_file(
     input_path: Path,
     args: argparse.Namespace,
@@ -1560,8 +1861,7 @@ def process_file(
         return _callback
 
     progress.set(0.02, "read")
-    audio, sr = sf.read(str(input_path), always_2d=True)
-    audio = audio.astype(np.float64, copy=False)
+    audio, sr = _read_audio_input(input_path)
 
     if audio.shape[0] == 0:
         raise ValueError("Input file has no audio samples")
@@ -1648,20 +1948,21 @@ def process_file(
         out_audio = resample_multi(out_audio, new_len, args.resample_mode)
         out_sr = args.target_sample_rate
 
-    out_audio = normalize_audio(out_audio, args.normalize, args.peak_dbfs, args.rms_dbfs)
-    if args.clip:
-        out_audio = np.clip(out_audio, -1.0, 1.0)
+    out_audio = apply_mastering_chain(out_audio, out_sr, args)
 
-    output_path = compute_output_path(input_path, args.output_dir, args.suffix, args.output_format)
-    if output_path.exists() and not args.overwrite and not args.dry_run:
-        raise FileExistsError(
-            f"Output exists: {output_path}. Use --overwrite to replace it."
-        )
+    if args.stdout:
+        output_path = Path("-")
+    else:
+        source_path = Path("stdin.wav") if str(input_path) == "-" else input_path
+        output_path = compute_output_path(source_path, args.output_dir, args.suffix, args.output_format)
+        if output_path.exists() and not args.overwrite and not args.dry_run:
+            raise FileExistsError(
+                f"Output exists: {output_path}. Use --overwrite to replace it."
+            )
 
     if not args.dry_run:
         progress.set(0.96, "write")
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        sf.write(str(output_path), out_audio, out_sr, subtype=args.subtype)
+        _write_audio_output(output_path, out_audio, out_sr, args)
 
     if console_level(args) >= _VERBOSITY_TO_LEVEL["verbose"]:
         rt = runtime_config()
@@ -1754,6 +2055,7 @@ def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> 
         parser.error("--kaiser-beta must be >= 0")
     if args.cuda_device < 0:
         parser.error("--cuda-device must be >= 0")
+    validate_mastering_args(args, parser)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -1763,7 +2065,7 @@ def build_parser() -> argparse.ArgumentParser:
         )
     )
 
-    parser.add_argument("inputs", nargs="+", help="Input audio files (wav/flac/aiff/ogg/etc)")
+    parser.add_argument("inputs", nargs="+", help="Input audio files/globs or '-' for stdin")
     parser.add_argument(
         "-o",
         "--output-dir",
@@ -1783,6 +2085,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--overwrite", action="store_true", help="Overwrite existing outputs")
     parser.add_argument("--dry-run", action="store_true", help="Resolve settings without writing files")
+    parser.add_argument(
+        "--stdout",
+        action="store_true",
+        help="Write processed audio to stdout stream (for piping); requires exactly one input",
+    )
     add_console_args(parser, include_no_progress_alias=True)
 
     stft_group = parser.add_argument_group("STFT / vocoder parameters")
@@ -1958,29 +2265,7 @@ def build_parser() -> argparse.ArgumentParser:
         default="auto",
         help="Resampling engine (auto=fft if scipy available, else linear)",
     )
-    io_group.add_argument(
-        "--normalize",
-        choices=["none", "peak", "rms"],
-        default="none",
-        help="Normalize output amplitude (default: none)",
-    )
-    io_group.add_argument(
-        "--peak-dbfs",
-        type=float,
-        default=-1.0,
-        help="Target peak dBFS when --normalize peak (default: -1.0)",
-    )
-    io_group.add_argument(
-        "--rms-dbfs",
-        type=float,
-        default=-18.0,
-        help="Target RMS dBFS when --normalize rms (default: -18.0)",
-    )
-    io_group.add_argument(
-        "--clip",
-        action="store_true",
-        help="Clip output to [-1, 1] after processing",
-    )
+    add_mastering_args(io_group)
     io_group.add_argument(
         "--subtype",
         default=None,
@@ -1993,6 +2278,9 @@ def build_parser() -> argparse.ArgumentParser:
 def expand_inputs(patterns: Iterable[str]) -> list[Path]:
     paths: list[Path] = []
     for pattern in patterns:
+        if pattern == "-":
+            paths.append(Path("-"))
+            continue
         if any(ch in pattern for ch in "*?["):
             matches = [Path(match) for match in glob.glob(pattern, recursive=True)]
         else:
@@ -2003,7 +2291,13 @@ def expand_inputs(patterns: Iterable[str]) -> list[Path]:
     # Keep stable ordering and remove duplicates while preserving sequence.
     unique: list[Path] = []
     seen: set[Path] = set()
+    saw_stdin = False
     for path in paths:
+        if str(path) == "-":
+            if not saw_stdin:
+                unique.append(path)
+                saw_stdin = True
+            continue
         resolved = path.resolve()
         if resolved not in seen:
             seen.add(resolved)
@@ -2022,6 +2316,15 @@ def main(argv: list[str] | None = None) -> int:
     input_paths = expand_inputs(args.inputs)
     if not input_paths:
         parser.error("No readable input files matched the provided paths/patterns")
+    stdin_count = sum(1 for path in input_paths if str(path) == "-")
+    if stdin_count > 1:
+        parser.error("Input '-' (stdin) may only be specified once")
+    if stdin_count and len(input_paths) != 1:
+        parser.error("Input '-' (stdin) cannot be combined with additional input files")
+    if args.stdout and len(input_paths) != 1:
+        parser.error("--stdout requires exactly one resolved input")
+    if args.stdout and args.output_dir is not None:
+        parser.error("--output-dir cannot be used with --stdout")
 
     config = VocoderConfig(
         n_fft=args.n_fft,

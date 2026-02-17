@@ -75,7 +75,7 @@ def main(argv: list[str] | None = None) -> int:
         transient_preserve=True,
         transient_threshold=args.transient_threshold,
     )
-    paths = resolve_inputs(args.inputs, parser)
+    paths = resolve_inputs(args.inputs, parser, args)
     status = build_status_bar(args, "pvxtransient", len(paths))
 
     failures = 0
@@ -101,7 +101,7 @@ def main(argv: list[str] | None = None) -> int:
             out = np.zeros((out_len, len(channels)), dtype=np.float64)
             for idx, ch in enumerate(channels):
                 out[: ch.size, idx] = ch
-            out = finalize_audio(out, args)
+            out = finalize_audio(out, sr, args)
 
             out_path = default_output_path(path, args)
             write_output(out_path, out, sr, args)

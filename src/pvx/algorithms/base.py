@@ -112,12 +112,15 @@ def soft_clip(x: np.ndarray, drive: float = 1.0) -> np.ndarray:
 
 
 def stft_multi(audio: np.ndarray, n_fft: int = 2048, hop: int = 512, window: str = "hann") -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    # SciPy raises when nperseg is auto-reduced below noverlap for short inputs.
+    # Pad to at least one full frame so STFT/ISTFT keep a stable n_fft contract.
+    work = audio if audio.shape[0] >= n_fft else ensure_length(audio, n_fft)
     specs: list[np.ndarray] = []
     f_ref = np.array([])
     t_ref = np.array([])
-    for ch in range(audio.shape[1]):
+    for ch in range(work.shape[1]):
         f, t, z = signal.stft(
-            audio[:, ch],
+            work[:, ch],
             fs=1.0,
             window=window,
             nperseg=n_fft,
@@ -459,93 +462,11 @@ def multiband_compression(audio: np.ndarray, sample_rate: int) -> np.ndarray:
     return lo_c + mid_c + hi_c
 
 
-def mid_side_widen(audio: np.ndarray, width: float = 1.25) -> np.ndarray:
-    if audio.shape[1] == 1:
-        return np.repeat(audio, 2, axis=1)
-    l = audio[:, 0]
-    r = audio[:, 1]
-    mid = 0.5 * (l + r)
-    side = 0.5 * (l - r) * width
-    out = np.stack([mid + side, mid - side], axis=1)
-    return out
-
-
-def allpass_decorrelate(x: np.ndarray, delay: int = 67, gain: float = 0.65) -> np.ndarray:
-    y = np.zeros_like(x)
-    for n in range(x.size):
-        xd = x[n - delay] if n - delay >= 0 else 0.0
-        yd = y[n - delay] if n - delay >= 0 else 0.0
-        y[n] = -gain * x[n] + xd + gain * yd
-    return y
-
-
-def binaural_render(audio: np.ndarray, sample_rate: int, azimuth_deg: float = 30.0) -> np.ndarray:
-    mono = np.mean(audio, axis=1)
-    itd_sec = 0.00035 * np.sin(np.deg2rad(azimuth_deg))
-    delay = int(round(abs(itd_sec) * sample_rate))
-    delayed = np.pad(mono, (delay, 0))[: mono.size]
-    ild = 0.75 + 0.25 * np.cos(np.deg2rad(azimuth_deg))
-    if azimuth_deg >= 0:
-        left = mono * ild
-        right = delayed
-    else:
-        left = delayed
-        right = mono * ild
-    return np.stack([left, right], axis=1)
-
-
-def ambisonics_encode_decode(audio: np.ndarray, angle_deg: float = 0.0) -> np.ndarray:
-    mono = np.mean(audio, axis=1)
-    theta = np.deg2rad(angle_deg)
-    w = mono / np.sqrt(2.0)
-    x = mono * np.cos(theta)
-    y = mono * np.sin(theta)
-    left = w + 0.5 * x + 0.5 * y
-    right = w - 0.5 * x + 0.5 * y
-    return np.stack([left, right], axis=1)
-
-
-def simple_beamform(audio: np.ndarray, mode: str = "mvdr") -> np.ndarray:
-    if audio.shape[1] == 1:
-        return audio.copy()
-    x = audio
-    cov = (x.T @ x) / max(1, x.shape[0])
-    cov += np.eye(cov.shape[0]) * 1e-6
-    inv = np.linalg.pinv(cov)
-    steer = np.ones((x.shape[1], 1), dtype=np.float64)
-    if mode == "gsc":
-        steer[1::2] *= -1.0
-    w = inv @ steer
-    denom = (steer.T @ inv @ steer).item()
-    if abs(denom) <= 1e-12:
-        denom = 1.0
-    w /= denom
-    y = x @ w
-    return np.repeat(y, 2, axis=1)
-
-
-def gcc_phat_delay(audio: np.ndarray, sample_rate: int) -> dict[str, Any]:
-    if audio.shape[1] < 2:
-        return {"delay_samples": 0, "delay_seconds": 0.0}
-    x = audio[:, 0]
-    y = audio[:, 1]
-    n = int(2 ** math.ceil(math.log2(x.size + y.size)))
-    X = np.fft.rfft(x, n=n)
-    Y = np.fft.rfft(y, n=n)
-    R = X * np.conj(Y)
-    R /= np.maximum(np.abs(R), 1e-12)
-    cc = np.fft.irfft(R, n=n)
-    max_shift = n // 2
-    cc = np.concatenate((cc[-max_shift:], cc[: max_shift + 1]))
-    shift = int(np.argmax(np.abs(cc)) - max_shift)
-    return {"delay_samples": shift, "delay_seconds": shift / float(sample_rate)}
-
-
 def cross_synthesis(audio: np.ndarray) -> np.ndarray:
     a = audio[:, 0]
     b = audio[:, 1] if audio.shape[1] > 1 else audio[::-1, 0]
-    n_fft = 2048
-    hop = 512
+    n_fft = int(max(128, min(2048, min(a.size, b.size))))
+    hop = max(1, n_fft // 4)
     _, _, sa = signal.stft(a, nperseg=n_fft, noverlap=n_fft - hop)
     _, _, sb = signal.stft(b, nperseg=n_fft, noverlap=n_fft - hop)
     n_bins = max(sa.shape[0], sb.shape[0])
@@ -667,6 +588,8 @@ def estimate_f0_track(audio_mono: np.ndarray, sample_rate: int, fmin: float = 50
     max_lag = max(min_lag + 1, int(sample_rate / fmin))
     for start in range(0, max(1, audio_mono.size - frame + 1), hop):
         x = audio_mono[start : start + frame]
+        if x.size < frame:
+            x = np.pad(x, (0, frame - x.size))
         x = x - np.mean(x)
         if np.max(np.abs(x)) < 1e-8:
             values.append(0.0)
@@ -674,6 +597,9 @@ def estimate_f0_track(audio_mono: np.ndarray, sample_rate: int, fmin: float = 50
         corr = signal.correlate(x, x, mode="full")[frame - 1 :]
         corr[:min_lag] = 0.0
         lag = min(max_lag, corr.size - 1)
+        if lag <= min_lag:
+            values.append(0.0)
+            continue
         idx = int(np.argmax(corr[min_lag : lag + 1]) + min_lag)
         values.append(sample_rate / max(1, idx))
     if not values:
@@ -1293,58 +1219,6 @@ def _dispatch_dynamics(slug: str, audio: np.ndarray, sr: int, params: dict[str, 
     return normalize_peak(out), notes, extras
 
 
-def _dispatch_spatial(slug: str, audio: np.ndarray, sr: int, params: dict[str, Any]) -> tuple[np.ndarray, list[str], dict[str, Any]]:
-    notes: list[str] = []
-    extras: dict[str, Any] = {}
-    if slug == "mid_side_adaptive_widening":
-        width = float(params.get("width", 1.35))
-        out = mid_side_widen(audio, width=width)
-        notes.append("Applied adaptive mid/side width expansion.")
-        extras["width"] = width
-    elif slug == "binaural_hrtf_rendering":
-        out = binaural_render(audio, sr, azimuth_deg=float(params.get("azimuth_deg", 35.0)))
-        notes.append("Applied binaural HRTF-style ITD/ILD rendering.")
-    elif slug == "ambisonics_encode_decode":
-        out = ambisonics_encode_decode(audio, angle_deg=float(params.get("angle_deg", 15.0)))
-        notes.append("Applied first-order ambisonics encode/decode projection.")
-    elif slug == "mvdr_beamforming":
-        out = simple_beamform(audio, mode="mvdr")
-        notes.append("Applied MVDR-style beamforming weights.")
-    elif slug == "gsc_beamforming":
-        out = simple_beamform(audio, mode="gsc")
-        notes.append("Applied GSC-style blocking matrix beamforming.")
-    elif slug == "gcc_phat_localization":
-        out = audio.copy()
-        extras.update(gcc_phat_delay(audio, sr))
-        notes.append("Estimated source delay using GCC-PHAT localization.")
-    elif slug == "stereo_decorrelation_for_width":
-        if audio.shape[1] == 1:
-            out = np.repeat(audio, 2, axis=1)
-        else:
-            left = allpass_decorrelate(audio[:, 0], delay=int(params.get("delay_samples", 67)), gain=float(params.get("gain", 0.65)))
-            right = allpass_decorrelate(audio[:, 1], delay=int(params.get("delay_samples", 83)), gain=float(params.get("gain", 0.62)))
-            out = np.stack([left, right], axis=1)
-        notes.append("Applied all-pass stereo decorrelation for width.")
-    elif slug == "upmix_downmix_with_phase_coherent_routing":
-        mode = str(params.get("mode", "upmix")).lower()
-        if mode == "downmix":
-            mono = np.mean(audio, axis=1, keepdims=True)
-            out = np.repeat(mono, 2, axis=1)
-        else:
-            if audio.shape[1] == 1:
-                out = np.repeat(audio, 2, axis=1)
-            else:
-                mid = np.mean(audio[:, :2], axis=1, keepdims=True)
-                side = (audio[:, :1] - audio[:, 1:2]) * 0.75
-                out = np.hstack([mid + side, mid - side])
-        notes.append("Applied phase-coherent upmix/downmix routing.")
-        extras["mode"] = mode
-    else:
-        out = audio.copy()
-        notes.append("Spatial fallback passthrough.")
-    return normalize_peak(out), notes, extras
-
-
 def _dispatch_creative(slug: str, audio: np.ndarray, sr: int, params: dict[str, Any]) -> tuple[np.ndarray, list[str], dict[str, Any]]:
     notes: list[str] = []
     if slug == "cross_synthesis_vocoder":
@@ -1406,10 +1280,13 @@ def _dispatch_granular(slug: str, audio: np.ndarray, sr: int, params: dict[str, 
         out = np.zeros_like(audio)
         hop = grain // 4
         win = np.hanning(grain)[:, None]
-        for pos in range(0, max(1, out.shape[0] - grain), hop):
-            alpha = pos / max(1, out.shape[0] - grain)
+        for pos in range(0, max(1, out.shape[0]), max(1, hop)):
+            n = min(grain, out.shape[0] - pos)
+            if n <= 0:
+                break
+            alpha = pos / max(1, out.shape[0] - n)
             chunk = (1.0 - alpha) * ensure_length(audio[pos : pos + grain, :], grain) + alpha * g
-            out[pos : pos + grain, :] += chunk * win
+            out[pos : pos + n, :] += (chunk * win)[:n, :]
         out = normalize_peak(out)
         notes.append("Applied freeze-grain morphing between source and frozen grain.")
     elif slug == "am_fm_ring_modulation_blocks":
@@ -1536,6 +1413,712 @@ def _dispatch_analysis(slug: str, audio: np.ndarray, sr: int, params: dict[str, 
     return audio.copy(), notes, extras
 
 
+def _spatial_to_channels(audio: np.ndarray, channels: int) -> np.ndarray:
+    channels = max(1, int(channels))
+    if audio.shape[1] == channels:
+        return audio.copy()
+    mono = np.mean(audio, axis=1, keepdims=True)
+    if channels == 1:
+        return mono
+    return np.repeat(mono, channels, axis=1)
+
+
+def _spatial_fractional_delay(x: np.ndarray, delay_samples: float) -> np.ndarray:
+    if x.size == 0:
+        return x.copy()
+    idx = np.arange(x.size, dtype=np.float64) - float(delay_samples)
+    lo = np.floor(idx).astype(int)
+    hi = lo + 1
+    frac = idx - lo
+    lo = np.clip(lo, 0, x.size - 1)
+    hi = np.clip(hi, 0, x.size - 1)
+    return (1.0 - frac) * x[lo] + frac * x[hi]
+
+
+def _spatial_apply_delays(audio: np.ndarray, delays: list[float]) -> np.ndarray:
+    out = np.zeros_like(audio)
+    for ch in range(audio.shape[1]):
+        delay = float(delays[ch]) if ch < len(delays) else 0.0
+        out[:, ch] = _spatial_fractional_delay(audio[:, ch], delay)
+    return out
+
+
+def _spatial_circular_gains(num_channels: int, azimuth_deg: float, width: float = 1.0, rolloff: float = 2.0) -> np.ndarray:
+    num_channels = max(1, int(num_channels))
+    angles = np.linspace(-180.0, 180.0, num=num_channels, endpoint=False)
+    delta = np.abs(((angles - azimuth_deg + 180.0) % 360.0) - 180.0)
+    spread = max(4.0, 45.0 * max(0.2, width))
+    gains = 1.0 / (1.0 + np.power(delta / spread, max(1.0, rolloff)))
+    gains /= np.sqrt(np.sum(gains * gains) + 1e-12)
+    return gains
+
+
+def _spatial_gcc_delay(x: np.ndarray, y: np.ndarray, max_lag: int) -> float:
+    if x.size == 0 or y.size == 0:
+        return 0.0
+    n = 1
+    target = max(2, x.size + y.size)
+    while n < target:
+        n <<= 1
+    X = np.fft.rfft(x, n=n)
+    Y = np.fft.rfft(y, n=n)
+    R = X * np.conj(Y)
+    R /= np.abs(R) + 1e-12
+    cc = np.fft.irfft(R, n=n)
+    max_lag = int(max(1, max_lag))
+    cc = np.concatenate((cc[-max_lag:], cc[: max_lag + 1]))
+    lag = int(np.argmax(np.abs(cc)) - max_lag)
+    return float(lag)
+
+
+def _spatial_estimate_channel_delays(audio: np.ndarray, max_lag: int = 128) -> list[float]:
+    delays = [0.0]
+    if audio.shape[1] < 2:
+        return delays
+    ref = audio[:, 0]
+    for ch in range(1, audio.shape[1]):
+        delays.append(_spatial_gcc_delay(ref, audio[:, ch], max_lag=max_lag))
+    return delays
+
+
+def _spatial_foa_encode(mono: np.ndarray, azimuth_deg: float = 0.0, elevation_deg: float = 0.0) -> np.ndarray:
+    az = np.deg2rad(float(azimuth_deg))
+    el = np.deg2rad(float(elevation_deg))
+    w = mono / np.sqrt(2.0)
+    x = mono * np.cos(az) * np.cos(el)
+    y = mono * np.sin(az) * np.cos(el)
+    z = mono * np.sin(el)
+    return np.stack([w, x, y, z], axis=1)
+
+
+def _spatial_rotate_foa(foa: np.ndarray, yaw_deg: float) -> np.ndarray:
+    out = foa.copy()
+    yaw = np.deg2rad(float(yaw_deg))
+    c = np.cos(yaw)
+    s = np.sin(yaw)
+    x = foa[:, 1]
+    y = foa[:, 2]
+    out[:, 1] = c * x - s * y
+    out[:, 2] = s * x + c * y
+    return out
+
+
+def _spatial_foa_decode_stereo(foa: np.ndarray) -> np.ndarray:
+    w = foa[:, 0]
+    x = foa[:, 1]
+    y = foa[:, 2]
+    left = w + 0.707 * x + 0.5 * y
+    right = w - 0.707 * x + 0.5 * y
+    return np.stack([left, right], axis=1)
+
+
+def _spatial_synthetic_rir(length: int, decay_s: float, sr: int, seed: int, channel_index: int) -> np.ndarray:
+    length = max(16, int(length))
+    rng = np.random.default_rng(int(seed) + int(channel_index) * 37)
+    t = np.arange(length, dtype=np.float64) / float(sr)
+    decay = np.exp(-t / max(1e-3, float(decay_s)))
+    rir = 0.12 * decay * rng.standard_normal(length)
+    rir[0] += 0.7
+    early = int(round((0.003 + 0.0015 * channel_index) * sr))
+    if 0 <= early < length:
+        rir[early] += 1.0
+    return rir
+
+
+def _dispatch_spatial(slug: str, audio: np.ndarray, sr: int, params: dict[str, Any]) -> tuple[np.ndarray, list[str], dict[str, Any]]:
+    notes: list[str] = []
+    extras: dict[str, Any] = {}
+    work = audio
+
+    if slug == "vbap_adaptive_panning":
+        output_channels = int(params.get("output_channels", max(2, work.shape[1])))
+        azimuth_deg = float(params.get("azimuth_deg", 0.0))
+        width = float(params.get("width", 1.0))
+        mono = np.mean(work, axis=1)
+        gains = _spatial_circular_gains(output_channels, azimuth_deg, width=width)
+        out = mono[:, None] * gains[None, :]
+        notes.append("Rendered source with VBAP-style adaptive gain distribution.")
+        extras["speaker_gains"] = gains.tolist()
+
+    elif slug == "dbap_distance_based_amplitude_panning":
+        output_channels = int(params.get("output_channels", max(2, work.shape[1])))
+        source_x = float(params.get("source_x", 0.25))
+        source_y = float(params.get("source_y", 0.0))
+        rolloff = float(params.get("rolloff", 1.8))
+        mono = np.mean(work, axis=1)
+        angles = np.linspace(0.0, 2.0 * np.pi, num=output_channels, endpoint=False)
+        speakers = np.stack([np.cos(angles), np.sin(angles)], axis=1)
+        src = np.array([source_x, source_y], dtype=np.float64)
+        dist = np.linalg.norm(speakers - src[None, :], axis=1) + 1e-3
+        gains = 1.0 / np.power(dist, max(0.5, rolloff))
+        gains /= np.sqrt(np.sum(gains * gains) + 1e-12)
+        out = mono[:, None] * gains[None, :]
+        notes.append("Applied DBAP weighting from virtual source position.")
+        extras["speaker_gains"] = gains.tolist()
+
+    elif slug == "binaural_itd_ild_synthesis":
+        azimuth_deg = float(params.get("azimuth_deg", 30.0))
+        itd_max_ms = float(params.get("itd_max_ms", 0.7))
+        ild_db = float(params.get("ild_db", 8.0))
+        mono = np.mean(work, axis=1)
+        az = np.deg2rad(azimuth_deg)
+        itd_samples = np.sin(az) * itd_max_ms * 1e-3 * sr
+        ild = ild_db * np.sin(az)
+        g_l = 10.0 ** ((-0.5 * ild) / 20.0)
+        g_r = 10.0 ** ((0.5 * ild) / 20.0)
+        left_delay = max(0.0, itd_samples)
+        right_delay = max(0.0, -itd_samples)
+        left = _spatial_fractional_delay(mono, left_delay) * g_l
+        right = _spatial_fractional_delay(mono, right_delay) * g_r
+        out = np.stack([left, right], axis=1)
+        notes.append("Synthesized binaural cues from ITD/ILD model.")
+
+    elif slug == "transaural_crosstalk_cancellation":
+        cancellation = float(params.get("cancellation", 0.6))
+        delay_ms = float(params.get("delay_ms", 0.22))
+        stereo = _spatial_to_channels(work, 2)
+        d = delay_ms * 1e-3 * sr
+        l = stereo[:, 0] - cancellation * _spatial_fractional_delay(stereo[:, 1], d)
+        r = stereo[:, 1] - cancellation * _spatial_fractional_delay(stereo[:, 0], d)
+        out = np.stack([l, r], axis=1)
+        notes.append("Applied transaural crosstalk cancellation matrix with delayed crossfeed.")
+
+    elif slug == "stereo_width_frequency_dependent_control":
+        width_low = float(params.get("width_low", 0.8))
+        width_high = float(params.get("width_high", 1.35))
+        crossover_hz = float(params.get("crossover_hz", 1400.0))
+        stereo = _spatial_to_channels(work, 2)
+        mid = 0.5 * (stereo[:, 0] + stereo[:, 1])
+        side = 0.5 * (stereo[:, 0] - stereo[:, 1])
+        b, a = signal.butter(2, min(0.98, max(0.001, crossover_hz / (0.5 * sr))), btype="low")
+        side_low = signal.lfilter(b, a, side)
+        side_high = side - side_low
+        side2 = width_low * side_low + width_high * side_high
+        out = np.stack([mid + side2, mid - side2], axis=1)
+        notes.append("Applied frequency-dependent stereo width control in mid/side domain.")
+
+    elif slug == "phase_aligned_mid_side_field_rotation":
+        rotation_deg = float(params.get("rotation_deg", 20.0))
+        stereo = _spatial_to_channels(work, 2)
+        mid = 0.5 * (stereo[:, 0] + stereo[:, 1])
+        side = 0.5 * (stereo[:, 0] - stereo[:, 1])
+        th = np.deg2rad(rotation_deg)
+        m2 = np.cos(th) * mid - np.sin(th) * side
+        s2 = np.sin(th) * mid + np.cos(th) * side
+        out = np.stack([m2 + s2, m2 - s2], axis=1)
+        notes.append("Rotated sound field in phase-aligned mid/side space.")
+
+    elif slug == "delay_and_sum_beamforming":
+        steer_deg = float(params.get("steer_deg", 0.0))
+        spacing_m = float(params.get("spacing_m", 0.05))
+        sound_speed = float(params.get("sound_speed", 343.0))
+        if work.shape[1] < 2:
+            out = np.mean(work, axis=1, keepdims=True)
+        else:
+            idx = np.arange(work.shape[1], dtype=np.float64) - 0.5 * (work.shape[1] - 1)
+            tau = idx * spacing_m * np.sin(np.deg2rad(steer_deg)) / max(1e-6, sound_speed)
+            delays = (tau * sr).tolist()
+            aligned = _spatial_apply_delays(work, [-d for d in delays])
+            out = np.mean(aligned, axis=1, keepdims=True)
+            extras["delays_samples"] = delays
+        notes.append("Applied delay-and-sum beamforming toward steering angle.")
+
+    elif slug == "mvdr_beamformer_wideband":
+        steer_deg = float(params.get("steer_deg", 0.0))
+        spacing_m = float(params.get("spacing_m", 0.05))
+        sound_speed = float(params.get("sound_speed", 343.0))
+        diag_load = float(params.get("diag_load", 1e-3))
+        if work.shape[1] < 2:
+            out = np.mean(work, axis=1, keepdims=True)
+        else:
+            spec, _, _ = stft_multi(work, n_fft=1024, hop=256)
+            bins, frames, chans = spec.shape
+            idx = np.arange(chans, dtype=np.float64) - 0.5 * (chans - 1)
+            tau = idx * spacing_m * np.sin(np.deg2rad(steer_deg)) / max(1e-6, sound_speed)
+            freqs = np.linspace(0.0, 0.5 * sr, num=bins)
+            y = np.zeros((bins, frames, 1), dtype=np.complex128)
+            for b, f_hz in enumerate(freqs):
+                d = np.exp(-1j * 2.0 * np.pi * f_hz * tau)
+                x = spec[b, :, :]
+                r = (x.conj().T @ x) / max(1, frames)
+                r = r + np.eye(chans, dtype=np.complex128) * max(1e-9, diag_load)
+                rinv = np.linalg.pinv(r)
+                denom = (d.conj().T @ rinv @ d) + 1e-9
+                w = (rinv @ d) / denom
+                y[b, :, 0] = x @ np.conj(w)
+            out = istft_multi(y, n_fft=1024, hop=256, length=work.shape[0])
+        notes.append("Applied wideband MVDR beamformer with diagonal loading.")
+
+    elif slug == "generalized_sidelobe_canceller":
+        mu = float(params.get("mu", 0.45))
+        steer_deg = float(params.get("steer_deg", 0.0))
+        spacing_m = float(params.get("spacing_m", 0.05))
+        sound_speed = float(params.get("sound_speed", 343.0))
+        if work.shape[1] < 2:
+            out = np.mean(work, axis=1, keepdims=True)
+        else:
+            idx = np.arange(work.shape[1], dtype=np.float64) - 0.5 * (work.shape[1] - 1)
+            tau = idx * spacing_m * np.sin(np.deg2rad(steer_deg)) / max(1e-6, sound_speed)
+            aligned = _spatial_apply_delays(work, [-(t * sr) for t in tau])
+            quiescent = np.mean(aligned, axis=1)
+            blocked = aligned - np.mean(aligned, axis=1, keepdims=True)
+            noise = np.mean(blocked, axis=1)
+            out = (quiescent - mu * noise)[:, None]
+        notes.append("Applied generalized sidelobe canceller (quiescent + blocking path).")
+
+    elif slug == "superdirective_beamformer":
+        steer_deg = float(params.get("steer_deg", 0.0))
+        spacing_m = float(params.get("spacing_m", 0.05))
+        sound_speed = float(params.get("sound_speed", 343.0))
+        aperture = float(params.get("aperture", 1.0))
+        if work.shape[1] < 2:
+            out = np.mean(work, axis=1, keepdims=True)
+        else:
+            idx = np.arange(work.shape[1], dtype=np.float64) - 0.5 * (work.shape[1] - 1)
+            tau = idx * spacing_m * np.sin(np.deg2rad(steer_deg)) / max(1e-6, sound_speed)
+            aligned = _spatial_apply_delays(work, [-(t * sr) for t in tau])
+            weights = np.exp(-0.5 * np.power(idx / max(0.3, aperture), 2.0))
+            weights /= np.sum(weights) + 1e-12
+            out = (aligned @ weights)[:, None]
+            extras["weights"] = weights.tolist()
+        notes.append("Applied superdirective-style weighted beamforming.")
+
+    elif slug == "diffuse_field_coherence_masking":
+        coherence_threshold = float(params.get("coherence_threshold", 0.45))
+        floor = float(params.get("floor", 0.12))
+        if work.shape[1] < 2:
+            out = spectral_gate(work, strength=1.1, floor=floor)
+        else:
+            spec, _, _ = stft_multi(work, n_fft=2048, hop=512)
+            ref = spec[:, :, 0]
+            coh = np.ones((spec.shape[0], spec.shape[1]), dtype=np.float64)
+            for ch in range(1, spec.shape[2]):
+                num = np.abs(ref * np.conj(spec[:, :, ch]))
+                den = np.abs(ref) * np.abs(spec[:, :, ch]) + 1e-12
+                coh += np.clip(num / den, 0.0, 1.0)
+            coh /= float(spec.shape[2])
+            mask = np.clip((coh - coherence_threshold) / (1.0 - coherence_threshold + 1e-9), floor, 1.0)
+            out = istft_multi(spec * mask[:, :, None], n_fft=2048, hop=512, length=work.shape[0])
+            extras["mean_coherence"] = float(np.mean(coh))
+        notes.append("Applied diffuse-field coherence masking in STFT domain.")
+
+    elif slug == "direction_of_arrival_grid_tracking":
+        spacing_m = float(params.get("spacing_m", 0.05))
+        sound_speed = float(params.get("sound_speed", 343.0))
+        frame = int(params.get("frame", 2048))
+        hop = int(params.get("hop", 512))
+        doa_track: list[float] = []
+        if work.shape[1] >= 2:
+            max_lag = int(round((spacing_m / max(1e-6, sound_speed)) * sr)) + 2
+            for start in range(0, max(1, work.shape[0] - frame + 1), max(1, hop)):
+                x = work[start : start + frame, 0]
+                y = work[start : start + frame, 1]
+                lag = _spatial_gcc_delay(x, y, max_lag=max_lag)
+                tau = lag / float(sr)
+                value = np.clip((tau * sound_speed) / max(1e-6, spacing_m), -1.0, 1.0)
+                doa_track.append(float(np.rad2deg(np.arcsin(value))))
+        if not doa_track:
+            doa_track = [0.0]
+        out = work.copy()
+        extras["doa_track_deg"] = doa_track
+        extras["doa_median_deg"] = float(np.median(doa_track))
+        notes.append("Tracked direction-of-arrival over a sliding GCC-PHAT grid.")
+
+    elif slug == "first_order_ambisonic_encode_decode":
+        azimuth_deg = float(params.get("azimuth_deg", 0.0))
+        elevation_deg = float(params.get("elevation_deg", 0.0))
+        if work.shape[1] >= 4:
+            foa = work[:, :4]
+        else:
+            foa = _spatial_foa_encode(np.mean(work, axis=1), azimuth_deg=azimuth_deg, elevation_deg=elevation_deg)
+        out = _spatial_foa_decode_stereo(foa)
+        notes.append("Performed FOA encode/decode render to stereo.")
+
+    elif slug == "higher_order_ambisonic_rotation":
+        yaw_deg = float(params.get("yaw_deg", 35.0))
+        if work.shape[1] >= 4:
+            out = work.copy()
+            out[:, :4] = _spatial_rotate_foa(work[:, :4], yaw_deg=yaw_deg)
+        else:
+            foa = _spatial_foa_encode(np.mean(work, axis=1))
+            out = _spatial_rotate_foa(foa, yaw_deg=yaw_deg)
+        notes.append("Applied ambisonic yaw rotation on first-order channels.")
+
+    elif slug == "ambisonic_binaural_rendering":
+        head_itd_ms = float(params.get("head_itd_ms", 0.35))
+        head_ild_db = float(params.get("head_ild_db", 3.0))
+        if work.shape[1] >= 4:
+            foa = work[:, :4]
+        else:
+            foa = _spatial_foa_encode(np.mean(work, axis=1), azimuth_deg=float(params.get("azimuth_deg", 0.0)))
+        stereo = _spatial_foa_decode_stereo(foa)
+        d = head_itd_ms * 1e-3 * sr
+        l = _spatial_fractional_delay(stereo[:, 0], d)
+        r = _spatial_fractional_delay(stereo[:, 1], -d)
+        g = 10.0 ** (head_ild_db / 20.0)
+        out = np.stack([l / g, r * g], axis=1)
+        notes.append("Rendered FOA to binaural stereo with simple ITD/ILD head model.")
+
+    elif slug == "spherical_harmonic_diffuse_enhancement":
+        diffuse_mix = float(params.get("diffuse_mix", 0.6))
+        if work.shape[1] >= 4:
+            foa = work[:, :4].copy()
+        else:
+            foa = _spatial_foa_encode(np.mean(work, axis=1))
+        b, a = signal.butter(2, min(0.98, 700.0 / (0.5 * sr)), btype="low")
+        w = foa[:, 0]
+        xyz = foa[:, 1:4]
+        w_low = signal.lfilter(b, a, w)
+        xyz_low = signal.lfilter(b, a, xyz, axis=0)
+        foa[:, 0] = (1.0 - diffuse_mix) * w + diffuse_mix * (w_low + 0.4 * (w - w_low))
+        foa[:, 1:4] = (1.0 - diffuse_mix) * xyz + diffuse_mix * (xyz + 0.6 * (xyz - xyz_low))
+        if work.shape[1] > 4:
+            out = np.hstack([foa, work[:, 4:]])
+        else:
+            out = foa
+        notes.append("Enhanced diffuse spherical-harmonic content via band-dependent FOA shaping.")
+
+    elif slug == "hoa_order_truncation_and_upmix":
+        target_channels = int(params.get("target_channels", max(4, work.shape[1])))
+        if work.shape[1] >= target_channels:
+            out = work[:, :target_channels]
+        else:
+            out = np.zeros((work.shape[0], target_channels), dtype=np.float64)
+            out[:, : work.shape[1]] = work
+            for ch in range(work.shape[1], target_channels):
+                src = work[:, ch % work.shape[1]]
+                delayed = _spatial_fractional_delay(src, float((ch + 1) * 5.0))
+                out[:, ch] = signal.lfilter([0.65, 0.0, 0.35], [1.0, -0.25, 0.1], delayed)
+        notes.append("Truncated higher order channels or upmixed using decorrelated synthetic channels.")
+
+    elif slug == "spatial_room_impulse_convolution":
+        decay_s = float(params.get("decay_s", 0.9))
+        rir_length = int(params.get("rir_length", max(256, int(sr * min(2.0, decay_s * 1.5)))))
+        seed = int(params.get("seed", 1307))
+        out = np.zeros_like(work)
+        for ch in range(work.shape[1]):
+            rir = _spatial_synthetic_rir(rir_length, decay_s, sr, seed, ch)
+            out[:, ch] = signal.fftconvolve(work[:, ch], rir, mode="full")[: work.shape[0]]
+        notes.append("Applied per-channel synthetic room impulse convolution.")
+
+    elif slug == "pvx_interchannel_phase_locking":
+        lock_strength = float(params.get("lock_strength", 0.7))
+        spec, _, _ = stft_multi(work, n_fft=2048, hop=512)
+        mag = np.abs(spec)
+        pha = np.angle(spec)
+        ref = pha[:, :, 0]
+        for ch in range(1, pha.shape[2]):
+            pha[:, :, ch] = (1.0 - lock_strength) * pha[:, :, ch] + lock_strength * ref
+        out = istft_multi(mag * np.exp(1j * pha), n_fft=2048, hop=512, length=work.shape[0])
+        notes.append("Locked interchannel phase to a reference channel in the phase-vocoder domain.")
+
+    elif slug == "pvx_spatial_transient_preservation":
+        transient_threshold = float(params.get("transient_threshold", 1.6))
+        phase_smooth = float(params.get("phase_smooth", 0.85))
+        preserve_amount = float(params.get("preserve_amount", 0.8))
+        spec, _, _ = stft_multi(work, n_fft=2048, hop=512)
+        mag = np.abs(spec)
+        pha = np.angle(spec)
+        energy = np.mean(mag, axis=(0, 2))
+        diff = np.diff(energy, prepend=energy[0])
+        thr = transient_threshold * (np.mean(np.abs(diff)) + 1e-12)
+        transient = diff > thr
+        pha2 = pha.copy()
+        for ch in range(pha.shape[2]):
+            for t in range(1, pha.shape[1]):
+                if transient[t]:
+                    pha2[:, t, ch] = preserve_amount * pha[:, t, ch] + (1.0 - preserve_amount) * pha2[:, t - 1, ch]
+                else:
+                    pha2[:, t, ch] = phase_smooth * pha2[:, t - 1, ch] + (1.0 - phase_smooth) * pha[:, t, ch]
+        out = istft_multi(mag * np.exp(1j * pha2), n_fft=2048, hop=512, length=work.shape[0])
+        notes.append("Preserved transients while smoothing inter-frame spatial phase trajectories.")
+
+    elif slug == "pvx_interaural_coherence_shaping":
+        coherence_target = float(params.get("coherence_target", 0.75))
+        stereo = _spatial_to_channels(work, 2)
+        spec, _, _ = stft_multi(stereo, n_fft=2048, hop=512)
+        l = spec[:, :, 0]
+        r = spec[:, :, 1]
+        mid = (l + r) / np.sqrt(2.0)
+        side = (l - r) / np.sqrt(2.0)
+        rng = np.random.default_rng(1307)
+        rand_phase = np.exp(1j * rng.uniform(-np.pi, np.pi, size=side.shape))
+        side2 = coherence_target * side + (1.0 - coherence_target) * np.abs(side) * rand_phase
+        l2 = (mid + side2) / np.sqrt(2.0)
+        r2 = (mid - side2) / np.sqrt(2.0)
+        out = istft_multi(np.stack([l2, r2], axis=2), n_fft=2048, hop=512, length=work.shape[0])
+        notes.append("Shaped interaural coherence by controlled side-channel decorrelation.")
+
+    elif slug == "pvx_directional_spectral_warp":
+        warp_amount = float(params.get("warp_amount", 0.16))
+        azimuth_deg = float(params.get("azimuth_deg", 30.0))
+        spec, _, _ = stft_multi(work, n_fft=2048, hop=512)
+        mag = np.abs(spec)
+        pha = np.angle(spec)
+        bins = np.arange(mag.shape[0], dtype=np.float64)
+        pos = np.linspace(-1.0, 1.0, num=mag.shape[2])
+        az = np.deg2rad(azimuth_deg)
+        mag2 = np.zeros_like(mag)
+        for ch in range(mag.shape[2]):
+            shift = warp_amount * pos[ch] * (bins / max(1.0, bins[-1])) * mag.shape[0] * 0.35
+            src = np.clip(bins - shift, 0.0, bins[-1])
+            for t in range(mag.shape[1]):
+                mag2[:, t, ch] = np.interp(src, bins, mag[:, t, ch])
+            pha[:, :, ch] = pha[:, :, ch] + az * pos[ch] * (bins[:, None] / max(1.0, bins[-1]))
+        out = istft_multi(mag2 * np.exp(1j * pha), n_fft=2048, hop=512, length=work.shape[0])
+        notes.append("Applied directional spectral warp with channel-dependent phase skew.")
+
+    elif slug == "pvx_multichannel_time_alignment":
+        max_lag = int(params.get("max_lag", max(8, int(0.002 * sr))))
+        if work.shape[1] < 2:
+            out = work.copy()
+            delays = [0.0]
+        else:
+            delays = _spatial_estimate_channel_delays(work, max_lag=max_lag)
+            out = _spatial_apply_delays(work, delays)
+        extras["estimated_delays_samples"] = delays
+        notes.append("Aligned channels by GCC-PHAT delay estimation and fractional delay compensation.")
+
+    elif slug == "pvx_spatial_freeze_and_trajectory":
+        frame_ratio = float(params.get("frame_ratio", 0.35))
+        orbit_hz = float(params.get("orbit_hz", 0.12))
+        spec, _, _ = stft_multi(work, n_fft=2048, hop=512)
+        idx = int(np.clip(round(frame_ratio * (spec.shape[1] - 1)), 0, max(0, spec.shape[1] - 1)))
+        frozen = spec[:, idx, :]
+        mag = np.abs(frozen)
+        base_phase = np.angle(frozen)
+        out_spec = np.zeros_like(spec)
+        frame_rate = sr / 512.0
+        for t in range(spec.shape[1]):
+            theta = 2.0 * np.pi * orbit_hz * (t / max(1.0, frame_rate))
+            for ch in range(spec.shape[2]):
+                phase = base_phase[:, ch] + theta * (1.0 + 0.15 * ch)
+                out_spec[:, t, ch] = mag[:, ch] * np.exp(1j * phase)
+        out = istft_multi(out_spec, n_fft=2048, hop=512, length=work.shape[0])
+        notes.append("Froze spatial spectrum and animated channel trajectories with phase orbits.")
+
+    elif slug == "multichannel_wiener_postfilter":
+        noise_floor = float(params.get("noise_floor", 0.15))
+        spec, _, _ = stft_multi(work, n_fft=2048, hop=512)
+        mag = np.abs(spec)
+        noise = np.percentile(mag, 20, axis=1, keepdims=True)
+        gain = mag * mag / (mag * mag + np.power(noise * (1.0 + noise_floor), 2.0) + 1e-12)
+        out = istft_multi(spec * gain, n_fft=2048, hop=512, length=work.shape[0])
+        notes.append("Applied multichannel Wiener postfilter using percentile noise estimate.")
+
+    elif slug == "coherence_based_dereverb_multichannel":
+        coherence_threshold = float(params.get("coherence_threshold", 0.5))
+        decay = float(params.get("decay", 0.92))
+        spec, _, _ = stft_multi(work, n_fft=2048, hop=512)
+        mag = np.abs(spec)
+        ref = spec[:, :, 0]
+        coh = np.ones((spec.shape[0], spec.shape[1]), dtype=np.float64)
+        for ch in range(1, spec.shape[2]):
+            coh += np.abs(ref * np.conj(spec[:, :, ch])) / (np.abs(ref) * np.abs(spec[:, :, ch]) + 1e-12)
+        coh /= float(spec.shape[2])
+        tail = np.zeros((mag.shape[0], mag.shape[2]), dtype=np.float64)
+        mask = np.zeros_like(mag)
+        for t in range(mag.shape[1]):
+            tail = np.maximum(decay * tail, mag[:, t, :])
+            base = np.clip((coh[:, t] - coherence_threshold) / (1.0 - coherence_threshold + 1e-9), 0.15, 1.0)
+            mask[:, t, :] = base[:, None] * np.clip(mag[:, t, :] / (mag[:, t, :] + 0.5 * tail + 1e-9), 0.1, 1.0)
+        out = istft_multi(spec * mask, n_fft=2048, hop=512, length=work.shape[0])
+        notes.append("Applied coherence-guided late-reverb suppression for multichannel material.")
+
+    elif slug == "multichannel_noise_psd_tracking":
+        alpha = float(params.get("alpha", 1.0))
+        floor = float(params.get("floor", 0.08))
+        spec, _, _ = stft_multi(work, n_fft=2048, hop=512)
+        power = np.abs(spec) ** 2
+        noise = np.minimum.accumulate(power, axis=1)
+        noise = ndimage.minimum_filter1d(noise, size=11, axis=1)
+        gain = np.clip((power - alpha * noise) / (power + 1e-12), floor, 1.0)
+        out = istft_multi(spec * np.sqrt(gain), n_fft=2048, hop=512, length=work.shape[0])
+        extras["mean_noise_power"] = float(np.mean(noise))
+        notes.append("Tracked multichannel noise PSD and applied adaptive subtraction mask.")
+
+    elif slug == "phase_consistent_multichannel_denoise":
+        reduction_db = float(params.get("reduction_db", 10.0))
+        floor = float(params.get("floor", 0.1))
+        spec, _, _ = stft_multi(work, n_fft=2048, hop=512)
+        mag = np.abs(spec)
+        shared = np.mean(mag, axis=2, keepdims=True)
+        noise = np.percentile(shared, 15, axis=1, keepdims=True)
+        gain = np.clip((shared - noise * (10.0 ** (reduction_db / 20.0))) / (shared + 1e-12), floor, 1.0)
+        out = istft_multi(spec * gain, n_fft=2048, hop=512, length=work.shape[0])
+        notes.append("Applied phase-consistent denoise mask shared across channels.")
+
+    elif slug == "microphone_array_calibration_tones":
+        tone_hz = params.get("tone_hz", [500.0, 1000.0, 2000.0])
+        if isinstance(tone_hz, (int, float)):
+            tones = [float(tone_hz)]
+        else:
+            tones = [float(v) for v in tone_hz] if tone_hz else [1000.0]
+        apply_correction = bool(params.get("apply_correction", True))
+        n = work.shape[0]
+        win = np.hanning(n)[:, None]
+        X = np.fft.rfft(work * win, axis=0)
+        freqs = np.fft.rfftfreq(n, d=1.0 / sr)
+        gains = np.ones(work.shape[1], dtype=np.float64)
+        delays = np.zeros(work.shape[1], dtype=np.float64)
+        for ch in range(1, work.shape[1]):
+            gain_est: list[float] = []
+            delay_est: list[float] = []
+            for tone in tones:
+                idx = int(np.argmin(np.abs(freqs - tone)))
+                f = max(1e-6, freqs[idx])
+                ref_mag = np.abs(X[idx, 0]) + 1e-12
+                ch_mag = np.abs(X[idx, ch]) + 1e-12
+                gain_est.append(float(ref_mag / ch_mag))
+                phase = np.angle(X[idx, ch]) - np.angle(X[idx, 0])
+                delay_est.append(float((-phase / (2.0 * np.pi * f)) * sr))
+            gains[ch] = float(np.median(gain_est)) if gain_est else 1.0
+            delays[ch] = float(np.median(delay_est)) if delay_est else 0.0
+        if apply_correction:
+            out = _spatial_apply_delays(work, delays.tolist())
+            out = out * gains[None, :]
+        else:
+            out = work.copy()
+        extras["estimated_gain_db"] = (20.0 * np.log10(gains + 1e-12)).tolist()
+        extras["estimated_delay_samples"] = delays.tolist()
+        notes.append("Estimated microphone gain/delay mismatches from calibration tones.")
+
+    elif slug == "cross_channel_click_pop_repair":
+        spike_threshold = float(params.get("spike_threshold", 6.0))
+        out = work.copy()
+        for ch in range(out.shape[1]):
+            x = out[:, ch]
+            dx = np.abs(np.diff(x, prepend=x[0]))
+            med = np.median(dx) + 1e-12
+            bad = np.where(dx > spike_threshold * med)[0]
+            for idx in bad:
+                lo = max(0, idx - 1)
+                hi = min(out.shape[0], idx + 2)
+                out[idx, ch] = float(np.median(out[lo:hi, :]))
+            out[:, ch] = signal.medfilt(out[:, ch], kernel_size=3)
+        notes.append("Repaired click/pop outliers using cross-channel robust interpolation.")
+
+    elif slug == "rotating_speaker_doppler_field":
+        output_channels = int(params.get("output_channels", max(2, work.shape[1])))
+        rotation_hz = float(params.get("rotation_hz", 0.25))
+        depth_ms = float(params.get("depth_ms", 1.2))
+        mono = np.mean(work, axis=1)
+        t = np.arange(work.shape[0], dtype=np.float64) / float(sr)
+        depth = depth_ms * 1e-3 * sr
+        idx = np.arange(work.shape[0], dtype=np.float64)
+        out = np.zeros((work.shape[0], output_channels), dtype=np.float64)
+        for ch in range(output_channels):
+            phase = 2.0 * np.pi * (rotation_hz * t + ch / max(1, output_channels))
+            delay = depth * np.sin(phase)
+            src = idx - delay
+            wave = np.interp(src, idx, mono, left=mono[0], right=mono[-1])
+            gain = 0.65 + 0.35 * np.cos(phase)
+            out[:, ch] = wave * gain
+        notes.append("Simulated rotating-speaker Doppler field over multichannel ring.")
+
+    elif slug == "binaural_motion_trajectory_designer":
+        trajectory = str(params.get("trajectory", "sine")).lower()
+        trajectory_hz = float(params.get("trajectory_hz", 0.15))
+        width = float(params.get("width", 1.0))
+        itd_ms = float(params.get("itd_ms", 0.6))
+        mono = np.mean(work, axis=1)
+        t = np.arange(work.shape[0], dtype=np.float64) / float(sr)
+        if trajectory == "saw":
+            phase = t * trajectory_hz
+            az = 90.0 * width * (2.0 * (phase - np.floor(phase + 0.5)))
+        elif trajectory == "triangle":
+            phase = (t * trajectory_hz) % 1.0
+            az = 90.0 * width * (2.0 * np.abs(2.0 * phase - 1.0) - 1.0)
+        else:
+            az = 90.0 * width * np.sin(2.0 * np.pi * trajectory_hz * t)
+        pan = np.clip((az + 90.0) / 180.0, 0.0, 1.0)
+        g_l = np.cos(pan * np.pi * 0.5)
+        g_r = np.sin(pan * np.pi * 0.5)
+        itd = itd_ms * 1e-3 * sr * np.sin(np.deg2rad(az))
+        idx = np.arange(work.shape[0], dtype=np.float64)
+        l = np.interp(idx - np.maximum(itd, 0.0), idx, mono, left=mono[0], right=mono[-1])
+        r = np.interp(idx + np.minimum(itd, 0.0), idx, mono, left=mono[0], right=mono[-1])
+        out = np.stack([l * g_l, r * g_r], axis=1)
+        notes.append("Designed dynamic binaural motion trajectory with time-varying pan and ITD.")
+
+    elif slug == "stochastic_spatial_diffusion_cloud":
+        output_channels = int(params.get("output_channels", 6))
+        diffusion = float(params.get("diffusion", 0.8))
+        max_delay_ms = float(params.get("max_delay_ms", 18.0))
+        seed = int(params.get("seed", 1307))
+        rng = np.random.default_rng(seed)
+        mono = np.mean(work, axis=1)
+        out = np.zeros((work.shape[0], output_channels), dtype=np.float64)
+        max_delay = max_delay_ms * 1e-3 * sr
+        for ch in range(output_channels):
+            delay = rng.uniform(0.0, max_delay)
+            y = _spatial_fractional_delay(mono, delay)
+            a = np.clip(diffusion * rng.uniform(0.2, 0.9), 0.05, 0.95)
+            y = signal.lfilter([a, 1.0], [1.0, a], y)
+            y = signal.lfilter([1.0, -0.4 * a], [1.0], y)
+            out[:, ch] = y * rng.uniform(0.6, 1.0)
+        notes.append("Generated stochastic spatial diffusion cloud with decorrelated delay/all-pass taps.")
+
+    elif slug == "decorrelated_reverb_upmix":
+        output_channels = int(params.get("output_channels", 6))
+        decay_s = float(params.get("decay_s", 1.2))
+        rir_length = int(params.get("rir_length", max(256, int(sr * min(3.0, decay_s * 2.0)))))
+        mix = float(params.get("mix", 0.45))
+        seed = int(params.get("seed", 1307))
+        mono = np.mean(work, axis=1)
+        out = np.zeros((work.shape[0], output_channels), dtype=np.float64)
+        for ch in range(output_channels):
+            rir = _spatial_synthetic_rir(rir_length, decay_s, sr, seed + 911, ch)
+            wet = signal.fftconvolve(mono, rir, mode="full")[: work.shape[0]]
+            dry = mono if ch % 2 == 0 else _spatial_fractional_delay(mono, float((ch + 1) * 2.0))
+            out[:, ch] = (1.0 - mix) * dry + mix * wet
+        notes.append("Upmixed source with decorrelated synthetic reverb field.")
+
+    elif slug == "spectral_spatial_granulator":
+        output_channels = int(params.get("output_channels", max(2, work.shape[1])))
+        grain = int(params.get("grain", 1024))
+        spread_semitones = float(params.get("spread_semitones", 5.0))
+        density = float(params.get("density", 1.0))
+        seed = int(params.get("seed", 1307))
+        rng = np.random.default_rng(seed)
+        mono = np.mean(work, axis=1)[:, None]
+        out = np.zeros((work.shape[0], output_channels), dtype=np.float64)
+        for ch in range(output_channels):
+            stretch = float(np.clip(1.0 + rng.normal(0.0, 0.18 * max(0.1, density)), 0.5, 2.0))
+            g = granular_time_stretch(mono, stretch=stretch, grain=grain, hop=max(64, grain // 4))
+            semi = float(rng.normal(0.0, spread_semitones))
+            g = pitch_shift(g, sr, semi)
+            g = ensure_length(g, work.shape[0])[:, 0]
+            lfo = 0.7 + 0.3 * np.sin(2.0 * np.pi * (0.07 * (ch + 1)) * np.arange(work.shape[0]) / float(sr) + rng.uniform(0.0, 2.0 * np.pi))
+            out[:, ch] = g * lfo
+        notes.append("Rendered spectral-spatial granulator with per-channel stochastic pitch/grain trajectories.")
+
+    elif slug == "spatial_freeze_resynthesis":
+        output_channels = int(params.get("output_channels", work.shape[1]))
+        frame_ratio = float(params.get("frame_ratio", 0.35))
+        phase_drift = float(params.get("phase_drift", 0.03))
+        src = _spatial_to_channels(work, output_channels)
+        spec, _, _ = stft_multi(src, n_fft=2048, hop=512)
+        idx = int(np.clip(round(frame_ratio * (spec.shape[1] - 1)), 0, max(0, spec.shape[1] - 1)))
+        frozen = spec[:, idx, :]
+        mag = np.abs(frozen)
+        base_phase = np.angle(frozen)
+        out_spec = np.zeros_like(spec)
+        for t in range(spec.shape[1]):
+            theta = 2.0 * np.pi * phase_drift * t
+            for ch in range(output_channels):
+                phase = base_phase[:, ch] + theta * (1.0 + 0.15 * ch)
+                out_spec[:, t, ch] = mag[:, ch] * np.exp(1j * phase)
+        out = istft_multi(out_spec, n_fft=2048, hop=512, length=work.shape[0])
+        notes.append("Resynthesized frozen spatial spectra with controlled per-channel phase drift.")
+
+    else:
+        out = work.copy()
+        notes.append("Spatial fallback passthrough.")
+
+    return normalize_peak(out), notes, extras
+
+
 def run_algorithm(
     *,
     algorithm_id: str,
@@ -1565,14 +2148,14 @@ def run_algorithm(
         out, notes, extras = _dispatch_dereverb(slug, work, sr, params)
     elif algorithm_id.startswith("dynamics_and_loudness."):
         out, notes, extras = _dispatch_dynamics(slug, work, sr, params)
-    elif algorithm_id.startswith("spatial_and_multichannel."):
-        out, notes, extras = _dispatch_spatial(slug, work, sr, params)
     elif algorithm_id.startswith("creative_spectral_effects."):
         out, notes, extras = _dispatch_creative(slug, work, sr, params)
     elif algorithm_id.startswith("granular_and_modulation."):
         out, notes, extras = _dispatch_granular(slug, work, sr, params)
     elif algorithm_id.startswith("analysis_qa_and_automation."):
         out, notes, extras = _dispatch_analysis(slug, work, sr, params)
+    elif algorithm_id.startswith("spatial_and_multichannel."):
+        out, notes, extras = _dispatch_spatial(slug, work, sr, params)
     else:
         out = work
         notes = ["Unknown algorithm id; returned passthrough output."]

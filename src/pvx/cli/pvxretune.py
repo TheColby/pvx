@@ -168,7 +168,7 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("0 < --f0-min < --f0-max required")
 
     config = build_vocoder_config(args, phase_locking="identity", transient_preserve=True, transient_threshold=1.8)
-    paths = resolve_inputs(args.inputs, parser)
+    paths = resolve_inputs(args.inputs, parser, args)
     status = build_status_bar(args, "pvxretune", len(paths))
 
     failures = 0
@@ -219,7 +219,7 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 out = overlap_add(chunks, starts, audio.shape[0])
 
-            out = finalize_audio(out, args)
+            out = finalize_audio(out, sr, args)
             out_path = default_output_path(path, args)
             write_output(out_path, out, sr, args)
             if ratios:

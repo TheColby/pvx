@@ -63,7 +63,7 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--dry-mix must be >= 0")
 
     config = build_vocoder_config(args, phase_locking="identity", transient_preserve=True, transient_threshold=2.0)
-    paths = resolve_inputs(args.inputs, parser)
+    paths = resolve_inputs(args.inputs, parser, args)
     status = build_status_bar(args, "pvxunison", len(paths))
 
     failures = 0
@@ -91,7 +91,7 @@ def main(argv: list[str] | None = None) -> int:
             dry[:, 0] = base[:, 0]
             dry[:, 1] = base[:, 0]
             out = mix + (args.dry_mix * dry)
-            out = finalize_audio(out, args)
+            out = finalize_audio(out, sr, args)
 
             out_path = default_output_path(path, args)
             write_output(out_path, out, sr, args)

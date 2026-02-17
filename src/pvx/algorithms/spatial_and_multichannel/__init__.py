@@ -1,1 +1,1 @@
-"""Spatial and Multichannel algorithm scaffolds."""
+"""Spatial and multichannel algorithm scaffolds."""

@@ -91,7 +91,7 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("kernel sizes must be > 0")
 
     config = build_vocoder_config(args, phase_locking="identity", transient_preserve=True, transient_threshold=1.7)
-    paths = resolve_inputs(args.inputs, parser)
+    paths = resolve_inputs(args.inputs, parser, args)
 
     harm_ratio = semitone_to_ratio(args.harmonic_pitch_semitones) * cents_to_ratio(args.harmonic_pitch_cents)
     perc_ratio = semitone_to_ratio(args.percussive_pitch_semitones) * cents_to_ratio(args.percussive_pitch_cents)
@@ -131,7 +131,7 @@ def main(argv: list[str] | None = None) -> int:
             out[: hproc.shape[0], :] += hproc
             out[: pproc.shape[0], :] += pproc
 
-            out = finalize_audio(out, args)
+            out = finalize_audio(out, sr, args)
             out_path = default_output_path(path, args)
             write_output(out_path, out, sr, args)
             log_message(args, f"[ok] {path} -> {out_path} | out_dur={out.shape[0]/sr:.3f}s", min_level="verbose")

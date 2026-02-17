@@ -79,7 +79,7 @@ def main(argv: list[str] | None = None) -> int:
     pans = [float(np.clip(v, -1.0, 1.0)) for v in pans[: len(intervals)]]
 
     config = build_vocoder_config(args, phase_locking="identity", transient_preserve=True, transient_threshold=2.0)
-    paths = resolve_inputs(args.inputs, parser)
+    paths = resolve_inputs(args.inputs, parser, args)
     status = build_status_bar(args, "pvxharmonize", len(paths))
 
     failures = 0
@@ -103,7 +103,7 @@ def main(argv: list[str] | None = None) -> int:
                 else:
                     out[: voice.shape[0], : voice.shape[1]] += voice
 
-            out = finalize_audio(out, args)
+            out = finalize_audio(out, sr, args)
             out_path = default_output_path(path, args)
             write_output(out_path, out, sr, args)
             log_message(args, f"[ok] {path} -> {out_path} | voices={len(intervals)}, ch={out.shape[1]}", min_level="verbose")

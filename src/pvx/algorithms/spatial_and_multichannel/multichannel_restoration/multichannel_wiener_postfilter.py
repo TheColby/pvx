@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Stereo decorrelation for width.
+"""Multichannel Wiener postfilter.
 
 Comprehensive module help:
 - Theme: Spatial and Multichannel
-- Algorithm ID: spatial_and_multichannel.stereo_decorrelation_for_width
+- Algorithm ID: spatial_and_multichannel.multichannel_wiener_postfilter
 - Primary API: process(audio, sample_rate, **params) -> AlgorithmResult
 - Backend: delegates to pvx.algorithms.base.run_algorithm()
 
@@ -22,17 +22,20 @@ from typing import Any
 import numpy as np
 
 if __package__ is None or __package__ == "":
-    sys.path.append(str(Path(__file__).resolve().parents[3]))
+    for _parent in Path(__file__).resolve().parents:
+        if (_parent / "pvx").is_dir():
+            sys.path.append(str(_parent))
+            break
 
 from pvx.algorithms.base import AlgorithmResult, run_algorithm
 
-ALGORITHM_ID = 'spatial_and_multichannel.stereo_decorrelation_for_width'
-ALGORITHM_NAME = 'Stereo decorrelation for width'
+ALGORITHM_ID = 'spatial_and_multichannel.multichannel_wiener_postfilter'
+ALGORITHM_NAME = 'Multichannel Wiener postfilter'
 THEME = 'Spatial and Multichannel'
 
 
 def process(audio: np.ndarray, sample_rate: int, **params: Any) -> AlgorithmResult:
-    """Run Stereo decorrelation for width on the provided audio buffer.
+    """Run Multichannel Wiener postfilter on the provided audio buffer.
 
     Parameters:
     - audio: np.ndarray, shape (samples,) or (samples, channels)
