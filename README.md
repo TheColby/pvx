@@ -93,7 +93,7 @@ $$
 Plain English: STFT analysis takes overlapping, windowed frames and converts them into complex frequency bins.
 
 $$
-\Delta\phi_t[k]=\operatorname{princarg}\left(\phi_t[k]-\phi_{t-1}[k]-\omega_kH_a\right),\qquad
+\Delta\phi_t[k]=\mathrm{princarg}\left(\phi_t[k]-\phi_{t-1}[k]-\omega_kH_a\right),\qquad
 \hat{\phi}_t[k]=\hat{\phi}_{t-1}[k]+\hat{\omega}_t[k]H_s
 $$
 
@@ -886,27 +886,19 @@ Key options:
 
 Example CSV (`map_conform.csv`) variants:
 
-`map_conform_basic_cents.csv` (small expressive offsets):
+Equal-temperament maps (N-TET): `step_cents = 1200 / N`
+
+`map_conform_12tet_cents.csv` (12-TET, 100 cents/step):
 
 ```csv
 start_sec,end_sec,stretch,pitch_cents
 0.0,1.0,1.00,0
-1.0,2.4,1.20,35
-2.4,3.1,0.90,-28
+1.0,2.0,1.00,100
+2.0,3.0,1.00,200
+3.0,4.0,1.00,300
 ```
 
-`map_conform_quarter_tone_24edo.csv` (24-EDO quarter-tone steps, 50 cents each):
-
-```csv
-start_sec,end_sec,stretch,pitch_cents
-0.0,0.8,1.00,0
-0.8,1.6,1.00,50
-1.6,2.4,1.00,100
-2.4,3.2,1.00,150
-3.2,4.0,1.00,200
-```
-
-`map_conform_19edo.csv` (19-EDO steps, 1200/19 = 63.1579 cents):
+`map_conform_19tet_cents.csv` (19-TET, 63.1579 cents/step):
 
 ```csv
 start_sec,end_sec,stretch,pitch_cents
@@ -917,17 +909,29 @@ start_sec,end_sec,stretch,pitch_cents
 3.6,4.5,1.00,252.6316
 ```
 
-`map_conform_just_intonation_ratios.csv` (JI pitch targets via direct ratios):
+`map_conform_24tet_cents.csv` (24-TET quarter-tone grid, 50 cents/step):
 
 ```csv
-start_sec,end_sec,stretch,pitch_ratio
-0.0,1.0,1.00,1.000000
-1.0,2.0,1.00,1.066667
-2.0,3.0,1.00,1.125000
-3.0,4.0,1.00,1.200000
+start_sec,end_sec,stretch,pitch_cents
+0.0,0.8,1.00,0
+0.8,1.6,1.00,50
+1.6,2.4,1.00,100
+2.4,3.2,1.00,150
+3.2,4.0,1.00,200
 ```
 
-`map_conform_equal_temperament_semitones.csv` (standard semitone offsets):
+`map_conform_31tet_cents.csv` (31-TET, 38.7097 cents/step):
+
+```csv
+start_sec,end_sec,stretch,pitch_cents
+0.0,0.8,1.00,0.0000
+0.8,1.6,1.00,38.7097
+1.6,2.4,1.00,77.4194
+2.4,3.2,1.00,116.1290
+3.2,4.0,1.00,154.8387
+```
+
+`map_conform_equal_temperament_semitones.csv` (12-TET semitone representation):
 
 ```csv
 start_sec,end_sec,stretch,pitch_semitones
@@ -937,10 +941,42 @@ start_sec,end_sec,stretch,pitch_semitones
 3.0,4.0,1.05,5
 ```
 
+`map_conform_basic_cents.csv` (small expressive non-grid offsets):
+
+```csv
+start_sec,end_sec,stretch,pitch_cents
+0.0,1.0,1.00,0
+1.0,2.4,1.20,35
+2.4,3.1,0.90,-28
+```
+
+Just intonation maps (ratio-based):
+
+`map_conform_just_intonation_ratios.csv` (5-limit major flavor: 1/1, 16/15, 9/8, 6/5):
+
+```csv
+start_sec,end_sec,stretch,pitch_ratio
+0.0,1.0,1.00,1.000000
+1.0,2.0,1.00,1.066667
+2.0,3.0,1.00,1.125000
+3.0,4.0,1.00,1.200000
+```
+
+`map_conform_just_intonation_triads.csv` (tonic-major movement with pure intervals):
+
+```csv
+start_sec,end_sec,stretch,pitch_ratio
+0.0,0.9,1.00,1.000000
+0.9,1.8,1.00,1.250000
+1.8,2.7,1.00,1.500000
+2.7,3.6,1.00,1.333333
+3.6,4.5,1.00,1.666667
+```
+
 Example command:
 
 ```bash
-python3 pvxconform.py vocal.wav --map map_conform_19edo.csv --crossfade-ms 10
+python3 pvxconform.py vocal.wav --map map_conform_19tet_cents.csv --crossfade-ms 10
 ```
 
 ### 5. `pvxmorph.py`
@@ -984,19 +1020,100 @@ Key options:
 - `--map`: CSV path.
 - `--crossfade-ms`: segment joins.
 
-Example CSV (`map_warp.csv`):
+Example CSV variants:
+
+`map_warp_basic.csv` (simple push/pull timing):
 
 ```csv
 start_sec,end_sec,stretch
-0.0,0.8,1.0
-0.8,2.0,1.3
+0.0,0.8,1.00
+0.8,2.0,1.30
 2.0,3.0,0.85
+```
+
+`map_warp_rubato_phrase.csv` (phrase-level rubato contour):
+
+```csv
+start_sec,end_sec,stretch
+0.0,0.7,0.92
+0.7,1.5,1.08
+1.5,2.6,1.18
+2.6,3.5,0.90
+3.5,4.4,0.96
+4.4,5.2,1.10
+```
+
+`map_warp_swing_eighths.csv` (alternating long/short feel):
+
+```csv
+start_sec,end_sec,stretch
+0.0,0.25,1.20
+0.25,0.50,0.82
+0.50,0.75,1.18
+0.75,1.00,0.84
+1.00,1.25,1.20
+1.25,1.50,0.82
+1.50,1.75,1.18
+1.75,2.00,0.84
+```
+
+`map_warp_chorus_lift.csv` (verse relaxed, chorus energized):
+
+```csv
+start_sec,end_sec,stretch
+0.0,8.0,0.97
+8.0,16.0,1.00
+16.0,24.0,1.06
+24.0,32.0,1.10
+32.0,40.0,1.03
+40.0,48.0,0.98
+```
+
+`map_warp_equal_temperament_12edo_phrase.csv` (12-EDO phrase template timing; pair with ET retune maps if needed):
+
+```csv
+start_sec,end_sec,stretch
+0.0,0.9,1.00
+0.9,1.8,1.02
+1.8,2.7,1.00
+2.7,3.6,0.98
+3.6,4.5,1.03
+4.5,5.4,0.97
+5.4,6.3,1.01
+6.3,7.2,0.99
+```
+
+`map_warp_just_intonation_phrase.csv` (JI-oriented phrase template timing; pair with JI ratio retune maps if needed):
+
+```csv
+start_sec,end_sec,stretch
+0.0,0.9,1.04
+0.9,1.8,0.96
+1.8,2.7,1.08
+2.7,3.6,0.92
+3.6,4.5,1.10
+4.5,5.4,0.90
+5.4,6.3,1.06
+6.3,7.2,0.94
+```
+
+`map_warp_anchor_points.csv` (explicit anchor-focused accelerando/ritardando):
+
+```csv
+start_sec,end_sec,stretch
+0.0,1.2,0.95
+1.2,2.4,1.05
+2.4,3.2,1.15
+3.2,4.0,1.22
+4.0,4.8,0.88
+4.8,5.6,0.80
+5.6,6.4,1.00
 ```
 
 Example command:
 
 ```bash
-python3 pvxwarp.py drums.wav --map map_warp.csv
+python3 pvxwarp.py drums.wav --map map_warp_rubato_phrase.csv --crossfade-ms 10
 ```
 
 ### 7. `pvxformant.py`
