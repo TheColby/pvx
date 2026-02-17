@@ -1,0 +1,673 @@
+{
+  "commit": "58b1a2e",
+  "commit_date": "2026-02-17T09:29:32-05:00",
+  "counts": {
+    "arxiv": 7,
+    "doi": 34,
+    "publisher_or_standard": 8,
+    "scholar": 110,
+    "web": 6
+  },
+  "unresolved_scholar": [
+    {
+      "authors": "M. R. Portnoff",
+      "title": "Implementation of the Digital Phase Vocoder Using the Fast Fourier Transform",
+      "url": "https://scholar.google.com/scholar?q=Implementation+of+the+Digital+Phase+Vocoder+Using+the+Fast+Fourier+Transform",
+      "year": "1976"
+    },
+    {
+      "authors": "M. R. Portnoff",
+      "title": "Time-Scale Modification of Speech Based on Short-Time Fourier Analysis",
+      "url": "https://scholar.google.com/scholar?q=Time-Scale+Modification+of+Speech+Based+on+Short-Time+Fourier+Analysis",
+      "year": "1980"
+    },
+    {
+      "authors": "R. J. McAulay; T. F. Quatieri",
+      "title": "Speech Analysis/Synthesis Based on a Sinusoidal Representation",
+      "url": "https://scholar.google.com/scholar?q=Speech+Analysis%2FSynthesis+Based+on+a+Sinusoidal+Representation",
+      "year": "1986"
+    },
+    {
+      "authors": "C. Duxbury; M. Davies; M. Sandler",
+      "title": "Improved Time-Scaling of Musical Audio Using Phase Locking at Transients",
+      "url": "https://scholar.google.com/scholar?q=Improved+Time-Scaling+of+Musical+Audio+Using+Phase+Locking+at+Transients",
+      "year": "2002"
+    },
+    {
+      "authors": "J. Bonada",
+      "title": "Automatic Technique in Frequency Domain for Near-Lossless Time-Scale Modification of Audio",
+      "url": "https://scholar.google.com/scholar?q=Automatic+Technique+in+Frequency+Domain+for+Near-Lossless+Time-Scale+Modification+of+Audio",
+      "year": "2000"
+    },
+    {
+      "authors": "N. Roucos; A. Wilgus",
+      "title": "High Quality Time-Scale Modification for Speech",
+      "url": "https://scholar.google.com/scholar?q=High+Quality+Time-Scale+Modification+for+Speech",
+      "year": "1985"
+    },
+    {
+      "authors": "W. Verhelst; M. Roelands",
+      "title": "An Overlap-Add Technique Based on Waveform Similarity (WSOLA) for High Quality Time-Scale Modification of Speech",
+      "url": "https://scholar.google.com/scholar?q=WSOLA+overlap-add+technique+waveform+similarity",
+      "year": "1993"
+    },
+    {
+      "authors": "S. Arfib; D. Keiler; U. Z\u00f6lzer",
+      "title": "DAFX: Digital Audio Effects (chapter references on pitch/time processing)",
+      "url": "https://scholar.google.com/scholar?q=DAFX+Digital+Audio+Effects+pitch+shifting+chapter",
+      "year": "2002"
+    },
+    {
+      "authors": "A. M. Noll",
+      "title": "Cepstrum Pitch Determination",
+      "url": "https://scholar.google.com/scholar?q=Cepstrum+Pitch+Determination",
+      "year": "1967"
+    },
+    {
+      "authors": "L. R. Rabiner; M. J. Cheng; A. E. Rosenberg; C. A. McGonegal",
+      "title": "A Comparative Performance Study of Several Pitch Detection Algorithms",
+      "url": "https://scholar.google.com/scholar?q=A+Comparative+Performance+Study+of+Several+Pitch+Detection+Algorithms",
+      "year": "1976"
+    },
+    {
+      "authors": "D. Talkin",
+      "title": "A Robust Algorithm for Pitch Tracking (RAPT)",
+      "url": "https://scholar.google.com/scholar?q=A+Robust+Algorithm+for+Pitch+Tracking+RAPT",
+      "year": "1995"
+    },
+    {
+      "authors": "P. Boersma",
+      "title": "Accurate Short-Term Analysis of the Fundamental Frequency and the Harmonics-to-Noise Ratio of a Sampled Sound",
+      "url": "https://scholar.google.com/scholar?q=Accurate+Short-Term+Analysis+of+the+Fundamental+Frequency+and+the+Harmonics-to-Noise+Ratio",
+      "year": "1993"
+    },
+    {
+      "authors": "C. Sch\u00f6rkhuber; A. Klapuri",
+      "title": "Constant-Q Transform Toolbox for Music Processing",
+      "url": "https://scholar.google.com/scholar?q=Constant-Q+Transform+Toolbox+for+Music+Processing",
+      "year": "2010"
+    },
+    {
+      "authors": "P. Flandrin; F. Auger; E. Chassande-Mottin",
+      "title": "Time-Frequency Reassignment: From Principles to Algorithms",
+      "url": "https://scholar.google.com/scholar?q=Time-Frequency+Reassignment%3A+From+Principles+to+Algorithms",
+      "year": "2002"
+    },
+    {
+      "authors": "S. Mann; S. Haykin",
+      "title": "The Chirplet Transform: Physical Considerations",
+      "url": "https://scholar.google.com/scholar?q=The+Chirplet+Transform%3A+Physical+Considerations",
+      "year": "1991"
+    },
+    {
+      "authors": "T. Virtanen",
+      "title": "Monaural Sound Source Separation by Nonnegative Matrix Factorization with Temporal Continuity and Sparseness Criteria",
+      "url": "https://scholar.google.com/scholar?q=Monaural+sound+source+separation+by+nonnegative+matrix+factorization+with+temporal+continuity+and+sparseness+criteria",
+      "year": "2007"
+    },
+    {
+      "authors": "N. Wiener",
+      "title": "Extrapolation, Interpolation, and Smoothing of Stationary Time Series",
+      "url": "https://scholar.google.com/scholar?q=Extrapolation+Interpolation+and+Smoothing+of+Stationary+Time+Series+Wiener",
+      "year": "1949"
+    },
+    {
+      "authors": "P. Scalart; J. V. Filho",
+      "title": "Speech Enhancement Based on a Priori Signal to Noise Estimation",
+      "url": "https://scholar.google.com/scholar?q=Speech+Enhancement+Based+on+a+Priori+Signal+to+Noise+Estimation",
+      "year": "1996"
+    },
+    {
+      "authors": "Y. Yoshioka; T. Nakatani",
+      "title": "Generalization of Multi-Channel Linear Prediction Methods for Blind MIMO Impulse Response Shortening",
+      "url": "https://scholar.google.com/scholar?q=Generalization+of+Multi-Channel+Linear+Prediction+Methods+for+Blind+MIMO+Impulse+Response+Shortening",
+      "year": "2012"
+    },
+    {
+      "authors": "S. Pulkki",
+      "title": "Virtual Sound Source Positioning Using Vector Base Amplitude Panning",
+      "url": "https://scholar.google.com/scholar?q=Virtual+Sound+Source+Positioning+Using+Vector+Base+Amplitude+Panning",
+      "year": "1997"
+    },
+    {
+      "authors": "M. H. C. de Gesmundo et al.",
+      "title": "ViSQOL v3: An Open Source Production Ready Objective Speech and Audio Metric",
+      "url": "https://scholar.google.com/scholar?q=ViSQOL+v3+objective+speech+and+audio+metric",
+      "year": "2019"
+    },
+    {
+      "authors": "R. Bristow-Johnson; M. Bogdanowicz",
+      "title": "Phase Vocoder Done Right",
+      "url": "https://scholar.google.com/scholar?q=Phase+Vocoder+Done+Right",
+      "year": "1989"
+    },
+    {
+      "authors": "S. Disch",
+      "title": "A New Phase Vocoder Technique for Time-Scale Modification of Audio Signals",
+      "url": "https://scholar.google.com/scholar?q=A+New+Phase+Vocoder+Technique+for+Time-Scale+Modification+of+Audio+Signals",
+      "year": "1998"
+    },
+    {
+      "authors": "M. Puckette",
+      "title": "Phase-Locked Vocoder",
+      "url": "https://scholar.google.com/scholar?q=Phase-Locked+Vocoder",
+      "year": "1995"
+    },
+    {
+      "authors": "B. Zavalishin",
+      "title": "The Art of VA Filter Design (sections on phase and spectral processing)",
+      "url": "https://scholar.google.com/scholar?q=The+Art+of+VA+Filter+Design+%28sections+on+phase+and+spectral+processing%29",
+      "year": "2012"
+    },
+    {
+      "authors": "N. Moreau",
+      "title": "Toolbox for Time-Scale Modification and Pitch-Shifting of Audio Signals",
+      "url": "https://scholar.google.com/scholar?q=Toolbox+for+Time-Scale+Modification+and+Pitch-Shifting+of+Audio+Signals",
+      "year": "2009"
+    },
+    {
+      "authors": "M. Dolson",
+      "title": "History of the Phase Vocoder",
+      "url": "https://scholar.google.com/scholar?q=History+of+the+Phase+Vocoder",
+      "year": "2013"
+    },
+    {
+      "authors": "D. S. Hamon; A. Lazarides",
+      "title": "Improved WSOLA for Real-Time Time-Scale Modification",
+      "url": "https://scholar.google.com/scholar?q=Improved+WSOLA+for+Real-Time+Time-Scale+Modification",
+      "year": "2010"
+    },
+    {
+      "authors": "M. Riess; A. R. Chhetri",
+      "title": "Transient Preservation in Time-Scale Modification",
+      "url": "https://scholar.google.com/scholar?q=Transient+Preservation+in+Time-Scale+Modification",
+      "year": "2015"
+    },
+    {
+      "authors": "J. Bonada",
+      "title": "Wide-Band Harmonic Sinusoidal Modeling for Time-Scale and Pitch-Scale Modification",
+      "url": "https://scholar.google.com/scholar?q=Wide-Band+Harmonic+Sinusoidal+Modeling+for+Time-Scale+and+Pitch-Scale+Modification",
+      "year": "2008"
+    },
+    {
+      "authors": "A. de Cheveigne",
+      "title": "Pitch and Time Manipulation of Speech",
+      "url": "https://scholar.google.com/scholar?q=Pitch+and+Time+Manipulation+of+Speech",
+      "year": "2004"
+    },
+    {
+      "authors": "M. Le Roux; E. Vincent",
+      "title": "Consistent Wiener Filtering for Audio Source Separation and Time-Frequency Processing",
+      "url": "https://scholar.google.com/scholar?q=Consistent+Wiener+Filtering+for+Audio+Source+Separation+and+Time-Frequency+Processing",
+      "year": "2011"
+    },
+    {
+      "authors": "J. Laroche",
+      "title": "About this Phasiness Business",
+      "url": "https://scholar.google.com/scholar?q=About+this+Phasiness+Business",
+      "year": "2003"
+    },
+    {
+      "authors": "J. Driedger; T. Pratzlich; M. Muller",
+      "title": "Let It Bee - Towards NMF-Inspired Audio Mosaicing",
+      "url": "https://scholar.google.com/scholar?q=Let+It+Bee+-+Towards+NMF-Inspired+Audio+Mosaicing",
+      "year": "2014"
+    },
+    {
+      "authors": "A. Roebel",
+      "title": "A Shape-Invariant Phase Vocoder for Speech Transformation",
+      "url": "https://scholar.google.com/scholar?q=A+Shape-Invariant+Phase+Vocoder+for+Speech+Transformation",
+      "year": "2010"
+    },
+    {
+      "authors": "H. Kawahara; A. de Cheveigne",
+      "title": "STRAIGHT, Exploitation of the Other Aspects of Vocal Source Information",
+      "url": "https://scholar.google.com/scholar?q=STRAIGHT%2C+Exploitation+of+the+Other+Aspects+of+Vocal+Source+Information",
+      "year": "2001"
+    },
+    {
+      "authors": "A. Klapuri",
+      "title": "Multiple Fundamental Frequency Estimation by Harmonicity and Spectral Smoothness",
+      "url": "https://scholar.google.com/scholar?q=Multiple+Fundamental+Frequency+Estimation+by+Harmonicity+and+Spectral+Smoothness",
+      "year": "2006"
+    },
+    {
+      "authors": "M. McLeod; G. Wyvill",
+      "title": "A Smarter Way to Find Pitch",
+      "url": "https://scholar.google.com/scholar?q=A+Smarter+Way+to+Find+Pitch",
+      "year": "2005"
+    },
+    {
+      "authors": "S. Ahmadi; H. Spanias",
+      "title": "Cepstrum-Based Pitch Detection Using FFT",
+      "url": "https://scholar.google.com/scholar?q=Cepstrum-Based+Pitch+Detection+Using+FFT",
+      "year": "1999"
+    },
+    {
+      "authors": "S. Bock; M. Korzeniowski",
+      "title": "piano_transcription - F0 and onset tracking",
+      "url": "https://scholar.google.com/scholar?q=piano_transcription+-+F0+and+onset+tracking",
+      "year": "2018"
+    },
+    {
+      "authors": "B. W. Schuller et al.",
+      "title": "Paralinguistics and robust pitch tracking methods",
+      "url": "https://scholar.google.com/scholar?q=Paralinguistics+and+robust+pitch+tracking+methods",
+      "year": "2015"
+    },
+    {
+      "authors": "K. Dressler",
+      "title": "Sinusoidal Extraction using Frequency-Domain Matching Pursuit",
+      "url": "https://scholar.google.com/scholar?q=Sinusoidal+Extraction+using+Frequency-Domain+Matching+Pursuit",
+      "year": "2012"
+    },
+    {
+      "authors": "S. Kum; C. L. Nikias",
+      "title": "Robust F0 Estimation in Noise",
+      "url": "https://scholar.google.com/scholar?q=Robust+F0+Estimation+in+Noise",
+      "year": "2000"
+    },
+    {
+      "authors": "K. Grochenig",
+      "title": "Foundations of Time-Frequency Analysis",
+      "url": "https://scholar.google.com/scholar?q=Foundations+of+Time-Frequency+Analysis",
+      "year": "2001"
+    },
+    {
+      "authors": "P. Flandrin",
+      "title": "Time-Frequency/Time-Scale Analysis",
+      "url": "https://scholar.google.com/scholar?q=Time-Frequency%2FTime-Scale+Analysis",
+      "year": "1998"
+    },
+    {
+      "authors": "D. L. Donoho",
+      "title": "De-Noising by Soft-Thresholding",
+      "url": "https://scholar.google.com/scholar?q=De-Noising+by+Soft-Thresholding",
+      "year": "1995"
+    },
+    {
+      "authors": "S. Mallat; Z. Zhang",
+      "title": "Matching Pursuits with Time-Frequency Dictionaries",
+      "url": "https://scholar.google.com/scholar?q=Matching+Pursuits+with+Time-Frequency+Dictionaries",
+      "year": "1993"
+    },
+    {
+      "authors": "L. Cohen",
+      "title": "Time-Frequency Distributions - A Review",
+      "url": "https://scholar.google.com/scholar?q=Time-Frequency+Distributions+-+A+Review",
+      "year": "1989"
+    },
+    {
+      "authors": "A. V. Oppenheim; R. W. Schafer",
+      "title": "Discrete-Time Signal Processing (STFT and filter-bank chapters)",
+      "url": "https://scholar.google.com/scholar?q=Discrete-Time+Signal+Processing+%28STFT+and+filter-bank+chapters%29",
+      "year": "2010"
+    },
+    {
+      "authors": "A. C. Gilbert; M. J. Strauss",
+      "title": "Approximation of signals in sparse Fourier dictionaries",
+      "url": "https://scholar.google.com/scholar?q=Approximation+of+signals+in+sparse+Fourier+dictionaries",
+      "year": "2006"
+    },
+    {
+      "authors": "M. Doring; M. M. Kokuer",
+      "title": "Practical NSGT audio applications",
+      "url": "https://scholar.google.com/scholar?q=Practical+NSGT+audio+applications",
+      "year": "2019"
+    },
+    {
+      "authors": "S. Essid; G. Richard",
+      "title": "Musical signal analysis with reassignment methods",
+      "url": "https://scholar.google.com/scholar?q=Musical+signal+analysis+with+reassignment+methods",
+      "year": "2012"
+    },
+    {
+      "authors": "P. Smaragdis",
+      "title": "Convolutive Speech Bases and Their Application to Supervised Speech Separation",
+      "url": "https://scholar.google.com/scholar?q=Convolutive+Speech+Bases+and+Their+Application+to+Supervised+Speech+Separation",
+      "year": "2007"
+    },
+    {
+      "authors": "C. Fevotte; N. Bertin; J.-L. Durrieu",
+      "title": "Nonnegative Matrix Factorization with the Itakura-Saito Divergence",
+      "url": "https://scholar.google.com/scholar?q=Nonnegative+Matrix+Factorization+with+the+Itakura-Saito+Divergence",
+      "year": "2009"
+    },
+    {
+      "authors": "A. Hyvarinen; E. Oja",
+      "title": "Independent Component Analysis: Algorithms and Applications",
+      "url": "https://scholar.google.com/scholar?q=Independent+Component+Analysis%3A+Algorithms+and+Applications",
+      "year": "2000"
+    },
+    {
+      "authors": "E. J. Candes; X. Li; Y. Ma; J. Wright",
+      "title": "Robust Principal Component Analysis?",
+      "url": "https://scholar.google.com/scholar?q=Robust+Principal+Component+Analysis%3F",
+      "year": "2011"
+    },
+    {
+      "authors": "N. Ono",
+      "title": "Stable and fast update rules for independent low-rank matrix analysis based on auxiliary function technique",
+      "url": "https://scholar.google.com/scholar?q=Stable+and+fast+update+rules+for+independent+low-rank+matrix+analysis+based+on+auxiliary+function+technique",
+      "year": "2011"
+    },
+    {
+      "authors": "A. J. Bell; T. J. Sejnowski",
+      "title": "An Information-Maximization Approach to Blind Separation and Blind Deconvolution",
+      "url": "https://scholar.google.com/scholar?q=An+Information-Maximization+Approach+to+Blind+Separation+and+Blind+Deconvolution",
+      "year": "1995"
+    },
+    {
+      "authors": "J. Le Roux; S. Wisdom; H. Erdogan; J. R. Hershey",
+      "title": "SDR half-baked or well done?",
+      "url": "https://scholar.google.com/scholar?q=SDR+half-baked+or+well+done%3F",
+      "year": "2019"
+    },
+    {
+      "authors": "A. Defossez et al.",
+      "title": "Music Source Separation in the Waveform Domain",
+      "url": "https://scholar.google.com/scholar?q=Music+Source+Separation+in+the+Waveform+Domain",
+      "year": "2019"
+    },
+    {
+      "authors": "N. Takahashi et al.",
+      "title": "MMDenseLSTM for source separation",
+      "url": "https://scholar.google.com/scholar?q=MMDenseLSTM+for+source+separation",
+      "year": "2018"
+    },
+    {
+      "authors": "F.-R. Stoter; S. Uhlich; A. Liutkus; Y. Mitsufuji",
+      "title": "Open-Unmix",
+      "url": "https://scholar.google.com/scholar?q=Open-Unmix",
+      "year": "2019"
+    },
+    {
+      "authors": "I. Cohen; B. Berdugo",
+      "title": "Speech Enhancement for Non-Stationary Noise Environments",
+      "url": "https://scholar.google.com/scholar?q=Speech+Enhancement+for+Non-Stationary+Noise+Environments",
+      "year": "2001"
+    },
+    {
+      "authors": "S. Boll",
+      "title": "Suppression of Acoustic Noise in Speech Using Spectral Subtraction",
+      "url": "https://scholar.google.com/scholar?q=Suppression+of+Acoustic+Noise+in+Speech+Using+Spectral+Subtraction",
+      "year": "1979"
+    },
+    {
+      "authors": "T. Yoshioka; T. Nakatani",
+      "title": "Generalization of Multi-Channel Linear Prediction Methods for Blind MIMO Impulse Response Shortening",
+      "url": "https://scholar.google.com/scholar?q=Generalization+of+Multi-Channel+Linear+Prediction+Methods+for+Blind+MIMO+Impulse+Response+Shortening",
+      "year": "2012"
+    },
+    {
+      "authors": "N. D. Gaubitch; P. A. Naylor",
+      "title": "Speech Dereverberation",
+      "url": "https://scholar.google.com/scholar?q=Speech+Dereverberation",
+      "year": "2012"
+    },
+    {
+      "authors": "K. Kinoshita et al.",
+      "title": "A summary of the REVERB challenge",
+      "url": "https://scholar.google.com/scholar?q=A+summary+of+the+REVERB+challenge",
+      "year": "2016"
+    },
+    {
+      "authors": "N. W. D. Evans et al.",
+      "title": "The voicehome and CHiME challenges",
+      "url": "https://scholar.google.com/scholar?q=The+voicehome+and+CHiME+challenges",
+      "year": "2018"
+    },
+    {
+      "authors": "J.-M. Valin",
+      "title": "A Hybrid DSP/Deep Learning Approach to Real-Time Full-Band Speech Enhancement",
+      "url": "https://scholar.google.com/scholar?q=A+Hybrid+DSP%2FDeep+Learning+Approach+to+Real-Time+Full-Band+Speech+Enhancement",
+      "year": "2018"
+    },
+    {
+      "authors": "A. Pandey; D. Wang",
+      "title": "A New Framework for CNN-Based Speech Enhancement in the Time Domain",
+      "url": "https://scholar.google.com/scholar?q=A+New+Framework+for+CNN-Based+Speech+Enhancement+in+the+Time+Domain",
+      "year": "2019"
+    },
+    {
+      "authors": "A. Rix et al.",
+      "title": "Perceptual Evaluation of Speech Quality (PESQ)",
+      "url": "https://scholar.google.com/scholar?q=Perceptual+Evaluation+of+Speech+Quality+%28PESQ%29",
+      "year": "2001"
+    },
+    {
+      "authors": "C. Taal et al.",
+      "title": "An Algorithm for Intelligibility Prediction of Time-Frequency Weighted Noisy Speech",
+      "url": "https://scholar.google.com/scholar?q=An+Algorithm+for+Intelligibility+Prediction+of+Time-Frequency+Weighted+Noisy+Speech",
+      "year": "2011"
+    },
+    {
+      "authors": "A. Hines et al.",
+      "title": "VISQOL: An Objective Speech Quality Model",
+      "url": "https://scholar.google.com/scholar?q=VISQOL%3A+An+Objective+Speech+Quality+Model",
+      "year": "2012"
+    },
+    {
+      "authors": "K. K. Paliwal",
+      "title": "Importance of phase in speech enhancement",
+      "url": "https://scholar.google.com/scholar?q=Importance+of+phase+in+speech+enhancement",
+      "year": "2011"
+    },
+    {
+      "authors": "P. C. Loizou",
+      "title": "Speech Enhancement: Theory and Practice",
+      "url": "https://scholar.google.com/scholar?q=Speech+Enhancement%3A+Theory+and+Practice",
+      "year": "2013"
+    },
+    {
+      "authors": "S. Doclo et al.",
+      "title": "Acoustic beamforming for hearing aid applications",
+      "url": "https://scholar.google.com/scholar?q=Acoustic+beamforming+for+hearing+aid+applications",
+      "year": "2015"
+    },
+    {
+      "authors": "M. A. Gerzon",
+      "title": "Periphony: With-Height Sound Reproduction",
+      "url": "https://scholar.google.com/scholar?q=Periphony%3A+With-Height+Sound+Reproduction",
+      "year": "1973"
+    },
+    {
+      "authors": "M. A. Gerzon",
+      "title": "Ambisonics in Multichannel Broadcasting and Video",
+      "url": "https://scholar.google.com/scholar?q=Ambisonics+in+Multichannel+Broadcasting+and+Video",
+      "year": "1985"
+    },
+    {
+      "authors": "V. Pulkki",
+      "title": "Virtual Sound Source Positioning Using Vector Base Amplitude Panning",
+      "url": "https://scholar.google.com/scholar?q=Virtual+Sound+Source+Positioning+Using+Vector+Base+Amplitude+Panning",
+      "year": "1997"
+    },
+    {
+      "authors": "M. Poletti",
+      "title": "Three-Dimensional Surround Sound Systems Based on Spherical Harmonics",
+      "url": "https://scholar.google.com/scholar?q=Three-Dimensional+Surround+Sound+Systems+Based+on+Spherical+Harmonics",
+      "year": "2005"
+    },
+    {
+      "authors": "B. Rafaely",
+      "title": "Fundamentals of Spherical Array Processing",
+      "url": "https://scholar.google.com/scholar?q=Fundamentals+of+Spherical+Array+Processing",
+      "year": "2015"
+    },
+    {
+      "authors": "J. Blauert",
+      "title": "Spatial Hearing",
+      "url": "https://scholar.google.com/scholar?q=Spatial+Hearing",
+      "year": "1997"
+    },
+    {
+      "authors": "W. M. Hartmann",
+      "title": "How We Localize Sound",
+      "url": "https://scholar.google.com/scholar?q=How+We+Localize+Sound",
+      "year": "1999"
+    },
+    {
+      "authors": "J. Benesty; J. Chen; Y. Huang",
+      "title": "Microphone Array Signal Processing",
+      "url": "https://scholar.google.com/scholar?q=Microphone+Array+Signal+Processing",
+      "year": "2008"
+    },
+    {
+      "authors": "H. L. Van Trees",
+      "title": "Optimum Array Processing",
+      "url": "https://scholar.google.com/scholar?q=Optimum+Array+Processing",
+      "year": "2002"
+    },
+    {
+      "authors": "L. Griffiths; C. Jim",
+      "title": "An Alternative Approach to Linearly Constrained Adaptive Beamforming",
+      "url": "https://scholar.google.com/scholar?q=An+Alternative+Approach+to+Linearly+Constrained+Adaptive+Beamforming",
+      "year": "1982"
+    },
+    {
+      "authors": "M. Brandstein; D. Ward",
+      "title": "Microphone Arrays: Signal Processing Techniques and Applications",
+      "url": "https://scholar.google.com/scholar?q=Microphone+Arrays%3A+Signal+Processing+Techniques+and+Applications",
+      "year": "2001"
+    },
+    {
+      "authors": "M. S. Brandstein",
+      "title": "A Pitch-Based Real-Time Tracking of Speech Source",
+      "url": "https://scholar.google.com/scholar?q=A+Pitch-Based+Real-Time+Tracking+of+Speech+Source",
+      "year": "1997"
+    },
+    {
+      "authors": "F. Zotter; M. Frank",
+      "title": "Ambisonics: A Practical 3D Audio Theory",
+      "url": "https://scholar.google.com/scholar?q=Ambisonics%3A+A+Practical+3D+Audio+Theory",
+      "year": "2019"
+    },
+    {
+      "authors": "J. Daniel",
+      "title": "Spatial Sound Encoding Including Near Field Effect",
+      "url": "https://scholar.google.com/scholar?q=Spatial+Sound+Encoding+Including+Near+Field+Effect",
+      "year": "2001"
+    },
+    {
+      "authors": "E. A. P. Habets",
+      "title": "Room Impulse Response Generator",
+      "url": "https://scholar.google.com/scholar?q=Room+Impulse+Response+Generator",
+      "year": "2006"
+    },
+    {
+      "authors": "S. Spors; R. Rabenstein",
+      "title": "Spatial Sound Reproduction by Wave Field Synthesis",
+      "url": "https://scholar.google.com/scholar?q=Spatial+Sound+Reproduction+by+Wave+Field+Synthesis",
+      "year": "2006"
+    },
+    {
+      "authors": "A. Politis et al.",
+      "title": "A Dataset of Binaural Room Impulse Responses for Evaluation of Spatial Audio Algorithms",
+      "url": "https://scholar.google.com/scholar?q=A+Dataset+of+Binaural+Room+Impulse+Responses+for+Evaluation+of+Spatial+Audio+Algorithms",
+      "year": "2018"
+    },
+    {
+      "authors": "A. Farina",
+      "title": "Simultaneous Measurement of Impulse Response and Distortion with a Swept-Sine Technique",
+      "url": "https://scholar.google.com/scholar?q=Simultaneous+Measurement+of+Impulse+Response+and+Distortion+with+a+Swept-Sine+Technique",
+      "year": "2000"
+    },
+    {
+      "authors": "P. Minnaar et al.",
+      "title": "A Localization Model for Binaural Rendering",
+      "url": "https://scholar.google.com/scholar?q=A+Localization+Model+for+Binaural+Rendering",
+      "year": "2001"
+    },
+    {
+      "authors": "M. A. Poletti",
+      "title": "A Unified Theory of Horizontal Holographic and Ambisonic Sound Systems",
+      "url": "https://scholar.google.com/scholar?q=A+Unified+Theory+of+Horizontal+Holographic+and+Ambisonic+Sound+Systems",
+      "year": "2005"
+    },
+    {
+      "authors": "T. Lund",
+      "title": "Loudness and True-Peak in Digital Audio",
+      "url": "https://scholar.google.com/scholar?q=Loudness+and+True-Peak+in+Digital+Audio",
+      "year": "2007"
+    },
+    {
+      "authors": "S. Stables et al.",
+      "title": "A Study of Loudness Normalization in Streaming Services",
+      "url": "https://scholar.google.com/scholar?q=A+Study+of+Loudness+Normalization+in+Streaming+Services",
+      "year": "2020"
+    },
+    {
+      "authors": "M. Fenton",
+      "title": "Practical Dynamics Processing for Modern Music Production",
+      "url": "https://scholar.google.com/scholar?q=Practical+Dynamics+Processing+for+Modern+Music+Production",
+      "year": "2018"
+    },
+    {
+      "authors": "J. Reiss",
+      "title": "Under the Hood of a Dynamic Range Compressor",
+      "url": "https://scholar.google.com/scholar?q=Under+the+Hood+of+a+Dynamic+Range+Compressor",
+      "year": "2011"
+    },
+    {
+      "authors": "D. Giannoulis; M. Massberg; J. Reiss",
+      "title": "Digital Dynamic Range Compressor Design",
+      "url": "https://scholar.google.com/scholar?q=Digital+Dynamic+Range+Compressor+Design",
+      "year": "2012"
+    },
+    {
+      "authors": "M. Ballou",
+      "title": "Handbook for Sound Engineers (Loudness and Dynamics chapters)",
+      "url": "https://scholar.google.com/scholar?q=Handbook+for+Sound+Engineers+%28Loudness+and+Dynamics+chapters%29",
+      "year": "2015"
+    },
+    {
+      "authors": "A. Gibiansky et al.",
+      "title": "Deep Voice 2: Multi-Speaker Neural Text-to-Speech",
+      "url": "https://scholar.google.com/scholar?q=Deep+Voice+2%3A+Multi-Speaker+Neural+Text-to-Speech",
+      "year": "2017"
+    },
+    {
+      "authors": "N. Kalchbrenner et al.",
+      "title": "Efficient Neural Audio Synthesis",
+      "url": "https://scholar.google.com/scholar?q=Efficient+Neural+Audio+Synthesis",
+      "year": "2018"
+    },
+    {
+      "authors": "R. Prenger et al.",
+      "title": "WaveGlow: A Flow-based Generative Network for Speech Synthesis",
+      "url": "https://scholar.google.com/scholar?q=WaveGlow%3A+A+Flow-based+Generative+Network+for+Speech+Synthesis",
+      "year": "2019"
+    },
+    {
+      "authors": "K. Kumar et al.",
+      "title": "MelGAN: Generative Adversarial Networks for Conditional Waveform Synthesis",
+      "url": "https://scholar.google.com/scholar?q=MelGAN%3A+Generative+Adversarial+Networks+for+Conditional+Waveform+Synthesis",
+      "year": "2019"
+    },
+    {
+      "authors": "J. Kong et al.",
+      "title": "HiFi-GAN: Generative Adversarial Networks for Efficient and High Fidelity Speech Synthesis",
+      "url": "https://scholar.google.com/scholar?q=HiFi-GAN%3A+Generative+Adversarial+Networks+for+Efficient+and+High+Fidelity+Speech+Synthesis",
+      "year": "2020"
+    },
+    {
+      "authors": "Y. Wang et al.",
+      "title": "Tacotron: Towards End-to-End Speech Synthesis",
+      "url": "https://scholar.google.com/scholar?q=Tacotron%3A+Towards+End-to-End+Speech+Synthesis",
+      "year": "2017"
+    },
+    {
+      "authors": "S. Wisdom et al.",
+      "title": "Differentiable Consistency Constraints for Improved Deep Speech Enhancement",
+      "url": "https://scholar.google.com/scholar?q=Differentiable+Consistency+Constraints+for+Improved+Deep+Speech+Enhancement",
+      "year": "2021"
+    },
+    {
+      "authors": "C. Donahue; J. McAuley; M. Puckette",
+      "title": "Adversarial Audio Synthesis",
+      "url": "https://scholar.google.com/scholar?q=Adversarial+Audio+Synthesis",
+      "year": "2018"
+    }
+  ]
+}

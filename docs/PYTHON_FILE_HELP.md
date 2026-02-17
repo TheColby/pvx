@@ -2,7 +2,7 @@
 
 Comprehensive reference for every Python file in this repository.
 
-Total Python files documented: **189**
+Total Python files documented: **192**
 
 ## Contents
 
@@ -24,8 +24,10 @@ Total Python files documented: **189**
 - [`pvxunison.py`](#pvxunisonpy)
 - [`pvxvoc.py`](#pvxvocpy)
 - [`pvxwarp.py`](#pvxwarppy)
+- [`scripts_generate_docs_extras.py`](#scriptsgeneratedocsextraspy)
 - [`scripts_generate_html_docs.py`](#scriptsgeneratehtmldocspy)
 - [`scripts_generate_python_docs.py`](#scriptsgeneratepythondocspy)
+- [`scripts_generate_theory_docs.py`](#scriptsgeneratetheorydocspy)
 - [`src/pvx/__init__.py`](#srcpvxinitpy)
 - [`src/pvx/algorithms/__init__.py`](#srcpvxalgorithmsinitpy)
 - [`src/pvx/algorithms/analysis_qa_and_automation/__init__.py`](#srcpvxalgorithmsanalysisqaandautomationinitpy)
@@ -193,6 +195,7 @@ Total Python files documented: **189**
 - [`src/pvxalgorithms/registry.py`](#srcpvxalgorithmsregistrypy)
 - [`tests/test_algorithms_generated.py`](#teststestalgorithmsgeneratedpy)
 - [`tests/test_cli_regression.py`](#teststestcliregressionpy)
+- [`tests/test_docs_coverage.py`](#teststestdocscoveragepy)
 - [`tests/test_dsp.py`](#teststestdsppy)
 - [`tests/test_microtonal.py`](#teststestmicrotonalpy)
 
@@ -1671,12 +1674,27 @@ This root module forwards imports/execution to `pvx.cli.pvxwarp` after the
 src-layout migration.
 ```
 
+## `scripts_generate_docs_extras.py`
+
+**Purpose:** Generate advanced docs artifacts (coverage, limitations, benchmarks, citations, cookbook, architecture).
+
+**Classes:** None
+**Functions:** `git_commit_meta`, `generated_stamp_lines`, `write_json`, `_string_literal`, `_simple_literal`, `_tool_name_for_path`, `_iter_cli_sources`, `collect_cli_flags`, `generate_cli_flags_reference`, `_unique_join`, `generate_algorithm_limitations`, `generate_cookbook`, `generate_architecture_doc`, `_spectral_distance_db`, `_snr_db`, `_make_signal`, `_benchmark_backend`, `generate_benchmarks`, `_classify_reference_url`, `_extract_doi`, `_bib_escape`, `_bib_key`, `generate_citation_docs`, `generate_docs_contract`, `main`
+
+**Help commands:** `python3 scripts_generate_docs_extras.py`, `python3 scripts_generate_docs_extras.py --help`
+
+### Module Docstring
+
+```text
+Generate advanced docs artifacts (coverage, limitations, benchmarks, citations, cookbook, architecture).
+```
+
 ## `scripts_generate_html_docs.py`
 
 **Purpose:** Generate grouped HTML documentation for pvx algorithms and research references.
 
 **Classes:** None
-**Functions:** `scholar`, `slugify`, `dedupe_papers`, `load_extra_papers`, `load_glossary`, `infer_glossary_terms`, `glossary_links_html`, `extract_algorithm_params`, `grouped_algorithms`, `html_page`, `write_style_css`, `render_index`, `module_path_from_meta`, `render_group_pages`, `render_papers_page`, `render_glossary_page`, `main`
+**Functions:** `git_commit_meta`, `scholar`, `slugify`, `dedupe_papers`, `_upgrade_paper_url`, `upgrade_paper_urls`, `load_extra_papers`, `load_glossary`, `infer_glossary_terms`, `glossary_links_html`, `load_json`, `classify_reference_url`, `window_entries`, `extract_algorithm_params`, `grouped_algorithms`, `html_page`, `write_style_css`, `render_index`, `module_path_from_meta`, `render_group_pages`, `render_papers_page`, `render_glossary_page`, `render_math_page`, `render_windows_page`, `render_architecture_page`, `render_cli_flags_page`, `render_limitations_page`, `render_benchmarks_page`, `render_cookbook_page`, `render_citations_page`, `write_docs_root_index`, `main`
 
 **Help commands:** `python3 scripts_generate_html_docs.py`
 
@@ -1699,6 +1717,21 @@ Generate grouped HTML documentation for pvx algorithms and research references.
 
 ```text
 Generate comprehensive documentation for every Python file in the repository.
+```
+
+## `scripts_generate_theory_docs.py`
+
+**Purpose:** Generate GitHub-renderable theory docs (math foundations + window reference).
+
+**Classes:** None
+**Functions:** `git_commit_meta`, `generated_stamp_lines`, `window_entries`, `window_samples`, `_first_local_minimum`, `compute_window_metrics`, `_polyline_points`, `_downsample_series`, `write_line_svg`, `generate_window_assets_and_metrics`, `write_math_foundations`, `write_window_reference`, `main`
+
+**Help commands:** `python3 scripts_generate_theory_docs.py`
+
+### Module Docstring
+
+```text
+Generate GitHub-renderable theory docs (math foundations + window reference).
 ```
 
 ## `src/pvx/__init__.py`
@@ -6013,6 +6046,19 @@ Coverage includes:
 - microtonal cents-shift CLI path
 - non-power-of-two Fourier-sync mode
 - a numeric DSP snapshot metric for drift detection
+```
+
+## `tests/test_docs_coverage.py`
+
+**Purpose:** Documentation coverage checks for CLI flags.
+
+**Classes:** None
+**Functions:** `_string_literal`, `_iter_cli_sources`, `_tool_name_for_path`, `extract_flags_from_code`, `load_doc_pairs`, `test_cli_flag_docs_match_parser_definitions`, `test_readme_long_flags_exist_in_parser_sources`
+
+### Module Docstring
+
+```text
+Documentation coverage checks for CLI flags.
 ```
 
 ## `tests/test_dsp.py`

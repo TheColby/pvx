@@ -1,0 +1,62 @@
+{
+  "benchmark_spec": {
+    "config": {
+      "center": true,
+      "hop_size": 512,
+      "kaiser_beta": 14.0,
+      "n_fft": 2048,
+      "phase_locking": "none",
+      "transient_preserve": false,
+      "transient_threshold": 1.5,
+      "win_length": 2048,
+      "window": "hann"
+    },
+    "duration_seconds": 4.0,
+    "sample_rate": 48000,
+    "signal_recipe": "sum of 4 deterministic sinusoids with linear amplitude ramp"
+  },
+  "commit": "58b1a2e",
+  "commit_date": "2026-02-17T09:29:32-05:00",
+  "generated_utc": "2026-02-17T15:50:22Z",
+  "host": {
+    "machine": "arm64",
+    "platform": "macOS-15.1.1-arm64-arm-64bit-Mach-O",
+    "processor": "arm",
+    "python": "3.14.3"
+  },
+  "runs": [
+    {
+      "backend": "cpu",
+      "device_request": "cpu",
+      "elapsed_ms": 20.356,
+      "peak_host_memory_mb": 12.02,
+      "reason": "",
+      "runtime_active_device": "cpu",
+      "runtime_fallback_reason": null,
+      "snr_vs_input_db": 160.5928,
+      "spectral_distance_vs_input_db": 0.0,
+      "status": "ok"
+    },
+    {
+      "backend": "cuda",
+      "device_request": "cuda",
+      "reason": "CUDA mode requires CuPy. Install a matching `cupy-cudaXXx` package.",
+      "status": "unavailable"
+    },
+    {
+      "backend": "apple_silicon_native_cpu",
+      "device_request": "cpu",
+      "elapsed_ms": 20.276,
+      "max_abs_error_vs_cpu": 0.0,
+      "peak_host_memory_mb": 12.02,
+      "reason": "",
+      "runtime_active_device": "cpu",
+      "runtime_fallback_reason": null,
+      "snr_vs_cpu_db": 160.5928,
+      "snr_vs_input_db": 160.5928,
+      "spectral_distance_vs_cpu_db": 0.0,
+      "spectral_distance_vs_input_db": 0.0,
+      "status": "ok"
+    }
+  ]
+}

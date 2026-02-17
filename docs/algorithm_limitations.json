@@ -1,0 +1,1199 @@
+{
+  "commit": "58b1a2e",
+  "commit_date": "2026-02-17T09:29:32-05:00",
+  "group_limits": {
+    "analysis_qa_and_automation": {
+      "assumption": "Feature extraction settings align with domain (speech vs music etc.).",
+      "avoid": "Avoid treating single metrics as absolute quality verdicts.",
+      "failure": "False positives/negatives under domain shift."
+    },
+    "creative_spectral_effects": {
+      "assumption": "Spectral manipulations are desired even with timbral coloration.",
+      "avoid": "Avoid for transparent restoration/mastering paths.",
+      "failure": "Can introduce intentional but strong coloration or temporal artifacts."
+    },
+    "denoise_and_restoration": {
+      "assumption": "Noise/artifacts are distinguishable from desired signal statistics.",
+      "avoid": "Avoid high reduction settings on sparse acoustic sources without auditioning.",
+      "failure": "Over-reduction can remove detail and create modulation artifacts."
+    },
+    "dereverb_and_room_correction": {
+      "assumption": "Late reverberation is separable from direct content under chosen model.",
+      "avoid": "Avoid strong dereverb when room character is part of artistic intent.",
+      "failure": "Speech/music clarity can drop if early reflections are over-suppressed."
+    },
+    "dynamics_and_loudness": {
+      "assumption": "Program dynamics fit compressor/limiter time constants and thresholds.",
+      "avoid": "Avoid applying multiple strong dynamics stages without gain staging checks.",
+      "failure": "Pumping, breathing, or overs if thresholds and release are mis-set."
+    },
+    "granular_and_modulation": {
+      "assumption": "Grain and modulation rates are musically matched to source texture.",
+      "avoid": "Avoid dense granular settings on speech intelligibility-critical content.",
+      "failure": "Incoherent grain scheduling can produce choppiness or blur."
+    },
+    "pitch_detection_and_tracking": {
+      "assumption": "F0 evidence is strong in the selected analysis band and frame size.",
+      "avoid": "Avoid as the sole control signal for dense polyphonic mixtures.",
+      "failure": "Octave errors and voicing flips under heavy noise/polyphony."
+    },
+    "retune_and_intonation": {
+      "assumption": "Detected notes map cleanly to intended tonal center/scale.",
+      "avoid": "Avoid aggressive correction when preserving natural micro-intonation is required.",
+      "failure": "Over-correction can flatten expressive vibrato or slides."
+    },
+    "separation_and_decomposition": {
+      "assumption": "Sources have partially separable spectral or statistical structure.",
+      "avoid": "Avoid expecting perfect stems from strongly correlated or co-modulated sources.",
+      "failure": "Component bleeding and musical noise under overlap or model mismatch."
+    },
+    "spatial_and_multichannel": {
+      "assumption": "Channel geometry/order and timing metadata are correct.",
+      "avoid": "Avoid blind spatial processing when channel order/calibration is unknown.",
+      "failure": "Spatial collapse, combing, or localization bias from misalignment."
+    },
+    "spectral_time_frequency_transforms": {
+      "assumption": "Transform parameterization matches target time-frequency structure.",
+      "avoid": "Avoid default settings for highly nonstationary signals without tuning.",
+      "failure": "Incorrect parameterization can smear events or over-fragment spectra."
+    },
+    "time_scale_and_pitch_core": {
+      "assumption": "Frames are locally quasi-stationary and harmonic evolution is reasonably smooth.",
+      "avoid": "Avoid for extreme percussive-only material when attack realism is critical.",
+      "failure": "High-ratio stretch can introduce phasiness and blurred transients."
+    }
+  },
+  "groups": {
+    "analysis_qa_and_automation": [
+      {
+        "algorithm_id": "analysis_qa_and_automation.auto_parameter_tuning_bayesian_optimization",
+        "assumptions": "Feature extraction settings align with domain (speech vs music etc.).",
+        "failure_modes": "False positives/negatives under domain shift.",
+        "module": "pvx.algorithms.analysis_qa_and_automation.auto_parameter_tuning_bayesian_optimization",
+        "name": "Auto-parameter tuning (Bayesian optimization)",
+        "theme": "Analysis, QA, and Automation",
+        "when_not_to_use": "Avoid treating single metrics as absolute quality verdicts."
+      },
+      {
+        "algorithm_id": "analysis_qa_and_automation.batch_preset_recommendation_based_on_source_features",
+        "assumptions": "Feature extraction settings align with domain (speech vs music etc.).",
+        "failure_modes": "False positives/negatives under domain shift.",
+        "module": "pvx.algorithms.analysis_qa_and_automation.batch_preset_recommendation_based_on_source_features",
+        "name": "Batch preset recommendation based on source features",
+        "theme": "Analysis, QA, and Automation",
+        "when_not_to_use": "Avoid treating single metrics as absolute quality verdicts."
+      },
+      {
+        "algorithm_id": "analysis_qa_and_automation.clip_hum_buzz_artifact_detection",
+        "assumptions": "Feature extraction settings align with domain (speech vs music etc.).",
+        "failure_modes": "False positives/negatives under domain shift.",
+        "module": "pvx.algorithms.analysis_qa_and_automation.clip_hum_buzz_artifact_detection",
+        "name": "Clip/hum/buzz artifact detection",
+        "theme": "Analysis, QA, and Automation",
+        "when_not_to_use": "Avoid treating single metrics as absolute quality verdicts."
+      },
+      {
+        "algorithm_id": "analysis_qa_and_automation.key_chord_detection",
+        "assumptions": "Feature extraction settings align with domain (speech vs music etc.).",
+        "failure_modes": "False positives/negatives under domain shift.",
+        "module": "pvx.algorithms.analysis_qa_and_automation.key_chord_detection",
+        "name": "Key/chord detection",
+        "theme": "Analysis, QA, and Automation",
+        "when_not_to_use": "Avoid treating single metrics as absolute quality verdicts."
+      },
+      {
+        "algorithm_id": "analysis_qa_and_automation.onset_beat_downbeat_tracking",
+        "assumptions": "Feature extraction settings align with domain (speech vs music etc.).",
+        "failure_modes": "False positives/negatives under domain shift.",
+        "module": "pvx.algorithms.analysis_qa_and_automation.onset_beat_downbeat_tracking",
+        "name": "Onset/beat/downbeat tracking",
+        "theme": "Analysis, QA, and Automation",
+        "when_not_to_use": "Avoid treating single metrics as absolute quality verdicts."
+      },
+      {
+        "algorithm_id": "analysis_qa_and_automation.pesq_stoi_visqol_quality_metrics",
+        "assumptions": "Feature extraction settings align with domain (speech vs music etc.).",
+        "failure_modes": "False positives/negatives under domain shift.",
+        "module": "pvx.algorithms.analysis_qa_and_automation.pesq_stoi_visqol_quality_metrics",
+        "name": "PESQ/STOI/VISQOL quality metrics",
+        "theme": "Analysis, QA, and Automation",
+        "when_not_to_use": "Avoid treating single metrics as absolute quality verdicts."
+      },
+      {
+        "algorithm_id": "analysis_qa_and_automation.silence_speech_music_classifiers",
+        "assumptions": "Feature extraction settings align with domain (speech vs music etc.).",
+        "failure_modes": "False positives/negatives under domain shift.",
+        "module": "pvx.algorithms.analysis_qa_and_automation.silence_speech_music_classifiers",
+        "name": "Silence/speech/music classifiers",
+        "theme": "Analysis, QA, and Automation",
+        "when_not_to_use": "Avoid treating single metrics as absolute quality verdicts."
+      },
+      {
+        "algorithm_id": "analysis_qa_and_automation.structure_segmentation_verse_chorus_sections",
+        "assumptions": "Feature extraction settings align with domain (speech vs music etc.).",
+        "failure_modes": "False positives/negatives under domain shift.",
+        "module": "pvx.algorithms.analysis_qa_and_automation.structure_segmentation_verse_chorus_sections",
+        "name": "Structure segmentation (verse/chorus/sections)",
+        "theme": "Analysis, QA, and Automation",
+        "when_not_to_use": "Avoid treating single metrics as absolute quality verdicts."
+      }
+    ],
+    "creative_spectral_effects": [
+      {
+        "algorithm_id": "creative_spectral_effects.cross_synthesis_vocoder",
+        "assumptions": "Spectral manipulations are desired even with timbral coloration.",
+        "failure_modes": "Can introduce intentional but strong coloration or temporal artifacts.",
+        "module": "pvx.algorithms.creative_spectral_effects.cross_synthesis_vocoder",
+        "name": "Cross-synthesis vocoder",
+        "theme": "Creative Spectral Effects",
+        "when_not_to_use": "Avoid for transparent restoration/mastering paths."
+      },
+      {
+        "algorithm_id": "creative_spectral_effects.formant_painting_warping",
+        "assumptions": "Spectral manipulations are desired even with timbral coloration.",
+        "failure_modes": "Can introduce intentional but strong coloration or temporal artifacts.",
+        "module": "pvx.algorithms.creative_spectral_effects.formant_painting_warping",
+        "name": "Formant painting/warping",
+        "theme": "Creative Spectral Effects",
+        "when_not_to_use": "Avoid for transparent restoration/mastering paths."
+      },
+      {
+        "algorithm_id": "creative_spectral_effects.phase_randomization_textures",
+        "assumptions": "Spectral manipulations are desired even with timbral coloration.",
+        "failure_modes": "Can introduce intentional but strong coloration or temporal artifacts.",
+        "module": "pvx.algorithms.creative_spectral_effects.phase_randomization_textures",
+        "name": "Phase randomization textures",
+        "theme": "Creative Spectral Effects",
+        "when_not_to_use": "Avoid for transparent restoration/mastering paths."
+      },
+      {
+        "algorithm_id": "creative_spectral_effects.resonator_filterbank_morphing",
+        "assumptions": "Spectral manipulations are desired even with timbral coloration.",
+        "failure_modes": "Can introduce intentional but strong coloration or temporal artifacts.",
+        "module": "pvx.algorithms.creative_spectral_effects.resonator_filterbank_morphing",
+        "name": "Resonator/filterbank morphing",
+        "theme": "Creative Spectral Effects",
+        "when_not_to_use": "Avoid for transparent restoration/mastering paths."
+      },
+      {
+        "algorithm_id": "creative_spectral_effects.spectral_blur_smear",
+        "assumptions": "Spectral manipulations are desired even with timbral coloration.",
+        "failure_modes": "Can introduce intentional but strong coloration or temporal artifacts.",
+        "module": "pvx.algorithms.creative_spectral_effects.spectral_blur_smear",
+        "name": "Spectral blur/smear",
+        "theme": "Creative Spectral Effects",
+        "when_not_to_use": "Avoid for transparent restoration/mastering paths."
+      },
+      {
+        "algorithm_id": "creative_spectral_effects.spectral_contrast_exaggeration",
+        "assumptions": "Spectral manipulations are desired even with timbral coloration.",
+        "failure_modes": "Can introduce intentional but strong coloration or temporal artifacts.",
+        "module": "pvx.algorithms.creative_spectral_effects.spectral_contrast_exaggeration",
+        "name": "Spectral contrast exaggeration",
+        "theme": "Creative Spectral Effects",
+        "when_not_to_use": "Avoid for transparent restoration/mastering paths."
+      },
+      {
+        "algorithm_id": "creative_spectral_effects.spectral_convolution_effects",
+        "assumptions": "Spectral manipulations are desired even with timbral coloration.",
+        "failure_modes": "Can introduce intentional but strong coloration or temporal artifacts.",
+        "module": "pvx.algorithms.creative_spectral_effects.spectral_convolution_effects",
+        "name": "Spectral convolution effects",
+        "theme": "Creative Spectral Effects",
+        "when_not_to_use": "Avoid for transparent restoration/mastering paths."
+      },
+      {
+        "algorithm_id": "creative_spectral_effects.spectral_freeze_banks",
+        "assumptions": "Spectral manipulations are desired even with timbral coloration.",
+        "failure_modes": "Can introduce intentional but strong coloration or temporal artifacts.",
+        "module": "pvx.algorithms.creative_spectral_effects.spectral_freeze_banks",
+        "name": "Spectral freeze banks",
+        "theme": "Creative Spectral Effects",
+        "when_not_to_use": "Avoid for transparent restoration/mastering paths."
+      }
+    ],
+    "denoise_and_restoration": [
+      {
+        "algorithm_id": "denoise_and_restoration.declick_decrackle_median_wavelet_interpolation",
+        "assumptions": "Noise/artifacts are distinguishable from desired signal statistics. Noise model should be representative of observed noise floor.",
+        "failure_modes": "Over-reduction can remove detail and create modulation artifacts. Mismatched noise estimate leaves residue or damages detail.",
+        "module": "pvx.algorithms.denoise_and_restoration.declick_decrackle_median_wavelet_interpolation",
+        "name": "Declick/decrackle (median/wavelet + interpolation)",
+        "theme": "Denoise and Restoration",
+        "when_not_to_use": "Avoid high reduction settings on sparse acoustic sources without auditioning. Avoid static settings on rapidly varying nonstationary noise."
+      },
+      {
+        "algorithm_id": "denoise_and_restoration.declip_via_sparse_reconstruction",
+        "assumptions": "Noise/artifacts are distinguishable from desired signal statistics. Noise model should be representative of observed noise floor.",
+        "failure_modes": "Over-reduction can remove detail and create modulation artifacts. Mismatched noise estimate leaves residue or damages detail.",
+        "module": "pvx.algorithms.denoise_and_restoration.declip_via_sparse_reconstruction",
+        "name": "Declip via sparse reconstruction",
+        "theme": "Denoise and Restoration",
+        "when_not_to_use": "Avoid high reduction settings on sparse acoustic sources without auditioning. Avoid static settings on rapidly varying nonstationary noise."
+      },
+      {
+        "algorithm_id": "denoise_and_restoration.diffusion_based_speech_audio_denoise",
+        "assumptions": "Noise/artifacts are distinguishable from desired signal statistics. Noise model should be representative of observed noise floor.",
+        "failure_modes": "Over-reduction can remove detail and create modulation artifacts. Mismatched noise estimate leaves residue or damages detail.",
+        "module": "pvx.algorithms.denoise_and_restoration.diffusion_based_speech_audio_denoise",
+        "name": "Diffusion-based speech/audio denoise",
+        "theme": "Denoise and Restoration",
+        "when_not_to_use": "Avoid high reduction settings on sparse acoustic sources without auditioning. Avoid static settings on rapidly varying nonstationary noise."
+      },
+      {
+        "algorithm_id": "denoise_and_restoration.log_mmse",
+        "assumptions": "Noise/artifacts are distinguishable from desired signal statistics. Noise model should be representative of observed noise floor.",
+        "failure_modes": "Over-reduction can remove detail and create modulation artifacts. Mismatched noise estimate leaves residue or damages detail.",
+        "module": "pvx.algorithms.denoise_and_restoration.log_mmse",
+        "name": "Log-MMSE",
+        "theme": "Denoise and Restoration",
+        "when_not_to_use": "Avoid high reduction settings on sparse acoustic sources without auditioning. Avoid static settings on rapidly varying nonstationary noise."
+      },
+      {
+        "algorithm_id": "denoise_and_restoration.minimum_statistics_noise_tracking",
+        "assumptions": "Noise/artifacts are distinguishable from desired signal statistics. Noise model should be representative of observed noise floor.",
+        "failure_modes": "Over-reduction can remove detail and create modulation artifacts. Mismatched noise estimate leaves residue or damages detail.",
+        "module": "pvx.algorithms.denoise_and_restoration.minimum_statistics_noise_tracking",
+        "name": "Minimum-statistics noise tracking",
+        "theme": "Denoise and Restoration",
+        "when_not_to_use": "Avoid high reduction settings on sparse acoustic sources without auditioning. Avoid static settings on rapidly varying nonstationary noise."
+      },
+      {
+        "algorithm_id": "denoise_and_restoration.mmse_stsa",
+        "assumptions": "Noise/artifacts are distinguishable from desired signal statistics. Noise model should be representative of observed noise floor.",
+        "failure_modes": "Over-reduction can remove detail and create modulation artifacts. Mismatched noise estimate leaves residue or damages detail.",
+        "module": "pvx.algorithms.denoise_and_restoration.mmse_stsa",
+        "name": "MMSE-STSA",
+        "theme": "Denoise and Restoration",
+        "when_not_to_use": "Avoid high reduction settings on sparse acoustic sources without auditioning. Avoid static settings on rapidly varying nonstationary noise."
+      },
+      {
+        "algorithm_id": "denoise_and_restoration.rnnoise_style_denoiser",
+        "assumptions": "Noise/artifacts are distinguishable from desired signal statistics. Noise model should be representative of observed noise floor.",
+        "failure_modes": "Over-reduction can remove detail and create modulation artifacts. Mismatched noise estimate leaves residue or damages detail.",
+        "module": "pvx.algorithms.denoise_and_restoration.rnnoise_style_denoiser",
+        "name": "RNNoise-style denoiser",
+        "theme": "Denoise and Restoration",
+        "when_not_to_use": "Avoid high reduction settings on sparse acoustic sources without auditioning. Avoid static settings on rapidly varying nonstationary noise."
+      },
+      {
+        "algorithm_id": "denoise_and_restoration.wiener_denoising",
+        "assumptions": "Noise/artifacts are distinguishable from desired signal statistics. Noise model should be representative of observed noise floor.",
+        "failure_modes": "Over-reduction can remove detail and create modulation artifacts. Mismatched noise estimate leaves residue or damages detail.",
+        "module": "pvx.algorithms.denoise_and_restoration.wiener_denoising",
+        "name": "Wiener denoising",
+        "theme": "Denoise and Restoration",
+        "when_not_to_use": "Avoid high reduction settings on sparse acoustic sources without auditioning. Avoid static settings on rapidly varying nonstationary noise."
+      }
+    ],
+    "dereverb_and_room_correction": [
+      {
+        "algorithm_id": "dereverb_and_room_correction.blind_deconvolution_dereverb",
+        "assumptions": "Late reverberation is separable from direct content under chosen model. Reverberation tail is assumed more diffuse than direct content.",
+        "failure_modes": "Speech/music clarity can drop if early reflections are over-suppressed. Over-suppression can thin tonal body and ambience.",
+        "module": "pvx.algorithms.dereverb_and_room_correction.blind_deconvolution_dereverb",
+        "name": "Blind deconvolution dereverb",
+        "theme": "Dereverb and Room Correction",
+        "when_not_to_use": "Avoid strong dereverb when room character is part of artistic intent. Avoid for intentionally wet effects unless mix preservation is planned."
+      },
+      {
+        "algorithm_id": "dereverb_and_room_correction.drr_guided_dereverb",
+        "assumptions": "Late reverberation is separable from direct content under chosen model. Reverberation tail is assumed more diffuse than direct content.",
+        "failure_modes": "Speech/music clarity can drop if early reflections are over-suppressed. Over-suppression can thin tonal body and ambience.",
+        "module": "pvx.algorithms.dereverb_and_room_correction.drr_guided_dereverb",
+        "name": "DRR-guided dereverb",
+        "theme": "Dereverb and Room Correction",
+        "when_not_to_use": "Avoid strong dereverb when room character is part of artistic intent. Avoid for intentionally wet effects unless mix preservation is planned."
+      },
+      {
+        "algorithm_id": "dereverb_and_room_correction.late_reverb_suppression_via_coherence",
+        "assumptions": "Late reverberation is separable from direct content under chosen model. Reverberation tail is assumed more diffuse than direct content.",
+        "failure_modes": "Speech/music clarity can drop if early reflections are over-suppressed. Over-suppression can thin tonal body and ambience.",
+        "module": "pvx.algorithms.dereverb_and_room_correction.late_reverb_suppression_via_coherence",
+        "name": "Late reverb suppression via coherence",
+        "theme": "Dereverb and Room Correction",
+        "when_not_to_use": "Avoid strong dereverb when room character is part of artistic intent. Avoid for intentionally wet effects unless mix preservation is planned."
+      },
+      {
+        "algorithm_id": "dereverb_and_room_correction.multi_band_adaptive_deverb",
+        "assumptions": "Late reverberation is separable from direct content under chosen model. Reverberation tail is assumed more diffuse than direct content.",
+        "failure_modes": "Speech/music clarity can drop if early reflections are over-suppressed. Over-suppression can thin tonal body and ambience.",
+        "module": "pvx.algorithms.dereverb_and_room_correction.multi_band_adaptive_deverb",
+        "name": "Multi-band adaptive deverb",
+        "theme": "Dereverb and Room Correction",
+        "when_not_to_use": "Avoid strong dereverb when room character is part of artistic intent. Avoid for intentionally wet effects unless mix preservation is planned."
+      },
+      {
+        "algorithm_id": "dereverb_and_room_correction.neural_dereverb_module",
+        "assumptions": "Late reverberation is separable from direct content under chosen model. Model priors assume training-like signal statistics. Reverberation tail is assumed more diffuse than direct content.",
+        "failure_modes": "Speech/music clarity can drop if early reflections are over-suppressed. Generalization gaps can produce unstable artifacts. Over-suppression can thin tonal body and ambience.",
+        "module": "pvx.algorithms.dereverb_and_room_correction.neural_dereverb_module",
+        "name": "Neural dereverb module",
+        "theme": "Dereverb and Room Correction",
+        "when_not_to_use": "Avoid strong dereverb when room character is part of artistic intent. Avoid fully unattended use on out-of-domain material. Avoid for intentionally wet effects unless mix preservation is planned."
+      },
+      {
+        "algorithm_id": "dereverb_and_room_correction.room_impulse_inverse_filtering",
+        "assumptions": "Late reverberation is separable from direct content under chosen model. Reverberation tail is assumed more diffuse than direct content.",
+        "failure_modes": "Speech/music clarity can drop if early reflections are over-suppressed. Over-suppression can thin tonal body and ambience.",
+        "module": "pvx.algorithms.dereverb_and_room_correction.room_impulse_inverse_filtering",
+        "name": "Room impulse inverse filtering",
+        "theme": "Dereverb and Room Correction",
+        "when_not_to_use": "Avoid strong dereverb when room character is part of artistic intent. Avoid for intentionally wet effects unless mix preservation is planned."
+      },
+      {
+        "algorithm_id": "dereverb_and_room_correction.spectral_decay_subtraction",
+        "assumptions": "Late reverberation is separable from direct content under chosen model. Reverberation tail is assumed more diffuse than direct content.",
+        "failure_modes": "Speech/music clarity can drop if early reflections are over-suppressed. Over-suppression can thin tonal body and ambience.",
+        "module": "pvx.algorithms.dereverb_and_room_correction.spectral_decay_subtraction",
+        "name": "Spectral decay subtraction",
+        "theme": "Dereverb and Room Correction",
+        "when_not_to_use": "Avoid strong dereverb when room character is part of artistic intent. Avoid for intentionally wet effects unless mix preservation is planned."
+      },
+      {
+        "algorithm_id": "dereverb_and_room_correction.wpe_dereverberation",
+        "assumptions": "Late reverberation is separable from direct content under chosen model. Reverberation tail is assumed more diffuse than direct content.",
+        "failure_modes": "Speech/music clarity can drop if early reflections are over-suppressed. Over-suppression can thin tonal body and ambience.",
+        "module": "pvx.algorithms.dereverb_and_room_correction.wpe_dereverberation",
+        "name": "WPE dereverberation",
+        "theme": "Dereverb and Room Correction",
+        "when_not_to_use": "Avoid strong dereverb when room character is part of artistic intent. Avoid for intentionally wet effects unless mix preservation is planned."
+      }
+    ],
+    "dynamics_and_loudness": [
+      {
+        "algorithm_id": "dynamics_and_loudness.ebu_r128_normalization",
+        "assumptions": "Program dynamics fit compressor/limiter time constants and thresholds.",
+        "failure_modes": "Pumping, breathing, or overs if thresholds and release are mis-set.",
+        "module": "pvx.algorithms.dynamics_and_loudness.ebu_r128_normalization",
+        "name": "EBU R128 normalization",
+        "theme": "Dynamics and Loudness",
+        "when_not_to_use": "Avoid applying multiple strong dynamics stages without gain staging checks."
+      },
+      {
+        "algorithm_id": "dynamics_and_loudness.itu_bs_1770_loudness_measurement_gating",
+        "assumptions": "Program dynamics fit compressor/limiter time constants and thresholds.",
+        "failure_modes": "Pumping, breathing, or overs if thresholds and release are mis-set.",
+        "module": "pvx.algorithms.dynamics_and_loudness.itu_bs_1770_loudness_measurement_gating",
+        "name": "ITU BS.1770 loudness measurement/gating",
+        "theme": "Dynamics and Loudness",
+        "when_not_to_use": "Avoid applying multiple strong dynamics stages without gain staging checks."
+      },
+      {
+        "algorithm_id": "dynamics_and_loudness.lufs_target_mastering_chain",
+        "assumptions": "Program dynamics fit compressor/limiter time constants and thresholds.",
+        "failure_modes": "Pumping, breathing, or overs if thresholds and release are mis-set.",
+        "module": "pvx.algorithms.dynamics_and_loudness.lufs_target_mastering_chain",
+        "name": "LUFS-target mastering chain",
+        "theme": "Dynamics and Loudness",
+        "when_not_to_use": "Avoid applying multiple strong dynamics stages without gain staging checks."
+      },
+      {
+        "algorithm_id": "dynamics_and_loudness.multi_band_compression",
+        "assumptions": "Program dynamics fit compressor/limiter time constants and thresholds.",
+        "failure_modes": "Pumping, breathing, or overs if thresholds and release are mis-set.",
+        "module": "pvx.algorithms.dynamics_and_loudness.multi_band_compression",
+        "name": "Multi-band compression",
+        "theme": "Dynamics and Loudness",
+        "when_not_to_use": "Avoid applying multiple strong dynamics stages without gain staging checks."
+      },
+      {
+        "algorithm_id": "dynamics_and_loudness.spectral_dynamics_bin_wise_compressor_expander",
+        "assumptions": "Program dynamics fit compressor/limiter time constants and thresholds.",
+        "failure_modes": "Pumping, breathing, or overs if thresholds and release are mis-set.",
+        "module": "pvx.algorithms.dynamics_and_loudness.spectral_dynamics_bin_wise_compressor_expander",
+        "name": "Spectral dynamics (bin-wise compressor/expander)",
+        "theme": "Dynamics and Loudness",
+        "when_not_to_use": "Avoid applying multiple strong dynamics stages without gain staging checks."
+      },
+      {
+        "algorithm_id": "dynamics_and_loudness.transient_shaping",
+        "assumptions": "Program dynamics fit compressor/limiter time constants and thresholds.",
+        "failure_modes": "Pumping, breathing, or overs if thresholds and release are mis-set.",
+        "module": "pvx.algorithms.dynamics_and_loudness.transient_shaping",
+        "name": "Transient shaping",
+        "theme": "Dynamics and Loudness",
+        "when_not_to_use": "Avoid applying multiple strong dynamics stages without gain staging checks."
+      },
+      {
+        "algorithm_id": "dynamics_and_loudness.true_peak_limiting",
+        "assumptions": "Program dynamics fit compressor/limiter time constants and thresholds.",
+        "failure_modes": "Pumping, breathing, or overs if thresholds and release are mis-set.",
+        "module": "pvx.algorithms.dynamics_and_loudness.true_peak_limiting",
+        "name": "True-peak limiting",
+        "theme": "Dynamics and Loudness",
+        "when_not_to_use": "Avoid applying multiple strong dynamics stages without gain staging checks."
+      },
+      {
+        "algorithm_id": "dynamics_and_loudness.upward_compression",
+        "assumptions": "Program dynamics fit compressor/limiter time constants and thresholds.",
+        "failure_modes": "Pumping, breathing, or overs if thresholds and release are mis-set.",
+        "module": "pvx.algorithms.dynamics_and_loudness.upward_compression",
+        "name": "Upward compression",
+        "theme": "Dynamics and Loudness",
+        "when_not_to_use": "Avoid applying multiple strong dynamics stages without gain staging checks."
+      }
+    ],
+    "granular_and_modulation": [
+      {
+        "algorithm_id": "granular_and_modulation.am_fm_ring_modulation_blocks",
+        "assumptions": "Grain and modulation rates are musically matched to source texture.",
+        "failure_modes": "Incoherent grain scheduling can produce choppiness or blur.",
+        "module": "pvx.algorithms.granular_and_modulation.am_fm_ring_modulation_blocks",
+        "name": "AM/FM/ring modulation blocks",
+        "theme": "Granular and Modulation",
+        "when_not_to_use": "Avoid dense granular settings on speech intelligibility-critical content."
+      },
+      {
+        "algorithm_id": "granular_and_modulation.envelope_followed_modulation_routing",
+        "assumptions": "Grain and modulation rates are musically matched to source texture.",
+        "failure_modes": "Incoherent grain scheduling can produce choppiness or blur.",
+        "module": "pvx.algorithms.granular_and_modulation.envelope_followed_modulation_routing",
+        "name": "Envelope-followed modulation routing",
+        "theme": "Granular and Modulation",
+        "when_not_to_use": "Avoid dense granular settings on speech intelligibility-critical content."
+      },
+      {
+        "algorithm_id": "granular_and_modulation.formant_lfo_modulation",
+        "assumptions": "Grain and modulation rates are musically matched to source texture.",
+        "failure_modes": "Incoherent grain scheduling can produce choppiness or blur.",
+        "module": "pvx.algorithms.granular_and_modulation.formant_lfo_modulation",
+        "name": "Formant LFO modulation",
+        "theme": "Granular and Modulation",
+        "when_not_to_use": "Avoid dense granular settings on speech intelligibility-critical content."
+      },
+      {
+        "algorithm_id": "granular_and_modulation.freeze_grain_morphing",
+        "assumptions": "Grain and modulation rates are musically matched to source texture.",
+        "failure_modes": "Incoherent grain scheduling can produce choppiness or blur.",
+        "module": "pvx.algorithms.granular_and_modulation.freeze_grain_morphing",
+        "name": "Freeze-grain morphing",
+        "theme": "Granular and Modulation",
+        "when_not_to_use": "Avoid dense granular settings on speech intelligibility-critical content."
+      },
+      {
+        "algorithm_id": "granular_and_modulation.grain_cloud_pitch_textures",
+        "assumptions": "Grain and modulation rates are musically matched to source texture.",
+        "failure_modes": "Incoherent grain scheduling can produce choppiness or blur.",
+        "module": "pvx.algorithms.granular_and_modulation.grain_cloud_pitch_textures",
+        "name": "Grain-cloud pitch textures",
+        "theme": "Granular and Modulation",
+        "when_not_to_use": "Avoid dense granular settings on speech intelligibility-critical content."
+      },
+      {
+        "algorithm_id": "granular_and_modulation.granular_time_stretch_engine",
+        "assumptions": "Grain and modulation rates are musically matched to source texture.",
+        "failure_modes": "Incoherent grain scheduling can produce choppiness or blur.",
+        "module": "pvx.algorithms.granular_and_modulation.granular_time_stretch_engine",
+        "name": "Granular time-stretch engine",
+        "theme": "Granular and Modulation",
+        "when_not_to_use": "Avoid dense granular settings on speech intelligibility-critical content."
+      },
+      {
+        "algorithm_id": "granular_and_modulation.rhythmic_gate_stutter_quantizer",
+        "assumptions": "Grain and modulation rates are musically matched to source texture.",
+        "failure_modes": "Incoherent grain scheduling can produce choppiness or blur.",
+        "module": "pvx.algorithms.granular_and_modulation.rhythmic_gate_stutter_quantizer",
+        "name": "Rhythmic gate/stutter quantizer",
+        "theme": "Granular and Modulation",
+        "when_not_to_use": "Avoid dense granular settings on speech intelligibility-critical content."
+      },
+      {
+        "algorithm_id": "granular_and_modulation.spectral_tremolo",
+        "assumptions": "Grain and modulation rates are musically matched to source texture.",
+        "failure_modes": "Incoherent grain scheduling can produce choppiness or blur.",
+        "module": "pvx.algorithms.granular_and_modulation.spectral_tremolo",
+        "name": "Spectral tremolo",
+        "theme": "Granular and Modulation",
+        "when_not_to_use": "Avoid dense granular settings on speech intelligibility-critical content."
+      }
+    ],
+    "pitch_detection_and_tracking": [
+      {
+        "algorithm_id": "pitch_detection_and_tracking.crepe_style_neural_f0",
+        "assumptions": "F0 evidence is strong in the selected analysis band and frame size. Model priors assume training-like signal statistics.",
+        "failure_modes": "Octave errors and voicing flips under heavy noise/polyphony. Generalization gaps can produce unstable artifacts.",
+        "module": "pvx.algorithms.pitch_detection_and_tracking.crepe_style_neural_f0",
+        "name": "CREPE-style neural F0",
+        "theme": "Pitch Detection and Tracking",
+        "when_not_to_use": "Avoid as the sole control signal for dense polyphonic mixtures. Avoid fully unattended use on out-of-domain material."
+      },
+      {
+        "algorithm_id": "pitch_detection_and_tracking.harmonic_product_spectrum_hps",
+        "assumptions": "F0 evidence is strong in the selected analysis band and frame size.",
+        "failure_modes": "Octave errors and voicing flips under heavy noise/polyphony.",
+        "module": "pvx.algorithms.pitch_detection_and_tracking.harmonic_product_spectrum_hps",
+        "name": "Harmonic Product Spectrum (HPS)",
+        "theme": "Pitch Detection and Tracking",
+        "when_not_to_use": "Avoid as the sole control signal for dense polyphonic mixtures."
+      },
+      {
+        "algorithm_id": "pitch_detection_and_tracking.pyin",
+        "assumptions": "F0 evidence is strong in the selected analysis band and frame size.",
+        "failure_modes": "Octave errors and voicing flips under heavy noise/polyphony.",
+        "module": "pvx.algorithms.pitch_detection_and_tracking.pyin",
+        "name": "pYIN",
+        "theme": "Pitch Detection and Tracking",
+        "when_not_to_use": "Avoid as the sole control signal for dense polyphonic mixtures."
+      },
+      {
+        "algorithm_id": "pitch_detection_and_tracking.rapt",
+        "assumptions": "F0 evidence is strong in the selected analysis band and frame size.",
+        "failure_modes": "Octave errors and voicing flips under heavy noise/polyphony.",
+        "module": "pvx.algorithms.pitch_detection_and_tracking.rapt",
+        "name": "RAPT",
+        "theme": "Pitch Detection and Tracking",
+        "when_not_to_use": "Avoid as the sole control signal for dense polyphonic mixtures."
+      },
+      {
+        "algorithm_id": "pitch_detection_and_tracking.subharmonic_summation",
+        "assumptions": "F0 evidence is strong in the selected analysis band and frame size.",
+        "failure_modes": "Octave errors and voicing flips under heavy noise/polyphony.",
+        "module": "pvx.algorithms.pitch_detection_and_tracking.subharmonic_summation",
+        "name": "Subharmonic summation",
+        "theme": "Pitch Detection and Tracking",
+        "when_not_to_use": "Avoid as the sole control signal for dense polyphonic mixtures."
+      },
+      {
+        "algorithm_id": "pitch_detection_and_tracking.swipe",
+        "assumptions": "F0 evidence is strong in the selected analysis band and frame size.",
+        "failure_modes": "Octave errors and voicing flips under heavy noise/polyphony.",
+        "module": "pvx.algorithms.pitch_detection_and_tracking.swipe",
+        "name": "SWIPE",
+        "theme": "Pitch Detection and Tracking",
+        "when_not_to_use": "Avoid as the sole control signal for dense polyphonic mixtures."
+      },
+      {
+        "algorithm_id": "pitch_detection_and_tracking.viterbi_smoothed_pitch_contour_tracking",
+        "assumptions": "F0 evidence is strong in the selected analysis band and frame size.",
+        "failure_modes": "Octave errors and voicing flips under heavy noise/polyphony.",
+        "module": "pvx.algorithms.pitch_detection_and_tracking.viterbi_smoothed_pitch_contour_tracking",
+        "name": "Viterbi-smoothed pitch contour tracking",
+        "theme": "Pitch Detection and Tracking",
+        "when_not_to_use": "Avoid as the sole control signal for dense polyphonic mixtures."
+      },
+      {
+        "algorithm_id": "pitch_detection_and_tracking.yin",
+        "assumptions": "F0 evidence is strong in the selected analysis band and frame size.",
+        "failure_modes": "Octave errors and voicing flips under heavy noise/polyphony.",
+        "module": "pvx.algorithms.pitch_detection_and_tracking.yin",
+        "name": "YIN",
+        "theme": "Pitch Detection and Tracking",
+        "when_not_to_use": "Avoid as the sole control signal for dense polyphonic mixtures."
+      }
+    ],
+    "retune_and_intonation": [
+      {
+        "algorithm_id": "retune_and_intonation.adaptive_intonation_context_sensitive_intervals",
+        "assumptions": "Detected notes map cleanly to intended tonal center/scale. Pitch trajectory estimates should be continuous enough for retuning.",
+        "failure_modes": "Over-correction can flatten expressive vibrato or slides. Fast F0 jumps can cause audible stepping.",
+        "module": "pvx.algorithms.retune_and_intonation.adaptive_intonation_context_sensitive_intervals",
+        "name": "Adaptive intonation (context-sensitive intervals)",
+        "theme": "Retune and Intonation",
+        "when_not_to_use": "Avoid aggressive correction when preserving natural micro-intonation is required. Avoid high-strength retune on breath/noise segments."
+      },
+      {
+        "algorithm_id": "retune_and_intonation.chord_aware_retuning",
+        "assumptions": "Detected notes map cleanly to intended tonal center/scale. Pitch trajectory estimates should be continuous enough for retuning.",
+        "failure_modes": "Over-correction can flatten expressive vibrato or slides. Fast F0 jumps can cause audible stepping.",
+        "module": "pvx.algorithms.retune_and_intonation.chord_aware_retuning",
+        "name": "Chord-aware retuning",
+        "theme": "Retune and Intonation",
+        "when_not_to_use": "Avoid aggressive correction when preserving natural micro-intonation is required. Avoid high-strength retune on breath/noise segments."
+      },
+      {
+        "algorithm_id": "retune_and_intonation.just_intonation_mapping_per_key_center",
+        "assumptions": "Detected notes map cleanly to intended tonal center/scale. Pitch trajectory estimates should be continuous enough for retuning.",
+        "failure_modes": "Over-correction can flatten expressive vibrato or slides. Fast F0 jumps can cause audible stepping.",
+        "module": "pvx.algorithms.retune_and_intonation.just_intonation_mapping_per_key_center",
+        "name": "Just intonation mapping per key center",
+        "theme": "Retune and Intonation",
+        "when_not_to_use": "Avoid aggressive correction when preserving natural micro-intonation is required. Avoid high-strength retune on breath/noise segments."
+      },
+      {
+        "algorithm_id": "retune_and_intonation.key_aware_retuning_with_confidence_weighting",
+        "assumptions": "Detected notes map cleanly to intended tonal center/scale. Pitch trajectory estimates should be continuous enough for retuning.",
+        "failure_modes": "Over-correction can flatten expressive vibrato or slides. Fast F0 jumps can cause audible stepping.",
+        "module": "pvx.algorithms.retune_and_intonation.key_aware_retuning_with_confidence_weighting",
+        "name": "Key-aware retuning with confidence weighting",
+        "theme": "Retune and Intonation",
+        "when_not_to_use": "Avoid aggressive correction when preserving natural micro-intonation is required. Avoid high-strength retune on breath/noise segments."
+      },
+      {
+        "algorithm_id": "retune_and_intonation.portamento_aware_retune_curves",
+        "assumptions": "Detected notes map cleanly to intended tonal center/scale. Pitch trajectory estimates should be continuous enough for retuning.",
+        "failure_modes": "Over-correction can flatten expressive vibrato or slides. Fast F0 jumps can cause audible stepping.",
+        "module": "pvx.algorithms.retune_and_intonation.portamento_aware_retune_curves",
+        "name": "Portamento-aware retune curves",
+        "theme": "Retune and Intonation",
+        "when_not_to_use": "Avoid aggressive correction when preserving natural micro-intonation is required. Avoid high-strength retune on breath/noise segments."
+      },
+      {
+        "algorithm_id": "retune_and_intonation.scala_mts_scale_import_and_quantization",
+        "assumptions": "Detected notes map cleanly to intended tonal center/scale. Pitch trajectory estimates should be continuous enough for retuning.",
+        "failure_modes": "Over-correction can flatten expressive vibrato or slides. Fast F0 jumps can cause audible stepping.",
+        "module": "pvx.algorithms.retune_and_intonation.scala_mts_scale_import_and_quantization",
+        "name": "Scala/MTS scale import and quantization",
+        "theme": "Retune and Intonation",
+        "when_not_to_use": "Avoid aggressive correction when preserving natural micro-intonation is required. Avoid high-strength retune on breath/noise segments."
+      },
+      {
+        "algorithm_id": "retune_and_intonation.time_varying_cents_maps",
+        "assumptions": "Detected notes map cleanly to intended tonal center/scale. Pitch trajectory estimates should be continuous enough for retuning.",
+        "failure_modes": "Over-correction can flatten expressive vibrato or slides. Fast F0 jumps can cause audible stepping.",
+        "module": "pvx.algorithms.retune_and_intonation.time_varying_cents_maps",
+        "name": "Time-varying cents maps",
+        "theme": "Retune and Intonation",
+        "when_not_to_use": "Avoid aggressive correction when preserving natural micro-intonation is required. Avoid high-strength retune on breath/noise segments."
+      },
+      {
+        "algorithm_id": "retune_and_intonation.vibrato_preserving_correction",
+        "assumptions": "Detected notes map cleanly to intended tonal center/scale. Pitch trajectory estimates should be continuous enough for retuning.",
+        "failure_modes": "Over-correction can flatten expressive vibrato or slides. Fast F0 jumps can cause audible stepping.",
+        "module": "pvx.algorithms.retune_and_intonation.vibrato_preserving_correction",
+        "name": "Vibrato-preserving correction",
+        "theme": "Retune and Intonation",
+        "when_not_to_use": "Avoid aggressive correction when preserving natural micro-intonation is required. Avoid high-strength retune on breath/noise segments."
+      }
+    ],
+    "separation_and_decomposition": [
+      {
+        "algorithm_id": "separation_and_decomposition.demucs_style_stem_separation_backend",
+        "assumptions": "Sources have partially separable spectral or statistical structure.",
+        "failure_modes": "Component bleeding and musical noise under overlap or model mismatch.",
+        "module": "pvx.algorithms.separation_and_decomposition.demucs_style_stem_separation_backend",
+        "name": "Demucs-style stem separation backend",
+        "theme": "Separation and Decomposition",
+        "when_not_to_use": "Avoid expecting perfect stems from strongly correlated or co-modulated sources."
+      },
+      {
+        "algorithm_id": "separation_and_decomposition.ica_bss_for_multichannel_stems",
+        "assumptions": "Sources have partially separable spectral or statistical structure.",
+        "failure_modes": "Component bleeding and musical noise under overlap or model mismatch.",
+        "module": "pvx.algorithms.separation_and_decomposition.ica_bss_for_multichannel_stems",
+        "name": "ICA/BSS for multichannel stems",
+        "theme": "Separation and Decomposition",
+        "when_not_to_use": "Avoid expecting perfect stems from strongly correlated or co-modulated sources."
+      },
+      {
+        "algorithm_id": "separation_and_decomposition.nmf_decomposition",
+        "assumptions": "Sources have partially separable spectral or statistical structure.",
+        "failure_modes": "Component bleeding and musical noise under overlap or model mismatch.",
+        "module": "pvx.algorithms.separation_and_decomposition.nmf_decomposition",
+        "name": "NMF decomposition",
+        "theme": "Separation and Decomposition",
+        "when_not_to_use": "Avoid expecting perfect stems from strongly correlated or co-modulated sources."
+      },
+      {
+        "algorithm_id": "separation_and_decomposition.probabilistic_latent_component_separation",
+        "assumptions": "Sources have partially separable spectral or statistical structure.",
+        "failure_modes": "Component bleeding and musical noise under overlap or model mismatch.",
+        "module": "pvx.algorithms.separation_and_decomposition.probabilistic_latent_component_separation",
+        "name": "Probabilistic latent component separation",
+        "theme": "Separation and Decomposition",
+        "when_not_to_use": "Avoid expecting perfect stems from strongly correlated or co-modulated sources."
+      },
+      {
+        "algorithm_id": "separation_and_decomposition.rpca_hpss",
+        "assumptions": "Sources have partially separable spectral or statistical structure.",
+        "failure_modes": "Component bleeding and musical noise under overlap or model mismatch.",
+        "module": "pvx.algorithms.separation_and_decomposition.rpca_hpss",
+        "name": "RPCA HPSS",
+        "theme": "Separation and Decomposition",
+        "when_not_to_use": "Avoid expecting perfect stems from strongly correlated or co-modulated sources."
+      },
+      {
+        "algorithm_id": "separation_and_decomposition.sinusoidal_residual_transient_decomposition",
+        "assumptions": "Sources have partially separable spectral or statistical structure.",
+        "failure_modes": "Component bleeding and musical noise under overlap or model mismatch.",
+        "module": "pvx.algorithms.separation_and_decomposition.sinusoidal_residual_transient_decomposition",
+        "name": "Sinusoidal+residual+transient decomposition",
+        "theme": "Separation and Decomposition",
+        "when_not_to_use": "Avoid expecting perfect stems from strongly correlated or co-modulated sources."
+      },
+      {
+        "algorithm_id": "separation_and_decomposition.tensor_decomposition_cp_tucker",
+        "assumptions": "Sources have partially separable spectral or statistical structure.",
+        "failure_modes": "Component bleeding and musical noise under overlap or model mismatch.",
+        "module": "pvx.algorithms.separation_and_decomposition.tensor_decomposition_cp_tucker",
+        "name": "Tensor decomposition (CP/Tucker)",
+        "theme": "Separation and Decomposition",
+        "when_not_to_use": "Avoid expecting perfect stems from strongly correlated or co-modulated sources."
+      },
+      {
+        "algorithm_id": "separation_and_decomposition.u_net_vocal_accompaniment_split",
+        "assumptions": "Sources have partially separable spectral or statistical structure.",
+        "failure_modes": "Component bleeding and musical noise under overlap or model mismatch.",
+        "module": "pvx.algorithms.separation_and_decomposition.u_net_vocal_accompaniment_split",
+        "name": "U-Net vocal/accompaniment split",
+        "theme": "Separation and Decomposition",
+        "when_not_to_use": "Avoid expecting perfect stems from strongly correlated or co-modulated sources."
+      }
+    ],
+    "spatial_and_multichannel": [
+      {
+        "algorithm_id": "spatial_and_multichannel.ambisonic_binaural_rendering",
+        "assumptions": "Channel geometry/order and timing metadata are correct.",
+        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
+        "module": "pvx.algorithms.spatial_and_multichannel.ambisonics_and_immersive.ambisonic_binaural_rendering",
+        "name": "Ambisonic binaural rendering",
+        "theme": "Spatial and Multichannel",
+        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
+      },
+      {
+        "algorithm_id": "spatial_and_multichannel.binaural_itd_ild_synthesis",
+        "assumptions": "Channel geometry/order and timing metadata are correct.",
+        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
+        "module": "pvx.algorithms.spatial_and_multichannel.imaging_and_panning.binaural_itd_ild_synthesis",
+        "name": "Binaural ITD/ILD synthesis",
+        "theme": "Spatial and Multichannel",
+        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
+      },
+      {
+        "algorithm_id": "spatial_and_multichannel.binaural_motion_trajectory_designer",
+        "assumptions": "Channel geometry/order and timing metadata are correct.",
+        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
+        "module": "pvx.algorithms.spatial_and_multichannel.creative_spatial_fx.binaural_motion_trajectory_designer",
+        "name": "Binaural motion trajectory designer",
+        "theme": "Spatial and Multichannel",
+        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
+      },
+      {
+        "algorithm_id": "spatial_and_multichannel.coherence_based_dereverb_multichannel",
+        "assumptions": "Channel geometry/order and timing metadata are correct. Reverberation tail is assumed more diffuse than direct content.",
+        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment. Over-suppression can thin tonal body and ambience.",
+        "module": "pvx.algorithms.spatial_and_multichannel.multichannel_restoration.coherence_based_dereverb_multichannel",
+        "name": "Coherence-based dereverb (multichannel)",
+        "theme": "Spatial and Multichannel",
+        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown. Avoid for intentionally wet effects unless mix preservation is planned."
+      },
+      {
+        "algorithm_id": "spatial_and_multichannel.cross_channel_click_pop_repair",
+        "assumptions": "Channel geometry/order and timing metadata are correct.",
+        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
+        "module": "pvx.algorithms.spatial_and_multichannel.multichannel_restoration.cross_channel_click_pop_repair",
+        "name": "Cross-channel click/pop repair",
+        "theme": "Spatial and Multichannel",
+        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
+      },
+      {
+        "algorithm_id": "spatial_and_multichannel.dbap_distance_based_amplitude_panning",
+        "assumptions": "Channel geometry/order and timing metadata are correct.",
+        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
+        "module": "pvx.algorithms.spatial_and_multichannel.imaging_and_panning.dbap_distance_based_amplitude_panning",
+        "name": "DBAP (distance-based amplitude panning)",
+        "theme": "Spatial and Multichannel",
+        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
+      },
+      {
+        "algorithm_id": "spatial_and_multichannel.decorrelated_reverb_upmix",
+        "assumptions": "Channel geometry/order and timing metadata are correct.",
+        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
+        "module": "pvx.algorithms.spatial_and_multichannel.creative_spatial_fx.decorrelated_reverb_upmix",
+        "name": "Decorrelated reverb upmix",
+        "theme": "Spatial and Multichannel",
+        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
+      },
+      {
+        "algorithm_id": "spatial_and_multichannel.delay_and_sum_beamforming",
+        "assumptions": "Channel geometry/order and timing metadata are correct. Array spacing and steering assumptions should match real geometry.",
+        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment. Steering mismatch causes target suppression or sidelobe leakage.",
+        "module": "pvx.algorithms.spatial_and_multichannel.beamforming_and_directionality.delay_and_sum_beamforming",
+        "name": "Delay-and-sum beamforming",
+        "theme": "Spatial and Multichannel",
+        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown. Avoid with uncertain microphone spacing/ordering."
+      },
+      {
+        "algorithm_id": "spatial_and_multichannel.diffuse_field_coherence_masking",
+        "assumptions": "Channel geometry/order and timing metadata are correct.",
+        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
+        "module": "pvx.algorithms.spatial_and_multichannel.beamforming_and_directionality.diffuse_field_coherence_masking",
+        "name": "Diffuse-field coherence masking",
+        "theme": "Spatial and Multichannel",
+        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
+      },
+      {
+        "algorithm_id": "spatial_and_multichannel.direction_of_arrival_grid_tracking",
+        "assumptions": "Channel geometry/order and timing metadata are correct.",
+        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
+        "module": "pvx.algorithms.spatial_and_multichannel.beamforming_and_directionality.direction_of_arrival_grid_tracking",
+        "name": "Direction-of-arrival grid tracking",
+        "theme": "Spatial and Multichannel",
+        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
+      },
+      {
+        "algorithm_id": "spatial_and_multichannel.first_order_ambisonic_encode_decode",
+        "assumptions": "Channel geometry/order and timing metadata are correct.",
+        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
+        "module": "pvx.algorithms.spatial_and_multichannel.ambisonics_and_immersive.first_order_ambisonic_encode_decode",
+        "name": "First-order ambisonic encode/decode",
+        "theme": "Spatial and Multichannel",
+        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
+      },
+      {
+        "algorithm_id": "spatial_and_multichannel.generalized_sidelobe_canceller",
+        "assumptions": "Channel geometry/order and timing metadata are correct.",
+        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
+        "module": "pvx.algorithms.spatial_and_multichannel.beamforming_and_directionality.generalized_sidelobe_canceller",
+        "name": "Generalized sidelobe canceller",
+        "theme": "Spatial and Multichannel",
+        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
+      },
+      {
+        "algorithm_id": "spatial_and_multichannel.higher_order_ambisonic_rotation",
+        "assumptions": "Channel geometry/order and timing metadata are correct.",
+        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
+        "module": "pvx.algorithms.spatial_and_multichannel.ambisonics_and_immersive.higher_order_ambisonic_rotation",
+        "name": "Higher-order ambisonic rotation",
+        "theme": "Spatial and Multichannel",
+        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
+      },
+      {
+        "algorithm_id": "spatial_and_multichannel.hoa_order_truncation_and_upmix",
+        "assumptions": "Channel geometry/order and timing metadata are correct.",
+        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
+        "module": "pvx.algorithms.spatial_and_multichannel.ambisonics_and_immersive.hoa_order_truncation_and_upmix",
+        "name": "HOA order truncation and upmix",
+        "theme": "Spatial and Multichannel",
+        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
+      },
+      {
+        "algorithm_id": "spatial_and_multichannel.microphone_array_calibration_tones",
+        "assumptions": "Channel geometry/order and timing metadata are correct.",
+        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
+        "module": "pvx.algorithms.spatial_and_multichannel.multichannel_restoration.microphone_array_calibration_tones",
+        "name": "Microphone-array calibration tones",
+        "theme": "Spatial and Multichannel",
+        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
+      },
+      {
+        "algorithm_id": "spatial_and_multichannel.multichannel_noise_psd_tracking",
+        "assumptions": "Channel geometry/order and timing metadata are correct.",
+        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
+        "module": "pvx.algorithms.spatial_and_multichannel.multichannel_restoration.multichannel_noise_psd_tracking",
+        "name": "Multichannel noise PSD tracking",
+        "theme": "Spatial and Multichannel",
+        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
+      },
+      {
+        "algorithm_id": "spatial_and_multichannel.multichannel_wiener_postfilter",
+        "assumptions": "Channel geometry/order and timing metadata are correct.",
+        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
+        "module": "pvx.algorithms.spatial_and_multichannel.multichannel_restoration.multichannel_wiener_postfilter",
+        "name": "Multichannel Wiener postfilter",
+        "theme": "Spatial and Multichannel",
+        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
+      },
+      {
+        "algorithm_id": "spatial_and_multichannel.mvdr_beamformer_wideband",
+        "assumptions": "Channel geometry/order and timing metadata are correct. Array spacing and steering assumptions should match real geometry.",
+        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment. Steering mismatch causes target suppression or sidelobe leakage.",
+        "module": "pvx.algorithms.spatial_and_multichannel.beamforming_and_directionality.mvdr_beamformer_wideband",
+        "name": "MVDR beamformer (wideband)",
+        "theme": "Spatial and Multichannel",
+        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown. Avoid with uncertain microphone spacing/ordering."
+      },
+      {
+        "algorithm_id": "spatial_and_multichannel.phase_aligned_mid_side_field_rotation",
+        "assumptions": "Channel geometry/order and timing metadata are correct.",
+        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
+        "module": "pvx.algorithms.spatial_and_multichannel.imaging_and_panning.phase_aligned_mid_side_field_rotation",
+        "name": "Phase-aligned mid/side field rotation",
+        "theme": "Spatial and Multichannel",
+        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
+      },
+      {
+        "algorithm_id": "spatial_and_multichannel.phase_consistent_multichannel_denoise",
+        "assumptions": "Channel geometry/order and timing metadata are correct. Noise model should be representative of observed noise floor.",
+        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment. Mismatched noise estimate leaves residue or damages detail.",
+        "module": "pvx.algorithms.spatial_and_multichannel.multichannel_restoration.phase_consistent_multichannel_denoise",
+        "name": "Phase-consistent multichannel denoise",
+        "theme": "Spatial and Multichannel",
+        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown. Avoid static settings on rapidly varying nonstationary noise."
+      },
+      {
+        "algorithm_id": "spatial_and_multichannel.pvx_directional_spectral_warp",
+        "assumptions": "Channel geometry/order and timing metadata are correct.",
+        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
+        "module": "pvx.algorithms.spatial_and_multichannel.phase_vocoder_spatial.pvx_directional_spectral_warp",
+        "name": "PVX directional spectral warp",
+        "theme": "Spatial and Multichannel",
+        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
+      },
+      {
+        "algorithm_id": "spatial_and_multichannel.pvx_interaural_coherence_shaping",
+        "assumptions": "Channel geometry/order and timing metadata are correct.",
+        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
+        "module": "pvx.algorithms.spatial_and_multichannel.phase_vocoder_spatial.pvx_interaural_coherence_shaping",
+        "name": "PVX interaural coherence shaping",
+        "theme": "Spatial and Multichannel",
+        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
+      },
+      {
+        "algorithm_id": "spatial_and_multichannel.pvx_interchannel_phase_locking",
+        "assumptions": "Channel geometry/order and timing metadata are correct.",
+        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
+        "module": "pvx.algorithms.spatial_and_multichannel.phase_vocoder_spatial.pvx_interchannel_phase_locking",
+        "name": "PVX interchannel phase locking",
+        "theme": "Spatial and Multichannel",
+        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
+      },
+      {
+        "algorithm_id": "spatial_and_multichannel.pvx_multichannel_time_alignment",
+        "assumptions": "Channel geometry/order and timing metadata are correct.",
+        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
+        "module": "pvx.algorithms.spatial_and_multichannel.phase_vocoder_spatial.pvx_multichannel_time_alignment",
+        "name": "PVX multichannel time alignment",
+        "theme": "Spatial and Multichannel",
+        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
+      },
+      {
+        "algorithm_id": "spatial_and_multichannel.pvx_spatial_freeze_and_trajectory",
+        "assumptions": "Channel geometry/order and timing metadata are correct.",
+        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
+        "module": "pvx.algorithms.spatial_and_multichannel.phase_vocoder_spatial.pvx_spatial_freeze_and_trajectory",
+        "name": "PVX spatial freeze and trajectory",
+        "theme": "Spatial and Multichannel",
+        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
+      },
+      {
+        "algorithm_id": "spatial_and_multichannel.pvx_spatial_transient_preservation",
+        "assumptions": "Channel geometry/order and timing metadata are correct.",
+        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
+        "module": "pvx.algorithms.spatial_and_multichannel.phase_vocoder_spatial.pvx_spatial_transient_preservation",
+        "name": "PVX spatial transient preservation",
+        "theme": "Spatial and Multichannel",
+        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
+      },
+      {
+        "algorithm_id": "spatial_and_multichannel.rotating_speaker_doppler_field",
+        "assumptions": "Channel geometry/order and timing metadata are correct.",
+        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
+        "module": "pvx.algorithms.spatial_and_multichannel.creative_spatial_fx.rotating_speaker_doppler_field",
+        "name": "Rotating-speaker Doppler field",
+        "theme": "Spatial and Multichannel",
+        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
+      },
+      {
+        "algorithm_id": "spatial_and_multichannel.spatial_freeze_resynthesis",
+        "assumptions": "Channel geometry/order and timing metadata are correct.",
+        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
+        "module": "pvx.algorithms.spatial_and_multichannel.creative_spatial_fx.spatial_freeze_resynthesis",
+        "name": "Spatial freeze resynthesis",
+        "theme": "Spatial and Multichannel",
+        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
+      },
+      {
+        "algorithm_id": "spatial_and_multichannel.spatial_room_impulse_convolution",
+        "assumptions": "Channel geometry/order and timing metadata are correct.",
+        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
+        "module": "pvx.algorithms.spatial_and_multichannel.ambisonics_and_immersive.spatial_room_impulse_convolution",
+        "name": "Spatial room impulse convolution",
+        "theme": "Spatial and Multichannel",
+        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
+      },
+      {
+        "algorithm_id": "spatial_and_multichannel.spectral_spatial_granulator",
+        "assumptions": "Channel geometry/order and timing metadata are correct.",
+        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
+        "module": "pvx.algorithms.spatial_and_multichannel.creative_spatial_fx.spectral_spatial_granulator",
+        "name": "Spectral spatial granulator",
+        "theme": "Spatial and Multichannel",
+        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
+      },
+      {
+        "algorithm_id": "spatial_and_multichannel.spherical_harmonic_diffuse_enhancement",
+        "assumptions": "Channel geometry/order and timing metadata are correct.",
+        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
+        "module": "pvx.algorithms.spatial_and_multichannel.ambisonics_and_immersive.spherical_harmonic_diffuse_enhancement",
+        "name": "Spherical-harmonic diffuse enhancement",
+        "theme": "Spatial and Multichannel",
+        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
+      },
+      {
+        "algorithm_id": "spatial_and_multichannel.stereo_width_frequency_dependent_control",
+        "assumptions": "Channel geometry/order and timing metadata are correct.",
+        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
+        "module": "pvx.algorithms.spatial_and_multichannel.imaging_and_panning.stereo_width_frequency_dependent_control",
+        "name": "Stereo width (frequency-dependent control)",
+        "theme": "Spatial and Multichannel",
+        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
+      },
+      {
+        "algorithm_id": "spatial_and_multichannel.stochastic_spatial_diffusion_cloud",
+        "assumptions": "Channel geometry/order and timing metadata are correct.",
+        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
+        "module": "pvx.algorithms.spatial_and_multichannel.creative_spatial_fx.stochastic_spatial_diffusion_cloud",
+        "name": "Stochastic spatial diffusion cloud",
+        "theme": "Spatial and Multichannel",
+        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
+      },
+      {
+        "algorithm_id": "spatial_and_multichannel.superdirective_beamformer",
+        "assumptions": "Channel geometry/order and timing metadata are correct. Array spacing and steering assumptions should match real geometry.",
+        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment. Steering mismatch causes target suppression or sidelobe leakage.",
+        "module": "pvx.algorithms.spatial_and_multichannel.beamforming_and_directionality.superdirective_beamformer",
+        "name": "Superdirective beamformer",
+        "theme": "Spatial and Multichannel",
+        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown. Avoid with uncertain microphone spacing/ordering."
+      },
+      {
+        "algorithm_id": "spatial_and_multichannel.transaural_crosstalk_cancellation",
+        "assumptions": "Channel geometry/order and timing metadata are correct.",
+        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
+        "module": "pvx.algorithms.spatial_and_multichannel.imaging_and_panning.transaural_crosstalk_cancellation",
+        "name": "Transaural crosstalk cancellation",
+        "theme": "Spatial and Multichannel",
+        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
+      },
+      {
+        "algorithm_id": "spatial_and_multichannel.vbap_adaptive_panning",
+        "assumptions": "Channel geometry/order and timing metadata are correct.",
+        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
+        "module": "pvx.algorithms.spatial_and_multichannel.imaging_and_panning.vbap_adaptive_panning",
+        "name": "VBAP adaptive panning",
+        "theme": "Spatial and Multichannel",
+        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
+      }
+    ],
+    "spectral_time_frequency_transforms": [
+      {
+        "algorithm_id": "spectral_time_frequency_transforms.chirplet_transform_analysis",
+        "assumptions": "Transform parameterization matches target time-frequency structure.",
+        "failure_modes": "Incorrect parameterization can smear events or over-fragment spectra.",
+        "module": "pvx.algorithms.spectral_time_frequency_transforms.chirplet_transform_analysis",
+        "name": "Chirplet transform analysis",
+        "theme": "Spectral and Time-Frequency Transforms",
+        "when_not_to_use": "Avoid default settings for highly nonstationary signals without tuning."
+      },
+      {
+        "algorithm_id": "spectral_time_frequency_transforms.constant_q_transform_cqt_processing",
+        "assumptions": "Transform parameterization matches target time-frequency structure.",
+        "failure_modes": "Incorrect parameterization can smear events or over-fragment spectra.",
+        "module": "pvx.algorithms.spectral_time_frequency_transforms.constant_q_transform_cqt_processing",
+        "name": "Constant-Q Transform (CQT) processing",
+        "theme": "Spectral and Time-Frequency Transforms",
+        "when_not_to_use": "Avoid default settings for highly nonstationary signals without tuning."
+      },
+      {
+        "algorithm_id": "spectral_time_frequency_transforms.multi_window_stft_fusion",
+        "assumptions": "Transform parameterization matches target time-frequency structure.",
+        "failure_modes": "Incorrect parameterization can smear events or over-fragment spectra.",
+        "module": "pvx.algorithms.spectral_time_frequency_transforms.multi_window_stft_fusion",
+        "name": "Multi-window STFT fusion",
+        "theme": "Spectral and Time-Frequency Transforms",
+        "when_not_to_use": "Avoid default settings for highly nonstationary signals without tuning."
+      },
+      {
+        "algorithm_id": "spectral_time_frequency_transforms.nsgt_based_processing",
+        "assumptions": "Transform parameterization matches target time-frequency structure.",
+        "failure_modes": "Incorrect parameterization can smear events or over-fragment spectra.",
+        "module": "pvx.algorithms.spectral_time_frequency_transforms.nsgt_based_processing",
+        "name": "NSGT-based processing",
+        "theme": "Spectral and Time-Frequency Transforms",
+        "when_not_to_use": "Avoid default settings for highly nonstationary signals without tuning."
+      },
+      {
+        "algorithm_id": "spectral_time_frequency_transforms.reassigned_spectrogram_methods",
+        "assumptions": "Transform parameterization matches target time-frequency structure.",
+        "failure_modes": "Incorrect parameterization can smear events or over-fragment spectra.",
+        "module": "pvx.algorithms.spectral_time_frequency_transforms.reassigned_spectrogram_methods",
+        "name": "Reassigned spectrogram methods",
+        "theme": "Spectral and Time-Frequency Transforms",
+        "when_not_to_use": "Avoid default settings for highly nonstationary signals without tuning."
+      },
+      {
+        "algorithm_id": "spectral_time_frequency_transforms.synchrosqueezed_stft",
+        "assumptions": "Transform parameterization matches target time-frequency structure.",
+        "failure_modes": "Incorrect parameterization can smear events or over-fragment spectra.",
+        "module": "pvx.algorithms.spectral_time_frequency_transforms.synchrosqueezed_stft",
+        "name": "Synchrosqueezed STFT",
+        "theme": "Spectral and Time-Frequency Transforms",
+        "when_not_to_use": "Avoid default settings for highly nonstationary signals without tuning."
+      },
+      {
+        "algorithm_id": "spectral_time_frequency_transforms.variable_q_transform_vqt",
+        "assumptions": "Transform parameterization matches target time-frequency structure.",
+        "failure_modes": "Incorrect parameterization can smear events or over-fragment spectra.",
+        "module": "pvx.algorithms.spectral_time_frequency_transforms.variable_q_transform_vqt",
+        "name": "Variable-Q Transform (VQT)",
+        "theme": "Spectral and Time-Frequency Transforms",
+        "when_not_to_use": "Avoid default settings for highly nonstationary signals without tuning."
+      },
+      {
+        "algorithm_id": "spectral_time_frequency_transforms.wavelet_packet_processing",
+        "assumptions": "Transform parameterization matches target time-frequency structure.",
+        "failure_modes": "Incorrect parameterization can smear events or over-fragment spectra.",
+        "module": "pvx.algorithms.spectral_time_frequency_transforms.wavelet_packet_processing",
+        "name": "Wavelet packet processing",
+        "theme": "Spectral and Time-Frequency Transforms",
+        "when_not_to_use": "Avoid default settings for highly nonstationary signals without tuning."
+      }
+    ],
+    "time_scale_and_pitch_core": [
+      {
+        "algorithm_id": "time_scale_and_pitch_core.beat_synchronous_time_warping",
+        "assumptions": "Frames are locally quasi-stationary and harmonic evolution is reasonably smooth.",
+        "failure_modes": "High-ratio stretch can introduce phasiness and blurred transients.",
+        "module": "pvx.algorithms.time_scale_and_pitch_core.beat_synchronous_time_warping",
+        "name": "Beat-synchronous time warping",
+        "theme": "Time-Scale and Pitch Core",
+        "when_not_to_use": "Avoid for extreme percussive-only material when attack realism is critical."
+      },
+      {
+        "algorithm_id": "time_scale_and_pitch_core.harmonic_percussive_split_tsm",
+        "assumptions": "Frames are locally quasi-stationary and harmonic evolution is reasonably smooth.",
+        "failure_modes": "High-ratio stretch can introduce phasiness and blurred transients.",
+        "module": "pvx.algorithms.time_scale_and_pitch_core.harmonic_percussive_split_tsm",
+        "name": "Harmonic/percussive split TSM",
+        "theme": "Time-Scale and Pitch Core",
+        "when_not_to_use": "Avoid for extreme percussive-only material when attack realism is critical."
+      },
+      {
+        "algorithm_id": "time_scale_and_pitch_core.lp_psola",
+        "assumptions": "Frames are locally quasi-stationary and harmonic evolution is reasonably smooth.",
+        "failure_modes": "High-ratio stretch can introduce phasiness and blurred transients.",
+        "module": "pvx.algorithms.time_scale_and_pitch_core.lp_psola",
+        "name": "LP-PSOLA",
+        "theme": "Time-Scale and Pitch Core",
+        "when_not_to_use": "Avoid for extreme percussive-only material when attack realism is critical."
+      },
+      {
+        "algorithm_id": "time_scale_and_pitch_core.multi_resolution_phase_vocoder",
+        "assumptions": "Frames are locally quasi-stationary and harmonic evolution is reasonably smooth. Phase continuity assumptions hold best for moderate stretch ratios.",
+        "failure_modes": "High-ratio stretch can introduce phasiness and blurred transients. Extreme settings increase phasiness/transient blur risk.",
+        "module": "pvx.algorithms.time_scale_and_pitch_core.multi_resolution_phase_vocoder",
+        "name": "Multi-resolution phase vocoder",
+        "theme": "Time-Scale and Pitch Core",
+        "when_not_to_use": "Avoid for extreme percussive-only material when attack realism is critical. Avoid very large stretch+pitch shifts without transient controls."
+      },
+      {
+        "algorithm_id": "time_scale_and_pitch_core.nonlinear_time_maps",
+        "assumptions": "Frames are locally quasi-stationary and harmonic evolution is reasonably smooth.",
+        "failure_modes": "High-ratio stretch can introduce phasiness and blurred transients.",
+        "module": "pvx.algorithms.time_scale_and_pitch_core.nonlinear_time_maps",
+        "name": "Nonlinear time maps (curves, anchors, spline timing)",
+        "theme": "Time-Scale and Pitch Core",
+        "when_not_to_use": "Avoid for extreme percussive-only material when attack realism is critical."
+      },
+      {
+        "algorithm_id": "time_scale_and_pitch_core.td_psola",
+        "assumptions": "Frames are locally quasi-stationary and harmonic evolution is reasonably smooth.",
+        "failure_modes": "High-ratio stretch can introduce phasiness and blurred transients.",
+        "module": "pvx.algorithms.time_scale_and_pitch_core.td_psola",
+        "name": "TD-PSOLA",
+        "theme": "Time-Scale and Pitch Core",
+        "when_not_to_use": "Avoid for extreme percussive-only material when attack realism is critical."
+      },
+      {
+        "algorithm_id": "time_scale_and_pitch_core.wsola_waveform_similarity_overlap_add",
+        "assumptions": "Frames are locally quasi-stationary and harmonic evolution is reasonably smooth.",
+        "failure_modes": "High-ratio stretch can introduce phasiness and blurred transients.",
+        "module": "pvx.algorithms.time_scale_and_pitch_core.wsola_waveform_similarity_overlap_add",
+        "name": "WSOLA (Waveform Similarity Overlap-Add)",
+        "theme": "Time-Scale and Pitch Core",
+        "when_not_to_use": "Avoid for extreme percussive-only material when attack realism is critical."
+      }
+    ]
+  }
+}

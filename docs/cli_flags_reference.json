@@ -1,0 +1,1569 @@
+{
+  "commit": "58b1a2e",
+  "commit_date": "2026-02-17T09:29:32-05:00",
+  "entries": [
+    {
+      "action": "store_true",
+      "choices": [],
+      "default": null,
+      "flag": "--list-algorithm-package",
+      "help": "Print location of pvxalgorithms package and registry files",
+      "required": false,
+      "source": "src/pvx/cli/main.py",
+      "tool": "main.py"
+    },
+    {
+      "action": "store_true",
+      "choices": [],
+      "default": null,
+      "flag": "--list-tools",
+      "help": "Print the primary pvx CLI tools",
+      "required": false,
+      "source": "src/pvx/cli/main.py",
+      "tool": "main.py"
+    },
+    {
+      "action": "store_true",
+      "choices": [],
+      "default": null,
+      "flag": "--show-docs",
+      "help": "Print key generated documentation paths",
+      "required": false,
+      "source": "src/pvx/cli/main.py",
+      "tool": "main.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 8.0,
+      "flag": "--crossfade-ms",
+      "help": "Segment crossfade in milliseconds",
+      "required": false,
+      "source": "src/pvx/cli/pvxconform.py",
+      "tool": "pvxconform.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--map",
+      "help": "CSV map path",
+      "required": true,
+      "source": "src/pvx/cli/pvxconform.py",
+      "tool": "pvxconform.py"
+    },
+    {
+      "action": "",
+      "choices": [
+        "auto",
+        "fft",
+        "linear"
+      ],
+      "default": "auto",
+      "flag": "--resample-mode",
+      "help": "",
+      "required": false,
+      "source": "src/pvx/cli/pvxconform.py",
+      "tool": "pvxconform.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 0.1,
+      "flag": "--floor",
+      "help": "Noise floor multiplier",
+      "required": false,
+      "source": "src/pvx/cli/pvxdenoise.py",
+      "tool": "pvxdenoise.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--noise-file",
+      "help": "Optional external noise reference",
+      "required": false,
+      "source": "src/pvx/cli/pvxdenoise.py",
+      "tool": "pvxdenoise.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 0.35,
+      "flag": "--noise-seconds",
+      "help": "Noise profile duration from start",
+      "required": false,
+      "source": "src/pvx/cli/pvxdenoise.py",
+      "tool": "pvxdenoise.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 12.0,
+      "flag": "--reduction-db",
+      "help": "Reduction strength in dB",
+      "required": false,
+      "source": "src/pvx/cli/pvxdenoise.py",
+      "tool": "pvxdenoise.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 5,
+      "flag": "--smooth",
+      "help": "Temporal smoothing frames",
+      "required": false,
+      "source": "src/pvx/cli/pvxdenoise.py",
+      "tool": "pvxdenoise.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 0.92,
+      "flag": "--decay",
+      "help": "Tail memory decay 0..1",
+      "required": false,
+      "source": "src/pvx/cli/pvxdeverb.py",
+      "tool": "pvxdeverb.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 0.12,
+      "flag": "--floor",
+      "help": "Per-bin floor multiplier",
+      "required": false,
+      "source": "src/pvx/cli/pvxdeverb.py",
+      "tool": "pvxdeverb.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 0.45,
+      "flag": "--strength",
+      "help": "Tail suppression strength 0..1",
+      "required": false,
+      "source": "src/pvx/cli/pvxdeverb.py",
+      "tool": "pvxdeverb.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 32,
+      "flag": "--formant-lifter",
+      "help": "",
+      "required": false,
+      "source": "src/pvx/cli/pvxformant.py",
+      "tool": "pvxformant.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 12.0,
+      "flag": "--formant-max-gain-db",
+      "help": "",
+      "required": false,
+      "source": "src/pvx/cli/pvxformant.py",
+      "tool": "pvxformant.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 1.0,
+      "flag": "--formant-shift-ratio",
+      "help": "Formant ratio (>1 up, <1 down)",
+      "required": false,
+      "source": "src/pvx/cli/pvxformant.py",
+      "tool": "pvxformant.py"
+    },
+    {
+      "action": "",
+      "choices": [
+        "shift",
+        "preserve"
+      ],
+      "default": "shift",
+      "flag": "--mode",
+      "help": "",
+      "required": false,
+      "source": "src/pvx/cli/pvxformant.py",
+      "tool": "pvxformant.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 0.0,
+      "flag": "--pitch-shift-cents",
+      "help": "Additional microtonal pitch shift in cents before formant stage",
+      "required": false,
+      "source": "src/pvx/cli/pvxformant.py",
+      "tool": "pvxformant.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 0.0,
+      "flag": "--pitch-shift-semitones",
+      "help": "Optional pitch shift before formant stage",
+      "required": false,
+      "source": "src/pvx/cli/pvxformant.py",
+      "tool": "pvxformant.py"
+    },
+    {
+      "action": "",
+      "choices": [
+        "auto",
+        "fft",
+        "linear"
+      ],
+      "default": "auto",
+      "flag": "--resample-mode",
+      "help": "",
+      "required": false,
+      "source": "src/pvx/cli/pvxformant.py",
+      "tool": "pvxformant.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 3.0,
+      "flag": "--duration",
+      "help": "Output freeze duration in seconds",
+      "required": false,
+      "source": "src/pvx/cli/pvxfreeze.py",
+      "tool": "pvxfreeze.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 0.2,
+      "flag": "--freeze-time",
+      "help": "Freeze anchor time in seconds",
+      "required": false,
+      "source": "src/pvx/cli/pvxfreeze.py",
+      "tool": "pvxfreeze.py"
+    },
+    {
+      "action": "store_true",
+      "choices": [],
+      "default": null,
+      "flag": "--random-phase",
+      "help": "Add subtle phase randomization per frame",
+      "required": false,
+      "source": "src/pvx/cli/pvxfreeze.py",
+      "tool": "pvxfreeze.py"
+    },
+    {
+      "action": "store_true",
+      "choices": [],
+      "default": null,
+      "flag": "--force-stereo",
+      "help": "Mix result as stereo with panning",
+      "required": false,
+      "source": "src/pvx/cli/pvxharmonize.py",
+      "tool": "pvxharmonize.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": "",
+      "flag": "--gains",
+      "help": "Optional comma-separated linear gain per voice",
+      "required": false,
+      "source": "src/pvx/cli/pvxharmonize.py",
+      "tool": "pvxharmonize.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": "0,4,7",
+      "flag": "--intervals",
+      "help": "Comma-separated semitone intervals per voice (supports fractional values)",
+      "required": false,
+      "source": "src/pvx/cli/pvxharmonize.py",
+      "tool": "pvxharmonize.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": "",
+      "flag": "--intervals-cents",
+      "help": "Optional cents offsets per voice, added to --intervals (e.g. 0,14,-12)",
+      "required": false,
+      "source": "src/pvx/cli/pvxharmonize.py",
+      "tool": "pvxharmonize.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": "",
+      "flag": "--pans",
+      "help": "Optional comma-separated pan per voice [-1..1]",
+      "required": false,
+      "source": "src/pvx/cli/pvxharmonize.py",
+      "tool": "pvxharmonize.py"
+    },
+    {
+      "action": "",
+      "choices": [
+        "auto",
+        "fft",
+        "linear"
+      ],
+      "default": "auto",
+      "flag": "--resample-mode",
+      "help": "",
+      "required": false,
+      "source": "src/pvx/cli/pvxharmonize.py",
+      "tool": "pvxharmonize.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 1.0,
+      "flag": "--harmonic-gain",
+      "help": "",
+      "required": false,
+      "source": "src/pvx/cli/pvxlayer.py",
+      "tool": "pvxlayer.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 31,
+      "flag": "--harmonic-kernel",
+      "help": "",
+      "required": false,
+      "source": "src/pvx/cli/pvxlayer.py",
+      "tool": "pvxlayer.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 0.0,
+      "flag": "--harmonic-pitch-cents",
+      "help": "",
+      "required": false,
+      "source": "src/pvx/cli/pvxlayer.py",
+      "tool": "pvxlayer.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 0.0,
+      "flag": "--harmonic-pitch-semitones",
+      "help": "",
+      "required": false,
+      "source": "src/pvx/cli/pvxlayer.py",
+      "tool": "pvxlayer.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 1.0,
+      "flag": "--harmonic-stretch",
+      "help": "",
+      "required": false,
+      "source": "src/pvx/cli/pvxlayer.py",
+      "tool": "pvxlayer.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 1.0,
+      "flag": "--percussive-gain",
+      "help": "",
+      "required": false,
+      "source": "src/pvx/cli/pvxlayer.py",
+      "tool": "pvxlayer.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 31,
+      "flag": "--percussive-kernel",
+      "help": "",
+      "required": false,
+      "source": "src/pvx/cli/pvxlayer.py",
+      "tool": "pvxlayer.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 0.0,
+      "flag": "--percussive-pitch-cents",
+      "help": "",
+      "required": false,
+      "source": "src/pvx/cli/pvxlayer.py",
+      "tool": "pvxlayer.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 0.0,
+      "flag": "--percussive-pitch-semitones",
+      "help": "",
+      "required": false,
+      "source": "src/pvx/cli/pvxlayer.py",
+      "tool": "pvxlayer.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 1.0,
+      "flag": "--percussive-stretch",
+      "help": "",
+      "required": false,
+      "source": "src/pvx/cli/pvxlayer.py",
+      "tool": "pvxlayer.py"
+    },
+    {
+      "action": "",
+      "choices": [
+        "auto",
+        "fft",
+        "linear"
+      ],
+      "default": "auto",
+      "flag": "--resample-mode",
+      "help": "",
+      "required": false,
+      "source": "src/pvx/cli/pvxlayer.py",
+      "tool": "pvxlayer.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 0.5,
+      "flag": "--alpha",
+      "help": "Morph amount 0..1 (0=A, 1=B)",
+      "required": false,
+      "source": "src/pvx/cli/pvxmorph.py",
+      "tool": "pvxmorph.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--output",
+      "help": "Output file path",
+      "required": false,
+      "source": "src/pvx/cli/pvxmorph.py",
+      "tool": "pvxmorph.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--output-format",
+      "help": "Output extension/format; for --stdout defaults to wav",
+      "required": false,
+      "source": "src/pvx/cli/pvxmorph.py",
+      "tool": "pvxmorph.py"
+    },
+    {
+      "action": "store_true",
+      "choices": [],
+      "default": null,
+      "flag": "--overwrite",
+      "help": "",
+      "required": false,
+      "source": "src/pvx/cli/pvxmorph.py",
+      "tool": "pvxmorph.py"
+    },
+    {
+      "action": "store_true",
+      "choices": [],
+      "default": null,
+      "flag": "--stdout",
+      "help": "Write processed audio to stdout stream (for piping); equivalent to -o -",
+      "required": false,
+      "source": "src/pvx/cli/pvxmorph.py",
+      "tool": "pvxmorph.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--subtype",
+      "help": "",
+      "required": false,
+      "source": "src/pvx/cli/pvxmorph.py",
+      "tool": "pvxmorph.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 80.0,
+      "flag": "--chunk-ms",
+      "help": "Analysis/process chunk duration in ms",
+      "required": false,
+      "source": "src/pvx/cli/pvxretune.py",
+      "tool": "pvxretune.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 1200.0,
+      "flag": "--f0-max",
+      "help": "",
+      "required": false,
+      "source": "src/pvx/cli/pvxretune.py",
+      "tool": "pvxretune.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 60.0,
+      "flag": "--f0-min",
+      "help": "",
+      "required": false,
+      "source": "src/pvx/cli/pvxretune.py",
+      "tool": "pvxretune.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 20.0,
+      "flag": "--overlap-ms",
+      "help": "Chunk overlap in ms",
+      "required": false,
+      "source": "src/pvx/cli/pvxretune.py",
+      "tool": "pvxretune.py"
+    },
+    {
+      "action": "",
+      "choices": [
+        "auto",
+        "fft",
+        "linear"
+      ],
+      "default": "auto",
+      "flag": "--resample-mode",
+      "help": "",
+      "required": false,
+      "source": "src/pvx/cli/pvxretune.py",
+      "tool": "pvxretune.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": "C",
+      "flag": "--root",
+      "help": "Scale root note (C,C#,D,...,B)",
+      "required": false,
+      "source": "src/pvx/cli/pvxretune.py",
+      "tool": "pvxretune.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": "chromatic",
+      "flag": "--scale",
+      "help": "Named scale for 12-TET quantization",
+      "required": false,
+      "source": "src/pvx/cli/pvxretune.py",
+      "tool": "pvxretune.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--scale-cents",
+      "help": "Optional comma-separated microtonal scale degrees in cents within one octave, relative to --root (example: 0,90,204,294,408,498,612,702,816,906,1020,1110)",
+      "required": false,
+      "source": "src/pvx/cli/pvxretune.py",
+      "tool": "pvxretune.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 0.85,
+      "flag": "--strength",
+      "help": "Correction strength 0..1",
+      "required": false,
+      "source": "src/pvx/cli/pvxretune.py",
+      "tool": "pvxretune.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--pitch-shift-cents",
+      "help": "Optional microtonal pitch shift in cents (added to --pitch-shift-semitones)",
+      "required": false,
+      "source": "src/pvx/cli/pvxtransient.py",
+      "tool": "pvxtransient.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--pitch-shift-ratio",
+      "help": "",
+      "required": false,
+      "source": "src/pvx/cli/pvxtransient.py",
+      "tool": "pvxtransient.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 0.0,
+      "flag": "--pitch-shift-semitones",
+      "help": "",
+      "required": false,
+      "source": "src/pvx/cli/pvxtransient.py",
+      "tool": "pvxtransient.py"
+    },
+    {
+      "action": "",
+      "choices": [
+        "auto",
+        "fft",
+        "linear"
+      ],
+      "default": "auto",
+      "flag": "--resample-mode",
+      "help": "",
+      "required": false,
+      "source": "src/pvx/cli/pvxtransient.py",
+      "tool": "pvxtransient.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--target-duration",
+      "help": "Target duration in seconds",
+      "required": false,
+      "source": "src/pvx/cli/pvxtransient.py",
+      "tool": "pvxtransient.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 1.0,
+      "flag": "--time-stretch",
+      "help": "",
+      "required": false,
+      "source": "src/pvx/cli/pvxtransient.py",
+      "tool": "pvxtransient.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 1.6,
+      "flag": "--transient-threshold",
+      "help": "",
+      "required": false,
+      "source": "src/pvx/cli/pvxtransient.py",
+      "tool": "pvxtransient.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 14.0,
+      "flag": "--detune-cents",
+      "help": "Total detune span in cents",
+      "required": false,
+      "source": "src/pvx/cli/pvxunison.py",
+      "tool": "pvxunison.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 0.2,
+      "flag": "--dry-mix",
+      "help": "Dry signal mix amount",
+      "required": false,
+      "source": "src/pvx/cli/pvxunison.py",
+      "tool": "pvxunison.py"
+    },
+    {
+      "action": "",
+      "choices": [
+        "auto",
+        "fft",
+        "linear"
+      ],
+      "default": "auto",
+      "flag": "--resample-mode",
+      "help": "",
+      "required": false,
+      "source": "src/pvx/cli/pvxunison.py",
+      "tool": "pvxunison.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 5,
+      "flag": "--voices",
+      "help": "Number of unison voices",
+      "required": false,
+      "source": "src/pvx/cli/pvxunison.py",
+      "tool": "pvxunison.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 1.0,
+      "flag": "--width",
+      "help": "Stereo width multiplier 0..2",
+      "required": false,
+      "source": "src/pvx/cli/pvxunison.py",
+      "tool": "pvxunison.py"
+    },
+    {
+      "action": "",
+      "choices": [
+        "first",
+        "mix"
+      ],
+      "default": "mix",
+      "flag": "--analysis-channel",
+      "help": "Channel strategy for F0 estimation with --target-f0 (default: mix)",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "store_true",
+      "choices": [],
+      "default": null,
+      "flag": "--clip",
+      "help": "Legacy alias: hard clip at +/-1.0 when set",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 8.0,
+      "flag": "--compander-attack-ms",
+      "help": "Compander attack time in ms",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 3.0,
+      "flag": "--compander-compress-ratio",
+      "help": "Compander compression ratio (>=1)",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 1.8,
+      "flag": "--compander-expand-ratio",
+      "help": "Compander expansion ratio (>=1)",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 0.0,
+      "flag": "--compander-makeup-db",
+      "help": "Compander makeup gain in dB",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 120.0,
+      "flag": "--compander-release-ms",
+      "help": "Compander release time in ms",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--compander-threshold-db",
+      "help": "Enable compander threshold in dBFS",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 10.0,
+      "flag": "--compressor-attack-ms",
+      "help": "Compressor attack time in ms",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 0.0,
+      "flag": "--compressor-makeup-db",
+      "help": "Compressor makeup gain in dB",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 4.0,
+      "flag": "--compressor-ratio",
+      "help": "Compressor ratio (>=1)",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 120.0,
+      "flag": "--compressor-release-ms",
+      "help": "Compressor release time in ms",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--compressor-threshold-db",
+      "help": "Enable compressor above threshold dBFS",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 0,
+      "flag": "--cuda-device",
+      "help": "CUDA device index used when --device is auto/cuda (default: 0)",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [
+        "auto",
+        "cpu",
+        "cuda"
+      ],
+      "default": "auto",
+      "flag": "--device",
+      "help": "Compute device: auto (prefer CUDA), cpu, or cuda",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "store_true",
+      "choices": [],
+      "default": null,
+      "flag": "--dry-run",
+      "help": "Resolve settings without writing files",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 5.0,
+      "flag": "--expander-attack-ms",
+      "help": "Expander attack time in ms",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 2.0,
+      "flag": "--expander-ratio",
+      "help": "Expander ratio (>=1)",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 120.0,
+      "flag": "--expander-release-ms",
+      "help": "Expander release time in ms",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--expander-threshold-db",
+      "help": "Enable downward expander below threshold dBFS",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 1000.0,
+      "flag": "--f0-max",
+      "help": "Maximum F0 search bound in Hz (default: 1000)",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 50.0,
+      "flag": "--f0-min",
+      "help": "Minimum F0 search bound in Hz (default: 50)",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 32,
+      "flag": "--formant-lifter",
+      "help": "Cepstral lifter cutoff for formant envelope extraction (default: 32)",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 12.0,
+      "flag": "--formant-max-gain-db",
+      "help": "Max per-bin formant correction gain in dB (default: 12)",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 1.0,
+      "flag": "--formant-strength",
+      "help": "Formant correction blend 0..1 when pitch mode is formant-preserving (default: 1.0)",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "store_true",
+      "choices": [],
+      "default": null,
+      "flag": "--fourier-sync",
+      "help": "Enable fundamental frame locking. Uses generic short-time Fourier transforms with per-frame FFT sizes locked to detected F0.",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 8192,
+      "flag": "--fourier-sync-max-fft",
+      "help": "Maximum frame FFT size for --fourier-sync (default: 8192)",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 256,
+      "flag": "--fourier-sync-min-fft",
+      "help": "Minimum frame FFT size for --fourier-sync (default: 256)",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 5,
+      "flag": "--fourier-sync-smooth",
+      "help": "Smoothing span (frames) for prescanned F0 track in --fourier-sync (default: 5)",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--hard-clip-level",
+      "help": "Hard clip level in linear full-scale",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 512,
+      "flag": "--hop-size",
+      "help": "Hop size in samples (default: 512)",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 14.0,
+      "flag": "--kaiser-beta",
+      "help": "Kaiser window beta parameter used when --window kaiser (default: 14.0)",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--limiter-threshold",
+      "help": "Peak limiter threshold in linear full-scale",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 2048,
+      "flag": "--n-fft",
+      "help": "FFT size (default: 2048)",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "store_true",
+      "choices": [],
+      "default": null,
+      "flag": "--no-center",
+      "help": "Disable center padding in STFT/ISTFT",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "store_true",
+      "choices": [],
+      "default": null,
+      "flag": "--no-progress",
+      "help": "",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [
+        "none",
+        "peak",
+        "rms"
+      ],
+      "default": "none",
+      "flag": "--normalize",
+      "help": "Output normalization mode",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--output-dir",
+      "help": "Directory for output files (default: same directory as each input)",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--output-format",
+      "help": "Output format/extension (e.g. wav, flac, aiff). Default: keep input extension.",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "store_true",
+      "choices": [],
+      "default": null,
+      "flag": "--overwrite",
+      "help": "Overwrite existing outputs",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--peak-dbfs",
+      "help": "Target peak dBFS when --normalize peak",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [
+        "off",
+        "identity"
+      ],
+      "default": "identity",
+      "flag": "--phase-locking",
+      "help": "Inter-bin phase locking mode for transient fidelity (default: identity)",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [
+        "standard",
+        "formant-preserving"
+      ],
+      "default": "standard",
+      "flag": "--pitch-mode",
+      "help": "Pitch mode: standard shift or formant-preserving correction (default: standard)",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--pitch-shift-cents",
+      "help": "Pitch shift in cents (+1200 is one octave up)",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--pitch-shift-ratio",
+      "help": "Pitch ratio (>1 up, <1 down)",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--pitch-shift-semitones",
+      "help": "Pitch shift in semitones (+12 is one octave up)",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "store_true",
+      "choices": [],
+      "default": null,
+      "flag": "--quiet",
+      "help": "Reduce output and hide status bars",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [
+        "auto",
+        "fft",
+        "linear"
+      ],
+      "default": "auto",
+      "flag": "--resample-mode",
+      "help": "Resampling engine (auto=fft if scipy available, else linear)",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--rms-dbfs",
+      "help": "Target RMS dBFS when --normalize rms",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "store_true",
+      "choices": [],
+      "default": null,
+      "flag": "--silent",
+      "help": "Suppress all console output",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 1.0,
+      "flag": "--soft-clip-drive",
+      "help": "Soft clip drive amount (>0)",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--soft-clip-level",
+      "help": "Soft clip output ceiling in linear full-scale",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [
+        "tanh",
+        "arctan",
+        "cubic"
+      ],
+      "default": "tanh",
+      "flag": "--soft-clip-type",
+      "help": "Soft clip transfer type",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "store_true",
+      "choices": [],
+      "default": null,
+      "flag": "--stdout",
+      "help": "Write processed audio to stdout stream (for piping); requires exactly one input",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--subtype",
+      "help": "Output file subtype for soundfile (e.g. PCM_16, PCM_24, FLOAT)",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": "_pv",
+      "flag": "--suffix",
+      "help": "Suffix appended to output filename stem (default: _pv)",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--target-duration",
+      "help": "Absolute target duration in seconds (overrides --time-stretch)",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--target-f0",
+      "help": "Target fundamental frequency in Hz. Auto-estimates source F0 per file.",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--target-lufs",
+      "help": "Integrated loudness target in LUFS",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--target-pitch-shift-semitones",
+      "help": "Pitch shift in semitones (+12 is one octave up)",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--target-sample-rate",
+      "help": "Output sample rate in Hz (default: keep input rate)",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 1.0,
+      "flag": "--time-stretch",
+      "help": "Final duration multiplier (1.0=unchanged, 2.0=2x longer)",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "store_true",
+      "choices": [],
+      "default": null,
+      "flag": "--transient-preserve",
+      "help": "Enable transient phase resets based on spectral flux",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 2.0,
+      "flag": "--transient-threshold",
+      "help": "Spectral-flux multiplier for transient detection (default: 2.0)",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "count",
+      "choices": [],
+      "default": 0,
+      "flag": "--verbose",
+      "help": "Increase verbosity (repeat for extra detail)",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": "normal",
+      "flag": "--verbosity",
+      "help": "Console verbosity level",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 2048,
+      "flag": "--win-length",
+      "help": "Window length in samples (default: 2048)",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": "hann",
+      "flag": "--window",
+      "help": "Window type (default: hann)",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 8.0,
+      "flag": "--crossfade-ms",
+      "help": "",
+      "required": false,
+      "source": "src/pvx/cli/pvxwarp.py",
+      "tool": "pvxwarp.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--map",
+      "help": "CSV map with start_sec,end_sec,stretch",
+      "required": true,
+      "source": "src/pvx/cli/pvxwarp.py",
+      "tool": "pvxwarp.py"
+    },
+    {
+      "action": "",
+      "choices": [
+        "auto",
+        "fft",
+        "linear"
+      ],
+      "default": "auto",
+      "flag": "--resample-mode",
+      "help": "",
+      "required": false,
+      "source": "src/pvx/cli/pvxwarp.py",
+      "tool": "pvxwarp.py"
+    }
+  ],
+  "unique_flags": [
+    "--alpha",
+    "--analysis-channel",
+    "--chunk-ms",
+    "--clip",
+    "--compander-attack-ms",
+    "--compander-compress-ratio",
+    "--compander-expand-ratio",
+    "--compander-makeup-db",
+    "--compander-release-ms",
+    "--compander-threshold-db",
+    "--compressor-attack-ms",
+    "--compressor-makeup-db",
+    "--compressor-ratio",
+    "--compressor-release-ms",
+    "--compressor-threshold-db",
+    "--crossfade-ms",
+    "--cuda-device",
+    "--decay",
+    "--detune-cents",
+    "--device",
+    "--dry-mix",
+    "--dry-run",
+    "--duration",
+    "--expander-attack-ms",
+    "--expander-ratio",
+    "--expander-release-ms",
+    "--expander-threshold-db",
+    "--f0-max",
+    "--f0-min",
+    "--floor",
+    "--force-stereo",
+    "--formant-lifter",
+    "--formant-max-gain-db",
+    "--formant-shift-ratio",
+    "--formant-strength",
+    "--fourier-sync",
+    "--fourier-sync-max-fft",
+    "--fourier-sync-min-fft",
+    "--fourier-sync-smooth",
+    "--freeze-time",
+    "--gains",
+    "--hard-clip-level",
+    "--harmonic-gain",
+    "--harmonic-kernel",
+    "--harmonic-pitch-cents",
+    "--harmonic-pitch-semitones",
+    "--harmonic-stretch",
+    "--hop-size",
+    "--intervals",
+    "--intervals-cents",
+    "--kaiser-beta",
+    "--limiter-threshold",
+    "--list-algorithm-package",
+    "--list-tools",
+    "--map",
+    "--mode",
+    "--n-fft",
+    "--no-center",
+    "--no-progress",
+    "--noise-file",
+    "--noise-seconds",
+    "--normalize",
+    "--output",
+    "--output-dir",
+    "--output-format",
+    "--overlap-ms",
+    "--overwrite",
+    "--pans",
+    "--peak-dbfs",
+    "--percussive-gain",
+    "--percussive-kernel",
+    "--percussive-pitch-cents",
+    "--percussive-pitch-semitones",
+    "--percussive-stretch",
+    "--phase-locking",
+    "--pitch-mode",
+    "--pitch-shift-cents",
+    "--pitch-shift-ratio",
+    "--pitch-shift-semitones",
+    "--quiet",
+    "--random-phase",
+    "--reduction-db",
+    "--resample-mode",
+    "--rms-dbfs",
+    "--root",
+    "--scale",
+    "--scale-cents",
+    "--show-docs",
+    "--silent",
+    "--smooth",
+    "--soft-clip-drive",
+    "--soft-clip-level",
+    "--soft-clip-type",
+    "--stdout",
+    "--strength",
+    "--subtype",
+    "--suffix",
+    "--target-duration",
+    "--target-f0",
+    "--target-lufs",
+    "--target-pitch-shift-semitones",
+    "--target-sample-rate",
+    "--time-stretch",
+    "--transient-preserve",
+    "--transient-threshold",
+    "--verbose",
+    "--verbosity",
+    "--voices",
+    "--width",
+    "--win-length",
+    "--window"
+  ]
+}

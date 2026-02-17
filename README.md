@@ -47,6 +47,63 @@ Primary tool entry points:
 - [`docs/html/glossary.html`](docs/html/glossary.html): technical glossary with links for core DSP, phase-vocoder, MIR, and spatial-audio terms.
 - [`docs/html/papers.html`](docs/html/papers.html): expanded bibliography (100+ papers/references) covering classic and modern methods.
 - [`docs/html/index.html`](docs/html/index.html): grouped algorithm documentation with per-algorithm concept links.
+- [`docs/html/README.md`](docs/html/README.md): notes on why GitHub shows HTML as source and how to view rendered HTML pages.
+- [`docs/html/architecture.html`](docs/html/architecture.html): rendered architecture diagrams.
+- [`docs/html/limitations.html`](docs/html/limitations.html): limitations/failure-mode guidance by algorithm.
+- [`docs/html/benchmarks.html`](docs/html/benchmarks.html): reproducible benchmark report page.
+- [`docs/html/cookbook.html`](docs/html/cookbook.html): command cookbook for practical pipelines.
+- [`docs/html/cli_flags.html`](docs/html/cli_flags.html): full CLI flag reference rendered as HTML.
+- [`docs/html/citations.html`](docs/html/citations.html): citation quality report and upgrade targets.
+- [`docs/MATHEMATICAL_FOUNDATIONS.md`](docs/MATHEMATICAL_FOUNDATIONS.md): GitHub-renderable LaTeX derivations and plain-English DSP explanations.
+- [`docs/WINDOW_REFERENCE.md`](docs/WINDOW_REFERENCE.md): complete 50-window mathematical reference with plain-English interpretation for every window.
+- [`docs/ALGORITHM_LIMITATIONS.md`](docs/ALGORITHM_LIMITATIONS.md): assumptions, failure modes, and exclusion guidance per group/algorithm.
+- [`docs/PIPELINE_COOKBOOK.md`](docs/PIPELINE_COOKBOOK.md): end-to-end one-liner command cookbook.
+- [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md): reproducible benchmark methodology and results.
+- [`docs/CLI_FLAGS_REFERENCE.md`](docs/CLI_FLAGS_REFERENCE.md): parser-derived CLI flags reference.
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md): Mermaid architecture diagrams in GitHub Markdown.
+- [`docs/CITATION_QUALITY.md`](docs/CITATION_QUALITY.md): citation-link quality classification.
+- [`docs/references.bib`](docs/references.bib): generated BibTeX export of the bibliography.
+- [`docs/DOCS_CONTRACT.md`](docs/DOCS_CONTRACT.md): documentation contribution contract.
+
+## Hosted Docs (GitHub Pages)
+
+The repository includes an automated Pages workflow that publishes the generated `docs/` site.
+
+- Workflow: `.github/workflows/pages.yml`
+- Entry point in published artifact: `docs/index.html` (redirects to `docs/html/index.html`)
+- Canonical local preview: `docs/html/index.html`
+
+After enabling GitHub Pages in repository settings (GitHub Actions source), your docs URL is typically:
+`https://<your-github-username>.github.io/pvx/html/index.html`
+
+## Math and Windows in GitHub
+
+GitHub repository view generally shows `.html` files as source text, not as rendered web pages.
+For browser-rendered math directly inside GitHub, use:
+
+- [`docs/MATHEMATICAL_FOUNDATIONS.md`](docs/MATHEMATICAL_FOUNDATIONS.md)
+- [`docs/WINDOW_REFERENCE.md`](docs/WINDOW_REFERENCE.md)
+
+Core equations used throughout PVX:
+
+$$
+X_t[k]=\sum_{n=0}^{N-1} x[n+tH_a]w[n]e^{-j2\pi kn/N}
+$$
+
+Plain English: STFT analysis takes overlapping, windowed frames and converts them into complex frequency bins.
+
+$$
+\Delta\phi_t[k]=\operatorname{princarg}\left(\phi_t[k]-\phi_{t-1}[k]-\omega_kH_a\right),\qquad
+\hat{\phi}_t[k]=\hat{\phi}_{t-1}[k]+\hat{\omega}_t[k]H_s
+$$
+
+Plain English: the phase vocoder estimates true per-bin frequency from wrapped phase difference, then accumulates phase at the synthesis hop.
+
+$$
+r_{\text{pitch}}=2^{\Delta s/12}=2^{\Delta c/1200}
+$$
+
+Plain English: semitone and cent shifts are equivalent ways to express the same pitch ratio.
 
 ## Repository Layout
 
@@ -99,13 +156,32 @@ python3 pvxvoc.py test.wav --time-stretch 1.25 --pitch-shift-semitones 3
 Documentation artifacts:
 
 - `docs/PYTHON_FILE_HELP.md`: exhaustive per-file reference and help index.
-  - Current coverage: all `189` Python files in this repository.
+  - Current coverage: all `192` Python files in this repository.
   - Includes purpose, top-level symbols, help commands, and CLI help snapshots where applicable.
 - `docs/PVX_ALGORITHM_PARAMS.md`: per-algorithm parameter keys consumed by `pvx.algorithms.base` dispatch.
+- `docs/MATHEMATICAL_FOUNDATIONS.md`: full mathematical foundations in GitHub-renderable LaTeX plus plain-English interpretation.
+- `docs/WINDOW_REFERENCE.md`: all supported windows defined mathematically and explained in plain English.
+- `docs/ALGORITHM_LIMITATIONS.md`: assumptions/failure modes/when-not-to-use by group and algorithm.
+- `docs/PIPELINE_COOKBOOK.md`: end-to-end one-line recipes (including Unix pipes).
+- `docs/BENCHMARKS.md`: reproducible performance + quality benchmark report.
+- `docs/CLI_FLAGS_REFERENCE.md`: parser-derived long-flag inventory with source mapping.
+- `docs/ARCHITECTURE.md`: Mermaid architecture diagrams (GitHub-renderable).
+- `docs/CITATION_QUALITY.md`: citation-link quality report and DOI/publisher upgrade targets.
+- `docs/references.bib`: generated BibTeX export.
+- `docs/DOCS_CONTRACT.md`: docs contribution contract/checklist.
 - `ALGORITHM_INVENTORY.md`: themed inventory of all algorithm modules.
 - [`docs/html/index.html`](docs/html/index.html): grouped HTML docs index (one page per algorithm folder/theme).
 - [`docs/html/glossary.html`](docs/html/glossary.html): linked technical glossary with external references.
 - [`docs/html/papers.html`](docs/html/papers.html): expanded bibliography (100+ papers/references) used in formulation of this codebase and related phase-vocoder DSP methods.
+- [`docs/html/math.html`](docs/html/math.html): browser-rendered mathematical summary page.
+- [`docs/html/windows.html`](docs/html/windows.html): browser-rendered complete window reference.
+- [`docs/html/architecture.html`](docs/html/architecture.html): rendered architecture diagrams.
+- [`docs/html/limitations.html`](docs/html/limitations.html): rendered limitations guidance.
+- [`docs/html/benchmarks.html`](docs/html/benchmarks.html): rendered benchmark report.
+- [`docs/html/cookbook.html`](docs/html/cookbook.html): rendered cookbook of command chains.
+- [`docs/html/cli_flags.html`](docs/html/cli_flags.html): rendered CLI flag inventory.
+- [`docs/html/citations.html`](docs/html/citations.html): rendered citation quality report.
+- [`docs/html/README.md`](docs/html/README.md): HTML viewing guidance for GitHub/local browser/GitHub Pages.
 - `docs/html/groups/*.html`: per-group algorithm pages listing IDs, module paths, dispatch parameter keys, and linked concepts.
 
 Help access patterns:
@@ -123,8 +199,28 @@ Regenerate docs after code changes:
 
 ```bash
 python3 scripts_generate_python_docs.py
+python3 scripts_generate_theory_docs.py
+python3 scripts_generate_docs_extras.py
 python3 scripts_generate_html_docs.py
+python3 scripts_generate_docs_pdf.py --output docs/pvx_documentation.pdf
 ```
+
+PDF engine notes for `scripts_generate_docs_pdf.py`:
+
+- Auto mode tries (in order): Chromium/Chrome, `wkhtmltopdf`, WeasyPrint, Playwright.
+- If you need explicit setup:
+  - Chromium/Chrome in PATH, or
+  - `python3 -m pip install weasyprint`, or
+  - `python3 -m pip install playwright && playwright install chromium`, or
+  - system `wkhtmltopdf` with local-file access enabled.
+
+## Documentation Contract
+
+`pvx` uses a strict docs-sync policy for code changes:
+
+- Contract file: [`docs/DOCS_CONTRACT.md`](docs/DOCS_CONTRACT.md)
+- CI enforcement: [`.github/workflows/docs-ci.yml`](.github/workflows/docs-ci.yml)
+- Scope: CLI flags, algorithm inventory, windows/math docs, citations, and HTML docs must be regenerated in the same change set.
 
 <!-- BEGIN TECHNICAL GLOSSARY TABLE -->
 ## Technical Glossary Snapshot (Linked)
@@ -646,6 +742,13 @@ Processing order in the shared mastering chain:
 Window families include classic, cosine-sum, tapered, gaussian/generalized gaussian, exponential, cauchy, cosine-power, hann-poisson, and general-hamming variants.
 
 All supported windows: `hann`, `hamming`, `blackman`, `blackmanharris`, `nuttall`, `flattop`, `blackman_nuttall`, `exact_blackman`, `sine`, `bartlett`, `boxcar`, `triangular`, `bartlett_hann`, `tukey`, `tukey_0p1`, `tukey_0p25`, `tukey_0p75`, `tukey_0p9`, `parzen`, `lanczos`, `welch`, `gaussian_0p25`, `gaussian_0p35`, `gaussian_0p45`, `gaussian_0p55`, `gaussian_0p65`, `general_gaussian_1p5_0p35`, `general_gaussian_2p0_0p35`, `general_gaussian_3p0_0p35`, `general_gaussian_4p0_0p35`, `exponential_0p25`, `exponential_0p5`, `exponential_1p0`, `cauchy_0p5`, `cauchy_1p0`, `cauchy_2p0`, `cosine_power_2`, `cosine_power_3`, `cosine_power_4`, `hann_poisson_0p5`, `hann_poisson_1p0`, `hann_poisson_2p0`, `general_hamming_0p50`, `general_hamming_0p60`, `general_hamming_0p70`, `general_hamming_0p80`, `bohman`, `cosine`, `kaiser`, `rect`.
+
+Mathematical definitions and plain-English explanations for every window above are provided in:
+
+- [`docs/WINDOW_REFERENCE.md`](docs/WINDOW_REFERENCE.md) (GitHub-renderable LaTeX)
+- [`docs/html/windows.html`](docs/html/windows.html) (browser-rendered HTML with MathJax)
+- [`docs/window_metrics.json`](docs/window_metrics.json) (machine-readable metrics for all windows)
+- `docs/assets/windows/*` (generated SVG time-domain and spectrum plots per window)
 
 Use `--help` on any `pvx*` tool to view the exact current window list.
 

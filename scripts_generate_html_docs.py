@@ -4,11 +4,11 @@
 from __future__ import annotations
 
 from collections import OrderedDict
-from datetime import datetime, timezone
 from html import escape
 import json
 from pathlib import Path
 import re
+import subprocess
 from urllib.parse import quote_plus
 import sys
 
@@ -18,9 +18,44 @@ DOCS_HTML_DIR = ROOT / "docs" / "html"
 GROUPS_DIR = DOCS_HTML_DIR / "groups"
 GLOSSARY_PATH = ROOT / "docs" / "technical_glossary.json"
 EXTRA_PAPERS_PATH = ROOT / "docs" / "papers_extra.json"
+WINDOW_METRICS_PATH = ROOT / "docs" / "window_metrics.json"
+CLI_FLAGS_PATH = ROOT / "docs" / "cli_flags_reference.json"
+LIMITATIONS_PATH = ROOT / "docs" / "algorithm_limitations.json"
+COOKBOOK_PATH = ROOT / "docs" / "pipeline_cookbook.json"
+BENCHMARKS_PATH = ROOT / "docs" / "benchmarks" / "latest.json"
+CITATION_QUALITY_PATH = ROOT / "docs" / "citation_quality.json"
 
 sys.path.insert(0, str(SRC_DIR))
 from pvx.algorithms.registry import ALGORITHM_REGISTRY  # noqa: E402
+from pvx.core import voc as voc_core  # noqa: E402
+
+
+def git_commit_meta() -> tuple[str, str]:
+    commit = "unknown"
+    commit_date = "unknown"
+    try:
+        commit_proc = subprocess.run(
+            ["git", "-C", str(ROOT), "rev-parse", "--short", "HEAD"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if commit_proc.returncode == 0 and commit_proc.stdout.strip():
+            commit = commit_proc.stdout.strip()
+        date_proc = subprocess.run(
+            ["git", "-C", str(ROOT), "show", "-s", "--format=%cI", "HEAD"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if date_proc.returncode == 0 and date_proc.stdout.strip():
+            commit_date = date_proc.stdout.strip()
+    except Exception:
+        pass
+    return commit, commit_date
+
+
+COMMIT_HASH, COMMIT_DATE = git_commit_meta()
 
 
 def scholar(title: str) -> str:
@@ -783,15 +818,45 @@ def dedupe_papers(papers: list[dict[str, str]]) -> list[dict[str, str]]:
     output: list[dict[str, str]] = []
     for paper in papers:
         key = (
-            paper.get("category", "").strip().lower(),
             paper.get("year", "").strip(),
             paper.get("title", "").strip().lower(),
+            paper.get("authors", "").strip().lower(),
         )
         if key in seen:
             continue
         seen.add(key)
         output.append(paper)
     return output
+
+
+PAPER_URL_UPGRADES: dict[str, str] = {
+    "MMSE short-time spectral amplitude estimator": "https://doi.org/10.1109/TASSP.1984.1164453",
+    "log-MMSE speech enhancement": "https://doi.org/10.1109/TASSP.1985.1164550",
+    "generalized sidelobe canceller": "https://doi.org/10.1109/TAP.1982.1142739",
+    "GCC-PHAT": "https://doi.org/10.1109/TASSP.1976.1162830",
+}
+
+
+def _upgrade_paper_url(title: str, url: str) -> str:
+    if "scholar.google.com" not in url:
+        return url
+    title_l = title.lower()
+    for key, replacement in PAPER_URL_UPGRADES.items():
+        if key.lower() in title_l:
+            return replacement
+    return url
+
+
+def upgrade_paper_urls(papers: list[dict[str, str]]) -> list[dict[str, str]]:
+    upgraded: list[dict[str, str]] = []
+    for paper in papers:
+        upgraded.append(
+            {
+                **paper,
+                "url": _upgrade_paper_url(str(paper.get("title", "")), str(paper.get("url", ""))),
+            }
+        )
+    return upgraded
 
 
 def load_extra_papers() -> list[dict[str, str]]:
@@ -840,7 +905,7 @@ def load_glossary() -> list[dict[str, str]]:
     return out
 
 
-PAPERS = dedupe_papers(PAPERS + load_extra_papers())
+PAPERS = dedupe_papers(upgrade_paper_urls(PAPERS + load_extra_papers()))
 TECHNICAL_GLOSSARY = load_glossary()
 GLOSSARY_LOOKUP = {entry["term"].lower(): entry for entry in TECHNICAL_GLOSSARY}
 
@@ -884,6 +949,201 @@ def glossary_links_html(entries: list[dict[str, str]], *, page_prefix: str = "")
         for entry in entries
     )
 
+
+def load_json(path: Path, default: dict | list):
+    if not path.exists():
+        return default
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return default
+    if isinstance(default, dict) and not isinstance(payload, dict):
+        return default
+    if isinstance(default, list) and not isinstance(payload, list):
+        return default
+    return payload
+
+
+def classify_reference_url(url: str) -> str:
+    lower = url.lower()
+    if "doi.org/" in lower:
+        return "doi"
+    if "arxiv.org" in lower:
+        return "arxiv"
+    if "scholar.google.com" in lower:
+        return "scholar"
+    if any(host in lower for host in ("ieeexplore", "acm.org", "springer", "sciencedirect", "wiley", "jstor", "itu.int", "tech.ebu.ch")):
+        return "publisher_or_standard"
+    return "web"
+
+
+def window_entries() -> list[dict[str, str]]:
+    entries: list[dict[str, str]] = []
+    for name in voc_core.WINDOW_CHOICES:
+        if name in voc_core._COSINE_SERIES_WINDOWS:
+            coeffs = ", ".join(f"{c:g}" for c in voc_core._COSINE_SERIES_WINDOWS[name])
+            family = "Cosine series"
+            params = f"coeffs=({coeffs})"
+            formula = "W1"
+            note = "Cosine-sum taper balancing leakage and resolution."
+        elif name == "sine":
+            family = "Sinusoidal"
+            params = "none"
+            formula = "W2"
+            note = "Raised-sine taper; smooth edges with moderate main-lobe width."
+        elif name == "cosine":
+            family = "Sinusoidal"
+            params = "none"
+            formula = "W2"
+            note = "Same implementation as sine window in PVX."
+        elif name == "bartlett":
+            family = "Triangular"
+            params = "none"
+            formula = "W3"
+            note = "Linear triangular taper; simple and fast."
+        elif name == "boxcar":
+            family = "Rectangular"
+            params = "none"
+            formula = "W0"
+            note = "No tapering; best frequency resolution but strongest leakage."
+        elif name == "rect":
+            family = "Rectangular"
+            params = "none"
+            formula = "W0"
+            note = "Alias of boxcar in PVX."
+        elif name == "triangular":
+            family = "Triangular"
+            params = "none"
+            formula = "W4"
+            note = "Triangular taper variant with denominator $(N+1)/2$."
+        elif name == "bartlett_hann":
+            family = "Hybrid taper"
+            params = "fixed coefficients"
+            formula = "W5"
+            note = "Blend of Bartlett-like slope and cosine curvature."
+        elif name in voc_core._TUKEY_WINDOWS:
+            family = "Tukey"
+            params = f"alpha={voc_core._TUKEY_WINDOWS[name]:g}"
+            formula = "W6"
+            note = "Cosine tapers at edges with flat center region."
+        elif name == "parzen":
+            family = "Polynomial"
+            params = "piecewise cubic"
+            formula = "W7"
+            note = "Smooth piecewise cubic window with strong sidelobe suppression."
+        elif name == "lanczos":
+            family = "Sinc"
+            params = "none"
+            formula = "W8"
+            note = "Sinc-based taper with useful compromise for spectral analysis."
+        elif name == "welch":
+            family = "Quadratic"
+            params = "none"
+            formula = "W9"
+            note = "Parabolic taper emphasizing center samples."
+        elif name in voc_core._GAUSSIAN_WINDOWS:
+            family = "Gaussian"
+            params = f"sigma_ratio={voc_core._GAUSSIAN_WINDOWS[name]:g}"
+            formula = "W10"
+            note = "Bell-shaped taper; smaller sigma gives stronger edge attenuation."
+        elif name in voc_core._GENERAL_GAUSSIAN_WINDOWS:
+            power, sigma_ratio = voc_core._GENERAL_GAUSSIAN_WINDOWS[name]
+            family = "Generalized Gaussian"
+            params = f"power={power:g}, sigma_ratio={sigma_ratio:g}"
+            formula = "W11"
+            note = "Adjustable shape exponent controls shoulder steepness."
+        elif name in voc_core._EXPONENTIAL_WINDOWS:
+            family = "Exponential"
+            params = f"tau_ratio={voc_core._EXPONENTIAL_WINDOWS[name]:g}"
+            formula = "W12"
+            note = "Symmetric exponential decay away from center."
+        elif name in voc_core._CAUCHY_WINDOWS:
+            family = "Cauchy / Lorentzian"
+            params = f"gamma_ratio={voc_core._CAUCHY_WINDOWS[name]:g}"
+            formula = "W13"
+            note = "Heavy-tailed taper with slower side decay than Gaussian."
+        elif name in voc_core._COSINE_POWER_WINDOWS:
+            family = "Cosine power"
+            params = f"power={voc_core._COSINE_POWER_WINDOWS[name]:g}"
+            formula = "W14"
+            note = "Raises sine taper to power $p$; higher $p$ narrows effective support."
+        elif name in voc_core._HANN_POISSON_WINDOWS:
+            family = "Hann-Poisson"
+            params = f"alpha={voc_core._HANN_POISSON_WINDOWS[name]:g}"
+            formula = "W15"
+            note = "Hann multiplied by exponential envelope for stronger edge decay."
+        elif name in voc_core._GENERAL_HAMMING_WINDOWS:
+            family = "General Hamming"
+            params = f"alpha={voc_core._GENERAL_HAMMING_WINDOWS[name]:.2f}"
+            formula = "W16"
+            note = "Hamming family with tunable cosine weight."
+        elif name == "bohman":
+            family = "Bohman"
+            params = "none"
+            formula = "W17"
+            note = "Continuous slope window with cosine plus sine correction."
+        elif name == "kaiser":
+            family = "Kaiser-Bessel"
+            params = "beta from --kaiser-beta"
+            formula = "W18"
+            note = "Adjustable trade-off window using modified Bessel function."
+        else:
+            family = "Other"
+            params = "none"
+            formula = "W0"
+            note = "Window supported by PVX."
+        entries.append(
+            {
+                "name": name,
+                "family": family,
+                "params": params,
+                "formula": formula,
+                "note": note,
+            }
+        )
+    return entries
+
+
+WINDOW_EQUATIONS_HTML = """
+<div class="card">
+  <h2>Window Formula Key</h2>
+  <p class="small">
+    Let $n=0,\\dots,N-1$, center index $m=(N-1)/2$, and normalized coordinate
+    $x_n=(n-m)/m$.
+  </p>
+  <p><strong>(W0) Rectangular:</strong> $$w[n]=1$$</p>
+  <p><strong>(W1) Cosine series:</strong> $$w[n]=\\sum_{k=0}^{K} a_k\\cos\\left(\\frac{2\\pi k n}{N-1}\\right)$$</p>
+  <p><strong>(W2) Sine/Cosine:</strong> $$w[n]=\\sin\\left(\\frac{\\pi n}{N-1}\\right)$$</p>
+  <p><strong>(W3) Bartlett:</strong> $$w[n]=1-\\left|\\frac{n-m}{m}\\right|$$</p>
+  <p><strong>(W4) Triangular:</strong> $$w[n]=\\max\\left(1-\\left|\\frac{n-m}{(N+1)/2}\\right|,0\\right)$$</p>
+  <p><strong>(W5) Bartlett-Hann:</strong> $$x=\\frac{n}{N-1}-\\frac{1}{2},\\quad w[n]=0.62-0.48|x|+0.38\\cos(2\\pi x)$$</p>
+  <p><strong>(W6) Tukey:</strong></p>
+  <p>$$x=\\frac{n}{N-1},\\quad w[n]=\\begin{cases}
+  \\frac{1}{2}\\left(1+\\cos\\left(\\pi\\left(\\frac{2x}{\\alpha}-1\\right)\\right)\\right), & 0\\le x<\\frac{\\alpha}{2} \\\\
+  1, & \\frac{\\alpha}{2}\\le x<1-\\frac{\\alpha}{2} \\\\
+  \\frac{1}{2}\\left(1+\\cos\\left(\\pi\\left(\\frac{2x}{\\alpha}-\\frac{2}{\\alpha}+1\\right)\\right)\\right), & 1-\\frac{\\alpha}{2}\\le x\\le 1
+  \\end{cases}$$</p>
+  <p class="small">PVX special cases: $\\alpha\\le 0$ is rectangular and $\\alpha\\ge 1$ becomes Hann.</p>
+  <p><strong>(W7) Parzen:</strong></p>
+  <p>$$u=\\left|\\frac{2n}{N-1}-1\\right|,\\quad w[n]=\\begin{cases}
+  1-6u^2+6u^3, & 0\\le u\\le \\frac{1}{2} \\\\
+  2(1-u)^3, & \\frac{1}{2}<u\\le 1 \\\\
+  0, & u>1
+  \\end{cases}$$</p>
+  <p><strong>(W8) Lanczos:</strong> $$w[n]=\\operatorname{sinc}\\left(\\frac{2n}{N-1}-1\\right)$$</p>
+  <p><strong>(W9) Welch:</strong> $$w[n]=\\max\\left(1-x_n^2,0\\right)$$</p>
+  <p><strong>(W10) Gaussian:</strong> $$w[n]=\\exp\\left(-\\frac{1}{2}\\left(\\frac{n-m}{\\sigma}\\right)^2\\right),\\ \\sigma=r_\\sigma m$$</p>
+  <p><strong>(W11) General Gaussian:</strong> $$w[n]=\\exp\\left(-\\frac{1}{2}\\left|\\frac{n-m}{\\sigma}\\right|^{2p}\\right)$$</p>
+  <p><strong>(W12) Exponential:</strong> $$w[n]=\\exp\\left(-\\frac{|n-m|}{\\tau}\\right),\\ \\tau=r_\\tau m$$</p>
+  <p><strong>(W13) Cauchy:</strong> $$w[n]=\\frac{1}{1+\\left(\\frac{n-m}{\\gamma}\\right)^2},\\ \\gamma=r_\\gamma m$$</p>
+  <p><strong>(W14) Cosine power:</strong> $$w[n]=\\sin\\left(\\frac{\\pi n}{N-1}\\right)^p$$</p>
+  <p><strong>(W15) Hann-Poisson:</strong> $$w[n]=w_{\\text{Hann}}[n]\\exp\\left(-\\alpha\\frac{|n-m|}{m}\\right)$$</p>
+  <p><strong>(W16) General Hamming:</strong> $$w[n]=\\alpha-(1-\\alpha)\\cos\\left(\\frac{2\\pi n}{N-1}\\right)$$</p>
+  <p><strong>(W17) Bohman:</strong> $$x=\\left|\\frac{2n}{N-1}-1\\right|,\\ \\ w[n]=(1-x)\\cos(\\pi x)+\\frac{\\sin(\\pi x)}{\\pi}$$</p>
+  <p><strong>(W18) Kaiser:</strong> $$w[n]=\\frac{I_0\\left(\\beta\\sqrt{1-r_n^2}\\right)}{I_0(\\beta)},\\quad r_n=\\frac{n-m}{m}$$</p>
+  <p class="small">Each window name in the table maps to one formula family above plus fixed constants/shape parameters.</p>
+</div>
+""".strip()
 
 def extract_algorithm_params(base_path: Path) -> dict[str, list[str]]:
     text = base_path.read_text(encoding="utf-8")
@@ -932,7 +1192,22 @@ def grouped_algorithms() -> OrderedDict[str, list[tuple[str, dict[str, str]]]]:
     return groups
 
 
-def html_page(title: str, content: str, *, css_path: str, breadcrumbs: str = "") -> str:
+def html_page(
+    title: str,
+    content: str,
+    *,
+    css_path: str,
+    breadcrumbs: str = "",
+    include_mermaid: bool = False,
+) -> str:
+    mermaid_header = ""
+    if include_mermaid:
+        mermaid_header = (
+            "  <script type=\"module\">\n"
+            "    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';\n"
+            "    mermaid.initialize({ startOnLoad: true, securityLevel: 'loose' });\n"
+            "  </script>\n"
+        )
     return f"""<!doctype html>
 <html lang=\"en\">
 <head>
@@ -940,7 +1215,17 @@ def html_page(title: str, content: str, *, css_path: str, breadcrumbs: str = "")
   <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
   <title>{escape(title)}</title>
   <link rel=\"stylesheet\" href=\"{css_path}\" />
-</head>
+  <script>
+    window.MathJax = {{
+      tex: {{
+        inlineMath: [['$', '$'], ['\\\\(', '\\\\)']],
+        displayMath: [['$$', '$$'], ['\\\\[', '\\\\]']]
+      }},
+      svg: {{ fontCache: 'global' }}
+    }};
+  </script>
+  <script defer src=\"https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js\"></script>
+{mermaid_header}</head>
 <body>
   <header class=\"site-header\">
     <div class=\"wrap\">
@@ -951,7 +1236,8 @@ def html_page(title: str, content: str, *, css_path: str, breadcrumbs: str = "")
   <main class=\"wrap\">{content}</main>
   <footer class=\"site-footer\">
     <div class=\"wrap\">
-      Generated by <code>scripts_generate_html_docs.py</code> on {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}.
+      Generated by <code>scripts_generate_html_docs.py</code> from commit <code>{escape(COMMIT_HASH)}</code>
+      (commit date: {escape(COMMIT_DATE)}).
     </div>
   </footer>
 </body>
@@ -1056,6 +1342,13 @@ code {
 .mono {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
+pre.mermaid {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px;
+  overflow-x: auto;
+}
 @media (max-width: 900px) {
   table { display: block; overflow-x: auto; white-space: nowrap; }
 }
@@ -1108,6 +1401,24 @@ def render_index(groups: OrderedDict[str, list[tuple[str, dict[str, str]]]], par
   <p>
     <a href=\"glossary.html\"><strong>Linked technical glossary ({unique_concepts} terms)</strong></a>
     - quick definitions and external references (Wikipedia, standards pages, docs, and papers).
+  </p>
+  <p>
+    <a href=\"math.html\"><strong>Mathematical foundations</strong></a> and
+    <a href=\"windows.html\"><strong>window reference (all {len(voc_core.WINDOW_CHOICES)} windows)</strong></a>.
+  </p>
+  <p>
+    <a href=\"architecture.html\"><strong>Architecture diagrams</strong></a>,
+    <a href=\"limitations.html\"><strong>algorithm limitations</strong></a>,
+    <a href=\"benchmarks.html\"><strong>benchmark report</strong></a>,
+    <a href=\"cookbook.html\"><strong>pipeline cookbook</strong></a>,
+    <a href=\"cli_flags.html\"><strong>CLI flag index</strong></a>, and
+    <a href=\"citations.html\"><strong>citation quality report</strong></a>.
+  </p>
+  <p class=\"small\">
+    GitHub usually shows <code>.html</code> files as source. For browser-rendered math on GitHub itself,
+    use the Markdown mirrors:
+    <a href=\"../MATHEMATICAL_FOUNDATIONS.md\"><code>docs/MATHEMATICAL_FOUNDATIONS.md</code></a> and
+    <a href=\"../WINDOW_REFERENCE.md\"><code>docs/WINDOW_REFERENCE.md</code></a>.
   </p>
 </div>
 """
@@ -1202,7 +1513,11 @@ def render_group_pages(groups: OrderedDict[str, list[tuple[str, dict[str, str]]]
             "<nav>"
             "<a href=\"../index.html\">Home</a> | "
             "<a href=\"../papers.html\">Research papers</a> | "
-            "<a href=\"../glossary.html\">Technical glossary</a>"
+            "<a href=\"../glossary.html\">Technical glossary</a> | "
+            "<a href=\"../math.html\">Math</a> | "
+            "<a href=\"../windows.html\">Windows</a> | "
+            "<a href=\"../architecture.html\">Architecture</a> | "
+            "<a href=\"../limitations.html\">Limitations</a>"
             "</nav>"
         )
         html = html_page(
@@ -1248,19 +1563,21 @@ def render_papers_page() -> None:
         anchor = slugify(category)
         rows = []
         for p in sorted(papers, key=lambda item: (item.get("year", ""), item.get("title", "")), reverse=True):
+            link_type = classify_reference_url(p["url"])
             rows.append(
                 "<tr>"
                 f"<td>{escape(p['year'])}</td>"
                 f"<td>{escape(p['authors'])}</td>"
                 f"<td>{escape(p['title'])}</td>"
                 f"<td>{escape(p['venue'])}</td>"
+                f"<td><code>{escape(link_type)}</code></td>"
                 f"<td><a href=\"{escape(p['url'])}\" target=\"_blank\" rel=\"noopener\">Link</a></td>"
                 "</tr>"
             )
         sections.append(
             f"<h2 id=\"{escape(anchor)}\">{escape(category)}</h2>"
             "<table>"
-            "<thead><tr><th>Year</th><th>Authors</th><th>Title</th><th>Venue</th><th>Link</th></tr></thead>"
+            "<thead><tr><th>Year</th><th>Authors</th><th>Title</th><th>Venue</th><th>Link type</th><th>Link</th></tr></thead>"
             f"<tbody>{''.join(rows)}</tbody>"
             "</table>"
         )
@@ -1268,7 +1585,10 @@ def render_papers_page() -> None:
     breadcrumbs = (
         "<nav>"
         "<a href=\"index.html\">Home</a> | "
-        "<a href=\"glossary.html\">Technical glossary</a>"
+        "<a href=\"glossary.html\">Technical glossary</a> | "
+        "<a href=\"math.html\">Math</a> | "
+        "<a href=\"windows.html\">Windows</a> | "
+        "<a href=\"citations.html\">Citation quality</a>"
         "</nav>"
     )
     html = html_page(
@@ -1328,7 +1648,10 @@ def render_glossary_page() -> None:
     breadcrumbs = (
         "<nav>"
         "<a href=\"index.html\">Home</a> | "
-        "<a href=\"papers.html\">Research papers</a>"
+        "<a href=\"papers.html\">Research papers</a> | "
+        "<a href=\"math.html\">Math</a> | "
+        "<a href=\"windows.html\">Windows</a> | "
+        "<a href=\"architecture.html\">Architecture</a>"
         "</nav>"
     )
     html = html_page(
@@ -1338,6 +1661,579 @@ def render_glossary_page() -> None:
         breadcrumbs=breadcrumbs,
     )
     (DOCS_HTML_DIR / "glossary.html").write_text(html, encoding="utf-8")
+
+
+def render_math_page() -> None:
+    sections: list[str] = []
+    sections.append(
+        """
+<div class=\"card\">
+  <p>
+    Mathematical summary of the core signal-processing model used across PVX.
+    Equations are rendered with MathJax when this page is opened in a normal browser.
+  </p>
+  <p class=\"small\">
+    GitHub usually displays HTML source text. For GitHub-native math rendering, use
+    <a href=\"../MATHEMATICAL_FOUNDATIONS.md\"><code>docs/MATHEMATICAL_FOUNDATIONS.md</code></a>.
+  </p>
+</div>
+"""
+    )
+    sections.append(
+        """
+<div class=\"card\">
+  <h2>STFT Analysis and Synthesis</h2>
+  <p><strong>Analysis:</strong></p>
+  <p>$$X_t[k]=\\sum_{n=0}^{N-1} x[n+tH_a]w[n]e^{-j2\\pi kn/N}$$</p>
+  <p class=\"small\">Each frame $t$ is windowed by $w[n]$ and transformed to complex bins $k$.</p>
+  <p><strong>Synthesis:</strong></p>
+  <p>$$\\hat{x}[n]=\\frac{\\sum_t \\hat{x}_t[n-tH_s]w[n-tH_s]}{\\sum_t w^2[n-tH_s]+\\varepsilon}$$</p>
+  <p class=\"small\">Overlap-add with energy normalization preserves level stability.</p>
+</div>
+"""
+    )
+    sections.append(
+        """
+<div class=\"card\">
+  <h2>Phase-Vocoder Propagation</h2>
+  <p>$$\\Delta\\phi_t[k]=\\operatorname{princarg}\\Big(\\phi_t[k]-\\phi_{t-1}[k]-\\omega_kH_a\\Big)$$</p>
+  <p>$$\\hat{\\omega}_t[k]=\\omega_k+\\frac{\\Delta\\phi_t[k]}{H_a}$$</p>
+  <p>$$\\hat{\\phi}_t[k]=\\hat{\\phi}_{t-1}[k]+\\hat{\\omega}_t[k]H_s$$</p>
+  <p class=\"small\">
+    PVX uses these relationships to estimate true instantaneous frequency and
+    re-accumulate phase under a new synthesis hop.
+  </p>
+</div>
+"""
+    )
+    sections.append(
+        """
+<div class=\"card\">
+  <h2>Pitch and Microtonal Mapping</h2>
+  <p>$$r_{\\text{pitch}}=2^{\\Delta s/12}=2^{\\Delta c/1200}$$</p>
+  <p class=\"small\">
+    Semitone shift $\\Delta s$ and cents shift $\\Delta c$ are equivalent ratio controls.
+    Scale-constrained retuning maps detected F0 to the nearest permitted scale target.
+  </p>
+</div>
+"""
+    )
+    sections.append(
+        """
+<div class=\"card\">
+  <h2>Dynamics and Loudness</h2>
+  <p>$$g_{\\text{LUFS}}=10^{(L_{\\text{target}}-L_{\\text{in}})/20}$$</p>
+  <p>$$y[n]=x[n]\\cdot g_{\\text{LUFS}}$$</p>
+  <p class=\"small\">
+    Target-loudness gain is applied in linear amplitude domain after dynamics stages,
+    before limiting/clipping safety stages.
+  </p>
+</div>
+"""
+    )
+    sections.append(
+        """
+<div class=\"card\">
+  <h2>Spatial and Multichannel Highlights</h2>
+  <p><strong>Delay-and-sum beamforming:</strong> $$y[n]=\\frac{1}{M}\\sum_{m=1}^{M}x_m[n-\\tau_m]$$</p>
+  <p><strong>MVDR weights:</strong> $$\\mathbf{w}=\\frac{\\mathbf{R}^{-1}\\mathbf{d}}{\\mathbf{d}^H\\mathbf{R}^{-1}\\mathbf{d}}$$</p>
+  <p><strong>FOA encode (WXYZ):</strong> $$W=\\frac{s}{\\sqrt{2}},\\ X=s\\cos\\theta\\cos\\varphi,\\ Y=s\\sin\\theta\\cos\\varphi,\\ Z=s\\sin\\varphi$$</p>
+  <p class=\"small\">
+    PVX spatial modules combine beamforming, ambisonic transformations, and phase-vocoder-consistent
+    multichannel processing for robust chain composition.
+  </p>
+</div>
+"""
+    )
+    breadcrumbs = (
+        "<nav>"
+        "<a href=\"index.html\">Home</a> | "
+        "<a href=\"papers.html\">Research papers</a> | "
+        "<a href=\"glossary.html\">Technical glossary</a> | "
+        "<a href=\"windows.html\">Window reference</a> | "
+        "<a href=\"benchmarks.html\">Benchmarks</a>"
+        "</nav>"
+    )
+    html = html_page(
+        "pvx Mathematical Foundations",
+        "\n".join(sections),
+        css_path="style.css",
+        breadcrumbs=breadcrumbs,
+    )
+    (DOCS_HTML_DIR / "math.html").write_text(html, encoding="utf-8")
+
+
+def render_windows_page() -> None:
+    metrics_payload = load_json(WINDOW_METRICS_PATH, {"windows": {}})
+    metrics_map = metrics_payload.get("windows", {}) if isinstance(metrics_payload, dict) else {}
+
+    rows: list[str] = []
+    for entry in window_entries():
+        metrics = metrics_map.get(entry["name"], {})
+        coherent_gain = metrics.get("coherent_gain", "n/a")
+        enbw_bins = metrics.get("enbw_bins", "n/a")
+        scalloping_loss_db = metrics.get("scalloping_loss_db", "n/a")
+        main_lobe_width_bins = metrics.get("main_lobe_width_bins", "n/a")
+        peak_sidelobe_db = metrics.get("peak_sidelobe_db", "n/a")
+        time_plot = metrics.get("time_plot")
+        freq_plot = metrics.get("freq_plot")
+        plot_html = "n/a"
+        if time_plot and freq_plot:
+            plot_html = (
+                f"<a href=\"../{escape(str(time_plot))}\" target=\"_blank\" rel=\"noopener\">time</a> / "
+                f"<a href=\"../{escape(str(freq_plot))}\" target=\"_blank\" rel=\"noopener\">freq</a>"
+            )
+
+        rows.append(
+            "<tr>"
+            f"<td><code>{escape(entry['name'])}</code></td>"
+            f"<td>{escape(entry['family'])}</td>"
+            f"<td><code>{escape(entry['params'])}</code></td>"
+            f"<td>{escape(entry['formula'])}</td>"
+            f"<td>{coherent_gain if isinstance(coherent_gain, str) else f'{float(coherent_gain):.6f}'}</td>"
+            f"<td>{enbw_bins if isinstance(enbw_bins, str) else f'{float(enbw_bins):.6f}'}</td>"
+            f"<td>{scalloping_loss_db if isinstance(scalloping_loss_db, str) else f'{float(scalloping_loss_db):.3f}'}</td>"
+            f"<td>{main_lobe_width_bins if isinstance(main_lobe_width_bins, str) else f'{float(main_lobe_width_bins):.3f}'}</td>"
+            f"<td>{peak_sidelobe_db if isinstance(peak_sidelobe_db, str) else f'{float(peak_sidelobe_db):.3f}'}</td>"
+            f"<td>{plot_html}</td>"
+            f"<td>{escape(entry['note'])}</td>"
+            "</tr>"
+        )
+
+    sections: list[str] = []
+    sections.append(
+        f"""
+<div class=\"card\">
+  <p>
+    Complete PVX analysis-window reference. This page covers all <strong>{len(voc_core.WINDOW_CHOICES)}</strong>
+    supported windows from <code>pvx.core.voc.WINDOW_CHOICES</code>, with formula-family mapping and practical interpretation.
+  </p>
+  <p class=\"small\">
+    For GitHub-native equation rendering, use
+    <a href=\"../WINDOW_REFERENCE.md\"><code>docs/WINDOW_REFERENCE.md</code></a>.
+  </p>
+  <p class=\"small\">
+    Quantitative metrics and per-window SVG plots are generated from
+    <code>docs/window_metrics.json</code> and <code>docs/assets/windows/*</code>.
+  </p>
+</div>
+"""
+    )
+    sections.append(WINDOW_EQUATIONS_HTML)
+    sections.append(
+        """
+<table>
+  <thead>
+    <tr>
+      <th>Window</th>
+      <th>Family</th>
+      <th>Parameters</th>
+      <th>Formula key</th>
+      <th>Coherent gain</th>
+      <th>ENBW (bins)</th>
+      <th>Scalloping loss (dB)</th>
+      <th>Main-lobe width (bins)</th>
+      <th>Peak sidelobe (dB)</th>
+      <th>Plots</th>
+      <th>Plain-English behavior</th>
+    </tr>
+  </thead>
+  <tbody>
+    {rows}
+  </tbody>
+</table>
+""".format(rows="".join(rows))
+    )
+    breadcrumbs = (
+        "<nav>"
+        "<a href=\"index.html\">Home</a> | "
+        "<a href=\"math.html\">Math foundations</a> | "
+        "<a href=\"glossary.html\">Technical glossary</a> | "
+        "<a href=\"benchmarks.html\">Benchmarks</a>"
+        "</nav>"
+    )
+    html = html_page(
+        "pvx Window Reference",
+        "\n".join(sections),
+        css_path="style.css",
+        breadcrumbs=breadcrumbs,
+    )
+    (DOCS_HTML_DIR / "windows.html").write_text(html, encoding="utf-8")
+
+
+def render_architecture_page() -> None:
+    content = """
+<div class=\"card\">
+  <p>
+    Architecture overview for runtime processing, algorithm dispatch, documentation generation,
+    and CI/Pages publication.
+  </p>
+</div>
+<div class=\"card\">
+  <h2>Runtime and CLI Flow</h2>
+  <pre class=\"mermaid\">
+flowchart LR
+  A[User CLI Command] --> B[src/pvx/cli or pvxvoc parser]
+  B --> C[Runtime Selection: auto/cpu/cuda]
+  C --> D[Shared IO + Mastering Chain]
+  D --> E[Core DSP in src/pvx/core/voc.py]
+  E --> F[Output Writer / stdout stream]
+  </pre>
+</div>
+<div class=\"card\">
+  <h2>Algorithm Registry and Dispatch</h2>
+  <pre class=\"mermaid\">
+flowchart TD
+  R[src/pvx/algorithms/registry.py] --> B[src/pvx/algorithms/base.py]
+  B --> M1[time_scale_and_pitch_core/*]
+  B --> M2[retune_and_intonation/*]
+  B --> M3[dynamics_and_loudness/*]
+  B --> M4[spatial_and_multichannel/*]
+  </pre>
+</div>
+<div class=\"card\">
+  <h2>Documentation Build Graph</h2>
+  <pre class=\"mermaid\">
+flowchart LR
+  G1[scripts_generate_python_docs.py] --> D[docs/*]
+  G2[scripts_generate_theory_docs.py] --> D
+  G3[scripts_generate_docs_extras.py] --> D
+  G4[scripts_generate_html_docs.py] --> H[docs/html/*]
+  D --> H
+  </pre>
+</div>
+<div class=\"card\">
+  <h2>CI and Pages</h2>
+  <pre class=\"mermaid\">
+flowchart LR
+  PR[Push / PR] --> CI[Doc and test workflow]
+  CI --> S[Generation + drift checks]
+  S --> T[Unit tests + docs coverage tests]
+  T --> P[GitHub Pages deploy workflow]
+  P --> SITE[Published docs site]
+  </pre>
+</div>
+""".strip()
+    breadcrumbs = (
+        "<nav>"
+        "<a href=\"index.html\">Home</a> | "
+        "<a href=\"math.html\">Math</a> | "
+        "<a href=\"windows.html\">Windows</a> | "
+        "<a href=\"limitations.html\">Limitations</a>"
+        "</nav>"
+    )
+    html = html_page(
+        "pvx Architecture",
+        content,
+        css_path="style.css",
+        breadcrumbs=breadcrumbs,
+        include_mermaid=True,
+    )
+    (DOCS_HTML_DIR / "architecture.html").write_text(html, encoding="utf-8")
+
+
+def render_cli_flags_page() -> None:
+    payload = load_json(CLI_FLAGS_PATH, {"entries": [], "unique_flags": []})
+    entries = payload.get("entries", []) if isinstance(payload, dict) else []
+    by_tool: OrderedDict[str, list[dict[str, str]]] = OrderedDict()
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        tool = str(entry.get("tool", "unknown"))
+        by_tool.setdefault(tool, []).append(entry)
+
+    sections: list[str] = []
+    sections.append(
+        "<div class=\"card\">"
+        f"<p>Total unique long flags: <strong>{len(payload.get('unique_flags', [])) if isinstance(payload, dict) else 0}</strong></p>"
+        "<p>Source index: <code>docs/CLI_FLAGS_REFERENCE.md</code> and <code>docs/cli_flags_reference.json</code>.</p>"
+        "</div>"
+    )
+
+    for tool, rows in by_tool.items():
+        table_rows = []
+        for row in sorted(rows, key=lambda item: str(item.get("flag", ""))):
+            default_text = "" if row.get("default") is None else str(row.get("default"))
+            choices = row.get("choices")
+            choices_text = ", ".join(str(c) for c in choices) if isinstance(choices, list) else ""
+            table_rows.append(
+                "<tr>"
+                f"<td><code>{escape(str(row.get('flag', '')))}</code></td>"
+                f"<td>{escape(str(row.get('required', False)))}</td>"
+                f"<td><code>{escape(default_text)}</code></td>"
+                f"<td><code>{escape(choices_text)}</code></td>"
+                f"<td><code>{escape(str(row.get('action', '')))}</code></td>"
+                f"<td>{escape(str(row.get('help', '')))}</td>"
+                f"<td><code>{escape(str(row.get('source', '')))}</code></td>"
+                "</tr>"
+            )
+        sections.append(
+            f"<h2>{escape(tool)}</h2>"
+            "<table>"
+            "<thead><tr><th>Flag</th><th>Required</th><th>Default</th><th>Choices</th><th>Action</th><th>Description</th><th>Source</th></tr></thead>"
+            f"<tbody>{''.join(table_rows)}</tbody>"
+            "</table>"
+        )
+
+    breadcrumbs = (
+        "<nav>"
+        "<a href=\"index.html\">Home</a> | "
+        "<a href=\"cookbook.html\">Cookbook</a> | "
+        "<a href=\"limitations.html\">Limitations</a>"
+        "</nav>"
+    )
+    html = html_page(
+        "pvx CLI Flag Index",
+        "\n".join(sections),
+        css_path="style.css",
+        breadcrumbs=breadcrumbs,
+    )
+    (DOCS_HTML_DIR / "cli_flags.html").write_text(html, encoding="utf-8")
+
+
+def render_limitations_page() -> None:
+    payload = load_json(LIMITATIONS_PATH, {"groups": {}, "group_limits": {}})
+    groups = payload.get("groups", {}) if isinstance(payload, dict) else {}
+    group_limits = payload.get("group_limits", {}) if isinstance(payload, dict) else {}
+
+    sections: list[str] = []
+    summary_rows: list[str] = []
+    for group in sorted(groups):
+        seed = group_limits.get(group, {})
+        summary_rows.append(
+            "<tr>"
+            f"<td><code>{escape(group)}</code></td>"
+            f"<td>{escape(str(seed.get('assumption', 'n/a')))}</td>"
+            f"<td>{escape(str(seed.get('failure', 'n/a')))}</td>"
+            f"<td>{escape(str(seed.get('avoid', 'n/a')))}</td>"
+            "</tr>"
+        )
+    sections.append(
+        "<div class=\"card\"><p>Limitations guidance for all algorithm groups and algorithm IDs.</p></div>"
+        "<h2>Group Summary</h2>"
+        "<table>"
+        "<thead><tr><th>Group</th><th>Assumptions</th><th>Failure modes</th><th>When not to use</th></tr></thead>"
+        f"<tbody>{''.join(summary_rows)}</tbody>"
+        "</table>"
+    )
+
+    for group in sorted(groups):
+        rows = groups[group]
+        table_rows: list[str] = []
+        if isinstance(rows, list):
+            for row in rows:
+                if not isinstance(row, dict):
+                    continue
+                table_rows.append(
+                    "<tr>"
+                    f"<td><code>{escape(str(row.get('algorithm_id', '')))}</code></td>"
+                    f"<td>{escape(str(row.get('assumptions', '')))}</td>"
+                    f"<td>{escape(str(row.get('failure_modes', '')))}</td>"
+                    f"<td>{escape(str(row.get('when_not_to_use', '')))}</td>"
+                    "</tr>"
+                )
+        sections.append(
+            f"<h2 id=\"{escape(group)}\"><code>{escape(group)}</code></h2>"
+            "<table>"
+            "<thead><tr><th>Algorithm ID</th><th>Assumptions</th><th>Failure modes</th><th>When not to use</th></tr></thead>"
+            f"<tbody>{''.join(table_rows)}</tbody>"
+            "</table>"
+        )
+
+    breadcrumbs = (
+        "<nav>"
+        "<a href=\"index.html\">Home</a> | "
+        "<a href=\"architecture.html\">Architecture</a> | "
+        "<a href=\"benchmarks.html\">Benchmarks</a>"
+        "</nav>"
+    )
+    html = html_page(
+        "pvx Algorithm Limitations",
+        "\n".join(sections),
+        css_path="style.css",
+        breadcrumbs=breadcrumbs,
+    )
+    (DOCS_HTML_DIR / "limitations.html").write_text(html, encoding="utf-8")
+
+
+def render_benchmarks_page() -> None:
+    payload = load_json(BENCHMARKS_PATH, {"runs": [], "benchmark_spec": {}, "host": {}})
+    runs = payload.get("runs", []) if isinstance(payload, dict) else []
+    spec = payload.get("benchmark_spec", {}) if isinstance(payload, dict) else {}
+    host = payload.get("host", {}) if isinstance(payload, dict) else {}
+
+    rows: list[str] = []
+    for run in runs:
+        if not isinstance(run, dict):
+            continue
+        note_parts: list[str] = []
+        if run.get("reason"):
+            note_parts.append(str(run["reason"]))
+        if run.get("runtime_fallback_reason"):
+            note_parts.append(f"fallback={run['runtime_fallback_reason']}")
+        if "gpu_pool_used_mb" in run:
+            note_parts.append(f"gpu_pool_used_mb={run['gpu_pool_used_mb']}")
+        rows.append(
+            "<tr>"
+            f"<td><code>{escape(str(run.get('backend', 'n/a')))}</code></td>"
+            f"<td>{escape(str(run.get('status', 'n/a')))}</td>"
+            f"<td>{escape(str(run.get('elapsed_ms', 'n/a')))}</td>"
+            f"<td>{escape(str(run.get('peak_host_memory_mb', 'n/a')))}</td>"
+            f"<td>{escape(str(run.get('snr_vs_input_db', 'n/a')))}</td>"
+            f"<td>{escape(str(run.get('spectral_distance_vs_input_db', 'n/a')))}</td>"
+            f"<td>{escape(str(run.get('snr_vs_cpu_db', 'n/a')))}</td>"
+            f"<td>{escape(str(run.get('spectral_distance_vs_cpu_db', 'n/a')))}</td>"
+            f"<td>{escape('; '.join(note_parts))}</td>"
+            "</tr>"
+        )
+
+    content = (
+        "<div class=\"card\">"
+        "<p>Reproducible STFT/ISTFT benchmark summary.</p>"
+        "<p><code>python3 scripts_generate_docs_extras.py --run-benchmarks</code></p>"
+        f"<p class=\"small\">Spec: sample_rate={escape(str(spec.get('sample_rate', 'n/a')))} Hz, "
+        f"duration={escape(str(spec.get('duration_seconds', 'n/a')))} s</p>"
+        f"<p class=\"small\">Host: {escape(str(host.get('platform', 'n/a')))} | machine={escape(str(host.get('machine', 'n/a')))} | python={escape(str(host.get('python', 'n/a')))}</p>"
+        "</div>"
+        "<table>"
+        "<thead><tr><th>Backend</th><th>Status</th><th>Elapsed (ms)</th><th>Peak host memory (MB)</th><th>SNR vs input (dB)</th><th>Spectral dist vs input (dB)</th><th>SNR vs CPU (dB)</th><th>Spectral dist vs CPU (dB)</th><th>Notes</th></tr></thead>"
+        f"<tbody>{''.join(rows)}</tbody>"
+        "</table>"
+    )
+    breadcrumbs = (
+        "<nav>"
+        "<a href=\"index.html\">Home</a> | "
+        "<a href=\"math.html\">Math</a> | "
+        "<a href=\"windows.html\">Windows</a>"
+        "</nav>"
+    )
+    html = html_page(
+        "pvx Benchmark Report",
+        content,
+        css_path="style.css",
+        breadcrumbs=breadcrumbs,
+    )
+    (DOCS_HTML_DIR / "benchmarks.html").write_text(html, encoding="utf-8")
+
+
+def render_cookbook_page() -> None:
+    payload = load_json(COOKBOOK_PATH, {"recipes": []})
+    recipes = payload.get("recipes", []) if isinstance(payload, dict) else []
+    by_cat: OrderedDict[str, list[dict[str, str]]] = OrderedDict()
+    for recipe in recipes:
+        if not isinstance(recipe, dict):
+            continue
+        by_cat.setdefault(str(recipe.get("category", "General")), []).append(recipe)
+
+    sections: list[str] = []
+    sections.append(
+        "<div class=\"card\">"
+        "<p>Pipeline cookbook for practical one-liners, including Unix pipes and mastering chains.</p>"
+        "<p>Markdown source: <code>docs/PIPELINE_COOKBOOK.md</code>.</p>"
+        "</div>"
+    )
+    for category, rows in by_cat.items():
+        table_rows = []
+        for row in rows:
+            table_rows.append(
+                "<tr>"
+                f"<td>{escape(str(row.get('title', '')))}</td>"
+                f"<td><code>{escape(str(row.get('command', '')))}</code></td>"
+                f"<td>{escape(str(row.get('why', '')))}</td>"
+                "</tr>"
+            )
+        sections.append(
+            f"<h2>{escape(category)}</h2>"
+            "<table>"
+            "<thead><tr><th>Workflow</th><th>Command</th><th>Why</th></tr></thead>"
+            f"<tbody>{''.join(table_rows)}</tbody>"
+            "</table>"
+        )
+
+    breadcrumbs = (
+        "<nav>"
+        "<a href=\"index.html\">Home</a> | "
+        "<a href=\"cli_flags.html\">CLI flags</a> | "
+        "<a href=\"benchmarks.html\">Benchmarks</a>"
+        "</nav>"
+    )
+    html = html_page(
+        "pvx Pipeline Cookbook",
+        "\n".join(sections),
+        css_path="style.css",
+        breadcrumbs=breadcrumbs,
+    )
+    (DOCS_HTML_DIR / "cookbook.html").write_text(html, encoding="utf-8")
+
+
+def render_citations_page() -> None:
+    payload = load_json(CITATION_QUALITY_PATH, {"counts": {}, "unresolved_scholar": []})
+    counts = payload.get("counts", {}) if isinstance(payload, dict) else {}
+    unresolved = payload.get("unresolved_scholar", []) if isinstance(payload, dict) else []
+
+    summary_rows = "".join(
+        "<tr>"
+        f"<td><code>{escape(str(kind))}</code></td>"
+        f"<td>{escape(str(counts[kind]))}</td>"
+        "</tr>"
+        for kind in sorted(counts)
+    )
+    unresolved_rows: list[str] = []
+    for row in unresolved:
+        if not isinstance(row, dict):
+            continue
+        unresolved_rows.append(
+            "<tr>"
+            f"<td>{escape(str(row.get('year', '')))}</td>"
+            f"<td>{escape(str(row.get('authors', '')))}</td>"
+            f"<td>{escape(str(row.get('title', '')))}</td>"
+            f"<td><a href=\"{escape(str(row.get('url', '')))}\" target=\"_blank\" rel=\"noopener\">link</a></td>"
+            "</tr>"
+        )
+
+    content = (
+        "<div class=\"card\">"
+        "<p>Citation quality report and BibTeX export.</p>"
+        "<p><a href=\"../references.bib\"><code>docs/references.bib</code></a></p>"
+        "</div>"
+        "<h2>Link-Type Summary</h2>"
+        "<table><thead><tr><th>Link type</th><th>Count</th></tr></thead>"
+        f"<tbody>{summary_rows}</tbody></table>"
+        "<h2>Scholar-Link Entries (upgrade candidates)</h2>"
+        "<table><thead><tr><th>Year</th><th>Authors</th><th>Title</th><th>URL</th></tr></thead>"
+        f"<tbody>{''.join(unresolved_rows)}</tbody></table>"
+    )
+    breadcrumbs = (
+        "<nav>"
+        "<a href=\"index.html\">Home</a> | "
+        "<a href=\"papers.html\">Research papers</a> | "
+        "<a href=\"glossary.html\">Glossary</a>"
+        "</nav>"
+    )
+    html = html_page(
+        "pvx Citation Quality",
+        content,
+        css_path="style.css",
+        breadcrumbs=breadcrumbs,
+    )
+    (DOCS_HTML_DIR / "citations.html").write_text(html, encoding="utf-8")
+
+
+def write_docs_root_index() -> None:
+    page = """<!doctype html>
+<html lang=\"en\">
+<head>
+  <meta charset=\"utf-8\" />
+  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
+  <meta http-equiv=\"refresh\" content=\"0; url=html/index.html\" />
+  <title>pvx docs</title>
+</head>
+<body>
+  <p>Redirecting to <a href=\"html/index.html\">docs/html/index.html</a> ...</p>
+</body>
+</html>
+"""
+    (ROOT / "docs" / "index.html").write_text(page, encoding="utf-8")
 
 
 def main() -> int:
@@ -1354,6 +2250,15 @@ def main() -> int:
     render_group_pages(groups, params)
     render_papers_page()
     render_glossary_page()
+    render_math_page()
+    render_windows_page()
+    render_architecture_page()
+    render_limitations_page()
+    render_benchmarks_page()
+    render_cookbook_page()
+    render_cli_flags_page()
+    render_citations_page()
+    write_docs_root_index()
     return 0
 
 

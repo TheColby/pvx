@@ -1,0 +1,78 @@
+{
+  "commit": "58b1a2e",
+  "commit_date": "2026-02-17T09:29:32-05:00",
+  "recipes": [
+    {
+      "category": "Phase-vocoder core",
+      "command": "python3 pvxvoc.py vocal.wav --time-stretch 1.15 --pitch-mode formant-preserving --output-dir out --suffix _pv",
+      "title": "Moderate vocal stretch with formant preservation",
+      "why": "Retains speech-like vowel envelope while stretching timing."
+    },
+    {
+      "category": "Phase-vocoder core",
+      "command": "python3 pvxvoc.py lead.wav --pitch-shift-cents -23 --time-stretch 1.0 --output-dir out --suffix _cents",
+      "title": "Independent cents retune",
+      "why": "Applies precise microtonal offset without tempo change."
+    },
+    {
+      "category": "Microtonal",
+      "command": "python3 pvxretune.py vox.wav --root 60 --scale-cents 0,90,204,294,408,498,612,702,816,906,1020,1110 --strength 0.8 --output-dir out",
+      "title": "Custom cents map retune",
+      "why": "Maps incoming notes to a custom 12-degree microtonal scale."
+    },
+    {
+      "category": "Microtonal",
+      "command": "python3 pvxconform.py solo.wav map_conform.csv --pitch-mode ratio --output-dir out --suffix _conform",
+      "title": "Conform CSV with per-segment ratios",
+      "why": "Applies timeline-specific time and pitch trajectories from CSV."
+    },
+    {
+      "category": "Pipelines",
+      "command": "python3 pvxvoc.py input.wav --time-stretch 1.25 --stdout | python3 pvxdenoise.py - --reduction-db 10 --stdout | python3 pvxdeverb.py - --strength 0.45 --output-dir out --suffix _clean",
+      "title": "Time-stretch -> denoise -> dereverb in one pipe",
+      "why": "Single-pass CLI chain for serial DSP in Unix pipes."
+    },
+    {
+      "category": "Pipelines",
+      "command": "python3 pvxmorph.py a.wav b.wav -o - | python3 pvxformant.py - --mode preserve --stdout | python3 pvxunison.py - --voices 5 --detune-cents 8 --output-dir out --suffix _morph_stack",
+      "title": "Morph -> formant -> unison",
+      "why": "Builds a richer timbre chain with no intermediate files."
+    },
+    {
+      "category": "Mastering",
+      "command": "python3 pvxvoc.py mix.wav --time-stretch 1.0 --target-lufs -14 --compressor-threshold-db -20 --compressor-ratio 3 --limiter-threshold 0.98 --output-dir out --suffix _master",
+      "title": "Integrated loudness targeting with limiter",
+      "why": "Combines dynamics and loudness controls in shared mastering chain."
+    },
+    {
+      "category": "Mastering",
+      "command": "python3 pvxharmonize.py bus.wav --intervals 0,7,12 --mix 0.35 --soft-clip-level 0.92 --soft-clip-type tanh --hard-clip-level 0.99 --output-dir out",
+      "title": "Soft clip and hard safety ceiling",
+      "why": "Adds saturation while enforcing a strict final peak ceiling."
+    },
+    {
+      "category": "Batch",
+      "command": "python3 pvxvoc.py stems/*.wav --time-stretch 1.08 --output-dir out/stems --overwrite",
+      "title": "Batch stretch over folder",
+      "why": "Applies consistent transform to many files with one command."
+    },
+    {
+      "category": "Batch",
+      "command": "python3 pvxdenoise.py takes/*.wav --reduction-db 8 --dry-run --output-dir out/preview",
+      "title": "Dry-run output validation",
+      "why": "Checks filename resolution and collisions without writing audio."
+    },
+    {
+      "category": "Spatial",
+      "command": "python3 -m pvx.algorithms.spatial_and_multichannel.imaging_and_panning.vbap_adaptive_panning input.wav --output-channels 6 --azimuth-deg 35 --width 0.8 --output out/vbap.wav",
+      "title": "VBAP adaptive panning via algorithm dispatcher",
+      "why": "Demonstrates algorithm-level spatial module invocation."
+    },
+    {
+      "category": "Analysis/QA",
+      "command": "python3 -m pvx.algorithms.analysis_qa_and_automation.pesq_stoi_visqol_quality_metrics clean.wav noisy.wav --output out/qa.json",
+      "title": "Quality metrics on processed speech",
+      "why": "Collects objective quality indicators for regression tracking."
+    }
+  ]
+}
