@@ -44,24 +44,53 @@ WINDOW_CHOICES = (
     "blackmanharris",
     "nuttall",
     "flattop",
+    "blackman_nuttall",
+    "exact_blackman",
+    "sine",
     "bartlett",
+    "boxcar",
+    "triangular",
+    "bartlett_hann",
+    "tukey",
+    "tukey_0p1",
+    "tukey_0p25",
+    "tukey_0p75",
+    "tukey_0p9",
+    "parzen",
+    "lanczos",
+    "welch",
+    "gaussian_0p25",
+    "gaussian_0p35",
+    "gaussian_0p45",
+    "gaussian_0p55",
+    "gaussian_0p65",
+    "general_gaussian_1p5_0p35",
+    "general_gaussian_2p0_0p35",
+    "general_gaussian_3p0_0p35",
+    "general_gaussian_4p0_0p35",
+    "exponential_0p25",
+    "exponential_0p5",
+    "exponential_1p0",
+    "cauchy_0p5",
+    "cauchy_1p0",
+    "cauchy_2p0",
+    "cosine_power_2",
+    "cosine_power_3",
+    "cosine_power_4",
+    "hann_poisson_0p5",
+    "hann_poisson_1p0",
+    "hann_poisson_2p0",
+    "general_hamming_0p50",
+    "general_hamming_0p60",
+    "general_hamming_0p70",
+    "general_hamming_0p80",
     "bohman",
     "cosine",
+    "kaiser",
     "rect",
 )
 
-WindowType = Literal[
-    "hann",
-    "hamming",
-    "blackman",
-    "blackmanharris",
-    "nuttall",
-    "flattop",
-    "bartlett",
-    "bohman",
-    "cosine",
-    "rect",
-]
+WindowType = str
 ResampleMode = Literal["auto", "fft", "linear"]
 PhaseLockMode = Literal["off", "identity"]
 DeviceMode = Literal["auto", "cpu", "cuda"]
@@ -78,6 +107,7 @@ class VocoderConfig:
     phase_locking: PhaseLockMode
     transient_preserve: bool
     transient_threshold: float
+    kaiser_beta: float = 14.0
 
 
 @dataclass(frozen=True)
@@ -129,6 +159,62 @@ _COSINE_SERIES_WINDOWS: dict[str, tuple[float, ...]] = {
     "blackmanharris": (0.35875, -0.48829, 0.14128, -0.01168),
     "nuttall": (0.355768, -0.487396, 0.144232, -0.012604),
     "flattop": (1.0, -1.93, 1.29, -0.388, 0.0322),
+    "blackman_nuttall": (0.3635819, -0.4891775, 0.1365995, -0.0106411),
+    "exact_blackman": (0.4265907136715391, -0.4965606190885641, 0.07684866723989682),
+}
+
+_TUKEY_WINDOWS: dict[str, float] = {
+    "tukey": 0.5,
+    "tukey_0p1": 0.1,
+    "tukey_0p25": 0.25,
+    "tukey_0p75": 0.75,
+    "tukey_0p9": 0.9,
+}
+
+_GAUSSIAN_WINDOWS: dict[str, float] = {
+    "gaussian_0p25": 0.25,
+    "gaussian_0p35": 0.35,
+    "gaussian_0p45": 0.45,
+    "gaussian_0p55": 0.55,
+    "gaussian_0p65": 0.65,
+}
+
+_GENERAL_GAUSSIAN_WINDOWS: dict[str, tuple[float, float]] = {
+    "general_gaussian_1p5_0p35": (1.5, 0.35),
+    "general_gaussian_2p0_0p35": (2.0, 0.35),
+    "general_gaussian_3p0_0p35": (3.0, 0.35),
+    "general_gaussian_4p0_0p35": (4.0, 0.35),
+}
+
+_EXPONENTIAL_WINDOWS: dict[str, float] = {
+    "exponential_0p25": 0.25,
+    "exponential_0p5": 0.5,
+    "exponential_1p0": 1.0,
+}
+
+_CAUCHY_WINDOWS: dict[str, float] = {
+    "cauchy_0p5": 0.5,
+    "cauchy_1p0": 1.0,
+    "cauchy_2p0": 2.0,
+}
+
+_COSINE_POWER_WINDOWS: dict[str, float] = {
+    "cosine_power_2": 2.0,
+    "cosine_power_3": 3.0,
+    "cosine_power_4": 4.0,
+}
+
+_HANN_POISSON_WINDOWS: dict[str, float] = {
+    "hann_poisson_0p5": 0.5,
+    "hann_poisson_1p0": 1.0,
+    "hann_poisson_2p0": 2.0,
+}
+
+_GENERAL_HAMMING_WINDOWS: dict[str, float] = {
+    "general_hamming_0p50": 0.50,
+    "general_hamming_0p60": 0.60,
+    "general_hamming_0p70": 0.70,
+    "general_hamming_0p80": 0.80,
 }
 
 
@@ -216,6 +302,16 @@ def _as_bool(value: Any) -> bool:
     if hasattr(value, "item"):
         return bool(value.item())
     return bool(value)
+
+
+def _i0(value, *, xp=np):
+    if hasattr(xp, "i0"):
+        return xp.i0(value)
+    value_np = np.asarray(_to_numpy(value), dtype=np.float64)
+    i0_np = np.i0(value_np)
+    if xp is np:
+        return i0_np
+    return xp.asarray(i0_np)
 
 
 def add_runtime_args(parser: argparse.ArgumentParser) -> None:
@@ -384,15 +480,214 @@ def _cosine_window(length: int, *, xp=np):
     return xp.sin((xp.pi * n) / float(length - 1))
 
 
-def make_window(kind: WindowType, n_fft: int, win_length: int, *, xp=np):
+def _sine_window(length: int, *, xp=np):
+    return _cosine_window(length, xp=xp)
+
+
+def _triangular_window(length: int, *, xp=np):
+    if length <= 0:
+        return xp.zeros(0, dtype=xp.float64)
+    if length == 1:
+        return xp.ones(1, dtype=xp.float64)
+    n = xp.arange(length, dtype=xp.float64)
+    denom = 0.5 * float(length + 1)
+    center = 0.5 * float(length - 1)
+    return xp.clip(1.0 - xp.abs((n - center) / denom), 0.0, 1.0)
+
+
+def _bartlett_hann_window(length: int, *, xp=np):
+    if length <= 0:
+        return xp.zeros(0, dtype=xp.float64)
+    if length == 1:
+        return xp.ones(1, dtype=xp.float64)
+    n = xp.arange(length, dtype=xp.float64)
+    x = n / float(length - 1)
+    y = x - 0.5
+    return 0.62 - 0.48 * xp.abs(y) + 0.38 * xp.cos(2.0 * xp.pi * y)
+
+
+def _tukey_window(length: int, alpha: float, *, xp=np):
+    if length <= 0:
+        return xp.zeros(0, dtype=xp.float64)
+    if length == 1 or alpha <= 0.0:
+        return xp.ones(length, dtype=xp.float64)
+    if alpha >= 1.0:
+        return _cosine_series_window(_COSINE_SERIES_WINDOWS["hann"], length, xp=xp)
+    n = xp.arange(length, dtype=xp.float64)
+    x = n / float(length - 1)
+    w = xp.ones(length, dtype=xp.float64)
+    left = x < (alpha * 0.5)
+    right = x >= (1.0 - alpha * 0.5)
+    w[left] = 0.5 * (1.0 + xp.cos(xp.pi * ((2.0 * x[left] / alpha) - 1.0)))
+    w[right] = 0.5 * (1.0 + xp.cos(xp.pi * ((2.0 * x[right] / alpha) - (2.0 / alpha) + 1.0)))
+    return w
+
+
+def _parzen_window(length: int, *, xp=np):
+    if length <= 0:
+        return xp.zeros(0, dtype=xp.float64)
+    if length == 1:
+        return xp.ones(1, dtype=xp.float64)
+    n = xp.arange(length, dtype=xp.float64)
+    x = xp.abs((2.0 * n / float(length - 1)) - 1.0)
+    w = xp.zeros(length, dtype=xp.float64)
+    inner = x <= 0.5
+    outer = (x > 0.5) & (x <= 1.0)
+    w[inner] = 1.0 - 6.0 * x[inner] * x[inner] + 6.0 * x[inner] * x[inner] * x[inner]
+    w[outer] = 2.0 * (1.0 - x[outer]) ** 3
+    return w
+
+
+def _lanczos_window(length: int, *, xp=np):
+    if length <= 0:
+        return xp.zeros(0, dtype=xp.float64)
+    if length == 1:
+        return xp.ones(1, dtype=xp.float64)
+    n = xp.arange(length, dtype=xp.float64)
+    x = (2.0 * n / float(length - 1)) - 1.0
+    return xp.sinc(x)
+
+
+def _welch_window(length: int, *, xp=np):
+    if length <= 0:
+        return xp.zeros(0, dtype=xp.float64)
+    if length == 1:
+        return xp.ones(1, dtype=xp.float64)
+    n = xp.arange(length, dtype=xp.float64)
+    center = 0.5 * float(length - 1)
+    x = (n - center) / center
+    return xp.clip(1.0 - x * x, 0.0, 1.0)
+
+
+def _gaussian_window(length: int, sigma_ratio: float, *, xp=np):
+    if length <= 0:
+        return xp.zeros(0, dtype=xp.float64)
+    if length == 1:
+        return xp.ones(1, dtype=xp.float64)
+    center = 0.5 * float(length - 1)
+    sigma = max(1e-9, sigma_ratio * center)
+    n = xp.arange(length, dtype=xp.float64)
+    z = (n - center) / sigma
+    return xp.exp(-0.5 * z * z)
+
+
+def _general_gaussian_window(length: int, power: float, sigma_ratio: float, *, xp=np):
+    if length <= 0:
+        return xp.zeros(0, dtype=xp.float64)
+    if length == 1:
+        return xp.ones(1, dtype=xp.float64)
+    center = 0.5 * float(length - 1)
+    sigma = max(1e-9, sigma_ratio * center)
+    n = xp.arange(length, dtype=xp.float64)
+    z = xp.abs((n - center) / sigma)
+    return xp.exp(-0.5 * xp.power(z, 2.0 * power))
+
+
+def _exponential_window(length: int, tau_ratio: float, *, xp=np):
+    if length <= 0:
+        return xp.zeros(0, dtype=xp.float64)
+    if length == 1:
+        return xp.ones(1, dtype=xp.float64)
+    center = 0.5 * float(length - 1)
+    tau = max(1e-9, tau_ratio * center)
+    n = xp.arange(length, dtype=xp.float64)
+    return xp.exp(-xp.abs(n - center) / tau)
+
+
+def _cauchy_window(length: int, gamma_ratio: float, *, xp=np):
+    if length <= 0:
+        return xp.zeros(0, dtype=xp.float64)
+    if length == 1:
+        return xp.ones(1, dtype=xp.float64)
+    center = 0.5 * float(length - 1)
+    gamma = max(1e-9, gamma_ratio * center)
+    n = xp.arange(length, dtype=xp.float64)
+    z = (n - center) / gamma
+    return 1.0 / (1.0 + z * z)
+
+
+def _cosine_power_window(length: int, power: float, *, xp=np):
+    if length <= 0:
+        return xp.zeros(0, dtype=xp.float64)
+    if length == 1:
+        return xp.ones(1, dtype=xp.float64)
+    n = xp.arange(length, dtype=xp.float64)
+    base = xp.sin((xp.pi * n) / float(length - 1))
+    return xp.power(base, power)
+
+
+def _hann_poisson_window(length: int, alpha: float, *, xp=np):
+    if length <= 0:
+        return xp.zeros(0, dtype=xp.float64)
+    if length == 1:
+        return xp.ones(1, dtype=xp.float64)
+    hann = _cosine_series_window(_COSINE_SERIES_WINDOWS["hann"], length, xp=xp)
+    center = 0.5 * float(length - 1)
+    n = xp.arange(length, dtype=xp.float64)
+    envelope = xp.exp(-alpha * xp.abs(n - center) / max(1e-9, center))
+    return hann * envelope
+
+
+def _general_hamming_window(length: int, alpha: float, *, xp=np):
+    coeffs = (alpha, -(1.0 - alpha))
+    return _cosine_series_window(coeffs, length, xp=xp)
+
+
+def _kaiser_window(length: int, beta: float, *, xp=np):
+    if length <= 0:
+        return xp.zeros(0, dtype=xp.float64)
+    if length == 1:
+        return xp.ones(1, dtype=xp.float64)
+    alpha = 0.5 * float(length - 1)
+    n = xp.arange(length, dtype=xp.float64)
+    r = (n - alpha) / alpha
+    arg = beta * xp.sqrt(xp.clip(1.0 - (r * r), 0.0, 1.0))
+    denom = _i0(beta, xp=xp)
+    return _i0(arg, xp=xp) / denom
+
+
+def make_window(kind: WindowType, n_fft: int, win_length: int, *, kaiser_beta: float = 14.0, xp=np):
     if kind in _COSINE_SERIES_WINDOWS:
         base = _cosine_series_window(_COSINE_SERIES_WINDOWS[kind], win_length, xp=xp)
+    elif kind == "sine":
+        base = _sine_window(win_length, xp=xp)
     elif kind == "bartlett":
         base = _bartlett_window(win_length, xp=xp)
+    elif kind == "boxcar":
+        base = xp.ones(win_length, dtype=xp.float64)
+    elif kind == "triangular":
+        base = _triangular_window(win_length, xp=xp)
+    elif kind == "bartlett_hann":
+        base = _bartlett_hann_window(win_length, xp=xp)
+    elif kind in _TUKEY_WINDOWS:
+        base = _tukey_window(win_length, _TUKEY_WINDOWS[kind], xp=xp)
+    elif kind == "parzen":
+        base = _parzen_window(win_length, xp=xp)
+    elif kind == "lanczos":
+        base = _lanczos_window(win_length, xp=xp)
+    elif kind == "welch":
+        base = _welch_window(win_length, xp=xp)
+    elif kind in _GAUSSIAN_WINDOWS:
+        base = _gaussian_window(win_length, _GAUSSIAN_WINDOWS[kind], xp=xp)
+    elif kind in _GENERAL_GAUSSIAN_WINDOWS:
+        power, sigma_ratio = _GENERAL_GAUSSIAN_WINDOWS[kind]
+        base = _general_gaussian_window(win_length, power, sigma_ratio, xp=xp)
+    elif kind in _EXPONENTIAL_WINDOWS:
+        base = _exponential_window(win_length, _EXPONENTIAL_WINDOWS[kind], xp=xp)
+    elif kind in _CAUCHY_WINDOWS:
+        base = _cauchy_window(win_length, _CAUCHY_WINDOWS[kind], xp=xp)
+    elif kind in _COSINE_POWER_WINDOWS:
+        base = _cosine_power_window(win_length, _COSINE_POWER_WINDOWS[kind], xp=xp)
+    elif kind in _HANN_POISSON_WINDOWS:
+        base = _hann_poisson_window(win_length, _HANN_POISSON_WINDOWS[kind], xp=xp)
+    elif kind in _GENERAL_HAMMING_WINDOWS:
+        base = _general_hamming_window(win_length, _GENERAL_HAMMING_WINDOWS[kind], xp=xp)
     elif kind == "bohman":
         base = _bohman_window(win_length, xp=xp)
     elif kind == "cosine":
         base = _cosine_window(win_length, xp=xp)
+    elif kind == "kaiser":
+        base = _kaiser_window(win_length, kaiser_beta, xp=xp)
     elif kind == "rect":
         base = xp.ones(win_length, dtype=xp.float64)
     else:  # pragma: no cover - parser blocks this
@@ -430,7 +725,13 @@ def stft(signal: np.ndarray, config: VocoderConfig):
     xp = _array_module(work_signal)
 
     work_signal, frame_count = pad_for_framing(work_signal, config.n_fft, config.hop_size, config.center)
-    window = make_window(config.window, config.n_fft, config.win_length, xp=xp)
+    window = make_window(
+        config.window,
+        config.n_fft,
+        config.win_length,
+        kaiser_beta=config.kaiser_beta,
+        xp=xp,
+    )
     spectrum = xp.empty((config.n_fft // 2 + 1, frame_count), dtype=xp.complex128)
 
     for frame_idx in range(frame_count):
@@ -456,7 +757,13 @@ def istft(
     output_len = config.n_fft + config.hop_size * max(0, n_frames - 1)
     output = xp.zeros(output_len, dtype=xp.float64)
     weight = xp.zeros(output_len, dtype=xp.float64)
-    window = make_window(config.window, config.n_fft, config.win_length, xp=xp)
+    window = make_window(
+        config.window,
+        config.n_fft,
+        config.win_length,
+        kaiser_beta=config.kaiser_beta,
+        xp=xp,
+    )
 
     for frame_idx in range(n_frames):
         start = frame_idx * config.hop_size
@@ -803,7 +1110,13 @@ def phase_vocoder_time_stretch_fourier_sync(
         start = frame_idx * config.hop_size
         frame = force_length(framed[start : start + n_fft_i], n_fft_i)
         win_length_i = scaled_win_length(config.win_length, config.n_fft, n_fft_i)
-        window = make_window(config.window, n_fft_i, win_length_i, xp=xp)
+        window = make_window(
+            config.window,
+            n_fft_i,
+            win_length_i,
+            kaiser_beta=config.kaiser_beta,
+            xp=xp,
+        )
         spectrum = xp.fft.rfft(frame * window, n=n_fft_i)
         input_stft[:, frame_idx] = resize_spectrum_bins(spectrum, ref_bins)
         if progress_callback is not None and (frame_idx == frame_count - 1 or (frame_idx % 8) == 0):
@@ -873,7 +1186,13 @@ def phase_vocoder_time_stretch_fourier_sync(
         spec_i = resize_spectrum_bins(output_stft[:, frame_idx], bins_i)
         frame = xp.fft.irfft(spec_i, n=n_fft_i)
         win_length_i = scaled_win_length(config.win_length, config.n_fft, n_fft_i)
-        window = make_window(config.window, n_fft_i, win_length_i, xp=xp)
+        window = make_window(
+            config.window,
+            n_fft_i,
+            win_length_i,
+            kaiser_beta=config.kaiser_beta,
+            xp=xp,
+        )
 
         start = frame_idx * config.hop_size
         output[start : start + n_fft_i] += frame * window
@@ -1354,6 +1673,8 @@ def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> 
         parser.error("--fourier-sync-max-fft must be >= --fourier-sync-min-fft")
     if args.fourier_sync_smooth <= 0:
         parser.error("--fourier-sync-smooth must be > 0")
+    if args.kaiser_beta < 0:
+        parser.error("--kaiser-beta must be >= 0")
     if args.cuda_device < 0:
         parser.error("--cuda-device must be >= 0")
 
@@ -1407,6 +1728,12 @@ def build_parser() -> argparse.ArgumentParser:
         choices=list(WINDOW_CHOICES),
         default="hann",
         help="Window type (default: hann)",
+    )
+    stft_group.add_argument(
+        "--kaiser-beta",
+        type=float,
+        default=14.0,
+        help="Kaiser window beta parameter used when --window kaiser (default: 14.0)",
     )
     stft_group.add_argument(
         "--no-center",
@@ -1619,6 +1946,7 @@ def main(argv: list[str] | None = None) -> int:
         win_length=args.win_length,
         hop_size=args.hop_size,
         window=args.window,
+        kaiser_beta=args.kaiser_beta,
         center=not args.no_center,
         phase_locking=args.phase_locking,
         transient_preserve=args.transient_preserve,

@@ -71,6 +71,12 @@ def add_vocoder_args(
         help=f"Hop size in samples (default: {default_hop_size})",
     )
     parser.add_argument("--window", choices=list(WINDOW_CHOICES), default="hann", help="Window type")
+    parser.add_argument(
+        "--kaiser-beta",
+        type=float,
+        default=14.0,
+        help="Kaiser window beta parameter used when --window kaiser (default: 14.0)",
+    )
     parser.add_argument("--no-center", action="store_true", help="Disable centered framing")
     add_runtime_args(parser)
 
@@ -91,6 +97,7 @@ def build_vocoder_config(
         phase_locking=phase_locking,
         transient_preserve=transient_preserve,
         transient_threshold=transient_threshold,
+        kaiser_beta=args.kaiser_beta,
     )
 
 
@@ -105,6 +112,8 @@ def validate_vocoder_args(args: argparse.Namespace, parser: argparse.ArgumentPar
         parser.error("--win-length must be <= --n-fft")
     if args.hop_size > args.win_length:
         parser.error("--hop-size should be <= --win-length")
+    if args.kaiser_beta < 0:
+        parser.error("--kaiser-beta must be >= 0")
     if args.cuda_device < 0:
         parser.error("--cuda-device must be >= 0")
 

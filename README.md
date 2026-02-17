@@ -67,7 +67,10 @@ Most `pvx*` scripts share these patterns:
 - Common file options: `-o/--output-dir`, `--output-format`, `--overwrite`, `--dry-run`, `--subtype`.
 - Common level controls: `--normalize {none,peak,rms}`, `--peak-dbfs`, `--rms-dbfs`, `--clip`.
 - Common STFT controls (except where noted): `--n-fft`, `--win-length`, `--hop-size`, `--window`, `--no-center`.
-- Available window types: `hann`, `hamming`, `blackman`, `blackmanharris`, `nuttall`, `flattop`, `bartlett`, `bohman`, `cosine`, `rect`.
+- Available window types now include 50 options across classic, cosine-sum, tapered, and hybrid families.
+- Examples: `hann`, `hamming`, `blackman_nuttall`, `triangular`, `tukey_0p25`, `parzen`, `lanczos`, `welch`, `gaussian_0p45`, `general_gaussian_3p0_0p35`, `exponential_0p5`, `cauchy_1p0`, `cosine_power_3`, `hann_poisson_1p0`, `general_hamming_0p80`, `kaiser`, `rect`.
+- Use `--help` on any `pvx*` tool to see the full window list.
+- Kaiser control: `--kaiser-beta` (used when `--window kaiser`).
 - Common runtime controls: `--device {auto,cpu,cuda}`, `--cuda-device`.
 
 ## Tool Reference
