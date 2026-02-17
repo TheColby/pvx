@@ -40,7 +40,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Generate harmonized voices from an input")
     add_common_io_args(parser, default_suffix="_harm")
     add_vocoder_args(parser, default_n_fft=2048, default_win_length=2048, default_hop_size=512)
-    parser.add_argument("--intervals", default="0,4,7", help="Comma-separated semitone intervals per voice")
+    parser.add_argument("--intervals", default="0,4,7", help="Comma-separated semitone intervals per voice (supports fractional values)")
+    parser.add_argument(
+        "--intervals-cents",
+        default="",
+        help="Optional cents offsets per voice, added to --intervals (e.g. 0,14,-12)",
+    )
     parser.add_argument("--gains", default="", help="Optional comma-separated linear gain per voice")
     parser.add_argument("--pans", default="", help="Optional comma-separated pan per voice [-1..1]")
     parser.add_argument("--force-stereo", action="store_true", help="Mix result as stereo with panning")
@@ -57,6 +62,11 @@ def main(argv: list[str] | None = None) -> int:
     intervals = parse_float_list(args.intervals)
     if not intervals:
         parser.error("--intervals requires at least one value")
+    interval_cents = parse_float_list(args.intervals_cents, allow_empty=True) if args.intervals_cents else [0.0] * len(intervals)
+    if len(interval_cents) < len(intervals):
+        interval_cents = interval_cents + [0.0] * (len(intervals) - len(interval_cents))
+    interval_cents = interval_cents[: len(intervals)]
+    pitch_steps = [semi + (cent / 100.0) for semi, cent in zip(intervals, interval_cents)]
 
     gains = parse_float_list(args.gains, allow_empty=True) if args.gains else [1.0] * len(intervals)
     if len(gains) < len(intervals):
@@ -77,7 +87,7 @@ def main(argv: list[str] | None = None) -> int:
         try:
             audio, sr = read_audio(path)
             voices: list[np.ndarray] = []
-            for semi, gain in zip(intervals, gains):
+            for semi, gain in zip(pitch_steps, gains):
                 ratio = semitone_to_ratio(semi)
                 shifted = time_pitch_shift_audio(audio, 1.0, ratio, config, resample_mode=args.resample_mode)
                 voices.append(shifted * gain)

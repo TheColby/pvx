@@ -334,6 +334,10 @@ def db_to_amplitude(db: float) -> float:
     return 10.0 ** (db / 20.0)
 
 
+def cents_to_ratio(cents: float) -> float:
+    return 2.0 ** (cents / 1200.0)
+
+
 def _has_cupy() -> bool:
     return cp is not None
 
@@ -1493,6 +1497,9 @@ def choose_pitch_ratio(args: argparse.Namespace, signal: np.ndarray, sr: int) ->
     if args.pitch_shift_semitones is not None:
         return PitchConfig(ratio=2.0 ** (args.pitch_shift_semitones / 12.0))
 
+    if args.pitch_shift_cents is not None:
+        return PitchConfig(ratio=cents_to_ratio(args.pitch_shift_cents))
+
     if args.target_f0 is None:
         return PitchConfig(ratio=1.0)
 
@@ -1876,6 +1883,12 @@ def build_parser() -> argparse.ArgumentParser:
         type=float,
         default=None,
         help="Pitch shift in semitones (+12 is one octave up)",
+    )
+    pitch_mutex.add_argument(
+        "--pitch-shift-cents",
+        type=float,
+        default=None,
+        help="Pitch shift in cents (+1200 is one octave up)",
     )
     pitch_mutex.add_argument(
         "--pitch-shift-ratio",

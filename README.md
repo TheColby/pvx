@@ -102,6 +102,18 @@ Precedence notes:
 | `--rms-dbfs` | float dBFS | Target RMS when `--normalize rms`. |
 | `--clip` | boolean | Hard-limits output samples to `[-1.0, 1.0]`. |
 
+### Microtonal Pitch Controls
+
+| Tool | Microtonal inputs | Notes |
+| --- | --- | --- |
+| `pvxvoc.py` | `--pitch-shift-cents`, fractional `--pitch-shift-semitones`, `--pitch-shift-ratio` | One pitch selector at a time via mutual exclusivity. |
+| `pvxtransient.py` | `--pitch-shift-cents`, fractional `--pitch-shift-semitones`, `--pitch-shift-ratio` | Cents are additive to semitones unless ratio is used. |
+| `pvxformant.py` | `--pitch-shift-cents`, fractional `--pitch-shift-semitones` | Cents are additive to semitones. |
+| `pvxharmonize.py` | fractional `--intervals`, `--intervals-cents` | Cents offsets are per voice and added to intervals. |
+| `pvxlayer.py` | `--harmonic-pitch-cents`, `--percussive-pitch-cents` plus semitone controls | Harmonic/percussive paths are controlled independently. |
+| `pvxretune.py` | `--scale-cents` | Custom octave degree map in cents relative to `--root`. |
+| `pvxconform.py` | CSV `pitch_cents` / `pitch_ratio` / `pitch_semitones` | Each segment row provides exactly one pitch field. |
+
 ### STFT and Windowing Controls
 
 | Area | Flags | Purpose |
@@ -142,7 +154,7 @@ Key capabilities:
 
 - Multi-file + multi-channel processing.
 - Time stretch by ratio (`--time-stretch`) or absolute length (`--target-duration`).
-- Pitch by semitones, ratio, or target F0 (`--target-f0`).
+- Pitch by semitones, cents, ratio, or target F0 (`--target-f0`).
 - Formant-preserving pitch mode (`--pitch-mode formant-preserving`).
 - Transient-preserve + phase locking.
 - Fourier-sync mode (`--fourier-sync`) with fundamental frame locking.
@@ -189,7 +201,8 @@ Creates harmony voices by pitch-shifting and summing.
 
 Key options:
 
-- `--intervals`: semitone list per voice (e.g. `0,4,7,12`).
+- `--intervals`: semitone list per voice (fractional values allowed).
+- `--intervals-cents`: optional per-voice cents offsets added to intervals.
 - `--gains`: per-voice gains.
 - `--pans`: per-voice pan in `[-1, 1]`.
 - `--force-stereo`: force stereo render path.
@@ -213,7 +226,7 @@ Required CSV columns:
 - `start_sec`
 - `end_sec`
 - `stretch`
-- `pitch_semitones`
+- one pitch field per row: `pitch_semitones` or `pitch_cents` or `pitch_ratio`
 
 Key options:
 
@@ -223,10 +236,10 @@ Key options:
 Example CSV (`map_conform.csv`):
 
 ```csv
-start_sec,end_sec,stretch,pitch_semitones
+start_sec,end_sec,stretch,pitch_cents
 0.0,1.0,1.0,0
-1.0,2.4,1.2,2
-2.4,3.1,0.9,-1
+1.0,2.4,1.2,35
+2.4,3.1,0.9,-28
 ```
 
 Example command:
@@ -288,6 +301,7 @@ Formant-domain processing with optional pitch shift stage.
 Key options:
 
 - `--pitch-shift-semitones`: optional pitch shift before formant stage.
+- `--pitch-shift-cents`: microtonal cents offset added to semitone shift.
 - `--formant-shift-ratio`: formant move factor.
 - `--mode {shift,preserve}`:
   - `shift`: explicitly shift formants.
@@ -310,7 +324,7 @@ Transient-emphasis variant of phase-vocoder processing.
 Key options:
 
 - `--time-stretch` or `--target-duration`.
-- `--pitch-shift-semitones` or `--pitch-shift-ratio`.
+- `--pitch-shift-semitones`, `--pitch-shift-cents`, or `--pitch-shift-ratio`.
 - `--transient-threshold`: transient detector sensitivity.
 
 Example:
@@ -378,6 +392,7 @@ Key options:
 
 - `--root`: tonic note (`C`, `C#`, ... `B`).
 - `--scale`: `chromatic`, `major`, `minor`, `pentatonic`.
+- `--scale-cents`: optional custom microtonal degree list (cents in one octave relative to `--root`).
 - `--strength`: correction amount.
 - `--chunk-ms`, `--overlap-ms`: analysis block design.
 - `--f0-min`, `--f0-max`: F0 detection bounds.
@@ -394,8 +409,8 @@ Splits audio into harmonic/percussive components, then applies independent pitch
 
 Key options:
 
-- Harmonic path: `--harmonic-stretch`, `--harmonic-pitch-semitones`, `--harmonic-gain`.
-- Percussive path: `--percussive-stretch`, `--percussive-pitch-semitones`, `--percussive-gain`.
+- Harmonic path: `--harmonic-stretch`, `--harmonic-pitch-semitones`, `--harmonic-pitch-cents`, `--harmonic-gain`.
+- Percussive path: `--percussive-stretch`, `--percussive-pitch-semitones`, `--percussive-pitch-cents`, `--percussive-gain`.
 - HPSS controls: `--harmonic-kernel`, `--percussive-kernel`.
 
 Example:

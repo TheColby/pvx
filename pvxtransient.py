@@ -13,6 +13,7 @@ from pvxcommon import (
     add_vocoder_args,
     build_status_bar,
     build_vocoder_config,
+    cents_to_ratio,
     default_output_path,
     ensure_runtime,
     finalize_audio,
@@ -34,6 +35,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--time-stretch", type=float, default=1.0)
     parser.add_argument("--target-duration", type=float, default=None, help="Target duration in seconds")
     parser.add_argument("--pitch-shift-semitones", type=float, default=0.0)
+    parser.add_argument(
+        "--pitch-shift-cents",
+        type=float,
+        default=None,
+        help="Optional microtonal pitch shift in cents (added to --pitch-shift-semitones)",
+    )
     parser.add_argument("--pitch-shift-ratio", type=float, default=None)
     parser.add_argument("--transient-threshold", type=float, default=1.6)
     parser.add_argument("--resample-mode", choices=["auto", "fft", "linear"], default="auto")
@@ -51,10 +58,17 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--target-duration must be > 0")
     if args.pitch_shift_ratio is not None and args.pitch_shift_ratio <= 0:
         parser.error("--pitch-shift-ratio must be > 0")
+    if args.pitch_shift_ratio is not None and args.pitch_shift_cents is not None:
+        parser.error("--pitch-shift-cents cannot be combined with --pitch-shift-ratio")
     if args.transient_threshold <= 0:
         parser.error("--transient-threshold must be > 0")
 
-    pitch_ratio = args.pitch_shift_ratio if args.pitch_shift_ratio is not None else semitone_to_ratio(args.pitch_shift_semitones)
+    if args.pitch_shift_ratio is not None:
+        pitch_ratio = args.pitch_shift_ratio
+    else:
+        pitch_ratio = semitone_to_ratio(args.pitch_shift_semitones) * (
+            cents_to_ratio(args.pitch_shift_cents) if args.pitch_shift_cents is not None else 1.0
+        )
     config = build_vocoder_config(
         args,
         phase_locking="identity",

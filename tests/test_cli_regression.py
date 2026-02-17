@@ -84,6 +84,32 @@ class TestCLIRegression(unittest.TestCase):
             self.assertEqual(proc.returncode, 0, msg=proc.stderr)
             self.assertIn("[ok]", proc.stdout)
 
+    def test_cli_microtonal_pitch_shift_cents(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            in_path = tmp_path / "micro.wav"
+            input_audio, sr = write_stereo_tone(in_path, duration=0.4)
+
+            cmd = [
+                sys.executable,
+                str(CLI),
+                str(in_path),
+                "--pitch-shift-cents",
+                "50",
+                "--phase-locking",
+                "identity",
+                "--overwrite",
+            ]
+            proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+            self.assertEqual(proc.returncode, 0, msg=proc.stderr)
+
+            out_path = tmp_path / "micro_pv.wav"
+            self.assertTrue(out_path.exists())
+            output_audio, out_sr = sf.read(out_path, always_2d=True)
+            self.assertEqual(out_sr, sr)
+            self.assertEqual(output_audio.shape[1], 2)
+            self.assertAlmostEqual(output_audio.shape[0], input_audio.shape[0], delta=4)
+
     def test_cli_fourier_sync_non_power_of_two_fft(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)

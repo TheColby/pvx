@@ -13,6 +13,7 @@ from pvxcommon import (
     add_vocoder_args,
     build_status_bar,
     build_vocoder_config,
+    cents_to_ratio,
     default_output_path,
     ensure_runtime,
     finalize_audio,
@@ -67,8 +68,10 @@ def build_parser() -> argparse.ArgumentParser:
     add_vocoder_args(parser, default_n_fft=2048, default_win_length=2048, default_hop_size=512)
     parser.add_argument("--harmonic-stretch", type=float, default=1.0)
     parser.add_argument("--harmonic-pitch-semitones", type=float, default=0.0)
+    parser.add_argument("--harmonic-pitch-cents", type=float, default=0.0)
     parser.add_argument("--percussive-stretch", type=float, default=1.0)
     parser.add_argument("--percussive-pitch-semitones", type=float, default=0.0)
+    parser.add_argument("--percussive-pitch-cents", type=float, default=0.0)
     parser.add_argument("--harmonic-gain", type=float, default=1.0)
     parser.add_argument("--percussive-gain", type=float, default=1.0)
     parser.add_argument("--harmonic-kernel", type=int, default=31)
@@ -90,8 +93,8 @@ def main(argv: list[str] | None = None) -> int:
     config = build_vocoder_config(args, phase_locking="identity", transient_preserve=True, transient_threshold=1.7)
     paths = resolve_inputs(args.inputs, parser)
 
-    harm_ratio = semitone_to_ratio(args.harmonic_pitch_semitones)
-    perc_ratio = semitone_to_ratio(args.percussive_pitch_semitones)
+    harm_ratio = semitone_to_ratio(args.harmonic_pitch_semitones) * cents_to_ratio(args.harmonic_pitch_cents)
+    perc_ratio = semitone_to_ratio(args.percussive_pitch_semitones) * cents_to_ratio(args.percussive_pitch_cents)
     status = build_status_bar(args, "pvxlayer", len(paths))
 
     failures = 0

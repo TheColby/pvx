@@ -300,6 +300,10 @@ def semitone_to_ratio(semitones: float) -> float:
     return float(2.0 ** (semitones / 12.0))
 
 
+def cents_to_ratio(cents: float) -> float:
+    return float(2.0 ** (cents / 1200.0))
+
+
 def time_pitch_shift_channel(
     signal: np.ndarray,
     stretch: float,
@@ -346,13 +350,16 @@ def read_segment_csv(path: Path, *, has_pitch: bool) -> list[SegmentSpec]:
     with path.open("r", encoding="utf-8", newline="") as f:
         reader = csv.DictReader(f)
         required = {"start_sec", "end_sec", "stretch"}
+        pitch_columns = ("pitch_ratio", "pitch_cents", "pitch_semitones")
         if has_pitch:
-            required.add("pitch_semitones")
+            headers = set(reader.fieldnames or [])
+            if not any(name in headers for name in pitch_columns):
+                raise ValueError(f"Missing CSV pitch column. Provide one of: {list(pitch_columns)}")
         missing = required - set(reader.fieldnames or [])
         if missing:
             raise ValueError(f"Missing CSV columns: {sorted(missing)}")
 
-        for row in reader:
+        for row_idx, row in enumerate(reader, start=2):
             start_s = float(row["start_sec"])
             end_s = float(row["end_sec"])
             stretch = float(row["stretch"])
@@ -362,7 +369,26 @@ def read_segment_csv(path: Path, *, has_pitch: bool) -> list[SegmentSpec]:
                 raise ValueError("stretch must be positive in all CSV rows")
             pitch_ratio = 1.0
             if has_pitch:
-                pitch_ratio = semitone_to_ratio(float(row["pitch_semitones"]))
+                ratio_text = str(row.get("pitch_ratio", "")).strip()
+                cents_text = str(row.get("pitch_cents", "")).strip()
+                semitones_text = str(row.get("pitch_semitones", "")).strip()
+                populated = int(bool(ratio_text)) + int(bool(cents_text)) + int(bool(semitones_text))
+                if populated == 0:
+                    raise ValueError(
+                        f"CSV row {row_idx}: missing pitch value. Provide pitch_ratio, pitch_cents, or pitch_semitones."
+                    )
+                if populated > 1:
+                    raise ValueError(
+                        f"CSV row {row_idx}: multiple pitch fields set. Use only one of pitch_ratio, pitch_cents, pitch_semitones."
+                    )
+                if ratio_text:
+                    pitch_ratio = float(ratio_text)
+                elif cents_text:
+                    pitch_ratio = cents_to_ratio(float(cents_text))
+                else:
+                    pitch_ratio = semitone_to_ratio(float(semitones_text))
+                if pitch_ratio <= 0:
+                    raise ValueError(f"CSV row {row_idx}: pitch ratio must be positive")
             segments.append(SegmentSpec(start_s=start_s, end_s=end_s, stretch=stretch, pitch_ratio=pitch_ratio))
 
     segments.sort(key=lambda seg: seg.start_s)

@@ -19,6 +19,7 @@ from pvxcommon import (
     finalize_audio,
     log_error,
     log_message,
+    parse_float_list,
     read_audio,
     resolve_inputs,
     time_pitch_shift_audio,
@@ -64,21 +65,38 @@ def midi_to_freq(midi: float) -> float:
     return 440.0 * (2.0 ** ((midi - 69.0) / 12.0))
 
 
-def nearest_scale_freq(freq: float, root: str, scale_name: str) -> float:
+def normalize_octave_cents(values: list[float]) -> list[float]:
+    unique = sorted({round(float(v) % 1200.0, 6) for v in values})
+    return [float(v) for v in unique]
+
+
+def nearest_scale_freq(
+    freq: float,
+    root: str,
+    scale_name: str,
+    *,
+    custom_scale_cents: list[float] | None = None,
+) -> float:
     root_class = NOTE_TO_CLASS[root.upper()]
-    allowed = {(root_class + interval) % 12 for interval in SCALES[scale_name]}
     midi = freq_to_midi(freq)
-    center = int(round(midi))
-    best = center
+    cents = midi * 100.0
+    root_cents = float(root_class * 100)
+    if custom_scale_cents is None:
+        degree_cents = [float(interval * 100.0) for interval in SCALES[scale_name]]
+    else:
+        degree_cents = custom_scale_cents
+    center_octave = int(round((cents - root_cents) / 1200.0))
+    best = cents
     best_err = float("inf")
-    for cand in range(center - 36, center + 37):
-        if cand % 12 not in allowed:
-            continue
-        err = abs(cand - midi)
-        if err < best_err:
-            best_err = err
-            best = cand
-    return midi_to_freq(float(best))
+    for octave in range(center_octave - 6, center_octave + 7):
+        base = root_cents + (octave * 1200.0)
+        for degree in degree_cents:
+            cand_cents = base + degree
+            err = abs(cand_cents - cents)
+            if err < best_err:
+                best_err = err
+                best = cand_cents
+    return midi_to_freq(best / 100.0)
 
 
 def overlap_add(chunks: list[np.ndarray], starts: list[int], total_len: int) -> np.ndarray:
@@ -107,7 +125,15 @@ def build_parser() -> argparse.ArgumentParser:
     add_common_io_args(parser, default_suffix="_retune")
     add_vocoder_args(parser, default_n_fft=2048, default_win_length=2048, default_hop_size=512)
     parser.add_argument("--root", default="C", help="Scale root note (C,C#,D,...,B)")
-    parser.add_argument("--scale", choices=sorted(SCALES.keys()), default="chromatic")
+    parser.add_argument("--scale", choices=sorted(SCALES.keys()), default="chromatic", help="Named scale for 12-TET quantization")
+    parser.add_argument(
+        "--scale-cents",
+        default=None,
+        help=(
+            "Optional comma-separated microtonal scale degrees in cents within one octave, "
+            "relative to --root (example: 0,90,204,294,408,498,612,702,816,906,1020,1110)"
+        ),
+    )
     parser.add_argument("--strength", type=float, default=0.85, help="Correction strength 0..1")
     parser.add_argument("--chunk-ms", type=float, default=80.0, help="Analysis/process chunk duration in ms")
     parser.add_argument("--overlap-ms", type=float, default=20.0, help="Chunk overlap in ms")
@@ -124,6 +150,14 @@ def main(argv: list[str] | None = None) -> int:
     validate_vocoder_args(args, parser)
     if args.root.upper() not in NOTE_TO_CLASS:
         parser.error("--root must be a valid note name")
+    custom_scale_cents: list[float] | None = None
+    if args.scale_cents:
+        cents = parse_float_list(args.scale_cents)
+        if not cents:
+            parser.error("--scale-cents requires at least one numeric value")
+        custom_scale_cents = normalize_octave_cents(cents)
+        if not custom_scale_cents:
+            parser.error("--scale-cents resolves to an empty set")
     if not (0.0 <= args.strength <= 1.0):
         parser.error("--strength must be between 0 and 1")
     if args.chunk_ms <= 5.0:
@@ -159,7 +193,12 @@ def main(argv: list[str] | None = None) -> int:
                 ratio = 1.0
                 try:
                     f0 = estimate_f0_autocorrelation(mono_piece, sr, args.f0_min, args.f0_max)
-                    target = nearest_scale_freq(f0, args.root, args.scale)
+                    target = nearest_scale_freq(
+                        f0,
+                        args.root,
+                        args.scale,
+                        custom_scale_cents=custom_scale_cents,
+                    )
                     ratio = target / f0
                 except Exception:
                     ratio = 1.0

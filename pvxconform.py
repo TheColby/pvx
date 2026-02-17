@@ -49,7 +49,8 @@ def expand_segments(segments: list[SegmentSpec], total_s: float) -> list[Segment
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
-            "Conform audio to a CSV map. CSV columns: start_sec,end_sec,stretch,pitch_semitones"
+            "Conform audio to a CSV map. CSV columns: start_sec,end_sec,stretch,"
+            " and one pitch field: pitch_semitones or pitch_cents or pitch_ratio"
         )
     )
     add_common_io_args(parser, default_suffix="_conform")

@@ -13,6 +13,7 @@ from pvxcommon import (
     add_vocoder_args,
     build_status_bar,
     build_vocoder_config,
+    cents_to_ratio,
     default_output_path,
     ensure_runtime,
     finalize_audio,
@@ -66,6 +67,12 @@ def build_parser() -> argparse.ArgumentParser:
     add_common_io_args(parser, default_suffix="_formant")
     add_vocoder_args(parser, default_n_fft=2048, default_win_length=2048, default_hop_size=512)
     parser.add_argument("--pitch-shift-semitones", type=float, default=0.0, help="Optional pitch shift before formant stage")
+    parser.add_argument(
+        "--pitch-shift-cents",
+        type=float,
+        default=0.0,
+        help="Additional microtonal pitch shift in cents before formant stage",
+    )
     parser.add_argument("--formant-shift-ratio", type=float, default=1.0, help="Formant ratio (>1 up, <1 down)")
     parser.add_argument("--mode", choices=["shift", "preserve"], default="shift")
     parser.add_argument("--formant-lifter", type=int, default=32)
@@ -87,7 +94,7 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--formant-max-gain-db must be > 0")
 
     config = build_vocoder_config(args, phase_locking="identity", transient_preserve=False)
-    pitch_ratio = semitone_to_ratio(args.pitch_shift_semitones)
+    pitch_ratio = semitone_to_ratio(args.pitch_shift_semitones) * cents_to_ratio(args.pitch_shift_cents)
     paths = resolve_inputs(args.inputs, parser)
     status = build_status_bar(args, "pvxformant", len(paths))
 
