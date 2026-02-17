@@ -8,99 +8,84 @@
 
 # pvx
 
-`pvx` is a phase-vocoder-based DSP toolkit with multiple command-line processors:
-`pvxvoc`, `pvxfreeze`, `pvxharmonize`, `pvxconform`, `pvxmorph`, `pvxwarp`,
-`pvxformant`, `pvxtransient`, `pvxunison`, `pvxdenoise`, `pvxdeverb`, `pvxretune`, and `pvxlayer`.
+`pvx` is a multi-tool audio DSP toolkit built around phase-vocoder workflows.
 
-This README focuses on `pvxvoc`, the core processor.
+The repository currently includes:
 
-It supports:
-- One or more input files in a single run
-- Mono, stereo, or arbitrary channel counts
-- FFT/window/hop controls
-- Transient-preserving phase locking
-- Fourier-sync mode with fundamental frame locking
-- Time stretch by ratio or absolute target duration
-- Pitch shift by semitones, ratio, or target fundamental frequency
-- Formant-preserving pitch mode
-- Optional output sample-rate conversion
-- Optional peak/RMS normalization
+- `pvxvoc.py`: full-feature phase vocoder (time/pitch/F0/formant/fourier-sync).
+- `pvxfreeze.py`: spectral freeze / sustained texture generation.
+- `pvxharmonize.py`: multi-voice harmonizer.
+- `pvxconform.py`: time+pitch conforming via CSV map.
+- `pvxmorph.py`: spectral morph between two files.
+- `pvxwarp.py`: variable time warp via CSV map.
+- `pvxformant.py`: formant shift/preserve processing.
+- `pvxtransient.py`: transient-first time/pitch processing.
+- `pvxunison.py`: stereo detuned unison thickener.
+- `pvxdenoise.py`: spectral subtraction denoiser.
+- `pvxdeverb.py`: reverb-tail suppression.
+- `pvxretune.py`: monophonic scale retune.
+- `pvxlayer.py`: harmonic/percussive split and independent processing.
 
 ## Install
+
+### Option A: Requirements file
 
 ```bash
 python3 -m pip install -r requirements.txt
 ```
 
-## Basic Usage
+### Option B: Editable package install
 
 ```bash
-python3 pvxvoc.py input.wav
+python3 -m pip install -e .
 ```
 
-Default output:
-- File: `input_pv.wav`
-- Location: same directory as input
-- Processing: no time/pitch change (acts as a pass-through transform)
-- A per-file processing progress bar is shown in interactive terminals
+This exposes console commands from `pyproject.toml` (`pvxvoc`, `pvxfreeze`, etc.).
 
-## Other Tools
-
-- `python3 pvxfreeze.py <in.wav>`: spectral freeze / sustain.
-- `python3 pvxharmonize.py <in.wav>`: multi-voice harmonizer.
-- `python3 pvxconform.py <in.wav> --map map.csv`: pitch+timing map conform.
-- `python3 pvxmorph.py <a.wav> <b.wav>`: spectral morphing.
-- `python3 pvxwarp.py <in.wav> --map map.csv`: time-warp map processing.
-- `python3 pvxformant.py <in.wav>`: formant shift/preserve processing.
-- `python3 pvxtransient.py <in.wav>`: transient-first vocoder mode.
-- `python3 pvxunison.py <in.wav>`: stereo micro-detune unison.
-- `python3 pvxdenoise.py <in.wav>`: spectral denoise.
-- `python3 pvxdeverb.py <in.wav>`: tail suppression / deverb.
-- `python3 pvxretune.py <in.wav>`: monophonic retuning.
-- `python3 pvxlayer.py <in.wav>`: harmonic/percussive layered processing.
-
-## CLI
+## Quick Start
 
 ```bash
-python3 pvxvoc.py [options] <input1> [<input2> ...]
+python3 pvxvoc.py test.wav --time-stretch 1.25 --pitch-shift-semitones 3
 ```
 
-### Common Examples
+## Shared Conventions (Most Tools)
 
-Time stretch 1.5x longer:
+Most `pvx*` scripts share these patterns:
 
-```bash
-python3 pvxvoc.py song.wav --time-stretch 1.5
-```
+- Input accepts one or more paths/globs.
+- Output naming uses tool-specific suffixes (for example `_harm`, `_denoise`).
+- Common file options: `-o/--output-dir`, `--output-format`, `--overwrite`, `--dry-run`, `--subtype`.
+- Common level controls: `--normalize {none,peak,rms}`, `--peak-dbfs`, `--rms-dbfs`, `--clip`.
+- Common STFT controls (except where noted): `--n-fft`, `--win-length`, `--hop-size`, `--window`, `--no-center`.
 
-Pitch up by 3 semitones (preserving final duration unless overridden):
+## Tool Reference
 
-```bash
-python3 pvxvoc.py vocals.wav --pitch-shift-semitones 3
-```
+### 1. `pvxvoc.py`
 
-Pitch by ratio and set exact output duration:
+Primary phase-vocoder engine for batch time/pitch processing.
 
-```bash
-python3 pvxvoc.py take.wav --pitch-shift-ratio 0.8 --target-duration 12.0
-```
+Key capabilities:
 
-Shift to a target F0 (auto-estimates input F0 first):
+- Multi-file + multi-channel processing.
+- Time stretch by ratio (`--time-stretch`) or absolute length (`--target-duration`).
+- Pitch by semitones, ratio, or target F0 (`--target-f0`).
+- Formant-preserving pitch mode (`--pitch-mode formant-preserving`).
+- Transient-preserve + phase locking.
+- Fourier-sync mode (`--fourier-sync`) with fundamental frame locking.
+- Optional terminal progress bar (`--no-progress` disables).
 
-```bash
-python3 pvxvoc.py voice.wav --target-f0 220 --f0-min 70 --f0-max 400
-```
-
-Batch process several files with custom STFT params:
+Example:
 
 ```bash
 python3 pvxvoc.py stems/*.wav \
-  --n-fft 4096 --win-length 4096 --hop-size 1024 --window hann \
-  --phase-locking identity --transient-preserve --transient-threshold 1.8 \
-  --time-stretch 1.2 --pitch-shift-semitones -2
+  --time-stretch 1.2 \
+  --pitch-shift-semitones -2 \
+  --phase-locking identity \
+  --transient-preserve \
+  --normalize peak --peak-dbfs -1
 ```
 
-Fourier-sync mode (non-power-of-two FFT and frame locking to F0):
+Fourier-sync example:
 
 ```bash
 python3 pvxvoc.py vocal.wav \
@@ -108,133 +93,349 @@ python3 pvxvoc.py vocal.wav \
   --f0-min 70 --f0-max 500 --time-stretch 1.25
 ```
 
-Write FLAC outputs into another directory:
+### 2. `pvxfreeze.py`
+
+Freezes one spectral snapshot and synthesizes a sustained output.
+
+Key options:
+
+- `--freeze-time`: time (seconds) where freeze frame is captured.
+- `--duration`: length of rendered freeze.
+- `--random-phase`: subtle animated phase drift.
+
+Example:
 
 ```bash
-python3 pvxvoc.py mixes/*.wav -o out --output-format flac --suffix _pv2 --overwrite
+python3 pvxfreeze.py pad.wav --freeze-time 0.42 --duration 8.0 --random-phase
 ```
 
-Convert output sample rate and normalize peaks:
+### 3. `pvxharmonize.py`
+
+Creates harmony voices by pitch-shifting and summing.
+
+Key options:
+
+- `--intervals`: semitone list per voice (e.g. `0,4,7,12`).
+- `--gains`: per-voice gains.
+- `--pans`: per-voice pan in `[-1, 1]`.
+- `--force-stereo`: force stereo render path.
+
+Example:
 
 ```bash
-python3 pvxvoc.py input.wav --target-sample-rate 48000 --normalize peak --peak-dbfs -1
+python3 pvxharmonize.py lead.wav \
+  --intervals 0,3,7 \
+  --gains 1.0,0.8,0.7 \
+  --pans -0.4,0,0.4 \
+  --force-stereo
 ```
 
-Formant-preserving pitch shift:
+### 4. `pvxconform.py`
+
+Conforms timing and pitch by segments from CSV.
+
+Required CSV columns:
+
+- `start_sec`
+- `end_sec`
+- `stretch`
+- `pitch_semitones`
+
+Key options:
+
+- `--map`: CSV path.
+- `--crossfade-ms`: segment boundary smoothing.
+
+Example CSV (`map_conform.csv`):
+
+```csv
+start_sec,end_sec,stretch,pitch_semitones
+0.0,1.0,1.0,0
+1.0,2.4,1.2,2
+2.4,3.1,0.9,-1
+```
+
+Example command:
 
 ```bash
-python3 pvxvoc.py vocal.wav \
+python3 pvxconform.py vocal.wav --map map_conform.csv --crossfade-ms 10
+```
+
+### 5. `pvxmorph.py`
+
+Morphs two inputs in STFT magnitude/phase space.
+
+Key options:
+
+- `input_a`, `input_b`: two source files.
+- `--alpha`: morph blend (`0` = A, `1` = B).
+- `-o/--output`: explicit output path.
+
+Example:
+
+```bash
+python3 pvxmorph.py source_a.wav source_b.wav --alpha 0.35 -o hybrid.wav
+```
+
+### 6. `pvxwarp.py`
+
+Time-only variable stretch from CSV map.
+
+Required CSV columns:
+
+- `start_sec`
+- `end_sec`
+- `stretch`
+
+Key options:
+
+- `--map`: CSV path.
+- `--crossfade-ms`: segment joins.
+
+Example CSV (`map_warp.csv`):
+
+```csv
+start_sec,end_sec,stretch
+0.0,0.8,1.0
+0.8,2.0,1.3
+2.0,3.0,0.85
+```
+
+Example command:
+
+```bash
+python3 pvxwarp.py drums.wav --map map_warp.csv
+```
+
+### 7. `pvxformant.py`
+
+Formant-domain processing with optional pitch shift stage.
+
+Key options:
+
+- `--pitch-shift-semitones`: optional pitch shift before formant stage.
+- `--formant-shift-ratio`: formant move factor.
+- `--mode {shift,preserve}`:
+  - `shift`: explicitly shift formants.
+  - `preserve`: compensate formants when pitch shifting.
+- `--formant-lifter`, `--formant-max-gain-db`: envelope extraction and gain limits.
+
+Example:
+
+```bash
+python3 pvxformant.py voice.wav \
   --pitch-shift-semitones 4 \
-  --pitch-mode formant-preserving \
-  --formant-lifter 32 --formant-strength 1.0
+  --mode preserve \
+  --formant-lifter 32
 ```
 
-Dry-run config validation (no files written):
+### 8. `pvxtransient.py`
+
+Transient-emphasis variant of phase-vocoder processing.
+
+Key options:
+
+- `--time-stretch` or `--target-duration`.
+- `--pitch-shift-semitones` or `--pitch-shift-ratio`.
+- `--transient-threshold`: transient detector sensitivity.
+
+Example:
 
 ```bash
-python3 pvxvoc.py input.wav --time-stretch 0.85 --dry-run --verbose
+python3 pvxtransient.py percussion.wav --time-stretch 1.35 --transient-threshold 1.4
 ```
 
-## Option Summary
+### 9. `pvxunison.py`
 
-### Input / Output
+Stereo thickening via multiple detuned voices.
 
-- `inputs`: one or more input files (supports shell globs)
-- `-o, --output-dir`: output directory (default: per-input directory)
-- `--suffix`: filename suffix before extension (default: `_pv`)
-- `--output-format`: output extension/format (e.g. `wav`, `flac`, `aiff`)
-- `--overwrite`: replace existing outputs
-- `--subtype`: libsndfile subtype (`PCM_16`, `PCM_24`, `FLOAT`, etc)
-- `--dry-run`: plan processing without writing files
-- `--verbose`: print per-file detailed processing diagnostics
-- `--no-progress`: disable terminal progress bars
+Key options:
 
-### Phase Vocoder / STFT
+- `--voices`: number of unison voices.
+- `--detune-cents`: overall detune span.
+- `--width`: stereo spread control.
+- `--dry-mix`: blend original signal.
 
-- `--n-fft`: FFT size (default `2048`)
-- `--win-length`: analysis/synthesis window length (default `2048`)
-- `--hop-size`: hop size in samples (default `512`)
-- `--window`: `hann`, `hamming`, `blackman`, `rect`
-- `--no-center`: disable centered frame padding
-- `--phase-locking`: `off` or `identity` phase locking
-- `--transient-preserve`: spectral-flux based transient phase resets
-- `--transient-threshold`: transient detection sensitivity
-- `--fourier-sync`: generic short-time Fourier mode with per-frame FFT locking to detected F0
-- `--fourier-sync-min-fft`, `--fourier-sync-max-fft`: bounds for per-frame FFT sizes in sync mode
-- `--fourier-sync-smooth`: smoothing span for prescanned F0 trajectory
-
-### Time Controls
-
-- `--time-stretch`: final duration multiplier (`2.0` = twice as long)
-- `--target-duration`: absolute target duration in seconds (overrides `--time-stretch`)
-
-### Pitch Controls
-
-Exactly one of these may be used at a time:
-- `--pitch-shift-semitones`
-- `--pitch-shift-ratio`
-- `--target-f0`
-
-Related options:
-- `--analysis-channel`: F0 analysis source for `--target-f0` (`mix` or `first`)
-- `--f0-min`, `--f0-max`: F0 search bounds (Hz)
-- `--pitch-mode`: `standard` or `formant-preserving`
-- `--formant-lifter`: cepstral lifter size for envelope extraction
-- `--formant-strength`: blend amount from `0.0` to `1.0`
-- `--formant-max-gain-db`: formant correction gain limit
-
-### Resampling / Level
-
-- `--target-sample-rate`: output sample rate in Hz
-- `--resample-mode`: `auto` (default), `fft`, `linear`
-- `--normalize`: `none`, `peak`, `rms`
-- `--peak-dbfs`: target peak dBFS for peak normalization
-- `--rms-dbfs`: target RMS dBFS for RMS normalization
-- `--clip`: hard-clip to `[-1, 1]` after processing
-
-## Notes
-
-- Multi-channel handling: each channel is processed independently with identical transform settings.
-- Pitch shifting is implemented by combining phase-vocoder time scaling with resampling.
-- `--target-f0` uses autocorrelation and works best on monophonic, pitched signals.
-- Very transient-heavy material can benefit from larger FFT/hop tuning tradeoffs.
-- `--fourier-sync` assumes mostly harmonic content and performs a prescan to lock frame sizes so detected F0 maps to integer spectral bins.
-
-## Build Executables
-
-Install dependencies first:
+Example:
 
 ```bash
+python3 pvxunison.py synth.wav --voices 7 --detune-cents 18 --width 1.2 --dry-mix 0.15
+```
+
+### 10. `pvxdenoise.py`
+
+Spectral subtraction denoiser with optional external noise reference.
+
+Key options:
+
+- `--noise-seconds`: profile from beginning of target file.
+- `--noise-file`: optional separate noise capture.
+- `--reduction-db`: subtraction strength.
+- `--floor`: residual floor factor.
+- `--smooth`: temporal smoothing span.
+
+Example:
+
+```bash
+python3 pvxdenoise.py noisy.wav --noise-file noise_print.wav --reduction-db 14 --smooth 7
+```
+
+### 11. `pvxdeverb.py`
+
+Reduces spectral tail smear (de-reverb style).
+
+Key options:
+
+- `--strength`: tail suppression amount.
+- `--decay`: tail memory decay.
+- `--floor`: per-bin floor safeguard.
+
+Example:
+
+```bash
+python3 pvxdeverb.py room_take.wav --strength 0.5 --decay 0.9 --floor 0.12
+```
+
+### 12. `pvxretune.py`
+
+Monophonic retuning toward a scale.
+
+Key options:
+
+- `--root`: tonic note (`C`, `C#`, ... `B`).
+- `--scale`: `chromatic`, `major`, `minor`, `pentatonic`.
+- `--strength`: correction amount.
+- `--chunk-ms`, `--overlap-ms`: analysis block design.
+- `--f0-min`, `--f0-max`: F0 detection bounds.
+
+Example:
+
+```bash
+python3 pvxretune.py vocal_mono.wav --root A --scale major --strength 0.9
+```
+
+### 13. `pvxlayer.py`
+
+Splits audio into harmonic/percussive components, then applies independent pitch/time processing and recombines.
+
+Key options:
+
+- Harmonic path: `--harmonic-stretch`, `--harmonic-pitch-semitones`, `--harmonic-gain`.
+- Percussive path: `--percussive-stretch`, `--percussive-pitch-semitones`, `--percussive-gain`.
+- HPSS controls: `--harmonic-kernel`, `--percussive-kernel`.
+
+Example:
+
+```bash
+python3 pvxlayer.py loop.wav \
+  --harmonic-stretch 1.2 --harmonic-pitch-semitones 3 --harmonic-gain 0.9 \
+  --percussive-stretch 1.0 --percussive-pitch-semitones 0 --percussive-gain 1.1
+```
+
+## Build Executables (All Major Desktop OSes)
+
+`pvx` uses [PyInstaller](https://pyinstaller.org/) for executable builds.
+
+Important notes:
+
+- Build on each target OS directly.
+- Cross-OS builds are not officially supported (Windows binaries should be built on Windows, etc.).
+- For broad compatibility, build on the oldest platform you intend to support.
+
+### Common Build Preparation
+
+```bash
+python3 -m pip install --upgrade pip
 python3 -m pip install -r requirements.txt
+python3 -m pip install pyinstaller
 ```
 
-Build a single-file executable with PyInstaller:
+### Build One Tool
+
+Example (`pvxvoc`):
 
 ```bash
 python3 -m PyInstaller --onefile --name pvxvoc --collect-all soundfile pvxvoc.py
 ```
 
-Build outputs:
-- macOS/Linux: `dist/pvxvoc`
-- Windows: `dist/pvxvoc.exe`
+### Build All Tools (macOS/Linux shell)
 
-Run the executable:
+```bash
+for tool in pvxvoc pvxfreeze pvxharmonize pvxconform pvxmorph pvxwarp pvxformant pvxtransient pvxunison pvxdenoise pvxdeverb pvxretune pvxlayer; do
+  python3 -m PyInstaller --onefile --name "$tool" --collect-all soundfile "$tool.py"
+done
+```
+
+### Build All Tools (Windows PowerShell)
+
+```powershell
+$tools = @("pvxvoc","pvxfreeze","pvxharmonize","pvxconform","pvxmorph","pvxwarp","pvxformant","pvxtransient","pvxunison","pvxdenoise","pvxdeverb","pvxretune","pvxlayer")
+foreach ($tool in $tools) {
+  python -m PyInstaller --onefile --name $tool --collect-all soundfile "$tool.py"
+}
+```
+
+### Platform-Specific Notes
+
+#### Windows
+
+- Use PowerShell or Command Prompt.
+- Output binaries are `.exe` files in `dist\`.
+- Install the Microsoft VC++ runtime if running on clean machines.
+
+Run example:
+
+```powershell
+.\dist\pvxvoc.exe --help
+```
+
+#### macOS (Apple Silicon + Intel)
+
+- Build separately on Apple Silicon and Intel for native binaries.
+- Gatekeeper may quarantine unsigned binaries distributed outside your machine.
+- For distribution, code-sign and notarize executables.
+
+Run example:
 
 ```bash
 ./dist/pvxvoc --help
 ```
 
-## Test Suite
+#### Linux
 
-Run all tests:
+- Build on a baseline distro for best `glibc` compatibility.
+- Prefer same distro family/version as deployment targets.
+- Output is an ELF binary in `dist/`.
+
+Run example:
+
+```bash
+./dist/pvxvoc --help
+```
+
+### Onefile vs Onedir
+
+- `--onefile`: single executable, easier distribution, slower startup.
+- `--onedir`: folder output, faster startup, easier debugging.
+
+Onedir example:
+
+```bash
+python3 -m PyInstaller --onedir --name pvxvoc --collect-all soundfile pvxvoc.py
+```
+
+## Validation / Test
+
+Run unit + regression tests:
 
 ```bash
 python3 -m unittest discover -s tests -p "test_*.py"
 ```
 
-Included:
-- DSP unit tests (stretch sizing, F0 estimation)
-- Transient-preservation and phase-locking behavior checks
-- Formant-preservation behavior checks
-- CLI integration tests for multi-channel files
-- Audio regression metric snapshot checks
+Run CLI help checks for all tools:
+
+```bash
+for tool in pvxvoc pvxfreeze pvxharmonize pvxconform pvxmorph pvxwarp pvxformant pvxtransient pvxunison pvxdenoise pvxdeverb pvxretune pvxlayer; do
+  python3 "$tool.py" --help > /dev/null
+done
+```
