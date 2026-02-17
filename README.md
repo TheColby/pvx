@@ -1,6 +1,10 @@
+<p align="center"><br><br></p>
+
 <p align="center">
   <img src="assets/pvx_logo.png" alt="pvx logo" width="360" />
 </p>
+
+<p align="center"><br><br></p>
 
 # pvx
 
