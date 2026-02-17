@@ -60,22 +60,77 @@ python3 pvxvoc.py test.wav --time-stretch 1.25 --pitch-shift-semitones 3
 
 ## Shared Conventions (Most Tools)
 
-Most `pvx*` scripts share these patterns:
+Most `pvx*` scripts are intentionally aligned around one CLI contract for batch audio workflows.  
+`pvxmorph.py` is the main exception (two explicit inputs and one explicit output path).
 
-- Input accepts one or more paths/globs.
-- Output naming uses tool-specific suffixes (for example `_harm`, `_denoise`).
-- Common file options: `-o/--output-dir`, `--output-format`, `--overwrite`, `--dry-run`, `--subtype`.
-- Common level controls: `--normalize {none,peak,rms}`, `--peak-dbfs`, `--rms-dbfs`, `--clip`.
-- Common STFT controls (except where noted): `--n-fft`, `--win-length`, `--hop-size`, `--window`, `--no-center`.
-- Available window types now include 50 options across classic, cosine-sum, tapered, and hybrid families.
-- Examples: `hann`, `hamming`, `blackman_nuttall`, `triangular`, `tukey_0p25`, `parzen`, `lanczos`, `welch`, `gaussian_0p45`, `general_gaussian_3p0_0p35`, `exponential_0p5`, `cauchy_1p0`, `cosine_power_3`, `hann_poisson_1p0`, `general_hamming_0p80`, `kaiser`, `rect`.
-- Use `--help` on any `pvx*` tool to see the full window list.
-- Kaiser control: `--kaiser-beta` (used when `--window kaiser`).
-- Common runtime controls: `--device {auto,cpu,cuda}`, `--cuda-device`.
-- Console verbosity controls: `--verbosity {silent,quiet,normal,verbose,debug}` and repeated `-v/--verbose`.
-- Default console behavior shows a live status bar while processing.
-- Use `--quiet` (or `--verbosity quiet`) to suppress status bars and non-error summaries.
-- Use `--silent` (or `--verbosity silent`) to suppress all console output.
+### I/O and Output Conventions
+
+| Area | Flags | Behavior | Notes |
+| --- | --- | --- | --- |
+| Input selection | `inputs` (positional) | Accepts one or more paths/globs | If no paths resolve, the parser exits with an error. |
+| Output location | `-o`, `--output-dir` | Writes beside source file when omitted | Applies to tools using shared I/O args. |
+| Output naming | `--suffix`, `--output-format` | Appends tool suffix and optional extension override | Examples: `_harm`, `_denoise`, `_retune`. |
+| Overwrite policy | `--overwrite` | Allows replacing an existing output file | Without it, existing output is an error. |
+| Dry-run mode | `--dry-run` | Validates and resolves outputs without writing audio | Useful for large batch verification. |
+| File encoding | `--subtype` | Sets libsndfile subtype (`PCM_16`, `PCM_24`, `FLOAT`, etc.) | Leave unset for default output subtype. |
+
+### Console Output and Verbosity
+
+Default behavior is a live status bar plus final summary lines.  
+Status bars are shown unless quiet/silent mode is active.
+
+| Control | Effective level | What you see |
+| --- | --- | --- |
+| No verbosity flags | `normal` | Status bar, final `[done]` summary, and errors (if any). |
+| `-v` or `--verbosity verbose` | `verbose` | Normal output plus per-file `[ok]` details. |
+| `-vv` or `--verbosity debug` | `debug` | Maximum detail level (currently most visible in `pvxvoc`). |
+| `--quiet` or `--verbosity quiet` | `quiet` | No status bar and reduced non-error output. |
+| `--silent` or `--verbosity silent` | `silent` | Suppresses all console output. |
+
+Precedence notes:
+
+- Repeating `-v` increases detail (`-vv`, `-vvv`), capped at `debug`.
+- `--quiet`/`--silent` override higher verbosity requests.
+- `pvxvoc.py` still accepts legacy `--no-progress` as a hidden alias mapped to quiet-style output.
+
+### Signal Level and Clipping Controls
+
+| Flag | Values | Purpose |
+| --- | --- | --- |
+| `--normalize` | `none`, `peak`, `rms` | Applies output normalization strategy. |
+| `--peak-dbfs` | float dBFS | Target peak when `--normalize peak`. |
+| `--rms-dbfs` | float dBFS | Target RMS when `--normalize rms`. |
+| `--clip` | boolean | Hard-limits output samples to `[-1.0, 1.0]`. |
+
+### STFT and Windowing Controls
+
+| Area | Flags | Purpose |
+| --- | --- | --- |
+| FFT framing | `--n-fft`, `--win-length`, `--hop-size` | Controls frequency/time resolution and overlap. |
+| Window shape | `--window` | Selects one of 50 available analysis windows. |
+| Kaiser tuning | `--kaiser-beta` | Beta parameter when `--window kaiser` is selected. |
+| Frame centering | `--no-center` | Disables centered framing. |
+
+Window families include classic, cosine-sum, tapered, gaussian/generalized gaussian, exponential, cauchy, cosine-power, hann-poisson, and general-hamming variants.
+
+Representative window names: `hann`, `hamming`, `blackman_nuttall`, `triangular`, `tukey_0p25`, `parzen`, `lanczos`, `welch`, `gaussian_0p45`, `general_gaussian_3p0_0p35`, `exponential_0p5`, `cauchy_1p0`, `cosine_power_3`, `hann_poisson_1p0`, `general_hamming_0p80`, `kaiser`, `rect`.
+
+Use `--help` on any `pvx*` tool to view the exact current window list.
+
+### Runtime and Acceleration Controls
+
+| Flag | Values | Behavior |
+| --- | --- | --- |
+| `--device` | `auto`, `cpu`, `cuda` | Chooses runtime backend for FFT/vocoder operations. |
+| `--cuda-device` | non-negative integer | Selects CUDA GPU index when CUDA backend is active. |
+
+### Exit Behavior
+
+| Scenario | Exit code | Behavior |
+| --- | --- | --- |
+| All files processed successfully | `0` | Normal completion. |
+| One or more files fail in batch mode | `1` | Tool keeps processing remaining files, then reports failures. |
+| Invalid arguments/configuration | non-zero | Parser/runtime validation exits before processing. |
 
 ## Tool Reference
 
