@@ -48,7 +48,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
-    ensure_runtime()
+    ensure_runtime(args, parser)
     validate_vocoder_args(args, parser)
 
     intervals = parse_float_list(args.intervals)

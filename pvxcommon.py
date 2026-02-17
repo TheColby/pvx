@@ -14,6 +14,9 @@ import soundfile as sf
 
 from pvxvoc import (
     VocoderConfig,
+    WINDOW_CHOICES,
+    add_runtime_args,
+    configure_runtime_from_args,
     compute_output_path,
     ensure_runtime_dependencies,
     expand_inputs,
@@ -67,8 +70,9 @@ def add_vocoder_args(
         default=default_hop_size,
         help=f"Hop size in samples (default: {default_hop_size})",
     )
-    parser.add_argument("--window", choices=["hann", "hamming", "blackman", "rect"], default="hann", help="Window type")
+    parser.add_argument("--window", choices=list(WINDOW_CHOICES), default="hann", help="Window type")
     parser.add_argument("--no-center", action="store_true", help="Disable centered framing")
+    add_runtime_args(parser)
 
 
 def build_vocoder_config(
@@ -101,6 +105,8 @@ def validate_vocoder_args(args: argparse.Namespace, parser: argparse.ArgumentPar
         parser.error("--win-length must be <= --n-fft")
     if args.hop_size > args.win_length:
         parser.error("--hop-size should be <= --win-length")
+    if args.cuda_device < 0:
+        parser.error("--cuda-device must be >= 0")
 
 
 def resolve_inputs(patterns: Iterable[str], parser: argparse.ArgumentParser) -> list[Path]:
@@ -241,6 +247,10 @@ def concat_with_crossfade(chunks: list[np.ndarray], sr: int, crossfade_ms: float
     return out
 
 
-def ensure_runtime() -> None:
+def ensure_runtime(
+    args: argparse.Namespace | None = None,
+    parser: argparse.ArgumentParser | None = None,
+) -> None:
     ensure_runtime_dependencies()
-
+    if args is not None:
+        configure_runtime_from_args(args, parser)

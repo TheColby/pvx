@@ -42,6 +42,16 @@ python3 -m pip install -e .
 
 This exposes console commands from `pyproject.toml` (`pvxvoc`, `pvxfreeze`, etc.).
 
+### Optional CUDA Acceleration
+
+CUDA processing is available when CuPy is installed for your CUDA runtime:
+
+```bash
+python3 -m pip install cupy-cuda12x
+```
+
+Use `--device auto` (default), `--device cpu`, or `--device cuda` plus `--cuda-device <index>`.
+
 ## Quick Start
 
 ```bash
@@ -57,6 +67,8 @@ Most `pvx*` scripts share these patterns:
 - Common file options: `-o/--output-dir`, `--output-format`, `--overwrite`, `--dry-run`, `--subtype`.
 - Common level controls: `--normalize {none,peak,rms}`, `--peak-dbfs`, `--rms-dbfs`, `--clip`.
 - Common STFT controls (except where noted): `--n-fft`, `--win-length`, `--hop-size`, `--window`, `--no-center`.
+- Available window types: `hann`, `hamming`, `blackman`, `blackmanharris`, `nuttall`, `flattop`, `bartlett`, `bohman`, `cosine`, `rect`.
+- Common runtime controls: `--device {auto,cpu,cuda}`, `--cuda-device`.
 
 ## Tool Reference
 

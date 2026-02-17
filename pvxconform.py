@@ -60,7 +60,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
-    ensure_runtime()
+    ensure_runtime(args, parser)
     validate_vocoder_args(args, parser)
     if args.crossfade_ms < 0:
         parser.error("--crossfade-ms must be >= 0")

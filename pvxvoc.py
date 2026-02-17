@@ -10,7 +10,7 @@ import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Iterable, Literal
+from typing import Any, Callable, Iterable, Literal
 
 try:
     import numpy as np
@@ -27,9 +27,44 @@ try:
 except Exception:  # pragma: no cover - optional dependency
     scipy_resample = None
 
-WindowType = Literal["hann", "hamming", "blackman", "rect"]
+try:
+    import cupy as cp
+except Exception:  # pragma: no cover - optional dependency
+    cp = None
+
+try:
+    from cupyx.scipy.signal import resample as cupyx_resample
+except Exception:  # pragma: no cover - optional dependency
+    cupyx_resample = None
+
+WINDOW_CHOICES = (
+    "hann",
+    "hamming",
+    "blackman",
+    "blackmanharris",
+    "nuttall",
+    "flattop",
+    "bartlett",
+    "bohman",
+    "cosine",
+    "rect",
+)
+
+WindowType = Literal[
+    "hann",
+    "hamming",
+    "blackman",
+    "blackmanharris",
+    "nuttall",
+    "flattop",
+    "bartlett",
+    "bohman",
+    "cosine",
+    "rect",
+]
 ResampleMode = Literal["auto", "fft", "linear"]
 PhaseLockMode = Literal["off", "identity"]
+DeviceMode = Literal["auto", "cpu", "cuda"]
 ProgressCallback = Callable[[int, int], None]
 
 
@@ -69,6 +104,32 @@ class FourierSyncPlan:
     frame_lengths: np.ndarray
     f0_track_hz: np.ndarray
     reference_n_fft: int
+
+
+@dataclass(frozen=True)
+class RuntimeConfig:
+    requested_device: DeviceMode
+    active_device: Literal["cpu", "cuda"]
+    cuda_device: int
+    fallback_reason: str | None = None
+
+
+_RUNTIME_CONFIG = RuntimeConfig(
+    requested_device="auto",
+    active_device="cpu",
+    cuda_device=0,
+    fallback_reason=None,
+)
+
+
+_COSINE_SERIES_WINDOWS: dict[str, tuple[float, ...]] = {
+    "hann": (0.5, -0.5),
+    "hamming": (0.54, -0.46),
+    "blackman": (0.42, -0.5, 0.08),
+    "blackmanharris": (0.35875, -0.48829, 0.14128, -0.01168),
+    "nuttall": (0.355768, -0.487396, 0.144232, -0.012604),
+    "flattop": (1.0, -1.93, 1.29, -0.388, 0.0322),
+}
 
 
 class ProgressBar:
@@ -117,6 +178,148 @@ def db_to_amplitude(db: float) -> float:
     return 10.0 ** (db / 20.0)
 
 
+def _has_cupy() -> bool:
+    return cp is not None
+
+
+def _is_cupy_array(value: Any) -> bool:
+    return _has_cupy() and isinstance(value, cp.ndarray)
+
+
+def _array_module(value: Any):
+    if _is_cupy_array(value):
+        return cp
+    return np
+
+
+def _to_numpy(value: Any):
+    if _is_cupy_array(value):
+        return cp.asnumpy(value)
+    return value
+
+
+def _to_runtime_array(value: Any):
+    if _RUNTIME_CONFIG.active_device != "cuda":
+        return value
+    if _is_cupy_array(value):
+        return value
+    return cp.asarray(value)
+
+
+def _as_float(value: Any) -> float:
+    if hasattr(value, "item"):
+        return float(value.item())
+    return float(value)
+
+
+def _as_bool(value: Any) -> bool:
+    if hasattr(value, "item"):
+        return bool(value.item())
+    return bool(value)
+
+
+def add_runtime_args(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--device",
+        choices=["auto", "cpu", "cuda"],
+        default="auto",
+        help="Compute device: auto (prefer CUDA), cpu, or cuda",
+    )
+    parser.add_argument(
+        "--cuda-device",
+        type=int,
+        default=0,
+        help="CUDA device index used when --device is auto/cuda (default: 0)",
+    )
+
+
+def runtime_config() -> RuntimeConfig:
+    return _RUNTIME_CONFIG
+
+
+def configure_runtime(
+    device: DeviceMode = "auto",
+    cuda_device: int = 0,
+    *,
+    verbose: bool = False,
+) -> RuntimeConfig:
+    global _RUNTIME_CONFIG
+
+    if cuda_device < 0:
+        raise ValueError("--cuda-device must be >= 0")
+
+    requested = device.lower()
+    if requested not in {"auto", "cpu", "cuda"}:
+        raise ValueError(f"Unsupported device mode: {device}")
+
+    if requested == "cpu":
+        _RUNTIME_CONFIG = RuntimeConfig(
+            requested_device="cpu",
+            active_device="cpu",
+            cuda_device=cuda_device,
+            fallback_reason=None,
+        )
+        return _RUNTIME_CONFIG
+
+    if not _has_cupy():
+        reason = "CuPy is not installed"
+        if requested == "cuda":
+            raise RuntimeError("CUDA mode requires CuPy. Install a matching `cupy-cudaXXx` package.")
+        _RUNTIME_CONFIG = RuntimeConfig(
+            requested_device="auto",
+            active_device="cpu",
+            cuda_device=cuda_device,
+            fallback_reason=reason,
+        )
+        if verbose:
+            print(f"[info] {reason}; using CPU backend", file=sys.stderr)
+        return _RUNTIME_CONFIG
+
+    try:
+        cp.cuda.Device(cuda_device).use()
+        _ = cp.cuda.runtime.getDevice()
+    except Exception as exc:
+        reason = f"CUDA device init failed: {exc}"
+        if requested == "cuda":
+            raise RuntimeError(reason) from exc
+        _RUNTIME_CONFIG = RuntimeConfig(
+            requested_device="auto",
+            active_device="cpu",
+            cuda_device=cuda_device,
+            fallback_reason=reason,
+        )
+        if verbose:
+            print(f"[info] {reason}; using CPU backend", file=sys.stderr)
+        return _RUNTIME_CONFIG
+
+    requested_device: DeviceMode = "auto" if requested == "auto" else "cuda"
+    _RUNTIME_CONFIG = RuntimeConfig(
+        requested_device=requested_device,
+        active_device="cuda",
+        cuda_device=cuda_device,
+        fallback_reason=None,
+    )
+    if verbose:
+        print(f"[info] Using CUDA backend on device {cuda_device}", file=sys.stderr)
+    return _RUNTIME_CONFIG
+
+
+def configure_runtime_from_args(
+    args: argparse.Namespace,
+    parser: argparse.ArgumentParser | None = None,
+) -> RuntimeConfig:
+    try:
+        return configure_runtime(
+            device=getattr(args, "device", "auto"),
+            cuda_device=getattr(args, "cuda_device", 0),
+            verbose=bool(getattr(args, "verbose", False)),
+        )
+    except Exception as exc:
+        if parser is not None:
+            parser.error(str(exc))
+        raise
+
+
 def ensure_runtime_dependencies() -> None:
     missing = []
     if np is None:
@@ -132,74 +335,132 @@ def ensure_runtime_dependencies() -> None:
         raise SystemExit(2)
 
 
-def principal_angle(phase: np.ndarray) -> np.ndarray:
+def principal_angle(phase):
     return (phase + np.pi) % (2.0 * np.pi) - np.pi
 
 
-def make_window(kind: WindowType, n_fft: int, win_length: int) -> np.ndarray:
-    if kind == "hann":
-        base = np.hanning(win_length)
-    elif kind == "hamming":
-        base = np.hamming(win_length)
-    elif kind == "blackman":
-        base = np.blackman(win_length)
+def _cosine_series_window(coeffs: tuple[float, ...], length: int, *, xp=np):
+    if length <= 0:
+        return xp.zeros(0, dtype=xp.float64)
+    if length == 1:
+        return xp.ones(1, dtype=xp.float64)
+    n = xp.arange(length, dtype=xp.float64)
+    phase = (2.0 * xp.pi * n) / float(length - 1)
+    out = xp.zeros(length, dtype=xp.float64)
+    for idx, coeff in enumerate(coeffs):
+        if idx == 0:
+            out += coeff
+        else:
+            out += coeff * xp.cos(idx * phase)
+    return out
+
+
+def _bartlett_window(length: int, *, xp=np):
+    if length <= 0:
+        return xp.zeros(0, dtype=xp.float64)
+    if length == 1:
+        return xp.ones(1, dtype=xp.float64)
+    n = xp.arange(length, dtype=xp.float64)
+    half = 0.5 * float(length - 1)
+    return 1.0 - xp.abs((n - half) / half)
+
+
+def _bohman_window(length: int, *, xp=np):
+    if length <= 0:
+        return xp.zeros(0, dtype=xp.float64)
+    if length == 1:
+        return xp.ones(1, dtype=xp.float64)
+    n = xp.arange(length, dtype=xp.float64)
+    x = xp.abs((2.0 * n) / float(length - 1) - 1.0)
+    return (1.0 - x) * xp.cos(xp.pi * x) + (xp.sin(xp.pi * x) / xp.pi)
+
+
+def _cosine_window(length: int, *, xp=np):
+    if length <= 0:
+        return xp.zeros(0, dtype=xp.float64)
+    if length == 1:
+        return xp.ones(1, dtype=xp.float64)
+    n = xp.arange(length, dtype=xp.float64)
+    return xp.sin((xp.pi * n) / float(length - 1))
+
+
+def make_window(kind: WindowType, n_fft: int, win_length: int, *, xp=np):
+    if kind in _COSINE_SERIES_WINDOWS:
+        base = _cosine_series_window(_COSINE_SERIES_WINDOWS[kind], win_length, xp=xp)
+    elif kind == "bartlett":
+        base = _bartlett_window(win_length, xp=xp)
+    elif kind == "bohman":
+        base = _bohman_window(win_length, xp=xp)
+    elif kind == "cosine":
+        base = _cosine_window(win_length, xp=xp)
     elif kind == "rect":
-        base = np.ones(win_length, dtype=np.float64)
+        base = xp.ones(win_length, dtype=xp.float64)
     else:  # pragma: no cover - parser blocks this
         raise ValueError(f"Unsupported window: {kind}")
 
     if win_length == n_fft:
-        return base.astype(np.float64, copy=False)
+        return base.astype(xp.float64, copy=False)
 
-    window = np.zeros(n_fft, dtype=np.float64)
+    window = xp.zeros(n_fft, dtype=xp.float64)
     offset = (n_fft - win_length) // 2
     window[offset : offset + win_length] = base
     return window
 
 
-def pad_for_framing(signal: np.ndarray, n_fft: int, hop: int, center: bool) -> tuple[np.ndarray, int]:
+def pad_for_framing(signal, n_fft: int, hop: int, center: bool):
+    xp = _array_module(signal)
     if center:
-        signal = np.pad(signal, (n_fft // 2, n_fft // 2), mode="constant")
+        signal = xp.pad(signal, (n_fft // 2, n_fft // 2), mode="constant")
 
     if signal.size < n_fft:
-        signal = np.pad(signal, (0, n_fft - signal.size), mode="constant")
+        signal = xp.pad(signal, (0, n_fft - signal.size), mode="constant")
 
     remainder = (signal.size - n_fft) % hop
     pad_end = (hop - remainder) % hop
     if pad_end:
-        signal = np.pad(signal, (0, pad_end), mode="constant")
+        signal = xp.pad(signal, (0, pad_end), mode="constant")
 
     frame_count = 1 + (signal.size - n_fft) // hop
     return signal, frame_count
 
 
-def stft(signal: np.ndarray, config: VocoderConfig) -> np.ndarray:
-    signal, frame_count = pad_for_framing(signal, config.n_fft, config.hop_size, config.center)
-    window = make_window(config.window, config.n_fft, config.win_length)
-    spectrum = np.empty((config.n_fft // 2 + 1, frame_count), dtype=np.complex128)
+def stft(signal: np.ndarray, config: VocoderConfig):
+    bridge_to_cuda = _RUNTIME_CONFIG.active_device == "cuda" and not _is_cupy_array(signal)
+    work_signal = _to_runtime_array(signal) if bridge_to_cuda else signal
+    xp = _array_module(work_signal)
+
+    work_signal, frame_count = pad_for_framing(work_signal, config.n_fft, config.hop_size, config.center)
+    window = make_window(config.window, config.n_fft, config.win_length, xp=xp)
+    spectrum = xp.empty((config.n_fft // 2 + 1, frame_count), dtype=xp.complex128)
 
     for frame_idx in range(frame_count):
         start = frame_idx * config.hop_size
-        frame = signal[start : start + config.n_fft]
-        spectrum[:, frame_idx] = np.fft.rfft(frame * window)
+        frame = work_signal[start : start + config.n_fft]
+        spectrum[:, frame_idx] = xp.fft.rfft(frame * window)
 
+    if bridge_to_cuda:
+        return _to_numpy(spectrum)
     return spectrum
 
 
 def istft(
-    spectrum: np.ndarray,
+    spectrum,
     config: VocoderConfig,
     expected_length: int | None = None,
-) -> np.ndarray:
-    n_frames = spectrum.shape[1]
+):
+    bridge_to_cuda = _RUNTIME_CONFIG.active_device == "cuda" and not _is_cupy_array(spectrum)
+    work_spectrum = _to_runtime_array(spectrum) if bridge_to_cuda else spectrum
+    xp = _array_module(work_spectrum)
+
+    n_frames = work_spectrum.shape[1]
     output_len = config.n_fft + config.hop_size * max(0, n_frames - 1)
-    output = np.zeros(output_len, dtype=np.float64)
-    weight = np.zeros(output_len, dtype=np.float64)
-    window = make_window(config.window, config.n_fft, config.win_length)
+    output = xp.zeros(output_len, dtype=xp.float64)
+    weight = xp.zeros(output_len, dtype=xp.float64)
+    window = make_window(config.window, config.n_fft, config.win_length, xp=xp)
 
     for frame_idx in range(n_frames):
         start = frame_idx * config.hop_size
-        frame = np.fft.irfft(spectrum[:, frame_idx], n=config.n_fft)
+        frame = xp.fft.irfft(work_spectrum[:, frame_idx], n=config.n_fft)
         output[start : start + config.n_fft] += frame * window
         weight[start : start + config.n_fft] += window * window
 
@@ -211,11 +472,13 @@ def istft(
         if output.size > 2 * trim:
             output = output[trim:-trim]
         else:
-            output = np.zeros(0, dtype=np.float64)
+            output = xp.zeros(0, dtype=xp.float64)
 
     if expected_length is not None:
         output = force_length(output, expected_length)
 
+    if bridge_to_cuda:
+        return _to_numpy(output)
     return output
 
 
@@ -226,19 +489,20 @@ def scaled_win_length(base_win: int, base_fft: int, frame_len: int) -> int:
     return max(2, min(frame_len, scaled))
 
 
-def resize_spectrum_bins(spectrum: np.ndarray, target_bins: int) -> np.ndarray:
+def resize_spectrum_bins(spectrum, target_bins: int):
+    xp = _array_module(spectrum)
     if target_bins <= 0:
         raise ValueError("target_bins must be > 0")
     if spectrum.size == target_bins:
-        return spectrum.astype(np.complex128, copy=True)
+        return spectrum.astype(xp.complex128, copy=True)
     if spectrum.size == 0:
-        return np.zeros(target_bins, dtype=np.complex128)
+        return xp.zeros(target_bins, dtype=xp.complex128)
 
-    x_old = np.linspace(0.0, 1.0, num=spectrum.size, endpoint=True)
-    x_new = np.linspace(0.0, 1.0, num=target_bins, endpoint=True)
-    real_new = np.interp(x_new, x_old, spectrum.real)
-    imag_new = np.interp(x_new, x_old, spectrum.imag)
-    return (real_new + 1j * imag_new).astype(np.complex128)
+    x_old = xp.linspace(0.0, 1.0, num=spectrum.size, endpoint=True)
+    x_new = xp.linspace(0.0, 1.0, num=target_bins, endpoint=True)
+    real_new = xp.interp(x_new, x_old, spectrum.real)
+    imag_new = xp.interp(x_new, x_old, spectrum.imag)
+    return (real_new + 1j * imag_new).astype(xp.complex128)
 
 
 def smooth_series(values: np.ndarray, span: int) -> np.ndarray:
@@ -361,19 +625,20 @@ def build_fourier_sync_plan(
     return FourierSyncPlan(frame_lengths=frame_lengths, f0_track_hz=f0_track, reference_n_fft=reference_n_fft)
 
 
-def compute_transient_flags(magnitude: np.ndarray, threshold_scale: float) -> np.ndarray:
+def compute_transient_flags(magnitude, threshold_scale: float):
+    xp = _array_module(magnitude)
     if magnitude.shape[1] <= 1:
-        return np.zeros(magnitude.shape[1], dtype=bool)
+        return xp.zeros(magnitude.shape[1], dtype=bool)
 
-    flux = np.zeros(magnitude.shape[1], dtype=np.float64)
-    positive_delta = np.maximum(0.0, np.diff(magnitude, axis=1))
-    flux[1:] = np.sqrt(np.sum(positive_delta * positive_delta, axis=0))
+    flux = xp.zeros(magnitude.shape[1], dtype=xp.float64)
+    positive_delta = xp.maximum(0.0, xp.diff(magnitude, axis=1))
+    flux[1:] = xp.sqrt(xp.sum(positive_delta * positive_delta, axis=0))
 
-    baseline = float(np.median(flux[1:])) if flux.size > 1 else 0.0
+    baseline = _as_float(xp.median(flux[1:])) if flux.size > 1 else 0.0
     if baseline <= 1e-12:
-        baseline = float(np.mean(flux[1:])) if flux.size > 1 else 0.0
+        baseline = _as_float(xp.mean(flux[1:])) if flux.size > 1 else 0.0
     if baseline <= 1e-12:
-        return np.zeros_like(flux, dtype=bool)
+        return xp.zeros_like(flux, dtype=bool)
 
     flags = flux >= (baseline * threshold_scale)
     flags[0] = False
@@ -381,30 +646,33 @@ def compute_transient_flags(magnitude: np.ndarray, threshold_scale: float) -> np
 
 
 def find_spectral_peaks(magnitude: np.ndarray) -> np.ndarray:
-    if magnitude.size < 3:
-        return np.array([int(np.argmax(magnitude))], dtype=np.int64)
+    mag = _to_numpy(magnitude)
+    if mag.size < 3:
+        return np.array([int(np.argmax(mag))], dtype=np.int64)
 
     interior = (
-        (magnitude[1:-1] > magnitude[:-2])
-        & (magnitude[1:-1] >= magnitude[2:])
+        (mag[1:-1] > mag[:-2])
+        & (mag[1:-1] >= mag[2:])
     )
     peak_bins = np.where(interior)[0] + 1
     if peak_bins.size == 0:
-        peak_bins = np.array([int(np.argmax(magnitude))], dtype=np.int64)
+        peak_bins = np.array([int(np.argmax(mag))], dtype=np.int64)
     return peak_bins.astype(np.int64, copy=False)
 
 
 def apply_identity_phase_locking(
-    synth_phase: np.ndarray,
-    analysis_phase: np.ndarray,
-    magnitude: np.ndarray,
-) -> np.ndarray:
-    peaks = find_spectral_peaks(magnitude)
+    synth_phase,
+    analysis_phase,
+    magnitude,
+):
+    xp = _array_module(synth_phase)
+    peaks_np = find_spectral_peaks(magnitude)
+    peaks = xp.asarray(peaks_np, dtype=xp.int64)
     if peaks.size == 0:
         return synth_phase
 
-    bins = np.arange(synth_phase.size, dtype=np.int64)[:, None]
-    nearest_peak_idx = np.argmin(np.abs(bins - peaks[None, :]), axis=1)
+    bins = xp.arange(synth_phase.size, dtype=xp.int64)[:, None]
+    nearest_peak_idx = xp.argmin(xp.abs(bins - peaks[None, :]), axis=1)
     nearest_peaks = peaks[nearest_peak_idx]
 
     locked = synth_phase.copy()
@@ -424,31 +692,37 @@ def phase_vocoder_time_stretch(
     if signal.size == 0:
         return signal
 
-    input_stft = stft(signal, config)
+    bridge_to_cuda = _RUNTIME_CONFIG.active_device == "cuda" and not _is_cupy_array(signal)
+    work_signal = _to_runtime_array(signal) if bridge_to_cuda else signal
+    xp = _array_module(work_signal)
+
+    input_stft = stft(work_signal, config)
     n_bins, n_frames = input_stft.shape
     if n_frames < 2:
-        target_len = max(1, int(round(signal.size * stretch)))
-        return force_length(signal.copy(), target_len)
+        target_len = max(1, int(round(work_signal.size * stretch)))
+        out = force_length(work_signal.copy(), target_len)
+        return _to_numpy(out) if bridge_to_cuda else out
 
     out_frames = max(2, int(round(n_frames * stretch)))
-    time_steps = np.arange(out_frames, dtype=np.float64) / stretch
-    time_steps = np.clip(time_steps, 0.0, n_frames - 1.000001)
+    time_steps = xp.arange(out_frames, dtype=xp.float64) / stretch
+    time_steps = xp.clip(time_steps, 0.0, n_frames - 1.000001)
 
-    input_phase = np.angle(input_stft)
-    input_mag = np.abs(input_stft)
+    input_phase = xp.angle(input_stft)
+    input_mag = xp.abs(input_stft)
     transient_flags = (
         compute_transient_flags(input_mag, config.transient_threshold)
         if config.transient_preserve
-        else np.zeros(n_frames, dtype=bool)
+        else xp.zeros(n_frames, dtype=bool)
     )
 
     phase = input_phase[:, 0].copy()
-    omega = 2.0 * np.pi * config.hop_size * np.arange(n_bins, dtype=np.float64) / config.n_fft
-    output_stft = np.zeros((n_bins, out_frames), dtype=np.complex128)
+    omega = 2.0 * np.pi * config.hop_size * xp.arange(n_bins, dtype=xp.float64) / config.n_fft
+    output_stft = xp.zeros((n_bins, out_frames), dtype=xp.complex128)
     if progress_callback is not None:
         progress_callback(0, out_frames)
 
-    for out_idx, t in enumerate(time_steps):
+    for out_idx in range(out_frames):
+        t = _as_float(time_steps[out_idx])
         frame_idx = int(math.floor(t))
         frac = t - frame_idx
 
@@ -457,7 +731,7 @@ def phase_vocoder_time_stretch(
         left_phase = input_phase[:, frame_idx]
         right_phase = input_phase[:, min(frame_idx + 1, n_frames - 1)]
 
-        mag = (1.0 - frac) * np.abs(left) + frac * np.abs(right)
+        mag = (1.0 - frac) * xp.abs(left) + frac * xp.abs(right)
 
         delta = right_phase - left_phase - omega
         delta = principal_angle(delta)
@@ -465,23 +739,24 @@ def phase_vocoder_time_stretch(
 
         if config.transient_preserve:
             transient_idx = min(frame_idx + (1 if frac >= 0.5 else 0), n_frames - 1)
-            if transient_flags[transient_idx]:
-                phase_blend = (1.0 - frac) * np.exp(1j * left_phase) + frac * np.exp(1j * right_phase)
-                synth_phase = np.angle(phase_blend)
+            if _as_bool(transient_flags[transient_idx]):
+                phase_blend = (1.0 - frac) * xp.exp(1j * left_phase) + frac * xp.exp(1j * right_phase)
+                synth_phase = xp.angle(phase_blend)
 
         if config.phase_locking == "identity":
-            analysis_phase = np.angle(
-                (1.0 - frac) * np.exp(1j * left_phase) + frac * np.exp(1j * right_phase)
+            analysis_phase = xp.angle(
+                (1.0 - frac) * xp.exp(1j * left_phase) + frac * xp.exp(1j * right_phase)
             )
             synth_phase = apply_identity_phase_locking(synth_phase, analysis_phase, mag)
 
         phase = synth_phase
-        output_stft[:, out_idx] = mag * np.exp(1j * phase)
+        output_stft[:, out_idx] = mag * xp.exp(1j * phase)
         if progress_callback is not None and (out_idx == out_frames - 1 or (out_idx % 8) == 0):
             progress_callback(out_idx + 1, out_frames)
 
-    target_length = max(1, int(round(signal.size * stretch)))
-    return istft(output_stft, config, expected_length=target_length)
+    target_length = max(1, int(round(work_signal.size * stretch)))
+    out = istft(output_stft, config, expected_length=target_length)
+    return _to_numpy(out) if bridge_to_cuda else out
 
 
 def phase_vocoder_time_stretch_fourier_sync(
@@ -496,10 +771,15 @@ def phase_vocoder_time_stretch_fourier_sync(
     if signal.size == 0:
         return signal
 
-    framed, frame_count = pad_for_framing(signal, config.n_fft, config.hop_size, config.center)
+    bridge_to_cuda = _RUNTIME_CONFIG.active_device == "cuda" and not _is_cupy_array(signal)
+    work_signal = _to_runtime_array(signal) if bridge_to_cuda else signal
+    xp = _array_module(work_signal)
+
+    framed, frame_count = pad_for_framing(work_signal, config.n_fft, config.hop_size, config.center)
     if frame_count < 2:
-        target_len = max(1, int(round(signal.size * stretch)))
-        return force_length(signal.copy(), target_len)
+        target_len = max(1, int(round(work_signal.size * stretch)))
+        out = force_length(work_signal.copy(), target_len)
+        return _to_numpy(out) if bridge_to_cuda else out
 
     if sync_plan.frame_lengths.size != frame_count:
         src = np.linspace(0.0, 1.0, num=sync_plan.frame_lengths.size, endpoint=True)
@@ -514,7 +794,7 @@ def phase_vocoder_time_stretch_fourier_sync(
 
     ref_n_fft = int(max(sync_plan.reference_n_fft, config.n_fft, int(np.max(frame_lengths))))
     ref_bins = ref_n_fft // 2 + 1
-    input_stft = np.empty((ref_bins, frame_count), dtype=np.complex128)
+    input_stft = xp.empty((ref_bins, frame_count), dtype=xp.complex128)
     if progress_callback is not None:
         progress_callback(0, total_steps)
 
@@ -523,30 +803,31 @@ def phase_vocoder_time_stretch_fourier_sync(
         start = frame_idx * config.hop_size
         frame = force_length(framed[start : start + n_fft_i], n_fft_i)
         win_length_i = scaled_win_length(config.win_length, config.n_fft, n_fft_i)
-        window = make_window(config.window, n_fft_i, win_length_i)
-        spectrum = np.fft.rfft(frame * window, n=n_fft_i)
+        window = make_window(config.window, n_fft_i, win_length_i, xp=xp)
+        spectrum = xp.fft.rfft(frame * window, n=n_fft_i)
         input_stft[:, frame_idx] = resize_spectrum_bins(spectrum, ref_bins)
         if progress_callback is not None and (frame_idx == frame_count - 1 or (frame_idx % 8) == 0):
             progress_callback(frame_idx + 1, total_steps)
 
-    time_steps = np.arange(out_frames, dtype=np.float64) / stretch
-    time_steps = np.clip(time_steps, 0.0, frame_count - 1.000001)
+    time_steps = xp.arange(out_frames, dtype=xp.float64) / stretch
+    time_steps = xp.clip(time_steps, 0.0, frame_count - 1.000001)
 
-    input_phase = np.angle(input_stft)
-    input_mag = np.abs(input_stft)
+    input_phase = xp.angle(input_stft)
+    input_mag = xp.abs(input_stft)
     transient_flags = (
         compute_transient_flags(input_mag, config.transient_threshold)
         if config.transient_preserve
-        else np.zeros(frame_count, dtype=bool)
+        else xp.zeros(frame_count, dtype=bool)
     )
 
     phase = input_phase[:, 0].copy()
-    omega = 2.0 * np.pi * config.hop_size * np.arange(ref_bins, dtype=np.float64) / ref_n_fft
-    output_stft = np.zeros((ref_bins, out_frames), dtype=np.complex128)
+    omega = 2.0 * np.pi * config.hop_size * xp.arange(ref_bins, dtype=xp.float64) / ref_n_fft
+    output_stft = xp.zeros((ref_bins, out_frames), dtype=xp.complex128)
     output_lengths = np.zeros(out_frames, dtype=np.int64)
     completed_steps = 0
 
-    for out_idx, t in enumerate(time_steps):
+    for out_idx in range(out_frames):
+        t = _as_float(time_steps[out_idx])
         frame_idx = int(math.floor(t))
         frac = t - frame_idx
         right_idx = min(frame_idx + 1, frame_count - 1)
@@ -556,24 +837,24 @@ def phase_vocoder_time_stretch_fourier_sync(
         left_phase = input_phase[:, frame_idx]
         right_phase = input_phase[:, right_idx]
 
-        mag = (1.0 - frac) * np.abs(left) + frac * np.abs(right)
+        mag = (1.0 - frac) * xp.abs(left) + frac * xp.abs(right)
         delta = principal_angle(right_phase - left_phase - omega)
         synth_phase = phase + omega + delta
 
         if config.transient_preserve:
             transient_idx = min(frame_idx + (1 if frac >= 0.5 else 0), frame_count - 1)
-            if transient_flags[transient_idx]:
-                phase_blend = (1.0 - frac) * np.exp(1j * left_phase) + frac * np.exp(1j * right_phase)
-                synth_phase = np.angle(phase_blend)
+            if _as_bool(transient_flags[transient_idx]):
+                phase_blend = (1.0 - frac) * xp.exp(1j * left_phase) + frac * xp.exp(1j * right_phase)
+                synth_phase = xp.angle(phase_blend)
 
         if config.phase_locking == "identity":
-            analysis_phase = np.angle(
-                (1.0 - frac) * np.exp(1j * left_phase) + frac * np.exp(1j * right_phase)
+            analysis_phase = xp.angle(
+                (1.0 - frac) * xp.exp(1j * left_phase) + frac * xp.exp(1j * right_phase)
             )
             synth_phase = apply_identity_phase_locking(synth_phase, analysis_phase, mag)
 
         phase = synth_phase
-        output_stft[:, out_idx] = mag * np.exp(1j * phase)
+        output_stft[:, out_idx] = mag * xp.exp(1j * phase)
 
         n_left = int(frame_lengths[frame_idx])
         n_right = int(frame_lengths[right_idx])
@@ -583,16 +864,16 @@ def phase_vocoder_time_stretch_fourier_sync(
             progress_callback(frame_count + completed_steps, total_steps)
 
     output_len = config.hop_size * max(0, out_frames - 1) + int(np.max(output_lengths))
-    output = np.zeros(output_len, dtype=np.float64)
-    weight = np.zeros(output_len, dtype=np.float64)
+    output = xp.zeros(output_len, dtype=xp.float64)
+    weight = xp.zeros(output_len, dtype=xp.float64)
 
     for frame_idx in range(out_frames):
         n_fft_i = int(output_lengths[frame_idx])
         bins_i = n_fft_i // 2 + 1
         spec_i = resize_spectrum_bins(output_stft[:, frame_idx], bins_i)
-        frame = np.fft.irfft(spec_i, n=n_fft_i)
+        frame = xp.fft.irfft(spec_i, n=n_fft_i)
         win_length_i = scaled_win_length(config.win_length, config.n_fft, n_fft_i)
-        window = make_window(config.window, n_fft_i, win_length_i)
+        window = make_window(config.window, n_fft_i, win_length_i, xp=xp)
 
         start = frame_idx * config.hop_size
         output[start : start + n_fft_i] += frame * window
@@ -608,46 +889,66 @@ def phase_vocoder_time_stretch_fourier_sync(
         if output.size > 2 * trim:
             output = output[trim:-trim]
         else:
-            output = np.zeros(0, dtype=np.float64)
+            output = xp.zeros(0, dtype=xp.float64)
 
-    target_length = max(1, int(round(signal.size * stretch)))
-    return force_length(output, target_length)
+    target_length = max(1, int(round(work_signal.size * stretch)))
+    out = force_length(output, target_length)
+    return _to_numpy(out) if bridge_to_cuda else out
 
 
-def linear_resample_1d(signal: np.ndarray, output_samples: int) -> np.ndarray:
+def linear_resample_1d(signal, output_samples: int):
+    xp = _array_module(signal)
     if signal.size == 0:
-        return np.zeros(output_samples, dtype=np.float64)
+        return xp.zeros(output_samples, dtype=xp.float64)
     if output_samples <= 1:
-        return np.array([signal[0]], dtype=np.float64) if output_samples == 1 else np.zeros(0, dtype=np.float64)
+        return (
+            xp.array([signal[0]], dtype=xp.float64)
+            if output_samples == 1
+            else xp.zeros(0, dtype=xp.float64)
+        )
     if signal.size == 1:
-        return np.full(output_samples, signal[0], dtype=np.float64)
+        return xp.full(output_samples, signal[0], dtype=xp.float64)
 
-    x_old = np.linspace(0.0, 1.0, num=signal.size, endpoint=True)
-    x_new = np.linspace(0.0, 1.0, num=output_samples, endpoint=True)
-    return np.interp(x_new, x_old, signal).astype(np.float64)
+    x_old = xp.linspace(0.0, 1.0, num=signal.size, endpoint=True)
+    x_new = xp.linspace(0.0, 1.0, num=output_samples, endpoint=True)
+    return xp.interp(x_new, x_old, signal).astype(xp.float64)
 
 
-def resample_1d(signal: np.ndarray, output_samples: int, mode: ResampleMode) -> np.ndarray:
+def resample_1d(signal, output_samples: int, mode: ResampleMode):
     if output_samples < 0:
         raise ValueError("output_samples must be non-negative")
     if output_samples == signal.size:
         return signal.copy()
 
+    bridge_to_cuda = _RUNTIME_CONFIG.active_device == "cuda" and not _is_cupy_array(signal)
+    work_signal = _to_runtime_array(signal) if bridge_to_cuda else signal
+    xp = _array_module(work_signal)
+
     use_fft = mode == "fft" or (mode == "auto" and scipy_resample is not None)
-    if use_fft and scipy_resample is not None:
-        return scipy_resample(signal, output_samples).astype(np.float64)
+    if use_fft:
+        if xp is np and scipy_resample is not None:
+            out = scipy_resample(work_signal, output_samples).astype(np.float64)
+            return _to_numpy(out) if bridge_to_cuda else out
+        if xp is cp and cupyx_resample is not None:
+            out = cupyx_resample(work_signal, output_samples).astype(cp.float64)
+            return _to_numpy(out) if bridge_to_cuda else out
+        if xp is cp and scipy_resample is not None:
+            out = scipy_resample(_to_numpy(work_signal), output_samples).astype(np.float64)
+            return out
 
-    return linear_resample_1d(signal, output_samples)
+    out = linear_resample_1d(work_signal, output_samples)
+    return _to_numpy(out) if bridge_to_cuda else out
 
 
-def force_length(signal: np.ndarray, length: int) -> np.ndarray:
+def force_length(signal, length: int):
+    xp = _array_module(signal)
     if length < 0:
         raise ValueError("Target length must be non-negative")
     if signal.size == length:
         return signal
     if signal.size > length:
         return signal[:length]
-    return np.pad(signal, (0, length - signal.size), mode="constant")
+    return xp.pad(signal, (0, length - signal.size), mode="constant")
 
 
 def estimate_f0_autocorrelation(
@@ -656,6 +957,7 @@ def estimate_f0_autocorrelation(
     f0_min_hz: float,
     f0_max_hz: float,
 ) -> float:
+    samples = _to_numpy(samples)
     if samples.size < 4:
         raise ValueError("Signal is too short to estimate F0")
 
@@ -698,23 +1000,24 @@ def estimate_f0_autocorrelation(
 
 
 def normalize_audio(
-    audio: np.ndarray,
+    audio,
     mode: str,
     peak_dbfs: float,
     rms_dbfs: float,
-) -> np.ndarray:
+):
     if mode == "none":
         return audio
 
-    out = audio.astype(np.float64, copy=True)
+    xp = _array_module(audio)
+    out = audio.astype(xp.float64, copy=True)
     if mode == "peak":
-        peak = float(np.max(np.abs(out))) if out.size else 0.0
+        peak = _as_float(xp.max(xp.abs(out))) if out.size else 0.0
         if peak > 0.0:
             out *= db_to_amplitude(peak_dbfs) / peak
         return out
 
     if mode == "rms":
-        rms = float(np.sqrt(np.mean(out * out))) if out.size else 0.0
+        rms = _as_float(xp.sqrt(xp.mean(out * out))) if out.size else 0.0
         if rms > 0.0:
             out *= db_to_amplitude(rms_dbfs) / rms
         return out
@@ -722,20 +1025,21 @@ def normalize_audio(
     raise ValueError(f"Unknown normalization mode: {mode}")
 
 
-def cepstral_envelope(magnitude: np.ndarray, lifter: int) -> np.ndarray:
+def cepstral_envelope(magnitude, lifter: int):
+    xp = _array_module(magnitude)
     n_bins = magnitude.size
     n_fft = max(2, (n_bins - 1) * 2)
-    log_mag = np.log(np.maximum(magnitude.astype(np.float64, copy=False), 1e-12))
-    cep = np.fft.irfft(log_mag, n=n_fft)
+    log_mag = xp.log(xp.maximum(magnitude.astype(xp.float64, copy=False), 1e-12))
+    cep = xp.fft.irfft(log_mag, n=n_fft)
 
     if lifter > 0 and lifter < n_fft // 2:
-        lifted = np.zeros_like(cep)
+        lifted = xp.zeros_like(cep)
         lifted[: lifter + 1] = cep[: lifter + 1]
         lifted[-lifter:] = cep[-lifter:]
         cep = lifted
 
-    env_log = np.fft.rfft(cep, n=n_fft).real
-    return np.exp(env_log)
+    env_log = xp.fft.rfft(cep, n=n_fft).real
+    return xp.exp(env_log)
 
 
 def apply_formant_preservation(
@@ -749,18 +1053,25 @@ def apply_formant_preservation(
     if reference.size == 0 or shifted.size == 0 or strength <= 0.0:
         return shifted
 
-    ref_spec = stft(reference, config)
-    tgt_spec = stft(shifted, config)
-    ref_mag = np.abs(ref_spec)
-    tgt_mag = np.abs(tgt_spec)
-    tgt_phase = np.angle(tgt_spec)
+    bridge_to_cuda = _RUNTIME_CONFIG.active_device == "cuda" and (
+        (not _is_cupy_array(reference)) or (not _is_cupy_array(shifted))
+    )
+    ref_work = _to_runtime_array(reference) if bridge_to_cuda else reference
+    shifted_work = _to_runtime_array(shifted) if bridge_to_cuda else shifted
+    xp = _array_module(ref_work)
+
+    ref_spec = stft(ref_work, config)
+    tgt_spec = stft(shifted_work, config)
+    ref_mag = xp.abs(ref_spec)
+    tgt_mag = xp.abs(tgt_spec)
+    tgt_phase = xp.angle(tgt_spec)
 
     ref_frames = ref_mag.shape[1]
     tgt_frames = tgt_mag.shape[1]
     if ref_frames == 0 or tgt_frames == 0:
         return shifted
 
-    ref_env = np.empty_like(ref_mag)
+    ref_env = xp.empty_like(ref_mag)
     for idx in range(ref_frames):
         ref_env[:, idx] = cepstral_envelope(ref_mag[:, idx], lifter)
 
@@ -768,7 +1079,7 @@ def apply_formant_preservation(
     min_gain = 1.0 / gain_limit
     max_gain = gain_limit
 
-    corrected = np.empty_like(tgt_spec)
+    corrected = xp.empty_like(tgt_spec)
     for idx in range(tgt_frames):
         ref_idx = (
             0
@@ -776,13 +1087,14 @@ def apply_formant_preservation(
             else int(round(idx * (ref_frames - 1) / max(1, tgt_frames - 1)))
         )
         tgt_env = cepstral_envelope(tgt_mag[:, idx], lifter)
-        gain = ref_env[:, ref_idx] / np.maximum(tgt_env, 1e-12)
-        gain = np.clip(gain, min_gain, max_gain)
+        gain = ref_env[:, ref_idx] / xp.maximum(tgt_env, 1e-12)
+        gain = xp.clip(gain, min_gain, max_gain)
         if strength < 1.0:
-            gain = np.power(gain, strength)
-        corrected[:, idx] = (tgt_mag[:, idx] * gain) * np.exp(1j * tgt_phase[:, idx])
+            gain = xp.power(gain, strength)
+        corrected[:, idx] = (tgt_mag[:, idx] * gain) * xp.exp(1j * tgt_phase[:, idx])
 
-    return istft(corrected, config, expected_length=shifted.size)
+    out = istft(corrected, config, expected_length=shifted_work.size)
+    return _to_numpy(out) if bridge_to_cuda else out
 
 
 def choose_pitch_ratio(args: argparse.Namespace, signal: np.ndarray, sr: int) -> PitchConfig:
@@ -956,12 +1268,14 @@ def process_file(
         sf.write(str(output_path), out_audio, out_sr, subtype=args.subtype)
 
     if args.verbose:
+        rt = runtime_config()
         msg = (
             f"[info] {input_path.name}: channels={audio.shape[1]}, sr={sr}, "
             f"stretch={base_stretch:.6f}, pitch_ratio={pitch.ratio:.6f}, "
             f"internal_stretch={internal_stretch:.6f}, "
             f"phase_locking={config.phase_locking}, pitch_mode={args.pitch_mode}, "
-            f"fourier_sync={'on' if args.fourier_sync else 'off'}"
+            f"fourier_sync={'on' if args.fourier_sync else 'off'}, "
+            f"device={rt.active_device}"
         )
         if pitch.source_f0_hz is not None:
             msg += f", detected_f0={pitch.source_f0_hz:.3f}Hz"
@@ -1040,6 +1354,8 @@ def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> 
         parser.error("--fourier-sync-max-fft must be >= --fourier-sync-min-fft")
     if args.fourier_sync_smooth <= 0:
         parser.error("--fourier-sync-smooth must be > 0")
+    if args.cuda_device < 0:
+        parser.error("--cuda-device must be >= 0")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -1088,7 +1404,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     stft_group.add_argument(
         "--window",
-        choices=["hann", "hamming", "blackman", "rect"],
+        choices=list(WINDOW_CHOICES),
         default="hann",
         help="Window type (default: hann)",
     )
@@ -1140,6 +1456,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=5,
         help="Smoothing span (frames) for prescanned F0 track in --fourier-sync (default: 5)",
     )
+    add_runtime_args(stft_group)
 
     time_group = parser.add_argument_group("Timing controls")
     time_group.add_argument(
@@ -1291,6 +1608,7 @@ def main(argv: list[str] | None = None) -> int:
     validate_args(args, parser)
 
     ensure_runtime_dependencies()
+    configure_runtime_from_args(args, parser)
 
     input_paths = expand_inputs(args.inputs)
     if not input_paths:

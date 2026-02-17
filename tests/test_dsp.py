@@ -3,13 +3,16 @@ import unittest
 import numpy as np
 
 from pvxvoc import (
+    WINDOW_CHOICES,
     VocoderConfig,
     apply_formant_preservation,
     build_fourier_sync_plan,
+    configure_runtime,
     estimate_f0_autocorrelation,
     phase_vocoder_time_stretch,
     phase_vocoder_time_stretch_fourier_sync,
     resample_1d,
+    runtime_config,
 )
 
 
@@ -25,6 +28,7 @@ def spectral_centroid(signal: np.ndarray, sample_rate: int) -> float:
 
 class TestPhaseVocoderDSP(unittest.TestCase):
     def setUp(self) -> None:
+        configure_runtime("cpu")
         self.cfg_off = VocoderConfig(
             n_fft=1024,
             win_length=1024,
@@ -151,6 +155,32 @@ class TestPhaseVocoderDSP(unittest.TestCase):
 
         y = phase_vocoder_time_stretch_fourier_sync(x, 1.2, cfg_sync, plan)
         self.assertEqual(y.size, int(round(x.size * 1.2)))
+
+    def test_runtime_cpu_configuration(self) -> None:
+        cfg = configure_runtime("cpu")
+        self.assertEqual(cfg.active_device, "cpu")
+        self.assertEqual(runtime_config().active_device, "cpu")
+
+    def test_all_window_types_supported(self) -> None:
+        sr = 12000
+        t = np.arange(int(sr * 0.25)) / sr
+        x = 0.35 * np.sin(2 * np.pi * 330.0 * t)
+        stretch = 1.12
+
+        for window in WINDOW_CHOICES:
+            cfg = VocoderConfig(
+                n_fft=512,
+                win_length=512,
+                hop_size=128,
+                window=window,
+                center=True,
+                phase_locking="off",
+                transient_preserve=False,
+                transient_threshold=2.0,
+            )
+            y = phase_vocoder_time_stretch(x, stretch, cfg)
+            self.assertEqual(y.size, int(round(x.size * stretch)))
+            self.assertTrue(np.all(np.isfinite(y)))
 
 
 if __name__ == "__main__":

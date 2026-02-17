@@ -40,7 +40,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
-    ensure_runtime()
+    ensure_runtime(args, parser)
     validate_vocoder_args(args, parser)
     if args.time_stretch <= 0:
         parser.error("--time-stretch must be > 0")

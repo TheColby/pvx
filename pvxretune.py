@@ -117,7 +117,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
-    ensure_runtime()
+    ensure_runtime(args, parser)
     validate_vocoder_args(args, parser)
     if args.root.upper() not in NOTE_TO_CLASS:
         parser.error("--root must be a valid note name")

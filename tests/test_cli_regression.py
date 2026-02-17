@@ -41,6 +41,8 @@ class TestCLIRegression(unittest.TestCase):
                 "--transient-preserve",
                 "--pitch-mode",
                 "formant-preserving",
+                "--device",
+                "cpu",
                 "--overwrite",
             ]
             proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
