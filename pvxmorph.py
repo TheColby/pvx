@@ -9,10 +9,13 @@ from pathlib import Path
 import numpy as np
 
 from pvxcommon import (
+    add_console_args,
     add_vocoder_args,
+    build_status_bar,
     build_vocoder_config,
     ensure_runtime,
-    finalize_audio,
+    log_error,
+    log_message,
     read_audio,
     validate_vocoder_args,
 )
@@ -76,7 +79,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--clip", action="store_true")
     parser.add_argument("--subtype", default=None)
     parser.add_argument("--overwrite", action="store_true")
-    parser.add_argument("--verbose", action="store_true")
+    add_console_args(parser)
     add_vocoder_args(parser, default_n_fft=2048, default_win_length=2048, default_hop_size=512)
     return parser
 
@@ -90,31 +93,40 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--alpha must be between 0 and 1")
 
     config = build_vocoder_config(args, phase_locking="off", transient_preserve=False)
-    a, sr_a = read_audio(args.input_a)
-    b, sr_b = read_audio(args.input_b)
-    if sr_b != sr_a:
-        target = max(1, int(round(b.shape[0] * sr_a / sr_b)))
-        rb = np.zeros((target, b.shape[1]), dtype=np.float64)
-        for ch in range(b.shape[1]):
-            rb[:, ch] = resample_1d(b[:, ch], target, "auto")
-        b = rb
+    status = build_status_bar(args, "pvxmorph", 1)
+    try:
+        a, sr_a = read_audio(args.input_a)
+        b, sr_b = read_audio(args.input_b)
+        if sr_b != sr_a:
+            target = max(1, int(round(b.shape[0] * sr_a / sr_b)))
+            rb = np.zeros((target, b.shape[1]), dtype=np.float64)
+            for ch in range(b.shape[1]):
+                rb[:, ch] = resample_1d(b[:, ch], target, "auto")
+            b = rb
 
-    out = morph_pair(a, b, sr_a, config, args.alpha)
-    out = normalize_audio(out, args.normalize, args.peak_dbfs, args.rms_dbfs)
-    if args.clip:
-        out = np.clip(out, -1.0, 1.0)
+        out = morph_pair(a, b, sr_a, config, args.alpha)
+        out = normalize_audio(out, args.normalize, args.peak_dbfs, args.rms_dbfs)
+        if args.clip:
+            out = np.clip(out, -1.0, 1.0)
 
-    out_path = args.output if args.output is not None else args.input_a.with_name(f"{args.input_a.stem}_morph.wav")
-    if out_path.exists() and not args.overwrite:
-        raise SystemExit(f"Output exists: {out_path} (use --overwrite)")
+        out_path = args.output if args.output is not None else args.input_a.with_name(f"{args.input_a.stem}_morph.wav")
+        if out_path.exists() and not args.overwrite:
+            raise FileExistsError(f"Output exists: {out_path} (use --overwrite)")
 
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    sf.write(str(out_path), out, sr_a, subtype=args.subtype)
-    if args.verbose:
-        print(f"[ok] {args.input_a} + {args.input_b} -> {out_path}")
-    return 0
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        sf.write(str(out_path), out, sr_a, subtype=args.subtype)
+        log_message(args, f"[ok] {args.input_a} + {args.input_b} -> {out_path}", min_level="verbose")
+        status.step(1, out_path.name)
+        status.finish("done")
+        log_message(args, "[done] pvxmorph processed=1 failed=0", min_level="normal")
+        return 0
+    except Exception as exc:
+        log_error(args, f"[error] {args.input_a} + {args.input_b}: {exc}")
+        status.step(1, "error")
+        status.finish("errors=1")
+        log_message(args, "[done] pvxmorph processed=1 failed=1", min_level="normal")
+        return 1
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

@@ -12,10 +12,13 @@ import numpy as np
 from pvxcommon import (
     add_common_io_args,
     add_vocoder_args,
+    build_status_bar,
     build_vocoder_config,
     default_output_path,
     ensure_runtime,
     finalize_audio,
+    log_error,
+    log_message,
     read_audio,
     resolve_inputs,
     time_pitch_shift_audio,
@@ -61,10 +64,11 @@ def main(argv: list[str] | None = None) -> int:
 
     config = build_vocoder_config(args, phase_locking="identity", transient_preserve=True, transient_threshold=2.0)
     paths = resolve_inputs(args.inputs, parser)
+    status = build_status_bar(args, "pvxunison", len(paths))
 
     failures = 0
     rng = np.random.default_rng(1307)
-    for path in paths:
+    for idx, path in enumerate(paths, start=1):
         try:
             audio, sr = read_audio(path)
             base = np.mean(audio, axis=1, keepdims=True)
@@ -91,14 +95,15 @@ def main(argv: list[str] | None = None) -> int:
 
             out_path = default_output_path(path, args)
             write_output(out_path, out, sr, args)
-            if args.verbose:
-                print(f"[ok] {path} -> {out_path} | voices={args.voices}")
+            log_message(args, f"[ok] {path} -> {out_path} | voices={args.voices}", min_level="verbose")
         except Exception as exc:
             failures += 1
-            print(f"[error] {path}: {exc}")
+            log_error(args, f"[error] {path}: {exc}")
+        status.step(idx, path.name)
+    status.finish("done" if failures == 0 else f"errors={failures}")
+    log_message(args, f"[done] pvxunison processed={len(paths)} failed={failures}", min_level="normal")
     return 1 if failures else 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

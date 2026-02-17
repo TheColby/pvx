@@ -260,6 +260,76 @@ class ProgressBar:
         self.set(1.0, detail)
 
 
+VERBOSITY_LEVELS = ("silent", "quiet", "normal", "verbose", "debug")
+_VERBOSITY_TO_LEVEL = {name: idx for idx, name in enumerate(VERBOSITY_LEVELS)}
+
+
+def add_console_args(
+    parser: argparse.ArgumentParser,
+    *,
+    include_no_progress_alias: bool = False,
+) -> None:
+    parser.add_argument(
+        "--verbosity",
+        choices=list(VERBOSITY_LEVELS),
+        default="normal",
+        help="Console verbosity level",
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="count",
+        default=0,
+        help="Increase verbosity (repeat for extra detail)",
+    )
+    parser.add_argument("--quiet", action="store_true", help="Reduce output and hide status bars")
+    parser.add_argument("--silent", action="store_true", help="Suppress all console output")
+    if include_no_progress_alias:
+        parser.add_argument(
+            "--no-progress",
+            action="store_true",
+            help=argparse.SUPPRESS,
+        )
+
+
+def console_level(args: argparse.Namespace) -> int:
+    cached = getattr(args, "_console_level_cache", None)
+    if cached is not None:
+        return int(cached)
+
+    base_level = _VERBOSITY_TO_LEVEL.get(str(getattr(args, "verbosity", "normal")), _VERBOSITY_TO_LEVEL["normal"])
+    verbose_count = int(getattr(args, "verbose", 0) or 0)
+    level = min(_VERBOSITY_TO_LEVEL["debug"], base_level + verbose_count)
+    if bool(getattr(args, "no_progress", False)):
+        level = min(level, _VERBOSITY_TO_LEVEL["quiet"])
+    if bool(getattr(args, "quiet", False)):
+        level = min(level, _VERBOSITY_TO_LEVEL["quiet"])
+    if bool(getattr(args, "silent", False)):
+        level = _VERBOSITY_TO_LEVEL["silent"]
+    setattr(args, "_console_level_cache", level)
+    return level
+
+
+def is_quiet(args: argparse.Namespace) -> bool:
+    return console_level(args) <= _VERBOSITY_TO_LEVEL["quiet"]
+
+
+def is_silent(args: argparse.Namespace) -> bool:
+    return console_level(args) == _VERBOSITY_TO_LEVEL["silent"]
+
+
+def log_message(args: argparse.Namespace, message: str, *, min_level: str = "normal", error: bool = False) -> None:
+    if console_level(args) < _VERBOSITY_TO_LEVEL[min_level]:
+        return
+    print(message, file=sys.stderr if error else sys.stdout)
+
+
+def log_error(args: argparse.Namespace, message: str) -> None:
+    if is_silent(args):
+        return
+    print(message, file=sys.stderr)
+
+
 def db_to_amplitude(db: float) -> float:
     return 10.0 ** (db / 20.0)
 
@@ -408,7 +478,7 @@ def configure_runtime_from_args(
         return configure_runtime(
             device=getattr(args, "device", "auto"),
             cuda_device=getattr(args, "cuda_device", 0),
-            verbose=bool(getattr(args, "verbose", False)),
+            verbose=console_level(args) >= _VERBOSITY_TO_LEVEL["verbose"],
         )
     except Exception as exc:
         if parser is not None:
@@ -1464,7 +1534,7 @@ def process_file(
     file_index: int = 0,
     file_total: int = 1,
 ) -> JobResult:
-    progress_enabled = (not args.no_progress) and sys.stderr.isatty()
+    progress_enabled = not is_quiet(args)
     progress = ProgressBar(
         label=f"{input_path.name} [{file_index + 1}/{file_total}]",
         enabled=progress_enabled,
@@ -1586,7 +1656,7 @@ def process_file(
         output_path.parent.mkdir(parents=True, exist_ok=True)
         sf.write(str(output_path), out_audio, out_sr, subtype=args.subtype)
 
-    if args.verbose:
+    if console_level(args) >= _VERBOSITY_TO_LEVEL["verbose"]:
         rt = runtime_config()
         msg = (
             f"[info] {input_path.name}: channels={audio.shape[1]}, sr={sr}, "
@@ -1603,7 +1673,7 @@ def process_file(
                 f", sync_f0_med={float(np.median(sync_plan.f0_track_hz)):.3f}Hz"
                 f", sync_fft_med={int(np.median(sync_plan.frame_lengths))}"
             )
-        print(msg)
+        log_message(args, msg, min_level="verbose")
 
     progress.finish("done")
 
@@ -1706,8 +1776,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--overwrite", action="store_true", help="Overwrite existing outputs")
     parser.add_argument("--dry-run", action="store_true", help="Resolve settings without writing files")
-    parser.add_argument("--verbose", action="store_true", help="Print per-file processing diagnostics")
-    parser.add_argument("--no-progress", action="store_true", help="Disable terminal progress bars")
+    add_console_args(parser, include_no_progress_alias=True)
 
     stft_group = parser.add_argument_group("STFT / vocoder parameters")
     stft_group.add_argument("--n-fft", type=int, default=2048, help="FFT size (default: 2048)")
@@ -1969,15 +2038,23 @@ def main(argv: list[str] | None = None) -> int:
     for result in results:
         in_dur = result.in_samples / result.in_sr
         out_dur = result.out_samples / result.out_sr
-        print(
+        log_message(
+            args,
             f"[ok] {result.input_path} -> {result.output_path} | "
             f"ch={result.channels}, sr={result.in_sr}->{result.out_sr}, "
             f"dur={in_dur:.3f}s->{out_dur:.3f}s, "
-            f"stretch={result.stretch:.6f}, pitch_ratio={result.pitch_ratio:.6f}"
+            f"stretch={result.stretch:.6f}, pitch_ratio={result.pitch_ratio:.6f}",
+            min_level="normal",
         )
 
     for path, exc in failures:
-        print(f"[error] {path}: {exc}", file=sys.stderr)
+        log_error(args, f"[error] {path}: {exc}")
+
+    log_message(
+        args,
+        f"[done] pvxvoc processed={len(input_paths)} failed={len(failures)}",
+        min_level="normal",
+    )
 
     return 1 if failures else 0
 

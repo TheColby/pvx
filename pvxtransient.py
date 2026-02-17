@@ -11,10 +11,13 @@ import numpy as np
 from pvxcommon import (
     add_common_io_args,
     add_vocoder_args,
+    build_status_bar,
     build_vocoder_config,
     default_output_path,
     ensure_runtime,
     finalize_audio,
+    log_error,
+    log_message,
     read_audio,
     resolve_inputs,
     semitone_to_ratio,
@@ -59,9 +62,10 @@ def main(argv: list[str] | None = None) -> int:
         transient_threshold=args.transient_threshold,
     )
     paths = resolve_inputs(args.inputs, parser)
+    status = build_status_bar(args, "pvxtransient", len(paths))
 
     failures = 0
-    for path in paths:
+    for idx, path in enumerate(paths, start=1):
         try:
             audio, sr = read_audio(path)
             stretch = args.time_stretch
@@ -87,14 +91,15 @@ def main(argv: list[str] | None = None) -> int:
 
             out_path = default_output_path(path, args)
             write_output(out_path, out, sr, args)
-            if args.verbose:
-                print(f"[ok] {path} -> {out_path} | stretch={stretch:.4f} pitch={pitch_ratio:.4f}")
+            log_message(args, f"[ok] {path} -> {out_path} | stretch={stretch:.4f} pitch={pitch_ratio:.4f}", min_level="verbose")
         except Exception as exc:
             failures += 1
-            print(f"[error] {path}: {exc}")
+            log_error(args, f"[error] {path}: {exc}")
+        status.step(idx, path.name)
+    status.finish("done" if failures == 0 else f"errors={failures}")
+    log_message(args, f"[done] pvxtransient processed={len(paths)} failed={failures}", min_level="normal")
     return 1 if failures else 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

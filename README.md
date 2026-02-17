@@ -72,6 +72,10 @@ Most `pvx*` scripts share these patterns:
 - Use `--help` on any `pvx*` tool to see the full window list.
 - Kaiser control: `--kaiser-beta` (used when `--window kaiser`).
 - Common runtime controls: `--device {auto,cpu,cuda}`, `--cuda-device`.
+- Console verbosity controls: `--verbosity {silent,quiet,normal,verbose,debug}` and repeated `-v/--verbose`.
+- Default console behavior shows a live status bar while processing.
+- Use `--quiet` (or `--verbosity quiet`) to suppress status bars and non-error summaries.
+- Use `--silent` (or `--verbosity silent`) to suppress all console output.
 
 ## Tool Reference
 
@@ -87,7 +91,7 @@ Key capabilities:
 - Formant-preserving pitch mode (`--pitch-mode formant-preserving`).
 - Transient-preserve + phase locking.
 - Fourier-sync mode (`--fourier-sync`) with fundamental frame locking.
-- Optional terminal progress bar (`--no-progress` disables).
+- Live status bar by default (`--quiet` or `--silent` suppresses it; legacy `--no-progress` is accepted as an alias).
 
 Example:
 

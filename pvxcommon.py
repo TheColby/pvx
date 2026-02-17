@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import argparse
 import csv
+import sys
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
@@ -35,6 +37,135 @@ class SegmentSpec:
     pitch_ratio: float = 1.0
 
 
+VERBOSITY_LEVELS = ("silent", "quiet", "normal", "verbose", "debug")
+_VERBOSITY_TO_LEVEL = {name: idx for idx, name in enumerate(VERBOSITY_LEVELS)}
+
+
+def add_console_args(
+    parser: argparse.ArgumentParser,
+    *,
+    include_no_progress_alias: bool = False,
+) -> None:
+    parser.add_argument(
+        "--verbosity",
+        choices=list(VERBOSITY_LEVELS),
+        default="normal",
+        help="Console verbosity level",
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="count",
+        default=0,
+        help="Increase verbosity (repeat for extra detail)",
+    )
+    parser.add_argument("--quiet", action="store_true", help="Reduce output and hide status bars")
+    parser.add_argument("--silent", action="store_true", help="Suppress all console output")
+    if include_no_progress_alias:
+        parser.add_argument(
+            "--no-progress",
+            action="store_true",
+            help=argparse.SUPPRESS,
+        )
+
+
+def console_level(args: argparse.Namespace) -> int:
+    cached = getattr(args, "_console_level_cache", None)
+    if cached is not None:
+        return int(cached)
+
+    base_level = _VERBOSITY_TO_LEVEL.get(str(getattr(args, "verbosity", "normal")), _VERBOSITY_TO_LEVEL["normal"])
+    verbose_count = int(getattr(args, "verbose", 0) or 0)
+    level = min(_VERBOSITY_TO_LEVEL["debug"], base_level + verbose_count)
+    if bool(getattr(args, "no_progress", False)):
+        level = min(level, _VERBOSITY_TO_LEVEL["quiet"])
+    if bool(getattr(args, "quiet", False)):
+        level = min(level, _VERBOSITY_TO_LEVEL["quiet"])
+    if bool(getattr(args, "silent", False)):
+        level = _VERBOSITY_TO_LEVEL["silent"]
+
+    setattr(args, "_console_level_cache", level)
+    return level
+
+
+def is_quiet(args: argparse.Namespace) -> bool:
+    return console_level(args) <= _VERBOSITY_TO_LEVEL["quiet"]
+
+
+def is_silent(args: argparse.Namespace) -> bool:
+    return console_level(args) == _VERBOSITY_TO_LEVEL["silent"]
+
+
+def log_message(
+    args: argparse.Namespace,
+    message: str,
+    *,
+    min_level: str = "normal",
+    error: bool = False,
+) -> None:
+    required = _VERBOSITY_TO_LEVEL[min_level]
+    if console_level(args) < required:
+        return
+    stream = sys.stderr if error else sys.stdout
+    print(message, file=stream)
+
+
+def log_error(args: argparse.Namespace, message: str) -> None:
+    if is_silent(args):
+        return
+    print(message, file=sys.stderr)
+
+
+class StatusBar:
+    def __init__(self, label: str, total: int, *, enabled: bool, width: int = 32) -> None:
+        self.label = label
+        self.total = max(1, int(total))
+        self.enabled = enabled
+        self.width = max(10, int(width))
+        self._last_fraction = -1.0
+        self._last_ts = 0.0
+        self._finished = False
+        if self.enabled:
+            self.set(0.0, "start")
+
+    def set(self, fraction: float, detail: str = "") -> None:
+        if not self.enabled or self._finished:
+            return
+
+        now = time.time()
+        frac = min(1.0, max(0.0, float(fraction)))
+        should_render = (
+            frac >= 1.0
+            or self._last_fraction < 0.0
+            or (frac - self._last_fraction) >= 0.01
+            or (now - self._last_ts) >= 0.2
+        )
+        if not should_render:
+            return
+
+        filled = int(round(frac * self.width))
+        bar = "#" * filled + "-" * (self.width - filled)
+        suffix = f" {detail}" if detail else ""
+        sys.stderr.write(f"\r[{bar}] {frac * 100:6.2f}% {self.label}{suffix}")
+        sys.stderr.flush()
+        self._last_fraction = frac
+        self._last_ts = now
+        if frac >= 1.0:
+            sys.stderr.write("\n")
+            sys.stderr.flush()
+            self._finished = True
+
+    def step(self, current: int, detail: str = "") -> None:
+        self.set(current / self.total, detail)
+
+    def finish(self, detail: str = "done") -> None:
+        self.set(1.0, detail)
+
+
+def build_status_bar(args: argparse.Namespace, label: str, total: int) -> StatusBar:
+    return StatusBar(label=label, total=total, enabled=not is_quiet(args))
+
+
 def add_common_io_args(parser: argparse.ArgumentParser, default_suffix: str) -> None:
     parser.add_argument("inputs", nargs="+", help="Input files or glob patterns")
     parser.add_argument("-o", "--output-dir", type=Path, default=None, help="Output directory")
@@ -42,7 +173,7 @@ def add_common_io_args(parser: argparse.ArgumentParser, default_suffix: str) -> 
     parser.add_argument("--output-format", default=None, help="Output extension/format")
     parser.add_argument("--overwrite", action="store_true", help="Overwrite existing outputs")
     parser.add_argument("--dry-run", action="store_true", help="Resolve and print, but do not write files")
-    parser.add_argument("--verbose", action="store_true", help="Print per-file diagnostics")
+    add_console_args(parser)
     parser.add_argument("--normalize", choices=["none", "peak", "rms"], default="none", help="Output normalization")
     parser.add_argument("--peak-dbfs", type=float, default=-1.0, help="Target peak dBFS for peak normalization")
     parser.add_argument("--rms-dbfs", type=float, default=-18.0, help="Target RMS dBFS for RMS normalization")
