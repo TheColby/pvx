@@ -83,6 +83,9 @@ Documentation artifacts:
   - Includes purpose, top-level symbols, help commands, and CLI help snapshots where applicable.
 - `docs/PVX_ALGORITHM_PARAMS.md`: per-algorithm parameter keys consumed by `pvx.algorithms.base` dispatch.
 - `ALGORITHM_INVENTORY.md`: themed inventory of all algorithm modules.
+- [`docs/html/index.html`](docs/html/index.html): grouped HTML docs index (one page per algorithm folder/theme).
+- [`docs/html/papers.html`](docs/html/papers.html): comprehensive research bibliography (dozens of papers) used in formulation of this codebase and related phase-vocoder DSP methods.
+- `docs/html/groups/*.html`: per-group algorithm pages listing IDs, module paths, and dispatch parameter keys.
 
 Help access patterns:
 
@@ -99,6 +102,7 @@ Regenerate docs after code changes:
 
 ```bash
 python3 scripts_generate_python_docs.py
+python3 scripts_generate_html_docs.py
 ```
 
 <!-- BEGIN ALGORITHM CATALOG -->
