@@ -101,6 +101,208 @@ Regenerate docs after code changes:
 python3 scripts_generate_python_docs.py
 ```
 
+<!-- BEGIN ALGORITHM CATALOG -->
+## Algorithm Catalog By Folder and Parameter Keys
+
+This section enumerates every registered algorithm (95 total) grouped by folder.
+`Parameter keys` are the exact `**params` keys consumed by `pvx.algorithms.base.run_algorithm()` dispatch.
+
+| Folder | Theme | Algorithm count |
+| --- | --- | ---: |
+| `time_scale_and_pitch_core` | Time-Scale and Pitch Core | 7 |
+| `pitch_detection_and_tracking` | Pitch Detection and Tracking | 8 |
+| `retune_and_intonation` | Retune and Intonation | 8 |
+| `spectral_time_frequency_transforms` | Spectral and Time-Frequency Transforms | 8 |
+| `separation_and_decomposition` | Separation and Decomposition | 8 |
+| `denoise_and_restoration` | Denoise and Restoration | 8 |
+| `dereverb_and_room_correction` | Dereverb and Room Correction | 8 |
+| `dynamics_and_loudness` | Dynamics and Loudness | 8 |
+| `spatial_and_multichannel` | Spatial and Multichannel | 8 |
+| `creative_spectral_effects` | Creative Spectral Effects | 8 |
+| `granular_and_modulation` | Granular and Modulation | 8 |
+| `analysis_qa_and_automation` | Analysis, QA, and Automation | 8 |
+
+### `time_scale_and_pitch_core`
+
+Theme: **Time-Scale and Pitch Core**
+
+| Algorithm ID | Algorithm name | Module Path | Parameter keys |
+| --- | --- | --- | --- |
+| `time_scale_and_pitch_core.wsola_waveform_similarity_overlap_add` | WSOLA (Waveform Similarity Overlap-Add) | `src/pvx/algorithms/time_scale_and_pitch_core/wsola_waveform_similarity_overlap_add.py` | `stretch`, `grain_size` |
+| `time_scale_and_pitch_core.td_psola` | TD-PSOLA | `src/pvx/algorithms/time_scale_and_pitch_core/td_psola.py` | `semitones`, `stretch` |
+| `time_scale_and_pitch_core.lp_psola` | LP-PSOLA | `src/pvx/algorithms/time_scale_and_pitch_core/lp_psola.py` | `semitones` |
+| `time_scale_and_pitch_core.multi_resolution_phase_vocoder` | Multi-resolution phase vocoder | `src/pvx/algorithms/time_scale_and_pitch_core/multi_resolution_phase_vocoder.py` | `stretch` |
+| `time_scale_and_pitch_core.harmonic_percussive_split_tsm` | Harmonic/percussive split TSM | `src/pvx/algorithms/time_scale_and_pitch_core/harmonic_percussive_split_tsm.py` | `harmonic_stretch`, `percussive_stretch` |
+| `time_scale_and_pitch_core.beat_synchronous_time_warping` | Beat-synchronous time warping | `src/pvx/algorithms/time_scale_and_pitch_core/beat_synchronous_time_warping.py` | `stretch` |
+| `time_scale_and_pitch_core.nonlinear_time_maps` | Nonlinear time maps (curves, anchors, spline timing) | `src/pvx/algorithms/time_scale_and_pitch_core/nonlinear_time_maps.py` | `curve`, `stretch`, `fmin` |
+
+### `pitch_detection_and_tracking`
+
+Theme: **Pitch Detection and Tracking**
+
+| Algorithm ID | Algorithm name | Module Path | Parameter keys |
+| --- | --- | --- | --- |
+| `pitch_detection_and_tracking.yin` | YIN | `src/pvx/algorithms/pitch_detection_and_tracking/yin.py` | None (generic/default path) |
+| `pitch_detection_and_tracking.pyin` | pYIN | `src/pvx/algorithms/pitch_detection_and_tracking/pyin.py` | None (generic/default path) |
+| `pitch_detection_and_tracking.rapt` | RAPT | `src/pvx/algorithms/pitch_detection_and_tracking/rapt.py` | None (generic/default path) |
+| `pitch_detection_and_tracking.swipe` | SWIPE | `src/pvx/algorithms/pitch_detection_and_tracking/swipe.py` | None (generic/default path) |
+| `pitch_detection_and_tracking.harmonic_product_spectrum_hps` | Harmonic Product Spectrum (HPS) | `src/pvx/algorithms/pitch_detection_and_tracking/harmonic_product_spectrum_hps.py` | None (generic/default path) |
+| `pitch_detection_and_tracking.subharmonic_summation` | Subharmonic summation | `src/pvx/algorithms/pitch_detection_and_tracking/subharmonic_summation.py` | None (generic/default path) |
+| `pitch_detection_and_tracking.crepe_style_neural_f0` | CREPE-style neural F0 | `src/pvx/algorithms/pitch_detection_and_tracking/crepe_style_neural_f0.py` | None (generic/default path) |
+| `pitch_detection_and_tracking.viterbi_smoothed_pitch_contour_tracking` | Viterbi-smoothed pitch contour tracking | `src/pvx/algorithms/pitch_detection_and_tracking/viterbi_smoothed_pitch_contour_tracking.py` | `root_midi`, `scale_cents`, `scale`, `fmin` |
+
+### `retune_and_intonation`
+
+Theme: **Retune and Intonation**
+
+| Algorithm ID | Algorithm name | Module Path | Parameter keys |
+| --- | --- | --- | --- |
+| `retune_and_intonation.chord_aware_retuning` | Chord-aware retuning | `src/pvx/algorithms/retune_and_intonation/chord_aware_retuning.py` | `strength` |
+| `retune_and_intonation.key_aware_retuning_with_confidence_weighting` | Key-aware retuning with confidence weighting | `src/pvx/algorithms/retune_and_intonation/key_aware_retuning_with_confidence_weighting.py` | None (generic/default path) |
+| `retune_and_intonation.just_intonation_mapping_per_key_center` | Just intonation mapping per key center | `src/pvx/algorithms/retune_and_intonation/just_intonation_mapping_per_key_center.py` | None (generic/default path) |
+| `retune_and_intonation.adaptive_intonation_context_sensitive_intervals` | Adaptive intonation (context-sensitive intervals) | `src/pvx/algorithms/retune_and_intonation/adaptive_intonation_context_sensitive_intervals.py` | None (generic/default path) |
+| `retune_and_intonation.scala_mts_scale_import_and_quantization` | Scala/MTS scale import and quantization | `src/pvx/algorithms/retune_and_intonation/scala_mts_scale_import_and_quantization.py` | None (generic/default path) |
+| `retune_and_intonation.time_varying_cents_maps` | Time-varying cents maps | `src/pvx/algorithms/retune_and_intonation/time_varying_cents_maps.py` | `cents_curve` |
+| `retune_and_intonation.vibrato_preserving_correction` | Vibrato-preserving correction | `src/pvx/algorithms/retune_and_intonation/vibrato_preserving_correction.py` | `strength` |
+| `retune_and_intonation.portamento_aware_retune_curves` | Portamento-aware retune curves | `src/pvx/algorithms/retune_and_intonation/portamento_aware_retune_curves.py` | `max_semitone_step`, `compression` |
+
+### `spectral_time_frequency_transforms`
+
+Theme: **Spectral and Time-Frequency Transforms**
+
+| Algorithm ID | Algorithm name | Module Path | Parameter keys |
+| --- | --- | --- | --- |
+| `spectral_time_frequency_transforms.constant_q_transform_cqt_processing` | Constant-Q Transform (CQT) processing | `src/pvx/algorithms/spectral_time_frequency_transforms/constant_q_transform_cqt_processing.py` | None (generic/default path) |
+| `spectral_time_frequency_transforms.variable_q_transform_vqt` | Variable-Q Transform (VQT) | `src/pvx/algorithms/spectral_time_frequency_transforms/variable_q_transform_vqt.py` | None (generic/default path) |
+| `spectral_time_frequency_transforms.nsgt_based_processing` | NSGT-based processing | `src/pvx/algorithms/spectral_time_frequency_transforms/nsgt_based_processing.py` | None (generic/default path) |
+| `spectral_time_frequency_transforms.reassigned_spectrogram_methods` | Reassigned spectrogram methods | `src/pvx/algorithms/spectral_time_frequency_transforms/reassigned_spectrogram_methods.py` | None (generic/default path) |
+| `spectral_time_frequency_transforms.synchrosqueezed_stft` | Synchrosqueezed STFT | `src/pvx/algorithms/spectral_time_frequency_transforms/synchrosqueezed_stft.py` | None (generic/default path) |
+| `spectral_time_frequency_transforms.chirplet_transform_analysis` | Chirplet transform analysis | `src/pvx/algorithms/spectral_time_frequency_transforms/chirplet_transform_analysis.py` | None (generic/default path) |
+| `spectral_time_frequency_transforms.wavelet_packet_processing` | Wavelet packet processing | `src/pvx/algorithms/spectral_time_frequency_transforms/wavelet_packet_processing.py` | None (generic/default path) |
+| `spectral_time_frequency_transforms.multi_window_stft_fusion` | Multi-window STFT fusion | `src/pvx/algorithms/spectral_time_frequency_transforms/multi_window_stft_fusion.py` | None (generic/default path) |
+
+### `separation_and_decomposition`
+
+Theme: **Separation and Decomposition**
+
+| Algorithm ID | Algorithm name | Module Path | Parameter keys |
+| --- | --- | --- | --- |
+| `separation_and_decomposition.rpca_hpss` | RPCA HPSS | `src/pvx/algorithms/separation_and_decomposition/rpca_hpss.py` | None (generic/default path) |
+| `separation_and_decomposition.nmf_decomposition` | NMF decomposition | `src/pvx/algorithms/separation_and_decomposition/nmf_decomposition.py` | `components` |
+| `separation_and_decomposition.ica_bss_for_multichannel_stems` | ICA/BSS for multichannel stems | `src/pvx/algorithms/separation_and_decomposition/ica_bss_for_multichannel_stems.py` | None (generic/default path) |
+| `separation_and_decomposition.sinusoidal_residual_transient_decomposition` | Sinusoidal+residual+transient decomposition | `src/pvx/algorithms/separation_and_decomposition/sinusoidal_residual_transient_decomposition.py` | None (generic/default path) |
+| `separation_and_decomposition.demucs_style_stem_separation_backend` | Demucs-style stem separation backend | `src/pvx/algorithms/separation_and_decomposition/demucs_style_stem_separation_backend.py` | None (generic/default path) |
+| `separation_and_decomposition.u_net_vocal_accompaniment_split` | U-Net vocal/accompaniment split | `src/pvx/algorithms/separation_and_decomposition/u_net_vocal_accompaniment_split.py` | None (generic/default path) |
+| `separation_and_decomposition.tensor_decomposition_cp_tucker` | Tensor decomposition (CP/Tucker) | `src/pvx/algorithms/separation_and_decomposition/tensor_decomposition_cp_tucker.py` | `rank` |
+| `separation_and_decomposition.probabilistic_latent_component_separation` | Probabilistic latent component separation | `src/pvx/algorithms/separation_and_decomposition/probabilistic_latent_component_separation.py` | None (generic/default path) |
+
+### `denoise_and_restoration`
+
+Theme: **Denoise and Restoration**
+
+| Algorithm ID | Algorithm name | Module Path | Parameter keys |
+| --- | --- | --- | --- |
+| `denoise_and_restoration.wiener_denoising` | Wiener denoising | `src/pvx/algorithms/denoise_and_restoration/wiener_denoising.py` | None (generic/default path) |
+| `denoise_and_restoration.mmse_stsa` | MMSE-STSA | `src/pvx/algorithms/denoise_and_restoration/mmse_stsa.py` | None (generic/default path) |
+| `denoise_and_restoration.log_mmse` | Log-MMSE | `src/pvx/algorithms/denoise_and_restoration/log_mmse.py` | None (generic/default path) |
+| `denoise_and_restoration.minimum_statistics_noise_tracking` | Minimum-statistics noise tracking | `src/pvx/algorithms/denoise_and_restoration/minimum_statistics_noise_tracking.py` | None (generic/default path) |
+| `denoise_and_restoration.rnnoise_style_denoiser` | RNNoise-style denoiser | `src/pvx/algorithms/denoise_and_restoration/rnnoise_style_denoiser.py` | None (generic/default path) |
+| `denoise_and_restoration.diffusion_based_speech_audio_denoise` | Diffusion-based speech/audio denoise | `src/pvx/algorithms/denoise_and_restoration/diffusion_based_speech_audio_denoise.py` | None (generic/default path) |
+| `denoise_and_restoration.declip_via_sparse_reconstruction` | Declip via sparse reconstruction | `src/pvx/algorithms/denoise_and_restoration/declip_via_sparse_reconstruction.py` | `clip_threshold` |
+| `denoise_and_restoration.declick_decrackle_median_wavelet_interpolation` | Declick/decrackle (median/wavelet + interpolation) | `src/pvx/algorithms/denoise_and_restoration/declick_decrackle_median_wavelet_interpolation.py` | `spike_threshold` |
+
+### `dereverb_and_room_correction`
+
+Theme: **Dereverb and Room Correction**
+
+| Algorithm ID | Algorithm name | Module Path | Parameter keys |
+| --- | --- | --- | --- |
+| `dereverb_and_room_correction.wpe_dereverberation` | WPE dereverberation | `src/pvx/algorithms/dereverb_and_room_correction/wpe_dereverberation.py` | `taps` |
+| `dereverb_and_room_correction.spectral_decay_subtraction` | Spectral decay subtraction | `src/pvx/algorithms/dereverb_and_room_correction/spectral_decay_subtraction.py` | None (generic/default path) |
+| `dereverb_and_room_correction.late_reverb_suppression_via_coherence` | Late reverb suppression via coherence | `src/pvx/algorithms/dereverb_and_room_correction/late_reverb_suppression_via_coherence.py` | None (generic/default path) |
+| `dereverb_and_room_correction.room_impulse_inverse_filtering` | Room impulse inverse filtering | `src/pvx/algorithms/dereverb_and_room_correction/room_impulse_inverse_filtering.py` | None (generic/default path) |
+| `dereverb_and_room_correction.multi_band_adaptive_deverb` | Multi-band adaptive deverb | `src/pvx/algorithms/dereverb_and_room_correction/multi_band_adaptive_deverb.py` | None (generic/default path) |
+| `dereverb_and_room_correction.drr_guided_dereverb` | DRR-guided dereverb | `src/pvx/algorithms/dereverb_and_room_correction/drr_guided_dereverb.py` | None (generic/default path) |
+| `dereverb_and_room_correction.blind_deconvolution_dereverb` | Blind deconvolution dereverb | `src/pvx/algorithms/dereverb_and_room_correction/blind_deconvolution_dereverb.py` | None (generic/default path) |
+| `dereverb_and_room_correction.neural_dereverb_module` | Neural dereverb module | `src/pvx/algorithms/dereverb_and_room_correction/neural_dereverb_module.py` | None (generic/default path) |
+
+### `dynamics_and_loudness`
+
+Theme: **Dynamics and Loudness**
+
+| Algorithm ID | Algorithm name | Module Path | Parameter keys |
+| --- | --- | --- | --- |
+| `dynamics_and_loudness.ebu_r128_normalization` | EBU R128 normalization | `src/pvx/algorithms/dynamics_and_loudness/ebu_r128_normalization.py` | `target_lufs` |
+| `dynamics_and_loudness.itu_bs_1770_loudness_measurement_gating` | ITU BS.1770 loudness measurement/gating | `src/pvx/algorithms/dynamics_and_loudness/itu_bs_1770_loudness_measurement_gating.py` | `gate_lufs` |
+| `dynamics_and_loudness.multi_band_compression` | Multi-band compression | `src/pvx/algorithms/dynamics_and_loudness/multi_band_compression.py` | None (generic/default path) |
+| `dynamics_and_loudness.upward_compression` | Upward compression | `src/pvx/algorithms/dynamics_and_loudness/upward_compression.py` | `threshold_db` |
+| `dynamics_and_loudness.transient_shaping` | Transient shaping | `src/pvx/algorithms/dynamics_and_loudness/transient_shaping.py` | `attack_boost` |
+| `dynamics_and_loudness.spectral_dynamics_bin_wise_compressor_expander` | Spectral dynamics (bin-wise compressor/expander) | `src/pvx/algorithms/dynamics_and_loudness/spectral_dynamics_bin_wise_compressor_expander.py` | `threshold_db` |
+| `dynamics_and_loudness.true_peak_limiting` | True-peak limiting | `src/pvx/algorithms/dynamics_and_loudness/true_peak_limiting.py` | `threshold` |
+| `dynamics_and_loudness.lufs_target_mastering_chain` | LUFS-target mastering chain | `src/pvx/algorithms/dynamics_and_loudness/lufs_target_mastering_chain.py` | `target_lufs` |
+
+### `spatial_and_multichannel`
+
+Theme: **Spatial and Multichannel**
+
+| Algorithm ID | Algorithm name | Module Path | Parameter keys |
+| --- | --- | --- | --- |
+| `spatial_and_multichannel.mid_side_adaptive_widening` | Mid/Side adaptive widening | `src/pvx/algorithms/spatial_and_multichannel/mid_side_adaptive_widening.py` | `width` |
+| `spatial_and_multichannel.binaural_hrtf_rendering` | Binaural HRTF rendering | `src/pvx/algorithms/spatial_and_multichannel/binaural_hrtf_rendering.py` | `azimuth_deg` |
+| `spatial_and_multichannel.ambisonics_encode_decode` | Ambisonics encode/decode | `src/pvx/algorithms/spatial_and_multichannel/ambisonics_encode_decode.py` | `angle_deg` |
+| `spatial_and_multichannel.mvdr_beamforming` | MVDR beamforming | `src/pvx/algorithms/spatial_and_multichannel/mvdr_beamforming.py` | None (generic/default path) |
+| `spatial_and_multichannel.gsc_beamforming` | GSC beamforming | `src/pvx/algorithms/spatial_and_multichannel/gsc_beamforming.py` | None (generic/default path) |
+| `spatial_and_multichannel.gcc_phat_localization` | GCC-PHAT localization | `src/pvx/algorithms/spatial_and_multichannel/gcc_phat_localization.py` | None (generic/default path) |
+| `spatial_and_multichannel.stereo_decorrelation_for_width` | Stereo decorrelation for width | `src/pvx/algorithms/spatial_and_multichannel/stereo_decorrelation_for_width.py` | `delay_samples` |
+| `spatial_and_multichannel.upmix_downmix_with_phase_coherent_routing` | Upmix/downmix with phase-coherent routing | `src/pvx/algorithms/spatial_and_multichannel/upmix_downmix_with_phase_coherent_routing.py` | `mode` |
+
+### `creative_spectral_effects`
+
+Theme: **Creative Spectral Effects**
+
+| Algorithm ID | Algorithm name | Module Path | Parameter keys |
+| --- | --- | --- | --- |
+| `creative_spectral_effects.cross_synthesis_vocoder` | Cross-synthesis vocoder | `src/pvx/algorithms/creative_spectral_effects/cross_synthesis_vocoder.py` | None (generic/default path) |
+| `creative_spectral_effects.spectral_convolution_effects` | Spectral convolution effects | `src/pvx/algorithms/creative_spectral_effects/spectral_convolution_effects.py` | `kernel_size` |
+| `creative_spectral_effects.spectral_freeze_banks` | Spectral freeze banks | `src/pvx/algorithms/creative_spectral_effects/spectral_freeze_banks.py` | `frame_ratio` |
+| `creative_spectral_effects.spectral_blur_smear` | Spectral blur/smear | `src/pvx/algorithms/creative_spectral_effects/spectral_blur_smear.py` | None (generic/default path) |
+| `creative_spectral_effects.phase_randomization_textures` | Phase randomization textures | `src/pvx/algorithms/creative_spectral_effects/phase_randomization_textures.py` | `strength` |
+| `creative_spectral_effects.formant_painting_warping` | Formant painting/warping | `src/pvx/algorithms/creative_spectral_effects/formant_painting_warping.py` | `ratio` |
+| `creative_spectral_effects.resonator_filterbank_morphing` | Resonator/filterbank morphing | `src/pvx/algorithms/creative_spectral_effects/resonator_filterbank_morphing.py` | None (generic/default path) |
+| `creative_spectral_effects.spectral_contrast_exaggeration` | Spectral contrast exaggeration | `src/pvx/algorithms/creative_spectral_effects/spectral_contrast_exaggeration.py` | `amount` |
+
+### `granular_and_modulation`
+
+Theme: **Granular and Modulation**
+
+| Algorithm ID | Algorithm name | Module Path | Parameter keys |
+| --- | --- | --- | --- |
+| `granular_and_modulation.granular_time_stretch_engine` | Granular time-stretch engine | `src/pvx/algorithms/granular_and_modulation/granular_time_stretch_engine.py` | `stretch` |
+| `granular_and_modulation.grain_cloud_pitch_textures` | Grain-cloud pitch textures | `src/pvx/algorithms/granular_and_modulation/grain_cloud_pitch_textures.py` | `seed`, `grain`, `count`, `stretch` |
+| `granular_and_modulation.freeze_grain_morphing` | Freeze-grain morphing | `src/pvx/algorithms/granular_and_modulation/freeze_grain_morphing.py` | `grain`, `start` |
+| `granular_and_modulation.am_fm_ring_modulation_blocks` | AM/FM/ring modulation blocks | `src/pvx/algorithms/granular_and_modulation/am_fm_ring_modulation_blocks.py` | `freq_hz` |
+| `granular_and_modulation.spectral_tremolo` | Spectral tremolo | `src/pvx/algorithms/granular_and_modulation/spectral_tremolo.py` | `lfo_hz` |
+| `granular_and_modulation.formant_lfo_modulation` | Formant LFO modulation | `src/pvx/algorithms/granular_and_modulation/formant_lfo_modulation.py` | `lfo_hz` |
+| `granular_and_modulation.rhythmic_gate_stutter_quantizer` | Rhythmic gate/stutter quantizer | `src/pvx/algorithms/granular_and_modulation/rhythmic_gate_stutter_quantizer.py` | `rate_hz` |
+| `granular_and_modulation.envelope_followed_modulation_routing` | Envelope-followed modulation routing | `src/pvx/algorithms/granular_and_modulation/envelope_followed_modulation_routing.py` | `depth` |
+
+### `analysis_qa_and_automation`
+
+Theme: **Analysis, QA, and Automation**
+
+| Algorithm ID | Algorithm name | Module Path | Parameter keys |
+| --- | --- | --- | --- |
+| `analysis_qa_and_automation.onset_beat_downbeat_tracking` | Onset/beat/downbeat tracking | `src/pvx/algorithms/analysis_qa_and_automation/onset_beat_downbeat_tracking.py` | None (generic/default path) |
+| `analysis_qa_and_automation.key_chord_detection` | Key/chord detection | `src/pvx/algorithms/analysis_qa_and_automation/key_chord_detection.py` | None (generic/default path) |
+| `analysis_qa_and_automation.structure_segmentation_verse_chorus_sections` | Structure segmentation (verse/chorus/sections) | `src/pvx/algorithms/analysis_qa_and_automation/structure_segmentation_verse_chorus_sections.py` | None (generic/default path) |
+| `analysis_qa_and_automation.silence_speech_music_classifiers` | Silence/speech/music classifiers | `src/pvx/algorithms/analysis_qa_and_automation/silence_speech_music_classifiers.py` | None (generic/default path) |
+| `analysis_qa_and_automation.clip_hum_buzz_artifact_detection` | Clip/hum/buzz artifact detection | `src/pvx/algorithms/analysis_qa_and_automation/clip_hum_buzz_artifact_detection.py` | None (generic/default path) |
+| `analysis_qa_and_automation.pesq_stoi_visqol_quality_metrics` | PESQ/STOI/VISQOL quality metrics | `src/pvx/algorithms/analysis_qa_and_automation/pesq_stoi_visqol_quality_metrics.py` | None (generic/default path) |
+| `analysis_qa_and_automation.auto_parameter_tuning_bayesian_optimization` | Auto-parameter tuning (Bayesian optimization) | `src/pvx/algorithms/analysis_qa_and_automation/auto_parameter_tuning_bayesian_optimization.py` | `target_centroid` |
+| `analysis_qa_and_automation.batch_preset_recommendation_based_on_source_features` | Batch preset recommendation based on source features | `src/pvx/algorithms/analysis_qa_and_automation/batch_preset_recommendation_based_on_source_features.py` | None (generic/default path) |
+<!-- END ALGORITHM CATALOG -->
+
+
 ## Shared Conventions (Most Tools)
 
 Most `pvx*` scripts are intentionally aligned around one CLI contract for batch audio workflows.  
