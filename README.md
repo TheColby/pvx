@@ -25,7 +25,20 @@ The repository currently includes:
 - `pvxdeverb.py`: reverb-tail suppression.
 - `pvxretune.py`: monophonic scale retune.
 - `pvxlayer.py`: harmonic/percussive split and independent processing.
-- `pvxalgorithms/`: themed algorithm library with 95 DSP modules (time/pitch, transforms, separation, denoise, dereverb, dynamics, spatial, creative, granular, and analysis).
+- `src/pvx/algorithms/`: canonical themed algorithm library with 95 DSP modules (time/pitch, transforms, separation, denoise, dereverb, dynamics, spatial, creative, granular, and analysis).
+- `pvxalgorithms/`: compatibility shim package so legacy imports still work (`pvxalgorithms.*` -> `pvx.algorithms.*`).
+
+## Repository Layout
+
+| Path | Purpose |
+| --- | --- |
+| `src/pvx/core/` | Core DSP/runtime modules (`voc.py`, shared `common.py`). |
+| `src/pvx/cli/` | Canonical CLI implementations for `pvx*` tools and `main.py` navigator. |
+| `src/pvx/algorithms/` | Canonical algorithm package (`pvx.algorithms.*`). |
+| `pvxvoc.py`, `pvxfreeze.py`, ... | Root compatibility wrappers forwarding to `src/pvx/...`. |
+| `pvxalgorithms/` | Legacy package compatibility shim forwarding to `src/pvx/algorithms/`. |
+| `docs/` | Generated documentation artifacts. |
+| `tests/` | Unit and regression tests. |
 
 ## Install
 
@@ -68,7 +81,7 @@ Documentation artifacts:
 - `docs/PYTHON_FILE_HELP.md`: exhaustive per-file reference and help index.
   - Current coverage: all `130` Python files in this repository.
   - Includes purpose, top-level symbols, help commands, and CLI help snapshots where applicable.
-- `docs/PVX_ALGORITHM_PARAMS.md`: per-algorithm parameter keys consumed by `pvxalgorithms.base` dispatch.
+- `docs/PVX_ALGORITHM_PARAMS.md`: per-algorithm parameter keys consumed by `pvx.algorithms.base` dispatch.
 - `ALGORITHM_INVENTORY.md`: themed inventory of all algorithm modules.
 
 Help access patterns:
@@ -77,8 +90,10 @@ Help access patterns:
 | --- | --- |
 | Main pvx tool CLIs (`pvxvoc.py`, `pvxfreeze.py`, etc.) | `python3 <tool>.py --help` |
 | Top-level navigator | `python3 main.py --help` |
-| Algorithm modules (`pvxalgorithms/.../*.py`) | `python3 <path/to/module.py> --help` or `python3 -m pvxalgorithms.<theme>.<module> --help` |
+| Algorithm modules (`src/pvx/algorithms/.../*.py`) | `python3 src/pvx/algorithms/<theme>/<module>.py --help` or `python3 -m pvx.algorithms.<theme>.<module> --help` |
 | Test modules | `python3 tests/<file>.py` or `python3 -m unittest ...` |
+
+Legacy algorithm module path `python3 -m pvxalgorithms.<theme>.<module> --help` is still supported via compatibility shims.
 
 Regenerate docs after code changes:
 

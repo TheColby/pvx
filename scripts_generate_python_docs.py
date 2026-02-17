@@ -5,12 +5,15 @@ from __future__ import annotations
 
 import ast
 import subprocess
+import sys
 from pathlib import Path
 from textwrap import indent
 
 ROOT = Path(__file__).resolve().parent
 DOCS_DIR = ROOT / "docs"
 DOCS_DIR.mkdir(parents=True, exist_ok=True)
+SRC_DIR = ROOT / "src"
+sys.path.insert(0, str(SRC_DIR))
 
 PY_FILES = sorted(
     p for p in ROOT.rglob("*.py") if ".venv" not in p.parts and "__pycache__" not in p.parts
@@ -150,11 +153,12 @@ def extract_algorithm_params(base_path: Path) -> dict[str, list[str]]:
 
 
 def generate_algorithm_param_doc() -> None:
-    params = extract_algorithm_params(ROOT / "pvxalgorithms" / "base.py")
+    params = extract_algorithm_params(ROOT / "src" / "pvx" / "algorithms" / "base.py")
     lines: list[str] = []
     lines.append("# PVX Algorithm Parameter Reference")
     lines.append("")
-    lines.append("This file lists per-algorithm parameter keys consumed by `pvxalgorithms.base.run_algorithm()` dispatch.")
+    lines.append("This file lists per-algorithm parameter keys consumed by `pvx.algorithms.base.run_algorithm()` dispatch.")
+    lines.append("Legacy import alias `pvxalgorithms.base.run_algorithm()` is still available for compatibility.")
     lines.append("Use these keys as `**params` when calling module `process(audio, sample_rate, **params)`. ")
     lines.append("")
     for slug in sorted(params):

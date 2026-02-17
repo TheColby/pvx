@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "pvx"
 version = "0.1.0"
@@ -14,16 +18,22 @@ dependencies = [
 ]
 
 [project.scripts]
-pvxvoc = "pvxvoc:main"
-pvxfreeze = "pvxfreeze:main"
-pvxharmonize = "pvxharmonize:main"
-pvxconform = "pvxconform:main"
-pvxmorph = "pvxmorph:main"
-pvxwarp = "pvxwarp:main"
-pvxformant = "pvxformant:main"
-pvxtransient = "pvxtransient:main"
-pvxunison = "pvxunison:main"
-pvxdenoise = "pvxdenoise:main"
-pvxdeverb = "pvxdeverb:main"
-pvxretune = "pvxretune:main"
-pvxlayer = "pvxlayer:main"
+pvxvoc = "pvx.core.voc:main"
+pvxfreeze = "pvx.cli.pvxfreeze:main"
+pvxharmonize = "pvx.cli.pvxharmonize:main"
+pvxconform = "pvx.cli.pvxconform:main"
+pvxmorph = "pvx.cli.pvxmorph:main"
+pvxwarp = "pvx.cli.pvxwarp:main"
+pvxformant = "pvx.cli.pvxformant:main"
+pvxtransient = "pvx.cli.pvxtransient:main"
+pvxunison = "pvx.cli.pvxunison:main"
+pvxdenoise = "pvx.cli.pvxdenoise:main"
+pvxdeverb = "pvx.cli.pvxdeverb:main"
+pvxretune = "pvx.cli.pvxretune:main"
+pvxlayer = "pvx.cli.pvxlayer:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

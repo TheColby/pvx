@@ -1,119 +1,20 @@
 #!/usr/bin/env python3
-"""Transient-aware time/pitch processing."""
+"""Compatibility wrapper.
+
+This root module forwards imports/execution to `pvx.cli.pvxtransient` after the
+src-layout migration.
+"""
 
 from __future__ import annotations
 
-import argparse
+import sys
 from pathlib import Path
 
-import numpy as np
+sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
-from pvxcommon import (
-    add_common_io_args,
-    add_vocoder_args,
-    build_status_bar,
-    build_vocoder_config,
-    cents_to_ratio,
-    default_output_path,
-    ensure_runtime,
-    finalize_audio,
-    log_error,
-    log_message,
-    read_audio,
-    resolve_inputs,
-    semitone_to_ratio,
-    time_pitch_shift_channel,
-    validate_vocoder_args,
-    write_output,
-)
-
-
-def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Transient-preserving phase-vocoder processor")
-    add_common_io_args(parser, default_suffix="_trans")
-    add_vocoder_args(parser, default_n_fft=2048, default_win_length=2048, default_hop_size=256)
-    parser.add_argument("--time-stretch", type=float, default=1.0)
-    parser.add_argument("--target-duration", type=float, default=None, help="Target duration in seconds")
-    parser.add_argument("--pitch-shift-semitones", type=float, default=0.0)
-    parser.add_argument(
-        "--pitch-shift-cents",
-        type=float,
-        default=None,
-        help="Optional microtonal pitch shift in cents (added to --pitch-shift-semitones)",
-    )
-    parser.add_argument("--pitch-shift-ratio", type=float, default=None)
-    parser.add_argument("--transient-threshold", type=float, default=1.6)
-    parser.add_argument("--resample-mode", choices=["auto", "fft", "linear"], default="auto")
-    return parser
-
-
-def main(argv: list[str] | None = None) -> int:
-    parser = build_parser()
-    args = parser.parse_args(argv)
-    ensure_runtime(args, parser)
-    validate_vocoder_args(args, parser)
-    if args.time_stretch <= 0:
-        parser.error("--time-stretch must be > 0")
-    if args.target_duration is not None and args.target_duration <= 0:
-        parser.error("--target-duration must be > 0")
-    if args.pitch_shift_ratio is not None and args.pitch_shift_ratio <= 0:
-        parser.error("--pitch-shift-ratio must be > 0")
-    if args.pitch_shift_ratio is not None and args.pitch_shift_cents is not None:
-        parser.error("--pitch-shift-cents cannot be combined with --pitch-shift-ratio")
-    if args.transient_threshold <= 0:
-        parser.error("--transient-threshold must be > 0")
-
-    if args.pitch_shift_ratio is not None:
-        pitch_ratio = args.pitch_shift_ratio
-    else:
-        pitch_ratio = semitone_to_ratio(args.pitch_shift_semitones) * (
-            cents_to_ratio(args.pitch_shift_cents) if args.pitch_shift_cents is not None else 1.0
-        )
-    config = build_vocoder_config(
-        args,
-        phase_locking="identity",
-        transient_preserve=True,
-        transient_threshold=args.transient_threshold,
-    )
-    paths = resolve_inputs(args.inputs, parser)
-    status = build_status_bar(args, "pvxtransient", len(paths))
-
-    failures = 0
-    for idx, path in enumerate(paths, start=1):
-        try:
-            audio, sr = read_audio(path)
-            stretch = args.time_stretch
-            if args.target_duration is not None:
-                stretch = (args.target_duration * sr) / max(1, audio.shape[0])
-
-            channels: list[np.ndarray] = []
-            for ch in range(audio.shape[1]):
-                channels.append(
-                    time_pitch_shift_channel(
-                        audio[:, ch],
-                        stretch=stretch,
-                        pitch_ratio=pitch_ratio,
-                        config=config,
-                        resample_mode=args.resample_mode,
-                    )
-                )
-            out_len = max(ch.size for ch in channels)
-            out = np.zeros((out_len, len(channels)), dtype=np.float64)
-            for idx, ch in enumerate(channels):
-                out[: ch.size, idx] = ch
-            out = finalize_audio(out, args)
-
-            out_path = default_output_path(path, args)
-            write_output(out_path, out, sr, args)
-            log_message(args, f"[ok] {path} -> {out_path} | stretch={stretch:.4f} pitch={pitch_ratio:.4f}", min_level="verbose")
-        except Exception as exc:
-            failures += 1
-            log_error(args, f"[error] {path}: {exc}")
-        status.step(idx, path.name)
-    status.finish("done" if failures == 0 else f"errors={failures}")
-    log_message(args, f"[done] pvxtransient processed={len(paths)} failed={failures}", min_level="normal")
-    return 1 if failures else 0
+from pvx.cli.pvxtransient import *  # noqa: F401,F403
+from pvx.cli.pvxtransient import main as _main
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(_main())
