@@ -771,7 +771,19 @@ Use `--help` on any `pvx*` tool to view the exact current window list.
 
 ### 1. `pvxvoc.py`
 
-Primary phase-vocoder engine for batch time/pitch processing.
+Description:
+
+`pvxvoc.py` is the canonical production engine in `pvx`. It performs STFT analysis, phase-coherent resynthesis, optional instantaneous-frequency correction, and output-domain post stages (normalization/mastering chain) in one CLI flow.
+It is designed for both transparent utility transforms (small stretch/pitch adjustments) and aggressive creative transforms (large stretch, formant-preserving pitch movement, transient-aware processing).
+
+Internally, this tool is where runtime acceleration and most shared DSP controls meet:
+
+- CPU/CUDA backend selection (`--device` / `--cuda-device`).
+- Full STFT/window controls (`--n-fft`, `--win-length`, `--hop-size`, `--window`, `--kaiser-beta`).
+- Phase and transient controls (`--phase-locking`, `--transient-preserve`, threshold tuning).
+- Output mastering pipeline (LUFS target, compressor/expander/compander/limiter/clipper).
+
+Use `pvxvoc.py` when you want maximum control and one-pass consistency for batch processing, automation, or chained Unix pipelines.
 
 Key capabilities:
 
@@ -804,7 +816,12 @@ python3 pvxvoc.py vocal.wav \
 
 ### 2. `pvxfreeze.py`
 
-Freezes one spectral snapshot and synthesizes a sustained output.
+Description:
+
+`pvxfreeze.py` captures a selected STFT frame and resynthesizes it over time as a sustained texture.
+Instead of pitch-correcting or time-warping the source globally, freeze mode locks spectral content around one moment and prolongs it, which is useful for ambient pads, transitions, drones, and time-suspended sound design.
+
+The tool keeps shared output/metering conventions, so it can be inserted in the same batch and pipeline workflows as other `pvx*` utilities.
 
 Key options:
 
@@ -820,7 +837,12 @@ python3 pvxfreeze.py pad.wav --freeze-time 0.42 --duration 8.0 --random-phase
 
 ### 3. `pvxharmonize.py`
 
-Creates harmony voices by pitch-shifting and summing.
+Description:
+
+`pvxharmonize.py` builds a multi-voice harmony stack from one source by spawning independent pitch-shifted voices, then mixing and optionally spatially distributing them.
+Each voice can have its own semitone/cents offset, gain, and pan, making the tool suitable for tight interval doubling, choir-like widening, or synthetic ensemble textures.
+
+For predictable musical results, treat `--intervals` as the harmonic design layer and `--gains`/`--pans` as arrangement/mix controls.
 
 Key options:
 
@@ -842,7 +864,12 @@ python3 pvxharmonize.py lead.wav \
 
 ### 4. `pvxconform.py`
 
-Conforms timing and pitch by segments from CSV.
+Description:
+
+`pvxconform.py` applies timeline-specific time and pitch transformations from a map file, segment by segment.
+It is intended for deterministic alignment workflows where transformation values must be explicit over time, such as ADR conform, vocal contour shaping from editorial maps, or experiment-driven microtonal score alignment.
+
+Each segment can define independent stretch plus one pitch representation (`semitones`, `cents`, or direct ratio), allowing precise control while preserving batch repeatability.
 
 Required CSV columns:
 
@@ -917,7 +944,12 @@ python3 pvxconform.py vocal.wav --map map_conform_19edo.csv --crossfade-ms 10
 
 ### 5. `pvxmorph.py`
 
-Morphs two inputs in STFT magnitude/phase space.
+Description:
+
+`pvxmorph.py` blends two sources in the spectral domain, combining short-time magnitude/phase characteristics according to `--alpha`.
+This is not a simple crossfade: it performs time-frequency-domain interpolation, so spectral color, articulation, and timbral identity can migrate between inputs.
+
+It is useful for timbral hybridization, transitional effects, and controlled spectral interpolation in sound design pipelines.
 
 Key options:
 
@@ -933,7 +965,12 @@ python3 pvxmorph.py source_a.wav source_b.wav --alpha 0.35 -o hybrid.wav
 
 ### 6. `pvxwarp.py`
 
-Time-only variable stretch from CSV map.
+Description:
+
+`pvxwarp.py` performs variable, segment-wise time deformation from CSV without applying pitch changes.
+Use it when you need expressive or editorial timing reshaping (rubato-like warps, section alignment, phrasing correction) while preserving overall pitch structure.
+
+Unlike global `--time-stretch`, map-driven warping lets each interval run faster/slower with explicit boundaries and optional crossfade smoothing at joins.
 
 Required CSV columns:
 
@@ -963,7 +1000,12 @@ python3 pvxwarp.py drums.wav --map map_warp.csv
 
 ### 7. `pvxformant.py`
 
-Formant-domain processing with optional pitch shift stage.
+Description:
+
+`pvxformant.py` targets spectral-envelope behavior (formants) and is useful when pitch and perceived vocal/instrument body should be controlled separately.
+In `preserve` mode it compensates formant drift during pitch movement; in `shift` mode it intentionally relocates formants for creative voice-shape effects.
+
+This tool is especially relevant for vocal work where naive pitch shifting can introduce chipmunk/baritone artifacts that are primarily envelope-related, not fundamental-frequency-related.
 
 Key options:
 
@@ -986,7 +1028,12 @@ python3 pvxformant.py voice.wav \
 
 ### 8. `pvxtransient.py`
 
-Transient-emphasis variant of phase-vocoder processing.
+Description:
+
+`pvxtransient.py` biases processing toward transient integrity by adjusting behavior around onset-like frames.
+It is intended for material where attack clarity matters (drums, percussive instruments, plucked sources) and where standard phase-vocoder settings may smear sharp events under stretch.
+
+Use it when you want time/pitch manipulation but with stronger onset protection than a default full-spectrum transform.
 
 Key options:
 
@@ -1002,7 +1049,12 @@ python3 pvxtransient.py percussion.wav --time-stretch 1.35 --transient-threshold
 
 ### 9. `pvxunison.py`
 
-Stereo thickening via multiple detuned voices.
+Description:
+
+`pvxunison.py` creates detuned multi-voice layering around the source to increase width, density, and perceived scale.
+It is conceptually similar to ensemble/unison synth effects, but exposed as deterministic CLI controls for voice count, detune spread, stereo width, and dry/wet balance.
+
+Common use cases include mono lead widening, subtle stereo enhancement, and intentionally exaggerated chorus-like texture design.
 
 Key options:
 
@@ -1019,7 +1071,12 @@ python3 pvxunison.py synth.wav --voices 7 --detune-cents 18 --width 1.2 --dry-mi
 
 ### 10. `pvxdenoise.py`
 
-Spectral subtraction denoiser with optional external noise reference.
+Description:
+
+`pvxdenoise.py` performs spectral noise reduction using a configurable noise estimate and subtraction profile.
+The estimate can come from an initial segment of the target file or from an external noise-print recording, making the tool suitable for practical cleanup workflows with controlled capture conditions.
+
+Core tuning parameters (`--reduction-db`, `--floor`, `--smooth`) trade off suppression strength vs artifact risk; moderate settings generally preserve timbre better in mixed-content material.
 
 Key options:
 
@@ -1037,7 +1094,12 @@ python3 pvxdenoise.py noisy.wav --noise-file noise_print.wav --reduction-db 14 -
 
 ### 11. `pvxdeverb.py`
 
-Reduces spectral tail smear (de-reverb style).
+Description:
+
+`pvxdeverb.py` attenuates late reverberant energy and spectral tail persistence to improve clarity and articulation.
+It is useful for overly live recordings, speech intelligibility recovery, and pre-processing before downstream pitch/transcription tasks that are sensitive to diffuse tails.
+
+`--strength`, `--decay`, and `--floor` define the aggressiveness/memory/safety balance; overdriving these can make material unnaturally dry or hollow.
 
 Key options:
 
@@ -1053,7 +1115,12 @@ python3 pvxdeverb.py room_take.wav --strength 0.5 --decay 0.9 --floor 0.12
 
 ### 12. `pvxretune.py`
 
-Monophonic retuning toward a scale.
+Description:
+
+`pvxretune.py` retunes monophonic content toward a specified tonal framework (preset scales or custom cents maps).
+It is the primary scale-aware correction tool in `pvx`, with explicit support for microtonal degree definitions through `--scale-cents`.
+
+Use this tool when correction should follow scale membership rather than fixed global transposition; `--strength` can be used to move between subtle guidance and near-hard quantization.
 
 Key options:
 
@@ -1072,7 +1139,12 @@ python3 pvxretune.py vocal_mono.wav --root A --scale major --strength 0.9
 
 ### 13. `pvxlayer.py`
 
-Splits audio into harmonic/percussive components, then applies independent pitch/time processing and recombines.
+Description:
+
+`pvxlayer.py` performs harmonic/percussive decomposition and processes each layer with independent time/pitch/gain controls before recombination.
+This enables musically useful asymmetric edits, such as stretching harmonic sustain while keeping percussion tight, or retuning tonal content while leaving transient content nearly unchanged.
+
+Because layer paths are independently controlled, this tool is often a better choice than a single global transform when source material combines stable pitched content and sharp transients.
 
 Key options:
 
