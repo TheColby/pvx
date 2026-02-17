@@ -1,4 +1,6 @@
 numpy>=1.24
 soundfile>=0.12.1
 scipy>=1.10
+librosa>=0.10.2
+pyloudnorm>=0.1.1
 pyinstaller>=6.0

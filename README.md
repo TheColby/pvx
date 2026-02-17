@@ -25,6 +25,7 @@ The repository currently includes:
 - `pvxdeverb.py`: reverb-tail suppression.
 - `pvxretune.py`: monophonic scale retune.
 - `pvxlayer.py`: harmonic/percussive split and independent processing.
+- `pvxalgorithms/`: themed algorithm library with 95 DSP modules (time/pitch, transforms, separation, denoise, dereverb, dynamics, spatial, creative, granular, and analysis).
 
 ## Install
 
