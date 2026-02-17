@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from pvocode import (
+from pvxvoc import (
     VocoderConfig,
     apply_formant_preservation,
     build_fourier_sync_plan,

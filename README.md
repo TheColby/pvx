@@ -1,6 +1,14 @@
-# pvocode
+<p align="center">
+  <img src="assets/pvx_logo.png" alt="pvx logo" width="360" />
+</p>
 
-`pvocode` is a command-line phase vocoder for batch audio time-stretch and pitch-shift processing.
+# pvx
+
+`pvx` is a phase-vocoder-based DSP toolkit with multiple command-line processors:
+`pvxvoc`, `pvxfreeze`, `pvxharmonize`, `pvxconform`, `pvxmorph`, `pvxwarp`,
+`pvxformant`, `pvxtransient`, `pvxunison`, `pvxdenoise`, `pvxdeverb`, `pvxretune`, and `pvxlayer`.
+
+This README focuses on `pvxvoc`, the core processor.
 
 It supports:
 - One or more input files in a single run
@@ -23,18 +31,34 @@ python3 -m pip install -r requirements.txt
 ## Basic Usage
 
 ```bash
-python3 pvocode.py input.wav
+python3 pvxvoc.py input.wav
 ```
 
 Default output:
 - File: `input_pv.wav`
 - Location: same directory as input
 - Processing: no time/pitch change (acts as a pass-through transform)
+- A per-file processing progress bar is shown in interactive terminals
+
+## Other Tools
+
+- `python3 pvxfreeze.py <in.wav>`: spectral freeze / sustain.
+- `python3 pvxharmonize.py <in.wav>`: multi-voice harmonizer.
+- `python3 pvxconform.py <in.wav> --map map.csv`: pitch+timing map conform.
+- `python3 pvxmorph.py <a.wav> <b.wav>`: spectral morphing.
+- `python3 pvxwarp.py <in.wav> --map map.csv`: time-warp map processing.
+- `python3 pvxformant.py <in.wav>`: formant shift/preserve processing.
+- `python3 pvxtransient.py <in.wav>`: transient-first vocoder mode.
+- `python3 pvxunison.py <in.wav>`: stereo micro-detune unison.
+- `python3 pvxdenoise.py <in.wav>`: spectral denoise.
+- `python3 pvxdeverb.py <in.wav>`: tail suppression / deverb.
+- `python3 pvxretune.py <in.wav>`: monophonic retuning.
+- `python3 pvxlayer.py <in.wav>`: harmonic/percussive layered processing.
 
 ## CLI
 
 ```bash
-python3 pvocode.py [options] <input1> [<input2> ...]
+python3 pvxvoc.py [options] <input1> [<input2> ...]
 ```
 
 ### Common Examples
@@ -42,31 +66,31 @@ python3 pvocode.py [options] <input1> [<input2> ...]
 Time stretch 1.5x longer:
 
 ```bash
-python3 pvocode.py song.wav --time-stretch 1.5
+python3 pvxvoc.py song.wav --time-stretch 1.5
 ```
 
 Pitch up by 3 semitones (preserving final duration unless overridden):
 
 ```bash
-python3 pvocode.py vocals.wav --pitch-shift-semitones 3
+python3 pvxvoc.py vocals.wav --pitch-shift-semitones 3
 ```
 
 Pitch by ratio and set exact output duration:
 
 ```bash
-python3 pvocode.py take.wav --pitch-shift-ratio 0.8 --target-duration 12.0
+python3 pvxvoc.py take.wav --pitch-shift-ratio 0.8 --target-duration 12.0
 ```
 
 Shift to a target F0 (auto-estimates input F0 first):
 
 ```bash
-python3 pvocode.py voice.wav --target-f0 220 --f0-min 70 --f0-max 400
+python3 pvxvoc.py voice.wav --target-f0 220 --f0-min 70 --f0-max 400
 ```
 
 Batch process several files with custom STFT params:
 
 ```bash
-python3 pvocode.py stems/*.wav \
+python3 pvxvoc.py stems/*.wav \
   --n-fft 4096 --win-length 4096 --hop-size 1024 --window hann \
   --phase-locking identity --transient-preserve --transient-threshold 1.8 \
   --time-stretch 1.2 --pitch-shift-semitones -2
@@ -75,7 +99,7 @@ python3 pvocode.py stems/*.wav \
 Fourier-sync mode (non-power-of-two FFT and frame locking to F0):
 
 ```bash
-python3 pvocode.py vocal.wav \
+python3 pvxvoc.py vocal.wav \
   --fourier-sync --n-fft 1500 --win-length 1500 --hop-size 375 \
   --f0-min 70 --f0-max 500 --time-stretch 1.25
 ```
@@ -83,19 +107,19 @@ python3 pvocode.py vocal.wav \
 Write FLAC outputs into another directory:
 
 ```bash
-python3 pvocode.py mixes/*.wav -o out --output-format flac --suffix _pv2 --overwrite
+python3 pvxvoc.py mixes/*.wav -o out --output-format flac --suffix _pv2 --overwrite
 ```
 
 Convert output sample rate and normalize peaks:
 
 ```bash
-python3 pvocode.py input.wav --target-sample-rate 48000 --normalize peak --peak-dbfs -1
+python3 pvxvoc.py input.wav --target-sample-rate 48000 --normalize peak --peak-dbfs -1
 ```
 
 Formant-preserving pitch shift:
 
 ```bash
-python3 pvocode.py vocal.wav \
+python3 pvxvoc.py vocal.wav \
   --pitch-shift-semitones 4 \
   --pitch-mode formant-preserving \
   --formant-lifter 32 --formant-strength 1.0
@@ -104,7 +128,7 @@ python3 pvocode.py vocal.wav \
 Dry-run config validation (no files written):
 
 ```bash
-python3 pvocode.py input.wav --time-stretch 0.85 --dry-run --verbose
+python3 pvxvoc.py input.wav --time-stretch 0.85 --dry-run --verbose
 ```
 
 ## Option Summary
@@ -119,6 +143,7 @@ python3 pvocode.py input.wav --time-stretch 0.85 --dry-run --verbose
 - `--subtype`: libsndfile subtype (`PCM_16`, `PCM_24`, `FLOAT`, etc)
 - `--dry-run`: plan processing without writing files
 - `--verbose`: print per-file detailed processing diagnostics
+- `--no-progress`: disable terminal progress bars
 
 ### Phase Vocoder / STFT
 
@@ -182,17 +207,17 @@ python3 -m pip install -r requirements.txt
 Build a single-file executable with PyInstaller:
 
 ```bash
-python3 -m PyInstaller --onefile --name pvocode --collect-all soundfile pvocode.py
+python3 -m PyInstaller --onefile --name pvxvoc --collect-all soundfile pvxvoc.py
 ```
 
 Build outputs:
-- macOS/Linux: `dist/pvocode`
-- Windows: `dist/pvocode.exe`
+- macOS/Linux: `dist/pvxvoc`
+- Windows: `dist/pvxvoc.exe`
 
 Run the executable:
 
 ```bash
-./dist/pvocode --help
+./dist/pvxvoc --help
 ```
 
 ## Test Suite

@@ -1,0 +1,26 @@
+[project]
+name = "pvx"
+version = "0.1.0"
+description = "Phase-vocoder DSP toolkit with pvx command suite"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24",
+    "soundfile>=0.12.1",
+    "scipy>=1.10",
+]
+
+[project.scripts]
+pvxvoc = "pvxvoc:main"
+pvxfreeze = "pvxfreeze:main"
+pvxharmonize = "pvxharmonize:main"
+pvxconform = "pvxconform:main"
+pvxmorph = "pvxmorph:main"
+pvxwarp = "pvxwarp:main"
+pvxformant = "pvxformant:main"
+pvxtransient = "pvxtransient:main"
+pvxunison = "pvxunison:main"
+pvxdenoise = "pvxdenoise:main"
+pvxdeverb = "pvxdeverb:main"
+pvxretune = "pvxretune:main"
+pvxlayer = "pvxlayer:main"

@@ -1,0 +1,113 @@
+#!/usr/bin/env python3
+"""Conform timing and pitch to a user-provided segment map."""
+
+from __future__ import annotations
+
+import argparse
+from pathlib import Path
+
+import numpy as np
+
+from pvxcommon import (
+    SegmentSpec,
+    add_common_io_args,
+    add_vocoder_args,
+    build_vocoder_config,
+    concat_with_crossfade,
+    default_output_path,
+    ensure_runtime,
+    finalize_audio,
+    read_audio,
+    read_segment_csv,
+    resolve_inputs,
+    time_pitch_shift_audio,
+    validate_vocoder_args,
+    write_output,
+)
+
+
+def expand_segments(segments: list[SegmentSpec], total_s: float) -> list[SegmentSpec]:
+    merged: list[SegmentSpec] = []
+    cursor = 0.0
+    for seg in segments:
+        start = max(0.0, min(total_s, seg.start_s))
+        end = max(0.0, min(total_s, seg.end_s))
+        if end <= start:
+            continue
+        if start > cursor:
+            merged.append(SegmentSpec(start_s=cursor, end_s=start, stretch=1.0, pitch_ratio=1.0))
+        merged.append(SegmentSpec(start_s=start, end_s=end, stretch=seg.stretch, pitch_ratio=seg.pitch_ratio))
+        cursor = max(cursor, end)
+    if cursor < total_s:
+        merged.append(SegmentSpec(start_s=cursor, end_s=total_s, stretch=1.0, pitch_ratio=1.0))
+    return merged
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description=(
+            "Conform audio to a CSV map. CSV columns: start_sec,end_sec,stretch,pitch_semitones"
+        )
+    )
+    add_common_io_args(parser, default_suffix="_conform")
+    add_vocoder_args(parser, default_n_fft=2048, default_win_length=2048, default_hop_size=512)
+    parser.add_argument("--map", required=True, type=Path, help="CSV map path")
+    parser.add_argument("--crossfade-ms", type=float, default=8.0, help="Segment crossfade in milliseconds")
+    parser.add_argument("--resample-mode", choices=["auto", "fft", "linear"], default="auto")
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    ensure_runtime()
+    validate_vocoder_args(args, parser)
+    if args.crossfade_ms < 0:
+        parser.error("--crossfade-ms must be >= 0")
+
+    map_segments = read_segment_csv(args.map, has_pitch=True)
+    if not map_segments:
+        parser.error("Map has no valid segments")
+
+    config = build_vocoder_config(args, phase_locking="identity", transient_preserve=True, transient_threshold=2.0)
+    paths = resolve_inputs(args.inputs, parser)
+
+    failures = 0
+    for path in paths:
+        try:
+            audio, sr = read_audio(path)
+            total_s = audio.shape[0] / sr
+            segments = expand_segments(map_segments, total_s)
+
+            chunks: list[np.ndarray] = []
+            for seg in segments:
+                start = int(round(seg.start_s * sr))
+                end = int(round(seg.end_s * sr))
+                if end <= start:
+                    continue
+                piece = audio[start:end, :]
+                shifted = time_pitch_shift_audio(
+                    piece,
+                    seg.stretch,
+                    seg.pitch_ratio,
+                    config,
+                    resample_mode=args.resample_mode,
+                )
+                chunks.append(shifted)
+
+            out = concat_with_crossfade(chunks, sr, crossfade_ms=args.crossfade_ms)
+            out = finalize_audio(out, args)
+            out_path = default_output_path(path, args)
+            write_output(out_path, out, sr, args)
+            if args.verbose:
+                print(f"[ok] {path} -> {out_path} | segs={len(segments)}, dur={out.shape[0]/sr:.3f}s")
+        except Exception as exc:
+            failures += 1
+            print(f"[error] {path}: {exc}")
+
+    return 1 if failures else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+

@@ -7,9 +7,10 @@ import argparse
 import glob
 import math
 import sys
+import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, Literal
+from typing import Callable, Iterable, Literal
 
 try:
     import numpy as np
@@ -29,6 +30,7 @@ except Exception:  # pragma: no cover - optional dependency
 WindowType = Literal["hann", "hamming", "blackman", "rect"]
 ResampleMode = Literal["auto", "fft", "linear"]
 PhaseLockMode = Literal["off", "identity"]
+ProgressCallback = Callable[[int, int], None]
 
 
 @dataclass(frozen=True)
@@ -67,6 +69,48 @@ class FourierSyncPlan:
     frame_lengths: np.ndarray
     f0_track_hz: np.ndarray
     reference_n_fft: int
+
+
+class ProgressBar:
+    def __init__(self, label: str, enabled: bool, width: int = 32) -> None:
+        self.label = label
+        self.enabled = enabled
+        self.width = max(10, width)
+        self._last_fraction = -1.0
+        self._last_ts = 0.0
+        self._finished = False
+        if self.enabled:
+            self.set(0.0, "start")
+
+    def set(self, fraction: float, detail: str = "") -> None:
+        if not self.enabled or self._finished:
+            return
+
+        now = time.time()
+        frac = min(1.0, max(0.0, fraction))
+        should_render = (
+            frac >= 1.0
+            or self._last_fraction < 0.0
+            or (frac - self._last_fraction) >= 0.005
+            or (now - self._last_ts) >= 0.15
+        )
+        if not should_render:
+            return
+
+        filled = int(round(frac * self.width))
+        bar = "#" * filled + "-" * (self.width - filled)
+        suffix = f" {detail}" if detail else ""
+        sys.stderr.write(f"\r[{bar}] {frac * 100:6.2f}% {self.label}{suffix}")
+        sys.stderr.flush()
+        self._last_fraction = frac
+        self._last_ts = now
+        if frac >= 1.0:
+            sys.stderr.write("\n")
+            sys.stderr.flush()
+            self._finished = True
+
+    def finish(self, detail: str = "done") -> None:
+        self.set(1.0, detail)
 
 
 def db_to_amplitude(db: float) -> float:
@@ -192,12 +236,9 @@ def resize_spectrum_bins(spectrum: np.ndarray, target_bins: int) -> np.ndarray:
 
     x_old = np.linspace(0.0, 1.0, num=spectrum.size, endpoint=True)
     x_new = np.linspace(0.0, 1.0, num=target_bins, endpoint=True)
-
-    mag = np.abs(spectrum)
-    phase = np.unwrap(np.angle(spectrum))
-    mag_new = np.interp(x_new, x_old, mag)
-    phase_new = np.interp(x_new, x_old, phase)
-    return mag_new * np.exp(1j * phase_new)
+    real_new = np.interp(x_new, x_old, spectrum.real)
+    imag_new = np.interp(x_new, x_old, spectrum.imag)
+    return (real_new + 1j * imag_new).astype(np.complex128)
 
 
 def smooth_series(values: np.ndarray, span: int) -> np.ndarray:
@@ -207,6 +248,26 @@ def smooth_series(values: np.ndarray, span: int) -> np.ndarray:
     pad = span // 2
     padded = np.pad(values, (pad, pad), mode="edge")
     return np.convolve(padded, kernel, mode="valid")[: values.size]
+
+
+def regularize_frame_lengths(frame_lengths: np.ndarray, max_step: int) -> np.ndarray:
+    if frame_lengths.size <= 1:
+        return frame_lengths
+
+    out = frame_lengths.astype(np.int64, copy=True)
+    step = max(1, int(max_step))
+
+    for idx in range(1, out.size):
+        lo = out[idx - 1] - step
+        hi = out[idx - 1] + step
+        out[idx] = int(np.clip(out[idx], lo, hi))
+
+    for idx in range(out.size - 2, -1, -1):
+        lo = out[idx + 1] - step
+        hi = out[idx + 1] + step
+        out[idx] = int(np.clip(out[idx], lo, hi))
+
+    return out
 
 
 def fill_nan_with_nearest(values: np.ndarray, fallback: float) -> np.ndarray:
@@ -227,13 +288,12 @@ def fill_nan_with_nearest(values: np.ndarray, fallback: float) -> np.ndarray:
 def lock_fft_length_to_f0(
     f0_hz: float,
     sample_rate: int,
-    reference_fft: int,
+    harmonic_bin: int,
     min_fft: int,
     max_fft: int,
 ) -> int:
     safe_f0 = max(float(f0_hz), 1e-6)
-    harmonic_bin = max(1, int(round(safe_f0 * reference_fft / sample_rate)))
-    locked = int(round(harmonic_bin * sample_rate / safe_f0))
+    locked = int(round(max(1, harmonic_bin) * sample_rate / safe_f0))
     return int(np.clip(max(16, locked), min_fft, max_fft))
 
 
@@ -246,6 +306,7 @@ def build_fourier_sync_plan(
     min_fft: int,
     max_fft: int,
     smooth_span: int,
+    progress_callback: ProgressCallback | None = None,
 ) -> FourierSyncPlan:
     framed, frame_count = pad_for_framing(signal, config.n_fft, config.hop_size, config.center)
     if frame_count <= 0:
@@ -259,14 +320,13 @@ def build_fourier_sync_plan(
     for frame_idx in range(frame_count):
         start = frame_idx * config.hop_size
         frame = framed[start : start + config.n_fft]
-        if frame.size < 4:
-            continue
-        if float(np.sqrt(np.mean(frame * frame))) < 1e-6:
-            continue
-        try:
-            f0_track[frame_idx] = estimate_f0_autocorrelation(frame, sample_rate, f0_min_hz, f0_max_hz)
-        except Exception:
-            continue
+        if frame.size >= 4 and float(np.sqrt(np.mean(frame * frame))) >= 1e-6:
+            try:
+                f0_track[frame_idx] = estimate_f0_autocorrelation(frame, sample_rate, f0_min_hz, f0_max_hz)
+            except Exception:
+                pass
+        if progress_callback is not None:
+            progress_callback(frame_idx + 1, frame_count)
 
     finite_f0 = f0_track[np.isfinite(f0_track)]
     fallback_f0 = float(np.median(finite_f0)) if finite_f0.size else (f0_min_hz + f0_max_hz) * 0.5
@@ -276,18 +336,26 @@ def build_fourier_sync_plan(
 
     min_fft = max(16, min_fft)
     max_fft = max(min_fft, max_fft)
+    reference_f0 = float(np.median(f0_track)) if f0_track.size else fallback_f0
+    target_bin = max(1, int(round(reference_f0 * config.n_fft / sample_rate)))
     frame_lengths = np.array(
         [
             lock_fft_length_to_f0(
                 f0_hz=f0,
                 sample_rate=sample_rate,
-                reference_fft=config.n_fft,
+                harmonic_bin=target_bin,
                 min_fft=min_fft,
                 max_fft=max_fft,
             )
             for f0 in f0_track
         ],
         dtype=np.int64,
+    )
+    frame_lengths = np.rint(smooth_series(frame_lengths.astype(np.float64), smooth_span)).astype(np.int64)
+    frame_lengths = np.clip(frame_lengths, min_fft, max_fft)
+    frame_lengths = regularize_frame_lengths(
+        frame_lengths,
+        max_step=max(2, int(round(config.n_fft * 0.015))),
     )
     reference_n_fft = int(max(config.n_fft, int(np.max(frame_lengths))))
     return FourierSyncPlan(frame_lengths=frame_lengths, f0_track_hz=f0_track, reference_n_fft=reference_n_fft)
@@ -345,7 +413,12 @@ def apply_identity_phase_locking(
     return locked
 
 
-def phase_vocoder_time_stretch(signal: np.ndarray, stretch: float, config: VocoderConfig) -> np.ndarray:
+def phase_vocoder_time_stretch(
+    signal: np.ndarray,
+    stretch: float,
+    config: VocoderConfig,
+    progress_callback: ProgressCallback | None = None,
+) -> np.ndarray:
     if stretch <= 0:
         raise ValueError("Stretch factor must be > 0")
     if signal.size == 0:
@@ -372,6 +445,8 @@ def phase_vocoder_time_stretch(signal: np.ndarray, stretch: float, config: Vocod
     phase = input_phase[:, 0].copy()
     omega = 2.0 * np.pi * config.hop_size * np.arange(n_bins, dtype=np.float64) / config.n_fft
     output_stft = np.zeros((n_bins, out_frames), dtype=np.complex128)
+    if progress_callback is not None:
+        progress_callback(0, out_frames)
 
     for out_idx, t in enumerate(time_steps):
         frame_idx = int(math.floor(t))
@@ -402,6 +477,8 @@ def phase_vocoder_time_stretch(signal: np.ndarray, stretch: float, config: Vocod
 
         phase = synth_phase
         output_stft[:, out_idx] = mag * np.exp(1j * phase)
+        if progress_callback is not None and (out_idx == out_frames - 1 or (out_idx % 8) == 0):
+            progress_callback(out_idx + 1, out_frames)
 
     target_length = max(1, int(round(signal.size * stretch)))
     return istft(output_stft, config, expected_length=target_length)
@@ -412,6 +489,7 @@ def phase_vocoder_time_stretch_fourier_sync(
     stretch: float,
     config: VocoderConfig,
     sync_plan: FourierSyncPlan,
+    progress_callback: ProgressCallback | None = None,
 ) -> np.ndarray:
     if stretch <= 0:
         raise ValueError("Stretch factor must be > 0")
@@ -431,9 +509,14 @@ def phase_vocoder_time_stretch_fourier_sync(
     else:
         frame_lengths = sync_plan.frame_lengths.astype(np.int64, copy=False)
 
+    out_frames = max(2, int(round(frame_count * stretch)))
+    total_steps = frame_count + out_frames + out_frames
+
     ref_n_fft = int(max(sync_plan.reference_n_fft, config.n_fft, int(np.max(frame_lengths))))
     ref_bins = ref_n_fft // 2 + 1
     input_stft = np.empty((ref_bins, frame_count), dtype=np.complex128)
+    if progress_callback is not None:
+        progress_callback(0, total_steps)
 
     for frame_idx in range(frame_count):
         n_fft_i = int(frame_lengths[frame_idx])
@@ -443,8 +526,9 @@ def phase_vocoder_time_stretch_fourier_sync(
         window = make_window(config.window, n_fft_i, win_length_i)
         spectrum = np.fft.rfft(frame * window, n=n_fft_i)
         input_stft[:, frame_idx] = resize_spectrum_bins(spectrum, ref_bins)
+        if progress_callback is not None and (frame_idx == frame_count - 1 or (frame_idx % 8) == 0):
+            progress_callback(frame_idx + 1, total_steps)
 
-    out_frames = max(2, int(round(frame_count * stretch)))
     time_steps = np.arange(out_frames, dtype=np.float64) / stretch
     time_steps = np.clip(time_steps, 0.0, frame_count - 1.000001)
 
@@ -460,6 +544,7 @@ def phase_vocoder_time_stretch_fourier_sync(
     omega = 2.0 * np.pi * config.hop_size * np.arange(ref_bins, dtype=np.float64) / ref_n_fft
     output_stft = np.zeros((ref_bins, out_frames), dtype=np.complex128)
     output_lengths = np.zeros(out_frames, dtype=np.int64)
+    completed_steps = 0
 
     for out_idx, t in enumerate(time_steps):
         frame_idx = int(math.floor(t))
@@ -493,6 +578,9 @@ def phase_vocoder_time_stretch_fourier_sync(
         n_left = int(frame_lengths[frame_idx])
         n_right = int(frame_lengths[right_idx])
         output_lengths[out_idx] = max(16, int(round((1.0 - frac) * n_left + frac * n_right)))
+        completed_steps += 1
+        if progress_callback is not None and (out_idx == out_frames - 1 or (out_idx % 8) == 0):
+            progress_callback(frame_count + completed_steps, total_steps)
 
     output_len = config.hop_size * max(0, out_frames - 1) + int(np.max(output_lengths))
     output = np.zeros(output_len, dtype=np.float64)
@@ -509,6 +597,8 @@ def phase_vocoder_time_stretch_fourier_sync(
         start = frame_idx * config.hop_size
         output[start : start + n_fft_i] += frame * window
         weight[start : start + n_fft_i] += window * window
+        if progress_callback is not None and (frame_idx == out_frames - 1 or (frame_idx % 8) == 0):
+            progress_callback(frame_count + out_frames + frame_idx + 1, total_steps)
 
     nz = weight > 1e-12
     output[nz] /= weight[nz]
@@ -740,13 +830,35 @@ def process_file(
     input_path: Path,
     args: argparse.Namespace,
     config: VocoderConfig,
+    file_index: int = 0,
+    file_total: int = 1,
 ) -> JobResult:
+    progress_enabled = (not args.no_progress) and sys.stderr.isatty()
+    progress = ProgressBar(
+        label=f"{input_path.name} [{file_index + 1}/{file_total}]",
+        enabled=progress_enabled,
+    )
+
+    def make_progress_callback(start: float, end: float, detail: str) -> ProgressCallback | None:
+        if not progress_enabled:
+            return None
+
+        span = max(0.0, end - start)
+
+        def _callback(done: int, total: int) -> None:
+            denom = max(1, total)
+            progress.set(start + span * (done / denom), detail)
+
+        return _callback
+
+    progress.set(0.02, "read")
     audio, sr = sf.read(str(input_path), always_2d=True)
     audio = audio.astype(np.float64, copy=False)
 
     if audio.shape[0] == 0:
         raise ValueError("Input file has no audio samples")
 
+    progress.set(0.08, "analyze")
     pitch = choose_pitch_ratio(args, audio, sr)
     base_stretch = resolve_base_stretch(args, audio.shape[0], sr)
     internal_stretch = base_stretch * pitch.ratio
@@ -756,6 +868,7 @@ def process_file(
 
     sync_plan: FourierSyncPlan | None = None
     if args.fourier_sync:
+        progress.set(0.10, "f0 prescan")
         sync_source = audio[:, 0] if args.analysis_channel == "first" else np.mean(audio, axis=1)
         sync_plan = build_fourier_sync_plan(
             signal=sync_source,
@@ -766,10 +879,16 @@ def process_file(
             min_fft=args.fourier_sync_min_fft,
             max_fft=args.fourier_sync_max_fft,
             smooth_span=args.fourier_sync_smooth,
+            progress_callback=make_progress_callback(0.10, 0.25, "f0 prescan"),
         )
 
+    channel_start = 0.25 if args.fourier_sync else 0.10
+    channel_end = 0.88
     processed_channels: list[np.ndarray] = []
     for ch in range(audio.shape[1]):
+        sub_start = channel_start + (channel_end - channel_start) * (ch / audio.shape[1])
+        sub_end = channel_start + (channel_end - channel_start) * ((ch + 1) / audio.shape[1])
+        detail = f"channel {ch + 1}/{audio.shape[1]}"
         source_ch = audio[:, ch]
         if args.fourier_sync:
             if sync_plan is None:  # pragma: no cover - defensive
@@ -779,9 +898,15 @@ def process_file(
                 internal_stretch,
                 config,
                 sync_plan,
+                progress_callback=make_progress_callback(sub_start, sub_end, detail),
             )
         else:
-            stretched = phase_vocoder_time_stretch(audio[:, ch], internal_stretch, config)
+            stretched = phase_vocoder_time_stretch(
+                audio[:, ch],
+                internal_stretch,
+                config,
+                progress_callback=make_progress_callback(sub_start, sub_end, detail),
+            )
         if abs(pitch.ratio - 1.0) > 1e-10:
             pitch_len = max(1, int(round(stretched.size / pitch.ratio)))
             shifted = resample_1d(stretched, pitch_len, args.resample_mode)
@@ -799,6 +924,7 @@ def process_file(
             )
         processed_channels.append(shifted)
 
+    progress.set(0.90, "mix")
     out_len = max(ch_data.size for ch_data in processed_channels)
     out_audio = np.zeros((out_len, len(processed_channels)), dtype=np.float64)
     for ch, ch_data in enumerate(processed_channels):
@@ -825,6 +951,7 @@ def process_file(
         )
 
     if not args.dry_run:
+        progress.set(0.96, "write")
         output_path.parent.mkdir(parents=True, exist_ok=True)
         sf.write(str(output_path), out_audio, out_sr, subtype=args.subtype)
 
@@ -844,6 +971,8 @@ def process_file(
                 f", sync_fft_med={int(np.median(sync_plan.frame_lengths))}"
             )
         print(msg)
+
+    progress.finish("done")
 
     return JobResult(
         input_path=input_path,
@@ -941,6 +1070,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--overwrite", action="store_true", help="Overwrite existing outputs")
     parser.add_argument("--dry-run", action="store_true", help="Resolve settings without writing files")
     parser.add_argument("--verbose", action="store_true", help="Print per-file processing diagnostics")
+    parser.add_argument("--no-progress", action="store_true", help="Disable terminal progress bars")
 
     stft_group = parser.add_argument_group("STFT / vocoder parameters")
     stft_group.add_argument("--n-fft", type=int, default=2048, help="FFT size (default: 2048)")
@@ -1183,9 +1313,9 @@ def main(argv: list[str] | None = None) -> int:
     results: list[JobResult] = []
     failures: list[tuple[Path, Exception]] = []
 
-    for path in input_paths:
+    for idx, path in enumerate(input_paths):
         try:
-            result = process_file(path, args, config)
+            result = process_file(path, args, config, file_index=idx, file_total=len(input_paths))
             results.append(result)
         except Exception as exc:  # pragma: no cover - runtime I/O errors
             failures.append((path, exc))

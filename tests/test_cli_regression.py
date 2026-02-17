@@ -9,7 +9,7 @@ import soundfile as sf
 
 
 ROOT = Path(__file__).resolve().parents[1]
-CLI = ROOT / "pvocode.py"
+CLI = ROOT / "pvxvoc.py"
 
 
 def write_stereo_tone(path: Path, sr: int = 24000, duration: float = 0.5) -> tuple[np.ndarray, int]:
@@ -120,7 +120,7 @@ class TestCLIRegression(unittest.TestCase):
             self.assertAlmostEqual(output_audio.shape[0], expected_len, delta=8)
 
     def test_regression_metrics_snapshot(self) -> None:
-        from pvocode import VocoderConfig, phase_vocoder_time_stretch, resample_1d
+        from pvxvoc import VocoderConfig, phase_vocoder_time_stretch, resample_1d
 
         sr = 24000
         n = int(sr * 0.7)
