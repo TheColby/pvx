@@ -1,0 +1,30 @@
+{
+  "old": {
+    "file": "examples/speech_seed_10min_600x_audible_declicked.wav",
+    "sample_rate_hz": 22050,
+    "duration_sec": 600.0,
+    "peak_abs": 0.8912509679794312,
+    "rms": 0.20839599737859993,
+    "jump_max_abs": 0.11215555667877197,
+    "jump_p99": 0.055422666072845406,
+    "jump_p999": 0.070846082210541,
+    "jump_count_gt_0p10": 16,
+    "jump_count_gt_0p20": 0,
+    "rms_mod_diff_p95_50ms": 0.019330095745154107,
+    "rms_mod_diff_p99_50ms": 0.0384278258169411
+  },
+  "new": {
+    "file": "examples/speech_seed_10min_600x_smooth.wav",
+    "sample_rate_hz": 22050,
+    "duration_sec": 600.0,
+    "peak_abs": 0.8912353515625,
+    "rms": 0.15275884338371667,
+    "jump_max_abs": 0.599700927734375,
+    "jump_p99": 0.226593017578125,
+    "jump_p999": 0.31158447265625,
+    "jump_count_gt_0p10": 1999872,
+    "jump_count_gt_0p20": 250701,
+    "rms_mod_diff_p95_50ms": 0.07314788140405586,
+    "rms_mod_diff_p99_50ms": 0.10553497377244522
+  }
+}

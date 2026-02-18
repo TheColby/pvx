@@ -15,7 +15,13 @@ from typing import Iterable
 import numpy as np
 import soundfile as sf
 
+from pvx.core.audio_metrics import (
+    render_audio_comparison_table,
+    render_audio_metrics_table,
+    summarize_audio_metrics,
+)
 from pvx.core.voc import (
+    PHASE_ENGINE_CHOICES,
     TRANSFORM_CHOICES,
     VocoderConfig,
     WINDOW_CHOICES,
@@ -230,6 +236,49 @@ def add_vocoder_args(
             "(default: fft; options: fft, dft, czt, dct, dst, hartley)"
         ),
     )
+    parser.add_argument(
+        "--phase-engine",
+        choices=list(PHASE_ENGINE_CHOICES),
+        default="propagate",
+        help=(
+            "Phase synthesis engine: propagate (classic), "
+            "hybrid (propagated + stochastic blend), random (ambient stochastic phase)"
+        ),
+    )
+    parser.add_argument(
+        "--ambient-phase-mix",
+        type=float,
+        default=0.5,
+        help="Random-phase blend for --phase-engine hybrid (0..1, default: 0.5)",
+    )
+    parser.add_argument(
+        "--phase-random-seed",
+        type=int,
+        default=None,
+        help="Deterministic random seed for random/hybrid phase engines",
+    )
+    parser.add_argument(
+        "--onset-time-credit",
+        action="store_true",
+        help="Enable onset-triggered time-credit scheduling for extreme stretch",
+    )
+    parser.add_argument(
+        "--onset-credit-pull",
+        type=float,
+        default=0.5,
+        help="Fraction of per-frame read advance removable by onset credit (0..1)",
+    )
+    parser.add_argument(
+        "--onset-credit-max",
+        type=float,
+        default=8.0,
+        help="Maximum accumulated onset credit in analysis-frame units",
+    )
+    parser.add_argument(
+        "--no-onset-realign",
+        action="store_true",
+        help="Disable onset read-position realignment when onset credit is active",
+    )
     parser.add_argument("--no-center", action="store_true", help="Disable centered framing")
     add_runtime_args(parser)
 
@@ -248,8 +297,15 @@ def build_vocoder_config(
         window=args.window,
         center=not args.no_center,
         phase_locking=phase_locking,
+        phase_engine=str(getattr(args, "phase_engine", "propagate")),
+        ambient_phase_mix=float(getattr(args, "ambient_phase_mix", 0.5)),
+        phase_random_seed=getattr(args, "phase_random_seed", None),
         transient_preserve=transient_preserve,
         transient_threshold=transient_threshold,
+        onset_time_credit=bool(getattr(args, "onset_time_credit", False)),
+        onset_credit_pull=float(getattr(args, "onset_credit_pull", 0.5)),
+        onset_credit_max=float(getattr(args, "onset_credit_max", 8.0)),
+        onset_realign=not bool(getattr(args, "no_onset_realign", False)),
         kaiser_beta=args.kaiser_beta,
         transform=args.transform,
     )
@@ -268,6 +324,14 @@ def validate_vocoder_args(args: argparse.Namespace, parser: argparse.ArgumentPar
         parser.error("--hop-size should be <= --win-length")
     if args.kaiser_beta < 0:
         parser.error("--kaiser-beta must be >= 0")
+    if str(getattr(args, "phase_engine", "propagate")) not in PHASE_ENGINE_CHOICES:
+        parser.error(f"--phase-engine must be one of: {', '.join(PHASE_ENGINE_CHOICES)}")
+    if not (0.0 <= float(getattr(args, "ambient_phase_mix", 0.5)) <= 1.0):
+        parser.error("--ambient-phase-mix must be between 0.0 and 1.0")
+    if not (0.0 <= float(getattr(args, "onset_credit_pull", 0.5)) <= 1.0):
+        parser.error("--onset-credit-pull must be between 0.0 and 1.0")
+    if float(getattr(args, "onset_credit_max", 8.0)) < 0.0:
+        parser.error("--onset-credit-max must be >= 0.0")
     if args.cuda_device < 0:
         parser.error("--cuda-device must be >= 0")
     validate_transform_available(args.transform, parser)
@@ -330,6 +394,34 @@ def write_output(path: Path, audio: np.ndarray, sr: int, args: argparse.Namespac
         return
     path.parent.mkdir(parents=True, exist_ok=True)
     sf.write(str(path), audio, sr, subtype=subtype)
+
+
+def print_input_output_metrics_table(
+    args: argparse.Namespace,
+    *,
+    input_label: str,
+    input_audio: np.ndarray,
+    input_sr: int,
+    output_label: str,
+    output_audio: np.ndarray,
+    output_sr: int,
+) -> None:
+    """Print detailed ASCII summary and comparison metrics unless --silent is set."""
+    rows = [
+        (f"in:{input_label}", summarize_audio_metrics(input_audio, int(input_sr))),
+        (f"out:{output_label}", summarize_audio_metrics(output_audio, int(output_sr))),
+    ]
+    summary_table = render_audio_metrics_table(rows, title="Audio Metrics", include_delta_from_first=True)
+    compare_table = render_audio_comparison_table(
+        reference_label=f"in:{input_label}",
+        reference_audio=input_audio,
+        reference_sr=int(input_sr),
+        candidate_label=f"out:{output_label}",
+        candidate_audio=output_audio,
+        candidate_sr=int(output_sr),
+        title="Audio Compare Metrics",
+    )
+    log_message(args, f"{summary_table}\n{compare_table}", min_level="quiet")
 
 
 def default_output_path(input_path: Path, args: argparse.Namespace) -> Path:

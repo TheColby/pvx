@@ -8,6 +8,11 @@ from pathlib import Path
 
 import numpy as np
 
+from pvx.core.audio_metrics import (
+    render_audio_comparison_table,
+    render_audio_metrics_table,
+    summarize_audio_metrics,
+)
 from pvx.core.common import (
     add_console_args,
     add_vocoder_args,
@@ -127,6 +132,34 @@ def main(argv: list[str] | None = None) -> int:
         else:
             base = Path("stdin.wav") if str(args.input_a) == "-" else args.input_a
             out_path = base.with_name(f"{base.stem}_morph.wav")
+        metrics_table = render_audio_metrics_table(
+            [
+                (f"inA:{args.input_a}", summarize_audio_metrics(a, int(sr_a))),
+                (f"inB:{args.input_b}", summarize_audio_metrics(b, int(sr_a))),
+                (f"out:{out_path}", summarize_audio_metrics(out, int(sr_a))),
+            ],
+            title="Audio Metrics",
+            include_delta_from_first=True,
+        )
+        compare_a = render_audio_comparison_table(
+            reference_label=f"inA:{args.input_a}",
+            reference_audio=a,
+            reference_sr=int(sr_a),
+            candidate_label=f"out:{out_path}",
+            candidate_audio=out,
+            candidate_sr=int(sr_a),
+            title="Audio Compare Metrics (out vs inA)",
+        )
+        compare_b = render_audio_comparison_table(
+            reference_label=f"inB:{args.input_b}",
+            reference_audio=b,
+            reference_sr=int(sr_a),
+            candidate_label=f"out:{out_path}",
+            candidate_audio=out,
+            candidate_sr=int(sr_a),
+            title="Audio Compare Metrics (out vs inB)",
+        )
+        log_message(args, f"{metrics_table}\n{compare_a}\n{compare_b}", min_level="quiet")
         write_output(out_path, out, sr_a, args)
         log_message(args, f"[ok] {args.input_a} + {args.input_b} -> {out_path}", min_level="verbose")
         status.step(1, out_path.name)

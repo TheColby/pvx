@@ -10,17 +10,22 @@ import unittest
 import numpy as np
 
 from pvxvoc import (
+    QUALITY_PROFILE_CHOICES,
     TRANSFORM_CHOICES,
     WINDOW_CHOICES,
     VocoderConfig,
     apply_formant_preservation,
     build_fourier_sync_plan,
+    compute_multistage_stretches,
     configure_runtime,
+    estimate_content_features,
     estimate_f0_autocorrelation,
+    phase_vocoder_time_stretch_multires_fusion,
     phase_vocoder_time_stretch,
     phase_vocoder_time_stretch_fourier_sync,
     resample_1d,
     runtime_config,
+    suggest_quality_profile,
 )
 
 
@@ -211,6 +216,64 @@ class TestPhaseVocoderDSP(unittest.TestCase):
             y = phase_vocoder_time_stretch(x, stretch, cfg)
             self.assertEqual(y.size, int(round(x.size * stretch)))
             self.assertTrue(np.all(np.isfinite(y)))
+
+    def test_multistage_stretch_factorization(self) -> None:
+        stages = compute_multistage_stretches(5.0, 1.6)
+        self.assertGreater(len(stages), 1)
+        self.assertTrue(all(stage <= 1.6 + 1e-12 for stage in stages))
+        product = float(np.prod(np.asarray(stages, dtype=np.float64)))
+        self.assertAlmostEqual(product, 5.0, delta=1e-9)
+
+    def test_multires_fusion_length(self) -> None:
+        sr = 16000
+        t = np.arange(int(sr * 0.4)) / sr
+        x = 0.3 * np.sin(2 * np.pi * 190.0 * t) + 0.15 * np.sin(2 * np.pi * 380.0 * t)
+        y, stage_count = phase_vocoder_time_stretch_multires_fusion(
+            x,
+            1.25,
+            self.cfg_lock,
+            fft_sizes=[512, 1024],
+            weights=[0.4, 0.6],
+            use_multistage=False,
+            max_stage_stretch=1.8,
+            use_fourier_sync=False,
+            sample_rate=sr,
+            f0_min_hz=80.0,
+            f0_max_hz=450.0,
+            fourier_sync_min_fft=256,
+            fourier_sync_max_fft=2048,
+            fourier_sync_smooth=5,
+        )
+        self.assertEqual(y.size, int(round(x.size * 1.25)))
+        self.assertGreaterEqual(stage_count, 1)
+        self.assertTrue(np.all(np.isfinite(y)))
+
+    def test_profile_suggestion_heuristics(self) -> None:
+        self.assertEqual(
+            suggest_quality_profile(stretch_ratio=100.0, features={}),
+            "extreme",
+        )
+        profile = suggest_quality_profile(
+            stretch_ratio=1.2,
+            features={
+                "zcr": 0.03,
+                "crest": 3.0,
+                "flatness": 0.1,
+                "centroid_hz": 900.0,
+                "transient_density": 0.05,
+            },
+        )
+        self.assertEqual(profile, "speech")
+        self.assertIn(profile, QUALITY_PROFILE_CHOICES)
+
+    def test_content_feature_estimator(self) -> None:
+        sr = 16000
+        t = np.arange(int(sr * 0.3)) / sr
+        x = 0.4 * np.sin(2 * np.pi * 220.0 * t)
+        features = estimate_content_features(x, sr, channel_mode="mix", lookahead_seconds=0.2)
+        self.assertGreater(features["rms"], 0.0)
+        self.assertGreater(features["centroid_hz"], 0.0)
+        self.assertGreaterEqual(features["zcr"], 0.0)
 
 
 if __name__ == "__main__":

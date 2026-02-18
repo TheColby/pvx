@@ -7,11 +7,13 @@ import argparse
 import ast
 import csv
 import glob
+import hashlib
 import io
+import json
 import math
 import sys
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any, Callable, Iterable, Literal
 
@@ -49,6 +51,16 @@ try:
     from cupyx.scipy.signal import resample as cupyx_resample
 except Exception:  # pragma: no cover - optional dependency
     cupyx_resample = None
+
+from pvx.core.presets import PRESET_CHOICES, PRESET_OVERRIDES
+from pvx.core.audio_metrics import (
+    render_audio_comparison_table,
+    render_audio_metrics_table,
+    summarize_audio_metrics,
+)
+from pvx.core.stereo import lr_to_ms, ms_to_lr, validate_ref_channel
+from pvx.core.transients import detect_transient_regions, map_mask_to_output, smooth_binary_mask
+from pvx.core.wsola import wsola_time_stretch
 
 WINDOW_CHOICES = (
     "hann",
@@ -107,11 +119,37 @@ WindowType = str
 TransformMode = Literal["fft", "dft", "czt", "dct", "dst", "hartley"]
 ResampleMode = Literal["auto", "fft", "linear"]
 PhaseLockMode = Literal["off", "identity"]
+PhaseEngineMode = Literal["propagate", "hybrid", "random"]
 DeviceMode = Literal["auto", "cpu", "cuda"]
 LowConfidenceMode = Literal["hold", "unity", "interp"]
+TransientMode = Literal["off", "reset", "hybrid", "wsola"]
+StereoMode = Literal["independent", "mid_side_lock", "ref_channel_lock"]
 ProgressCallback = Callable[[int, int], None]
 
 TRANSFORM_CHOICES: tuple[TransformMode, ...] = ("fft", "dft", "czt", "dct", "dst", "hartley")
+PHASE_ENGINE_CHOICES: tuple[PhaseEngineMode, ...] = ("propagate", "hybrid", "random")
+QUALITY_PROFILE_CHOICES: tuple[str, ...] = (
+    "neutral",
+    "speech",
+    "music",
+    "percussion",
+    "ambient",
+    "extreme",
+)
+EXAMPLE_CHOICES: tuple[str, ...] = (
+    "all",
+    "basic",
+    "vocal",
+    "ambient",
+    "extreme",
+    "drums_safe",
+    "stereo_coherent",
+    "hybrid",
+    "benchmark",
+    "gpu",
+    "pipeline",
+    "csv",
+)
 
 
 @dataclass(frozen=True)
@@ -126,6 +164,13 @@ class VocoderConfig:
     transient_threshold: float
     kaiser_beta: float = 14.0
     transform: TransformMode = "fft"
+    phase_engine: PhaseEngineMode = "propagate"
+    ambient_phase_mix: float = 0.5
+    phase_random_seed: int | None = None
+    onset_time_credit: bool = False
+    onset_credit_pull: float = 0.5
+    onset_credit_max: float = 8.0
+    onset_realign: bool = True
 
 
 @dataclass(frozen=True)
@@ -154,6 +199,10 @@ class JobResult:
     channels: int
     stretch: float
     pitch_ratio: float
+    stage_count: int = 1
+    control_map_segments: int = 0
+    quality_profile: str = "neutral"
+    checkpoint_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -168,6 +217,7 @@ class AudioBlockResult:
     audio: np.ndarray
     internal_stretch: float
     sync_plan: FourierSyncPlan | None
+    stage_count: int = 1
 
 
 @dataclass(frozen=True)
@@ -184,6 +234,141 @@ _RUNTIME_CONFIG = RuntimeConfig(
     cuda_device=0,
     fallback_reason=None,
 )
+
+
+_QUALITY_PROFILE_OVERRIDES: dict[str, dict[str, Any]] = {
+    "neutral": {},
+    "speech": {
+        "phase_engine": "propagate",
+        "phase_locking": "identity",
+        "transient_preserve": True,
+        "transient_mode": "reset",
+        "window": "hann",
+        "n_fft": 4096,
+        "win_length": 4096,
+        "hop_size": 256,
+        "stretch_mode": "standard",
+        "pitch_mode": "formant-preserving",
+        "resample_mode": "linear",
+    },
+    "music": {
+        "phase_engine": "propagate",
+        "phase_locking": "identity",
+        "transient_preserve": True,
+        "transient_mode": "reset",
+        "window": "blackmanharris",
+        "n_fft": 4096,
+        "win_length": 4096,
+        "hop_size": 512,
+        "stretch_mode": "auto",
+        "pitch_mode": "formant-preserving",
+    },
+    "percussion": {
+        "phase_engine": "propagate",
+        "phase_locking": "identity",
+        "transient_preserve": True,
+        "transient_mode": "wsola",
+        "transient_sensitivity": 0.68,
+        "transient_protect_ms": 24.0,
+        "transient_crossfade_ms": 6.0,
+        "window": "kaiser",
+        "kaiser_beta": 16.0,
+        "n_fft": 1024,
+        "win_length": 1024,
+        "hop_size": 128,
+        "stretch_mode": "standard",
+        "pitch_mode": "standard",
+    },
+    "ambient": {
+        "phase_engine": "random",
+        "phase_locking": "off",
+        "transient_preserve": True,
+        "transient_mode": "hybrid",
+        "transient_sensitivity": 0.46,
+        "transient_protect_ms": 36.0,
+        "transient_crossfade_ms": 14.0,
+        "window": "kaiser",
+        "kaiser_beta": 18.0,
+        "n_fft": 16384,
+        "win_length": 16384,
+        "hop_size": 2048,
+        "stretch_mode": "multistage",
+        "max_stage_stretch": 1.35,
+        "onset_time_credit": True,
+        "onset_credit_pull": 0.65,
+        "onset_credit_max": 12.0,
+        "pitch_mode": "standard",
+    },
+    "extreme": {
+        "phase_engine": "hybrid",
+        "ambient_phase_mix": 0.35,
+        "phase_locking": "identity",
+        "transient_preserve": True,
+        "transient_mode": "hybrid",
+        "transient_sensitivity": 0.54,
+        "transient_protect_ms": 40.0,
+        "transient_crossfade_ms": 16.0,
+        "window": "kaiser",
+        "kaiser_beta": 20.0,
+        "n_fft": 16384,
+        "win_length": 16384,
+        "hop_size": 1024,
+        "stretch_mode": "multistage",
+        "max_stage_stretch": 1.25,
+        "onset_time_credit": True,
+        "onset_credit_pull": 0.75,
+        "onset_credit_max": 16.0,
+        "pitch_mode": "formant-preserving",
+    },
+}
+
+
+_EXAMPLE_COMMANDS: dict[str, tuple[str, str]] = {
+    "basic": (
+        "Basic time stretch",
+        "python3 pvxvoc.py input.wav --stretch 1.20 --output output.wav",
+    ),
+    "vocal": (
+        "Vocal-friendly preset with formant preservation",
+        "python3 pvxvoc.py vocal.wav --preset vocal --pitch -2 --output vocal_tuned.wav",
+    ),
+    "ambient": (
+        "Extreme ambient stretch",
+        "python3 pvxvoc.py texture.wav --preset ambient --target-duration 600 --output texture_ambient.wav",
+    ),
+    "extreme": (
+        "Extreme long-form stretch with checkpoints",
+        "python3 pvxvoc.py source.wav --preset extreme --auto-segment-seconds 0.5 --checkpoint-dir checkpoints --output source_extreme.wav",
+    ),
+    "drums_safe": (
+        "Transient-safe drum stretch with WSOLA regions",
+        "python3 pvxvoc.py drums.wav --preset drums_safe --time-stretch 1.35 --output drums_safe.wav",
+    ),
+    "stereo_coherent": (
+        "Stereo-coherent stretch with mid/side coupling",
+        "python3 pvxvoc.py mix_stereo.wav --preset stereo_coherent --time-stretch 1.2 --output mix_coherent.wav",
+    ),
+    "hybrid": (
+        "Hybrid transient mode (PV steady-state + WSOLA transients)",
+        "python3 pvxvoc.py speech.wav --transient-mode hybrid --transient-sensitivity 0.6 --time-stretch 1.25 --output speech_hybrid.wav",
+    ),
+    "benchmark": (
+        "Benchmark pvx vs Rubber Band vs librosa (tiny suite)",
+        "python3 benchmarks/run_bench.py --quick --out-dir benchmarks/out",
+    ),
+    "gpu": (
+        "CUDA render",
+        "python3 pvxvoc.py input.wav --device cuda --stretch 1.1 --output out_gpu.wav",
+    ),
+    "pipeline": (
+        "Tracker sidechain pipeline",
+        "python3 HPS-pitch-track.py A.wav | python3 pvxvoc.py B.wav --pitch-follow-stdin --pitch-conf-min 0.75 --output B_follow.wav",
+    ),
+    "csv": (
+        "Segment map workflow",
+        "python3 pvxvoc.py input.wav --pitch-map map_conform.csv --output input_mapped.wav",
+    ),
+}
 
 
 _COSINE_SERIES_WINDOWS: dict[str, tuple[float, ...]] = {
@@ -365,6 +550,121 @@ def log_error(args: argparse.Namespace, message: str) -> None:
     print(message, file=sys.stderr)
 
 
+def clone_args_namespace(args: argparse.Namespace) -> argparse.Namespace:
+    return argparse.Namespace(**vars(args))
+
+
+def collect_cli_flags(argv: Iterable[str]) -> set[str]:
+    flags: set[str] = set()
+    for token in argv:
+        if not token.startswith("--"):
+            continue
+        flag = token.split("=", 1)[0]
+        flags.add(flag)
+    return flags
+
+
+def print_cli_examples(which: str) -> None:
+    key = str(which).strip().lower()
+    if key not in EXAMPLE_CHOICES:
+        raise ValueError(f"Unknown example preset: {which}")
+
+    print("pvxvoc example commands\n")
+    if key == "all":
+        for name in EXAMPLE_CHOICES:
+            if name == "all":
+                continue
+            title, command = _EXAMPLE_COMMANDS[name]
+            print(f"[{name}] {title}")
+            print(command)
+            print()
+        return
+
+    title, command = _EXAMPLE_COMMANDS[key]
+    print(f"[{key}] {title}")
+    print(command)
+
+
+def apply_named_preset(
+    args: argparse.Namespace,
+    *,
+    preset: str,
+    provided_flags: set[str],
+) -> list[str]:
+    key = str(preset or "none").strip().lower()
+    if key not in PRESET_CHOICES:
+        raise ValueError(f"Unknown preset: {preset}")
+
+    overrides = PRESET_OVERRIDES.get(key, {})
+    changes: list[str] = []
+    for field, value in overrides.items():
+        cli_flag = f"--{field.replace('_', '-')}"
+        if cli_flag in provided_flags:
+            continue
+        if not hasattr(args, field):
+            continue
+        setattr(args, field, value)
+        changes.append(field)
+    return changes
+
+
+def _prompt_text(prompt: str, default: str) -> str:
+    raw = input(f"{prompt} [{default}]: ").strip()
+    return raw if raw else default
+
+
+def _prompt_choice(prompt: str, choices: tuple[str, ...], default: str) -> str:
+    value = _prompt_text(prompt, default).strip().lower()
+    if value not in choices:
+        valid = ", ".join(choices)
+        raise ValueError(f"Expected one of: {valid}")
+    return value
+
+
+def run_guided_mode(args: argparse.Namespace) -> argparse.Namespace:
+    if not sys.stdin.isatty():
+        raise ValueError("--guided requires an interactive terminal (TTY stdin)")
+
+    print("pvxvoc guided mode")
+    print("Press Enter to accept defaults.\n")
+
+    out = clone_args_namespace(args)
+    out.inputs = list(getattr(args, "inputs", []) or [])
+
+    if not out.inputs:
+        first_input = _prompt_text("Input WAV/FLAC path", "input.wav")
+        out.inputs = [first_input]
+
+    if out.output is None and not out.stdout:
+        output_text = _prompt_text("Output path", "output_pv.wav")
+        if output_text:
+            out.output = Path(output_text)
+
+    mode = _prompt_choice("Operation (stretch/pitch/both)", ("stretch", "pitch", "both"), "stretch")
+    if mode in {"stretch", "both"}:
+        stretch_raw = _prompt_text("Stretch factor (>0)", f"{float(out.time_stretch):.3f}")
+        out.time_stretch = float(parse_numeric_expression(stretch_raw, context="guided stretch factor"))
+
+    if mode in {"pitch", "both"}:
+        if out.pitch_shift_cents is None and out.pitch_shift_ratio is None and out.target_f0 is None:
+            semi_raw = _prompt_text("Pitch shift semitones", "0")
+            out.pitch_shift_semitones = float(parse_numeric_expression(semi_raw, context="guided semitones"))
+
+    preset_default = str(getattr(out, "preset", "none") or "none")
+    out.preset = _prompt_choice(
+        "Preset (none/default/vocal/vocal_studio/drums_safe/ambient/extreme/extreme_ambient/stereo_coherent)",
+        PRESET_CHOICES,
+        preset_default,
+    )
+    out.device = _prompt_choice("Device (auto/cpu/cuda)", ("auto", "cpu", "cuda"), str(out.device))
+
+    if _prompt_choice("Write to stdout instead of file? (no/yes)", ("no", "yes"), "no") == "yes":
+        out.stdout = True
+        out.output = None
+
+    return out
+
+
 def db_to_amplitude(db: float) -> float:
     return 10.0 ** (db / 20.0)
 
@@ -484,6 +784,178 @@ def parse_pitch_ratio_value(value: str | float | int, *, context: str = "pitch r
     if ratio <= 0.0:
         raise ValueError(f"{context} must be > 0")
     return ratio
+
+
+def _is_power_of_two(value: int) -> bool:
+    n = int(value)
+    return n > 0 and (n & (n - 1)) == 0
+
+
+def parse_numeric_list(value: str, *, context: str) -> list[float]:
+    tokens = [token.strip() for token in str(value).split(",")]
+    if not tokens or all(not token for token in tokens):
+        raise ValueError(f"{context} must contain at least one numeric value")
+    out: list[float] = []
+    for idx, token in enumerate(tokens, start=1):
+        if not token:
+            raise ValueError(f"{context}: entry {idx} is empty")
+        out.append(parse_numeric_expression(token, context=f"{context} entry {idx}"))
+    return out
+
+
+def parse_int_list(value: str, *, context: str) -> list[int]:
+    values = parse_numeric_list(value, context=context)
+    out: list[int] = []
+    for idx, number in enumerate(values, start=1):
+        rounded = int(round(number))
+        if abs(number - rounded) > 1e-9:
+            raise ValueError(f"{context}: entry {idx} must be an integer")
+        out.append(rounded)
+    return out
+
+
+def estimate_content_features(
+    audio: np.ndarray,
+    sample_rate: int,
+    *,
+    channel_mode: str = "mix",
+    lookahead_seconds: float = 6.0,
+) -> dict[str, float]:
+    work = np.asarray(audio, dtype=np.float64)
+    if work.ndim == 2 and work.shape[1] > 1:
+        if channel_mode == "first":
+            mono = work[:, 0]
+        else:
+            mono = np.mean(work, axis=1)
+    else:
+        mono = work.reshape(-1)
+
+    max_samples = int(round(max(0.01, lookahead_seconds) * sample_rate))
+    segment = mono[:max_samples] if mono.size > max_samples else mono
+    if segment.size <= 8:
+        return {
+            "rms": 0.0,
+            "peak": 0.0,
+            "crest": 1.0,
+            "zcr": 0.0,
+            "centroid_hz": 0.0,
+            "flatness": 1.0,
+            "transient_density": 0.0,
+        }
+
+    rms = float(np.sqrt(np.mean(segment * segment) + 1e-12))
+    peak = float(np.max(np.abs(segment)))
+    crest = peak / max(rms, 1e-12)
+
+    signs = np.signbit(segment)
+    zcr = float(np.mean(signs[1:] != signs[:-1]))
+
+    n_fft = min(8192, max(512, int(2 ** round(math.log2(min(segment.size, 8192))))))
+    win = np.hanning(n_fft)
+    padded = np.zeros(n_fft, dtype=np.float64)
+    padded[: min(n_fft, segment.size)] = segment[: min(n_fft, segment.size)]
+    spec = np.abs(np.fft.rfft(padded * win))
+    freqs = np.fft.rfftfreq(n_fft, d=1.0 / sample_rate)
+    spec_sum = float(np.sum(spec))
+    centroid_hz = float(np.sum(freqs * spec) / spec_sum) if spec_sum > 1e-12 else 0.0
+    flatness = float(np.exp(np.mean(np.log(spec + 1e-12))) / (np.mean(spec) + 1e-12))
+
+    frame = 1024
+    hop = 256
+    if segment.size < frame:
+        transient_density = 0.0
+    else:
+        frames = 1 + (segment.size - frame) // hop
+        prev_mag = None
+        flux: list[float] = []
+        window = np.hanning(frame)
+        for idx in range(frames):
+            start = idx * hop
+            chunk = segment[start : start + frame] * window
+            mag = np.abs(np.fft.rfft(chunk))
+            if prev_mag is not None:
+                delta = np.maximum(0.0, mag - prev_mag)
+                flux.append(float(np.sqrt(np.mean(delta * delta))))
+            prev_mag = mag
+        if flux:
+            flux_np = np.asarray(flux, dtype=np.float64)
+            threshold = float(np.median(flux_np) * 2.0)
+            transient_density = float(np.mean(flux_np >= threshold))
+        else:
+            transient_density = 0.0
+
+    return {
+        "rms": rms,
+        "peak": peak,
+        "crest": crest,
+        "zcr": zcr,
+        "centroid_hz": centroid_hz,
+        "flatness": flatness,
+        "transient_density": transient_density,
+    }
+
+
+def suggest_quality_profile(*, stretch_ratio: float, features: dict[str, float]) -> str:
+    ratio = max(1e-9, float(stretch_ratio))
+    ratio_mag = max(ratio, 1.0 / ratio)
+    if ratio_mag >= 40.0:
+        return "extreme"
+    if ratio_mag >= 8.0:
+        return "ambient"
+
+    zcr = float(features.get("zcr", 0.0))
+    crest = float(features.get("crest", 1.0))
+    flatness = float(features.get("flatness", 1.0))
+    centroid = float(features.get("centroid_hz", 0.0))
+    transient_density = float(features.get("transient_density", 0.0))
+
+    if transient_density > 0.28 and zcr > 0.09 and crest > 5.0:
+        return "percussion"
+    if centroid < 1700.0 and zcr < 0.10 and flatness < 0.45:
+        return "speech"
+    return "music"
+
+
+def apply_quality_profile_overrides(
+    args: argparse.Namespace,
+    *,
+    profile: str,
+    provided_flags: set[str],
+) -> list[str]:
+    overrides = _QUALITY_PROFILE_OVERRIDES.get(profile, {})
+    changed: list[str] = []
+    if not overrides:
+        return changed
+
+    for key, value in overrides.items():
+        cli_flag = f"--{key.replace('_', '-')}"
+        if cli_flag in provided_flags:
+            continue
+        if not hasattr(args, key):
+            continue
+        setattr(args, key, value)
+        changed.append(key)
+    return changed
+
+
+def resolve_transform_auto(
+    *,
+    requested_transform: str,
+    profile: str,
+    n_fft: int,
+    provided_flags: set[str],
+) -> str:
+    if "--transform" in provided_flags:
+        return requested_transform
+    if requested_transform != "fft":
+        return requested_transform
+    if profile in {"ambient", "extreme"} and not _is_power_of_two(n_fft) and scipy_czt is not None:
+        return "czt"
+    if profile == "percussion":
+        return "dst" if scipy_fft is not None else "fft"
+    if profile == "speech":
+        return "fft"
+    return requested_transform
 
 
 def _has_cupy() -> bool:
@@ -1360,6 +1832,113 @@ def compute_transient_flags(magnitude, threshold_scale: float):
     return flags
 
 
+def build_output_time_steps(
+    *,
+    out_frames: int,
+    frame_count: int,
+    stretch: float,
+    transient_flags: np.ndarray | None = None,
+    onset_time_credit: bool = False,
+    onset_credit_pull: float = 0.5,
+    onset_credit_max: float = 8.0,
+    onset_realign: bool = True,
+) -> np.ndarray:
+    if out_frames <= 0:
+        return np.zeros(0, dtype=np.float64)
+    if frame_count <= 1:
+        return np.zeros(out_frames, dtype=np.float64)
+
+    if not onset_time_credit:
+        steps = np.arange(out_frames, dtype=np.float64) / float(stretch)
+        return np.clip(steps, 0.0, frame_count - 1.000001)
+
+    flags = None
+    if transient_flags is not None:
+        flags = np.asarray(transient_flags, dtype=bool)
+        if flags.size != frame_count:
+            src = np.linspace(0.0, 1.0, num=max(1, flags.size), endpoint=True)
+            dst = np.linspace(0.0, 1.0, num=frame_count, endpoint=True)
+            mapped = np.interp(dst, src, flags.astype(np.float64))
+            flags = mapped >= 0.5
+
+    base_advance = 1.0 / float(stretch)
+    credit_pull = float(np.clip(onset_credit_pull, 0.0, 1.0))
+    credit_cap = max(0.0, float(onset_credit_max))
+
+    steps = np.zeros(out_frames, dtype=np.float64)
+    read_pos = 0.0
+    onset_credit = 0.0
+    last_onset_idx = -1
+
+    for out_idx in range(out_frames):
+        read_pos = float(np.clip(read_pos, 0.0, frame_count - 1.000001))
+        frame_idx = int(math.floor(read_pos))
+        frac = read_pos - frame_idx
+        onset_idx = min(frame_idx + (1 if frac >= 0.5 else 0), frame_count - 1)
+
+        if flags is not None and bool(flags[onset_idx]) and onset_idx != last_onset_idx:
+            if onset_realign and frac > 1e-12:
+                onset_credit += 1.0 - frac
+                read_pos = float(frame_idx)
+            else:
+                onset_credit += max(0.0, 1.0 - frac)
+            onset_credit = min(onset_credit, credit_cap)
+            last_onset_idx = onset_idx
+
+        steps[out_idx] = read_pos
+        advance = base_advance
+        if onset_credit > 0.0 and credit_pull > 0.0:
+            credit_get = min(onset_credit, credit_pull * advance)
+            onset_credit -= credit_get
+            advance = max(1e-9, advance - credit_get)
+
+        read_pos += advance
+
+    return np.clip(steps, 0.0, frame_count - 1.000001)
+
+
+def create_phase_rng(*, xp=np, seed: int | None = None):
+    if xp is np:
+        return np.random.default_rng(seed if seed is None else int(seed))
+    if xp is cp:
+        return cp.random.RandomState(seed if seed is None else int(seed))
+    return None
+
+
+def draw_random_phase(n_bins: int, *, xp=np, rng=None):
+    if n_bins <= 0:
+        return xp.zeros(0, dtype=xp.float64)
+    if xp is np:
+        if rng is None:
+            rng = np.random.default_rng()
+        return np.asarray(rng.uniform(-np.pi, np.pi, size=n_bins), dtype=np.float64)
+    if xp is cp:
+        generator = rng if rng is not None else cp.random
+        return generator.uniform(-np.pi, np.pi, size=n_bins).astype(cp.float64, copy=False)
+    return xp.zeros(n_bins, dtype=xp.float64)
+
+
+def apply_phase_engine(
+    phase,
+    *,
+    engine: PhaseEngineMode,
+    mix: float,
+    rng=None,
+):
+    if engine == "propagate":
+        return phase
+    xp = _array_module(phase)
+    random_phase = draw_random_phase(phase.size, xp=xp, rng=rng)
+    if engine == "random":
+        return random_phase
+    blend = float(np.clip(mix, 0.0, 1.0))
+    if blend <= 1e-9:
+        return phase
+    if blend >= 1.0:
+        return random_phase
+    return xp.angle((1.0 - blend) * xp.exp(1j * phase) + blend * xp.exp(1j * random_phase))
+
+
 def find_spectral_peaks(magnitude: np.ndarray) -> np.ndarray:
     mag = _to_numpy(magnitude)
     if mag.size < 3:
@@ -1419,10 +1998,6 @@ def phase_vocoder_time_stretch(
         out = force_length(work_signal.copy(), target_len)
         return _to_numpy(out) if bridge_to_cuda else out
 
-    out_frames = max(2, int(round(n_frames * stretch)))
-    time_steps = xp.arange(out_frames, dtype=xp.float64) / stretch
-    time_steps = xp.clip(time_steps, 0.0, n_frames - 1.000001)
-
     input_phase = xp.angle(input_stft)
     input_mag = xp.abs(input_stft)
     transient_flags = (
@@ -1430,8 +2005,21 @@ def phase_vocoder_time_stretch(
         if config.transient_preserve
         else xp.zeros(n_frames, dtype=bool)
     )
+    out_frames = max(2, int(round(n_frames * stretch)))
+    time_steps_np = build_output_time_steps(
+        out_frames=out_frames,
+        frame_count=n_frames,
+        stretch=stretch,
+        transient_flags=_to_numpy(transient_flags),
+        onset_time_credit=config.onset_time_credit,
+        onset_credit_pull=config.onset_credit_pull,
+        onset_credit_max=config.onset_credit_max,
+        onset_realign=config.onset_realign,
+    )
+    time_steps = xp.asarray(time_steps_np, dtype=xp.float64)
 
     phase = input_phase[:, 0].copy()
+    phase_rng = create_phase_rng(xp=xp, seed=config.phase_random_seed)
     omega = _analysis_angular_velocity(n_bins, config.n_fft, config.hop_size, transform, xp=xp)
     output_stft = xp.zeros((n_bins, out_frames), dtype=xp.complex128)
     if progress_callback is not None:
@@ -1452,6 +2040,12 @@ def phase_vocoder_time_stretch(
         delta = right_phase - left_phase - omega
         delta = principal_angle(delta)
         synth_phase = phase + omega + delta
+        synth_phase = apply_phase_engine(
+            synth_phase,
+            engine=config.phase_engine,
+            mix=config.ambient_phase_mix,
+            rng=phase_rng,
+        )
 
         if config.transient_preserve:
             transient_idx = min(frame_idx + (1 if frac >= 0.5 else 0), n_frames - 1)
@@ -1459,7 +2053,7 @@ def phase_vocoder_time_stretch(
                 phase_blend = (1.0 - frac) * xp.exp(1j * left_phase) + frac * xp.exp(1j * right_phase)
                 synth_phase = xp.angle(phase_blend)
 
-        if config.phase_locking == "identity":
+        if config.phase_locking == "identity" and config.phase_engine != "random":
             analysis_phase = xp.angle(
                 (1.0 - frac) * xp.exp(1j * left_phase) + frac * xp.exp(1j * right_phase)
             )
@@ -1532,9 +2126,6 @@ def phase_vocoder_time_stretch_fourier_sync(
         if progress_callback is not None and (frame_idx == frame_count - 1 or (frame_idx % 8) == 0):
             progress_callback(frame_idx + 1, total_steps)
 
-    time_steps = xp.arange(out_frames, dtype=xp.float64) / stretch
-    time_steps = xp.clip(time_steps, 0.0, frame_count - 1.000001)
-
     input_phase = xp.angle(input_stft)
     input_mag = xp.abs(input_stft)
     transient_flags = (
@@ -1542,8 +2133,20 @@ def phase_vocoder_time_stretch_fourier_sync(
         if config.transient_preserve
         else xp.zeros(frame_count, dtype=bool)
     )
+    time_steps_np = build_output_time_steps(
+        out_frames=out_frames,
+        frame_count=frame_count,
+        stretch=stretch,
+        transient_flags=_to_numpy(transient_flags),
+        onset_time_credit=config.onset_time_credit,
+        onset_credit_pull=config.onset_credit_pull,
+        onset_credit_max=config.onset_credit_max,
+        onset_realign=config.onset_realign,
+    )
+    time_steps = xp.asarray(time_steps_np, dtype=xp.float64)
 
     phase = input_phase[:, 0].copy()
+    phase_rng = create_phase_rng(xp=xp, seed=config.phase_random_seed)
     omega = _analysis_angular_velocity(ref_bins, ref_n_fft, config.hop_size, transform, xp=xp)
     output_stft = xp.zeros((ref_bins, out_frames), dtype=xp.complex128)
     output_lengths = np.zeros(out_frames, dtype=np.int64)
@@ -1563,6 +2166,12 @@ def phase_vocoder_time_stretch_fourier_sync(
         mag = (1.0 - frac) * xp.abs(left) + frac * xp.abs(right)
         delta = principal_angle(right_phase - left_phase - omega)
         synth_phase = phase + omega + delta
+        synth_phase = apply_phase_engine(
+            synth_phase,
+            engine=config.phase_engine,
+            mix=config.ambient_phase_mix,
+            rng=phase_rng,
+        )
 
         if config.transient_preserve:
             transient_idx = min(frame_idx + (1 if frac >= 0.5 else 0), frame_count - 1)
@@ -1570,7 +2179,7 @@ def phase_vocoder_time_stretch_fourier_sync(
                 phase_blend = (1.0 - frac) * xp.exp(1j * left_phase) + frac * xp.exp(1j * right_phase)
                 synth_phase = xp.angle(phase_blend)
 
-        if config.phase_locking == "identity":
+        if config.phase_locking == "identity" and config.phase_engine != "random":
             analysis_phase = xp.angle(
                 (1.0 - frac) * xp.exp(1j * left_phase) + frac * xp.exp(1j * right_phase)
             )
@@ -1623,6 +2232,272 @@ def phase_vocoder_time_stretch_fourier_sync(
     target_length = max(1, int(round(work_signal.size * stretch)))
     out = force_length(output, target_length)
     return _to_numpy(out) if bridge_to_cuda else out
+
+
+def compute_multistage_stretches(stretch: float, max_stage_stretch: float) -> list[float]:
+    if stretch <= 0.0:
+        raise ValueError("stretch must be > 0")
+    max_stage = max(1.01, float(max_stage_stretch))
+    inv_max = 1.0 / max_stage
+
+    if inv_max <= stretch <= max_stage:
+        return [float(stretch)]
+
+    if stretch > 1.0:
+        stage_count = int(math.ceil(math.log(stretch) / math.log(max_stage)))
+    else:
+        stage_count = int(math.ceil(math.log(1.0 / stretch) / math.log(max_stage)))
+    stage_count = max(2, stage_count)
+    stage = float(stretch ** (1.0 / stage_count))
+    return [stage] * stage_count
+
+
+def phase_vocoder_time_stretch_multistage(
+    signal: np.ndarray,
+    stretch: float,
+    config: VocoderConfig,
+    *,
+    max_stage_stretch: float = 1.8,
+    use_fourier_sync: bool = False,
+    sample_rate: int | None = None,
+    f0_min_hz: float = 50.0,
+    f0_max_hz: float = 1000.0,
+    fourier_sync_min_fft: int = 256,
+    fourier_sync_max_fft: int = 8192,
+    fourier_sync_smooth: int = 5,
+    progress_callback: ProgressCallback | None = None,
+) -> np.ndarray:
+    stages = compute_multistage_stretches(stretch, max_stage_stretch)
+    if len(stages) == 1:
+        if use_fourier_sync:
+            if sample_rate is None:
+                raise ValueError("sample_rate is required for multistage fourier-sync")
+            plan = build_fourier_sync_plan(
+                signal=signal,
+                sample_rate=sample_rate,
+                config=config,
+                f0_min_hz=f0_min_hz,
+                f0_max_hz=f0_max_hz,
+                min_fft=fourier_sync_min_fft,
+                max_fft=fourier_sync_max_fft,
+                smooth_span=fourier_sync_smooth,
+            )
+            return phase_vocoder_time_stretch_fourier_sync(
+                signal,
+                stretch,
+                config,
+                plan,
+                progress_callback=progress_callback,
+            )
+        return phase_vocoder_time_stretch(
+            signal,
+            stretch,
+            config,
+            progress_callback=progress_callback,
+        )
+
+    work = np.asarray(signal, dtype=np.float64)
+    original_len = work.size
+    stage_count = len(stages)
+    for stage_idx, stage_stretch in enumerate(stages):
+        stage_start = stage_idx / stage_count
+        stage_span = 1.0 / stage_count
+
+        stage_cb: ProgressCallback | None = None
+        if progress_callback is not None:
+            def _stage_cb(done: int, total: int, *, _stage_start: float = stage_start, _stage_span: float = stage_span) -> None:
+                frac = _stage_start + _stage_span * (done / max(1, total))
+                progress_callback(frac, 1.0)
+
+            stage_cb = _stage_cb
+
+        if use_fourier_sync:
+            if sample_rate is None:
+                raise ValueError("sample_rate is required for multistage fourier-sync")
+            plan = build_fourier_sync_plan(
+                signal=work,
+                sample_rate=sample_rate,
+                config=config,
+                f0_min_hz=f0_min_hz,
+                f0_max_hz=f0_max_hz,
+                min_fft=fourier_sync_min_fft,
+                max_fft=fourier_sync_max_fft,
+                smooth_span=fourier_sync_smooth,
+            )
+            work = phase_vocoder_time_stretch_fourier_sync(
+                work,
+                stage_stretch,
+                config,
+                plan,
+                progress_callback=stage_cb,
+            )
+        else:
+            work = phase_vocoder_time_stretch(
+                work,
+                stage_stretch,
+                config,
+                progress_callback=stage_cb,
+            )
+
+    target_len = max(1, int(round(original_len * stretch)))
+    return np.asarray(force_length(work, target_len), dtype=np.float64)
+
+
+def stretch_channel_with_strategy(
+    signal: np.ndarray,
+    stretch: float,
+    config: VocoderConfig,
+    *,
+    use_multistage: bool,
+    max_stage_stretch: float,
+    use_fourier_sync: bool,
+    sample_rate: int,
+    f0_min_hz: float,
+    f0_max_hz: float,
+    fourier_sync_min_fft: int,
+    fourier_sync_max_fft: int,
+    fourier_sync_smooth: int,
+    progress_callback: ProgressCallback | None = None,
+) -> tuple[np.ndarray, int]:
+    if use_multistage:
+        out = phase_vocoder_time_stretch_multistage(
+            signal,
+            stretch,
+            config,
+            max_stage_stretch=max_stage_stretch,
+            use_fourier_sync=use_fourier_sync,
+            sample_rate=sample_rate,
+            f0_min_hz=f0_min_hz,
+            f0_max_hz=f0_max_hz,
+            fourier_sync_min_fft=fourier_sync_min_fft,
+            fourier_sync_max_fft=fourier_sync_max_fft,
+            fourier_sync_smooth=fourier_sync_smooth,
+            progress_callback=progress_callback,
+        )
+        stage_count = len(compute_multistage_stretches(stretch, max_stage_stretch))
+        return out, stage_count
+
+    if use_fourier_sync:
+        plan = build_fourier_sync_plan(
+            signal=signal,
+            sample_rate=sample_rate,
+            config=config,
+            f0_min_hz=f0_min_hz,
+            f0_max_hz=f0_max_hz,
+            min_fft=fourier_sync_min_fft,
+            max_fft=fourier_sync_max_fft,
+            smooth_span=fourier_sync_smooth,
+        )
+        out = phase_vocoder_time_stretch_fourier_sync(
+            signal,
+            stretch,
+            config,
+            plan,
+            progress_callback=progress_callback,
+        )
+        return out, 1
+
+    out = phase_vocoder_time_stretch(
+        signal,
+        stretch,
+        config,
+        progress_callback=progress_callback,
+    )
+    return out, 1
+
+
+def phase_vocoder_time_stretch_multires_fusion(
+    signal: np.ndarray,
+    stretch: float,
+    config: VocoderConfig,
+    *,
+    fft_sizes: list[int],
+    weights: list[float],
+    use_multistage: bool,
+    max_stage_stretch: float,
+    use_fourier_sync: bool,
+    sample_rate: int,
+    f0_min_hz: float,
+    f0_max_hz: float,
+    fourier_sync_min_fft: int,
+    fourier_sync_max_fft: int,
+    fourier_sync_smooth: int,
+    progress_callback: ProgressCallback | None = None,
+) -> tuple[np.ndarray, int]:
+    if not fft_sizes:
+        raise ValueError("multires fusion requires at least one FFT size")
+    if len(weights) != len(fft_sizes):
+        raise ValueError("multires fusion weights must match fft size count")
+
+    valid_weights = np.asarray(weights, dtype=np.float64)
+    if np.any(valid_weights < 0.0):
+        raise ValueError("multires fusion weights must be non-negative")
+    total_weight = float(np.sum(valid_weights))
+    if total_weight <= 0.0:
+        raise ValueError("multires fusion weights must sum to > 0")
+    valid_weights /= total_weight
+
+    hop_ratio = config.hop_size / float(max(1, config.n_fft))
+    win_ratio = config.win_length / float(max(1, config.n_fft))
+    target_len = max(1, int(round(signal.size * stretch)))
+    fused = np.zeros(target_len, dtype=np.float64)
+    max_stages = 1
+
+    for idx, (fft_size, weight) in enumerate(zip(fft_sizes, valid_weights, strict=True)):
+        fft_i = max(16, int(fft_size))
+        win_i = max(2, min(fft_i, int(round(win_ratio * fft_i))))
+        hop_i = max(1, min(win_i, int(round(hop_ratio * fft_i))))
+        config_i = VocoderConfig(
+            n_fft=fft_i,
+            win_length=win_i,
+            hop_size=hop_i,
+            window=config.window,
+            center=config.center,
+            phase_locking=config.phase_locking,
+            transient_preserve=config.transient_preserve,
+            transient_threshold=config.transient_threshold,
+            kaiser_beta=config.kaiser_beta,
+            transform=config.transform,
+            phase_engine=config.phase_engine,
+            ambient_phase_mix=config.ambient_phase_mix,
+            phase_random_seed=config.phase_random_seed,
+            onset_time_credit=config.onset_time_credit,
+            onset_credit_pull=config.onset_credit_pull,
+            onset_credit_max=config.onset_credit_max,
+            onset_realign=config.onset_realign,
+        )
+
+        sub_cb: ProgressCallback | None = None
+        if progress_callback is not None:
+            sub_start = idx / len(fft_sizes)
+            sub_end = (idx + 1) / len(fft_sizes)
+
+            def _sub_cb(done: int, total: int, *, _start: float = sub_start, _span: float = sub_end - sub_start) -> None:
+                frac = _start + _span * (done / max(1, total))
+                progress_callback(frac, 1)
+
+            sub_cb = _sub_cb
+
+        stretched_i, stage_count_i = stretch_channel_with_strategy(
+            signal=signal,
+            stretch=stretch,
+            config=config_i,
+            use_multistage=use_multistage,
+            max_stage_stretch=max_stage_stretch,
+            use_fourier_sync=use_fourier_sync,
+            sample_rate=sample_rate,
+            f0_min_hz=f0_min_hz,
+            f0_max_hz=f0_max_hz,
+            fourier_sync_min_fft=fourier_sync_min_fft,
+            fourier_sync_max_fft=fourier_sync_max_fft,
+            fourier_sync_smooth=fourier_sync_smooth,
+            progress_callback=sub_cb,
+        )
+        stretched_i = np.asarray(force_length(stretched_i, target_len), dtype=np.float64)
+        fused += float(weight) * stretched_i
+        max_stages = max(max_stages, int(stage_count_i))
+
+    return fused, max_stages
 
 
 def linear_resample_1d(signal, output_samples: int):
@@ -2421,6 +3296,52 @@ def load_control_segments(
     return segments
 
 
+def _lock_channel_phase_to_reference(
+    reference: np.ndarray,
+    target: np.ndarray,
+    config: VocoderConfig,
+    *,
+    strength: float,
+) -> np.ndarray:
+    """Constrain target channel phase trajectory to a reference channel."""
+    blend = float(np.clip(strength, 0.0, 1.0))
+    if blend <= 1e-9:
+        return np.asarray(target, dtype=np.float64)
+
+    if reference.size == 0 or target.size == 0:
+        return np.asarray(target, dtype=np.float64)
+
+    n = min(reference.size, target.size)
+    ref = np.asarray(reference[:n], dtype=np.float64)
+    tgt = np.asarray(target[:n], dtype=np.float64)
+
+    cfg = replace(config, transient_preserve=False)
+    ref_spec = stft(ref, cfg)
+    tgt_spec = stft(tgt, cfg)
+    bins = min(ref_spec.shape[0], tgt_spec.shape[0])
+    frames = min(ref_spec.shape[1], tgt_spec.shape[1])
+    if bins == 0 or frames == 0:
+        return np.asarray(force_length(tgt, target.size), dtype=np.float64)
+
+    ref_spec = ref_spec[:bins, :frames]
+    tgt_spec = tgt_spec[:bins, :frames]
+
+    ref_phase = np.angle(ref_spec)
+    tgt_phase = np.angle(tgt_spec)
+    tgt_mag = np.abs(tgt_spec)
+
+    base_delta = principal_angle(tgt_phase[:, :1] - ref_phase[:, :1])
+    current_delta = principal_angle(tgt_phase - ref_phase)
+    desired_delta = (1.0 - blend) * current_delta + blend * base_delta
+    locked_phase = ref_phase + desired_delta
+    locked_spec = tgt_mag * np.exp(1j * locked_phase)
+
+    locked = istft(locked_spec, cfg, expected_length=n)
+    if target.size > n:
+        locked = force_length(locked, target.size)
+    return np.asarray(locked, dtype=np.float64)
+
+
 def process_audio_block(
     audio: np.ndarray,
     sr: int,
@@ -2434,10 +3355,55 @@ def process_audio_block(
     internal_stretch = float(stretch * pitch_ratio)
     if internal_stretch <= 0.0:
         raise ValueError("Computed internal stretch must be > 0")
+    if abs(internal_stretch - 1.0) <= 1e-10 and abs(pitch_ratio - 1.0) <= 1e-10:
+        return AudioBlockResult(
+            audio=np.asarray(audio, dtype=np.float64).copy(),
+            internal_stretch=internal_stretch,
+            sync_plan=None,
+            stage_count=1,
+        )
+
+    transient_mode = str(getattr(args, "transient_mode", "off")).strip().lower()
+    if transient_mode == "off" and bool(getattr(args, "transient_preserve", False)):
+        transient_mode = "reset"
+    coherence_strength = float(np.clip(getattr(args, "coherence_strength", 0.0), 0.0, 1.0))
+    stereo_mode = str(getattr(args, "stereo_mode", "independent")).strip().lower()
+
+    ms_active = stereo_mode == "mid_side_lock" and audio.shape[1] == 2
+    working_audio = lr_to_ms(audio) if ms_active else audio
+
+    stretch_mode = str(getattr(args, "stretch_mode", "auto")).strip().lower()
+    auto_threshold = max(1.01, float(getattr(args, "extreme_stretch_threshold", 2.0)))
+    extreme_forced = bool(getattr(args, "extreme_time_stretch", False))
+    if stretch_mode == "multistage":
+        use_multistage = True
+    elif stretch_mode == "standard":
+        use_multistage = extreme_forced
+    else:
+        use_multistage = (
+            extreme_forced
+            or internal_stretch > auto_threshold
+            or internal_stretch < (1.0 / auto_threshold)
+        )
+
+    stage_count = 1
+    if use_multistage:
+        stage_count = len(compute_multistage_stretches(internal_stretch, args.max_stage_stretch))
+
+    multires_enabled = bool(getattr(args, "multires_fusion", False))
+    multires_ffts = list(getattr(args, "_multires_ffts", [config.n_fft]))
+    multires_weights = list(getattr(args, "_multires_weights", [1.0 for _ in multires_ffts]))
+    if multires_enabled and not multires_ffts:
+        multires_enabled = False
 
     sync_plan: FourierSyncPlan | None = None
-    if args.fourier_sync:
-        sync_source = audio[:, 0] if args.analysis_channel == "first" else np.mean(audio, axis=1)
+    use_global_sync_plan = args.fourier_sync and (not use_multistage) and (not multires_enabled)
+    if use_global_sync_plan:
+        sync_source = (
+            working_audio[:, 0]
+            if args.analysis_channel == "first"
+            else np.mean(working_audio, axis=1)
+        )
         callback = (
             None
             if progress_callback_factory is None
@@ -2455,32 +3421,110 @@ def process_audio_block(
             progress_callback=callback,
         )
 
-    channel_start = 0.25 if args.fourier_sync else 0.10
-    channel_end = 0.88
-    processed_channels: list[np.ndarray] = []
-    for ch in range(audio.shape[1]):
-        sub_start = channel_start + (channel_end - channel_start) * (ch / audio.shape[1])
-        sub_end = channel_start + (channel_end - channel_start) * ((ch + 1) / audio.shape[1])
-        detail = f"channel {ch + 1}/{audio.shape[1]}"
-        callback = None if progress_callback_factory is None else progress_callback_factory(sub_start, sub_end, detail)
-        source_ch = audio[:, ch]
-        if args.fourier_sync:
-            if sync_plan is None:  # pragma: no cover - defensive
-                raise RuntimeError("Fourier-sync plan is unavailable")
-            stretched = phase_vocoder_time_stretch_fourier_sync(
+    def _run_core_stretch(
+        source_ch: np.ndarray,
+        run_config: VocoderConfig,
+        callback: ProgressCallback | None,
+    ) -> tuple[np.ndarray, int]:
+        if multires_enabled:
+            stretched_i, stage_count_i = phase_vocoder_time_stretch_multires_fusion(
                 source_ch,
                 internal_stretch,
-                config,
+                run_config,
+                fft_sizes=multires_ffts,
+                weights=multires_weights,
+                use_multistage=use_multistage,
+                max_stage_stretch=args.max_stage_stretch,
+                use_fourier_sync=args.fourier_sync,
+                sample_rate=sr,
+                f0_min_hz=args.f0_min,
+                f0_max_hz=args.f0_max,
+                fourier_sync_min_fft=args.fourier_sync_min_fft,
+                fourier_sync_max_fft=args.fourier_sync_max_fft,
+                fourier_sync_smooth=args.fourier_sync_smooth,
+                progress_callback=callback,
+            )
+            return np.asarray(stretched_i, dtype=np.float64), int(stage_count_i)
+
+        if use_global_sync_plan:
+            if sync_plan is None:  # pragma: no cover - defensive
+                raise RuntimeError("Fourier-sync plan is unavailable")
+            stretched_i = phase_vocoder_time_stretch_fourier_sync(
+                source_ch,
+                internal_stretch,
+                run_config,
                 sync_plan,
                 progress_callback=callback,
             )
-        else:
-            stretched = phase_vocoder_time_stretch(
+            return np.asarray(stretched_i, dtype=np.float64), 1
+
+        stretched_i, stage_count_i = stretch_channel_with_strategy(
+            signal=source_ch,
+            stretch=internal_stretch,
+            config=run_config,
+            use_multistage=use_multistage,
+            max_stage_stretch=args.max_stage_stretch,
+            use_fourier_sync=args.fourier_sync,
+            sample_rate=sr,
+            f0_min_hz=args.f0_min,
+            f0_max_hz=args.f0_max,
+            fourier_sync_min_fft=args.fourier_sync_min_fft,
+            fourier_sync_max_fft=args.fourier_sync_max_fft,
+            fourier_sync_smooth=args.fourier_sync_smooth,
+            progress_callback=callback,
+        )
+        return np.asarray(stretched_i, dtype=np.float64), int(stage_count_i)
+
+    channel_start = 0.25 if use_global_sync_plan else 0.10
+    channel_end = 0.88
+    processed_channels: list[np.ndarray] = []
+    for ch in range(working_audio.shape[1]):
+        sub_start = channel_start + (channel_end - channel_start) * (ch / working_audio.shape[1])
+        sub_end = channel_start + (channel_end - channel_start) * ((ch + 1) / working_audio.shape[1])
+        detail = f"channel {ch + 1}/{working_audio.shape[1]}"
+        callback = None if progress_callback_factory is None else progress_callback_factory(sub_start, sub_end, detail)
+        source_ch = working_audio[:, ch]
+
+        if transient_mode in {"hybrid", "wsola"}:
+            _, transient_mask, _ = detect_transient_regions(
+                source_ch,
+                sr,
+                n_fft=config.n_fft,
+                hop_size=config.hop_size,
+                sensitivity=float(args.transient_sensitivity),
+                protect_ms=float(args.transient_protect_ms),
+                crossfade_ms=float(args.transient_crossfade_ms),
+                center=config.center,
+            )
+            frame_ms = 1000.0 * max(config.win_length, config.hop_size * 2) / float(max(1, sr))
+            hop_ms = 1000.0 * max(1, config.hop_size) / float(max(1, sr))
+            stretched_wsola = wsola_time_stretch(
                 source_ch,
                 internal_stretch,
-                config,
-                progress_callback=callback,
+                sr,
+                frame_ms=max(12.0, min(90.0, frame_ms)),
+                analysis_hop_ms=max(2.0, min(30.0, hop_ms)),
+                search_ms=max(4.0, min(60.0, float(args.transient_protect_ms) * 0.8)),
             )
+            target_len = max(1, int(round(source_ch.size * internal_stretch)))
+            stretched_wsola = np.asarray(force_length(stretched_wsola, target_len), dtype=np.float64)
+
+            if transient_mode == "wsola":
+                stretched = stretched_wsola
+                stage_count_i = 1
+            else:
+                steady_cfg = replace(config, transient_preserve=False)
+                stretched_pv, stage_count_i = _run_core_stretch(source_ch, steady_cfg, callback)
+                stretched_pv = np.asarray(force_length(stretched_pv, target_len), dtype=np.float64)
+                mask_out = map_mask_to_output(transient_mask, internal_stretch, target_len)
+                fade_samples = int(round(sr * max(0.0, float(args.transient_crossfade_ms)) / 1000.0))
+                blend = smooth_binary_mask(mask_out, fade_samples)
+                stretched = stretched_pv * (1.0 - blend) + stretched_wsola * blend
+        else:
+            run_cfg = replace(config, transient_preserve=(transient_mode == "reset"))
+            stretched, stage_count_i = _run_core_stretch(source_ch, run_cfg, callback)
+
+        stage_count = max(stage_count, int(stage_count_i))
 
         if abs(pitch_ratio - 1.0) > 1e-10:
             pitch_len = max(1, int(round(stretched.size / pitch_ratio)))
@@ -2504,7 +3548,34 @@ def process_audio_block(
     for ch, ch_data in enumerate(processed_channels):
         out_audio[: ch_data.size, ch] = ch_data
 
-    return AudioBlockResult(audio=out_audio, internal_stretch=internal_stretch, sync_plan=sync_plan)
+    if ms_active:
+        if coherence_strength > 1e-9:
+            out_audio[:, 1] = _lock_channel_phase_to_reference(
+                out_audio[:, 0],
+                out_audio[:, 1],
+                config,
+                strength=coherence_strength,
+            )
+        out_audio = ms_to_lr(out_audio)
+    elif stereo_mode == "ref_channel_lock" and out_audio.shape[1] > 1 and coherence_strength > 1e-9:
+        ref_idx = validate_ref_channel(int(getattr(args, "ref_channel", 0)), out_audio.shape[1])
+        reference = out_audio[:, ref_idx].copy()
+        for ch in range(out_audio.shape[1]):
+            if ch == ref_idx:
+                continue
+            out_audio[:, ch] = _lock_channel_phase_to_reference(
+                reference,
+                out_audio[:, ch],
+                config,
+                strength=coherence_strength,
+            )
+
+    return AudioBlockResult(
+        audio=out_audio,
+        internal_stretch=internal_stretch,
+        sync_plan=sync_plan,
+        stage_count=stage_count,
+    )
 
 
 def resolve_base_stretch(args: argparse.Namespace, in_samples: int, sr: int) -> float:
@@ -2591,6 +3662,124 @@ def concat_audio_chunks(chunks: list[np.ndarray], *, sr: int, crossfade_ms: floa
     return out
 
 
+def build_uniform_control_segments(
+    *,
+    total_seconds: float,
+    segment_seconds: float,
+    stretch: float,
+    pitch_ratio: float,
+) -> list[ControlSegment]:
+    total = max(0.0, float(total_seconds))
+    seg = max(1e-3, float(segment_seconds))
+    if total <= 0.0:
+        return []
+
+    out: list[ControlSegment] = []
+    cursor = 0.0
+    while cursor < total:
+        end = min(total, cursor + seg)
+        out.append(
+            ControlSegment(
+                start_sec=cursor,
+                end_sec=end,
+                stretch=float(stretch),
+                pitch_ratio=float(pitch_ratio),
+                confidence=1.0,
+            )
+        )
+        cursor = end
+    return out
+
+
+def _checkpoint_job_id(
+    *,
+    input_path: Path,
+    args: argparse.Namespace,
+    base_stretch: float,
+    pitch_ratio: float,
+) -> str:
+    payload = {
+        "input": str(input_path),
+        "time_stretch": float(base_stretch),
+        "pitch_ratio": float(pitch_ratio),
+        "target_duration": getattr(args, "target_duration", None),
+        "n_fft": int(getattr(args, "n_fft", 0)),
+        "win_length": int(getattr(args, "win_length", 0)),
+        "hop_size": int(getattr(args, "hop_size", 0)),
+        "window": str(getattr(args, "window", "hann")),
+        "phase_engine": str(getattr(args, "phase_engine", "propagate")),
+        "transform": str(getattr(args, "transform", "fft")),
+        "profile": str(getattr(args, "_active_quality_profile", "neutral")),
+    }
+    text = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha1(text.encode("utf-8")).hexdigest()[:16]
+
+
+def resolve_checkpoint_context(
+    *,
+    input_path: Path,
+    args: argparse.Namespace,
+    base_stretch: float,
+    pitch_ratio: float,
+) -> tuple[str, Path] | None:
+    checkpoint_root = getattr(args, "checkpoint_dir", None)
+    if checkpoint_root is None:
+        return None
+    cp_root = Path(checkpoint_root).resolve()
+    cp_id = str(getattr(args, "checkpoint_id", "") or "").strip()
+    if not cp_id:
+        cp_id = _checkpoint_job_id(
+            input_path=input_path,
+            args=args,
+            base_stretch=base_stretch,
+            pitch_ratio=pitch_ratio,
+        )
+    cp_dir = cp_root / cp_id
+    cp_dir.mkdir(parents=True, exist_ok=True)
+    return cp_id, cp_dir
+
+
+def load_checkpoint_chunk(path: Path) -> np.ndarray:
+    values = np.asarray(np.load(path), dtype=np.float64)
+    if values.ndim == 1:
+        values = values[:, None]
+    if values.ndim != 2:
+        raise ValueError(f"Checkpoint chunk has invalid shape: {path}")
+    return values
+
+
+def save_checkpoint_chunk(path: Path, values: np.ndarray) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    np.save(path, np.asarray(values, dtype=np.float64), allow_pickle=False)
+
+
+def write_manifest(
+    path: Path,
+    entries: list[dict[str, Any]],
+    *,
+    append: bool,
+) -> None:
+    payload_entries: list[dict[str, Any]] = []
+    if append and path.exists():
+        try:
+            existing = json.loads(path.read_text(encoding="utf-8"))
+            if isinstance(existing, dict):
+                payload_entries.extend(list(existing.get("entries", [])))
+            elif isinstance(existing, list):
+                payload_entries.extend(existing)
+        except Exception:
+            payload_entries = []
+    payload_entries.extend(entries)
+
+    payload = {
+        "generated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "entry_count": len(payload_entries),
+        "entries": payload_entries,
+    }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
 def process_file(
     input_path: Path,
     args: argparse.Namespace,
@@ -2626,26 +3815,51 @@ def process_file(
     pitch = choose_pitch_ratio(args, audio, sr)
     base_stretch = resolve_base_stretch(args, audio.shape[0], sr)
     use_control_map = bool(args.pitch_map is not None) or bool(args.pitch_map_stdin)
+    auto_segment_seconds = float(getattr(args, "auto_segment_seconds", 0.0))
+    use_auto_segments = (not use_control_map) and (auto_segment_seconds > 0.0)
+    segment_mode = use_control_map or use_auto_segments
     map_segments: list[ControlSegment] = []
     internal_stretch = base_stretch * pitch.ratio
     sync_plan: FourierSyncPlan | None = None
+    stage_count = 1
+    checkpoint_id: str | None = None
+    checkpoint_dir: Path | None = None
+    checkpoint_state_path: Path | None = None
 
-    if use_control_map:
+    if segment_mode:
         progress.set(0.10, "map")
-        raw_segments = load_control_segments(
-            args,
-            default_stretch=base_stretch,
-            default_pitch_ratio=pitch.ratio,
-        )
         total_seconds = audio.shape[0] / float(sr)
-        map_segments = expand_control_segments(
-            raw_segments,
-            total_seconds=total_seconds,
-            default_stretch=base_stretch,
-            default_pitch_ratio=pitch.ratio,
-        )
+        if use_control_map:
+            raw_segments = load_control_segments(
+                args,
+                default_stretch=base_stretch,
+                default_pitch_ratio=pitch.ratio,
+            )
+            map_segments = expand_control_segments(
+                raw_segments,
+                total_seconds=total_seconds,
+                default_stretch=base_stretch,
+                default_pitch_ratio=pitch.ratio,
+            )
+        else:
+            map_segments = build_uniform_control_segments(
+                total_seconds=total_seconds,
+                segment_seconds=auto_segment_seconds,
+                stretch=base_stretch,
+                pitch_ratio=pitch.ratio,
+            )
         if not map_segments:
             raise ValueError("Control map produced no usable segments")
+
+        checkpoint_context = resolve_checkpoint_context(
+            input_path=input_path,
+            args=args,
+            base_stretch=base_stretch,
+            pitch_ratio=pitch.ratio,
+        )
+        if checkpoint_context is not None:
+            checkpoint_id, checkpoint_dir = checkpoint_context
+            checkpoint_state_path = checkpoint_dir / "state.json"
 
         chunk_list: list[np.ndarray] = []
         for seg_idx, seg in enumerate(map_segments):
@@ -2655,16 +3869,46 @@ def process_file(
                 continue
             progress_fraction = 0.12 + 0.70 * (seg_idx / max(1, len(map_segments)))
             progress.set(progress_fraction, f"segment {seg_idx + 1}/{len(map_segments)}")
-            piece = audio[start:end, :]
-            block = process_audio_block(
-                piece,
-                sr,
-                args,
-                config,
-                stretch=seg.stretch,
-                pitch_ratio=seg.pitch_ratio,
+            checkpoint_chunk_path = (
+                None
+                if checkpoint_dir is None
+                else checkpoint_dir / f"segment_{seg_idx:05d}.npy"
             )
-            chunk_list.append(block.audio)
+            reused = False
+            if (
+                checkpoint_chunk_path is not None
+                and bool(getattr(args, "resume", False))
+                and checkpoint_chunk_path.exists()
+            ):
+                chunk = load_checkpoint_chunk(checkpoint_chunk_path)
+                reused = True
+            else:
+                piece = audio[start:end, :]
+                block = process_audio_block(
+                    piece,
+                    sr,
+                    args,
+                    config,
+                    stretch=seg.stretch,
+                    pitch_ratio=seg.pitch_ratio,
+                )
+                chunk = block.audio
+                stage_count = max(stage_count, int(block.stage_count))
+                if checkpoint_chunk_path is not None:
+                    save_checkpoint_chunk(checkpoint_chunk_path, chunk)
+            chunk_list.append(chunk)
+
+            if checkpoint_state_path is not None:
+                state = {
+                    "input_path": str(input_path),
+                    "sample_rate": int(sr),
+                    "segments_total": len(map_segments),
+                    "segments_completed": seg_idx + 1,
+                    "last_segment_reused": reused,
+                    "profile": str(getattr(args, "_active_quality_profile", "neutral")),
+                    "updated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                }
+                checkpoint_state_path.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
 
         progress.set(0.88, "assemble")
         out_audio = concat_audio_chunks(
@@ -2697,6 +3941,7 @@ def process_file(
         out_audio = block.audio
         internal_stretch = block.internal_stretch
         sync_plan = block.sync_plan
+        stage_count = int(block.stage_count)
 
     if args.target_duration is not None:
         exact_len = max(1, int(round(args.target_duration * sr)))
@@ -2726,6 +3971,25 @@ def process_file(
                 f"Output exists: {output_path}. Use --overwrite to replace it."
             )
 
+    metrics_table = render_audio_metrics_table(
+        [
+            (f"in:{input_path}", summarize_audio_metrics(audio, int(sr))),
+            (f"out:{output_path}", summarize_audio_metrics(out_audio, int(out_sr))),
+        ],
+        title="Audio Metrics",
+        include_delta_from_first=True,
+    )
+    compare_table = render_audio_comparison_table(
+        reference_label=f"in:{input_path}",
+        reference_audio=audio,
+        reference_sr=int(sr),
+        candidate_label=f"out:{output_path}",
+        candidate_audio=out_audio,
+        candidate_sr=int(out_sr),
+        title="Audio Compare Metrics",
+    )
+    log_message(args, f"{metrics_table}\n{compare_table}", min_level="quiet")
+
     if not args.dry_run:
         progress.set(0.96, "write")
         _write_audio_output(output_path, out_audio, out_sr, args)
@@ -2736,9 +4000,14 @@ def process_file(
             f"[info] {input_path.name}: channels={audio.shape[1]}, sr={sr}, "
             f"stretch={base_stretch:.6f}, pitch_ratio={pitch.ratio:.6f}, "
             f"internal_stretch={internal_stretch:.6f}, "
-            f"phase_locking={config.phase_locking}, pitch_mode={args.pitch_mode}, "
+            f"phase_locking={config.phase_locking}, phase_engine={config.phase_engine}, "
+            f"transient_mode={args.transient_mode}, "
+            f"onset_credit={'on' if config.onset_time_credit else 'off'}, "
+            f"stereo_mode={args.stereo_mode}, coherence={float(args.coherence_strength):.2f}, "
+            f"pitch_mode={args.pitch_mode}, "
             f"fourier_sync={'on' if args.fourier_sync else 'off'}, "
-            f"device={rt.active_device}, control_map={'on' if use_control_map else 'off'}"
+            f"device={rt.active_device}, control_map={'on' if segment_mode else 'off'}, "
+            f"stretch_mode={args.stretch_mode}, stages={stage_count}"
         )
         if pitch.source_f0_hz is not None:
             msg += f", detected_f0={pitch.source_f0_hz:.3f}Hz"
@@ -2749,7 +4018,21 @@ def process_file(
             )
         if map_segments:
             msg += f", map_segments={len(map_segments)}"
+        if checkpoint_id is not None:
+            msg += f", checkpoint_id={checkpoint_id}"
         log_message(args, msg, min_level="verbose")
+
+    if checkpoint_state_path is not None:
+        state = {
+            "input_path": str(input_path),
+            "output_path": str(output_path),
+            "sample_rate": int(out_sr),
+            "segments_total": len(map_segments),
+            "complete": True,
+            "profile": str(getattr(args, "_active_quality_profile", "neutral")),
+            "updated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        }
+        checkpoint_state_path.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
 
     progress.finish("done")
 
@@ -2763,6 +4046,10 @@ def process_file(
         channels=audio.shape[1],
         stretch=base_stretch,
         pitch_ratio=pitch.ratio,
+        stage_count=stage_count,
+        control_map_segments=len(map_segments),
+        quality_profile=str(getattr(args, "_active_quality_profile", "neutral")),
+        checkpoint_id=checkpoint_id,
     )
 
 
@@ -2783,6 +4070,15 @@ def resample_multi(audio: np.ndarray, output_samples: int, mode: ResampleMode) -
 
 
 def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
+    if args.stretch is not None:
+        args.time_stretch = float(args.stretch)
+    if args.gpu and args.cpu:
+        parser.error("Choose only one of --gpu or --cpu.")
+    if args.gpu:
+        args.device = "cuda"
+    if args.cpu:
+        args.device = "cpu"
+
     if args.pitch_follow_stdin:
         args.pitch_map_stdin = True
 
@@ -2798,6 +4094,10 @@ def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> 
         parser.error("--hop-size should be <= --win-length")
     if args.time_stretch <= 0:
         parser.error("--time-stretch must be > 0")
+    if args.extreme_stretch_threshold <= 1.0:
+        parser.error("--extreme-stretch-threshold must be > 1.0")
+    if args.max_stage_stretch <= 1.0:
+        parser.error("--max-stage-stretch must be > 1.0")
     if args.output is not None and args.output_dir is not None:
         parser.error("--output cannot be combined with --output-dir")
     if args.output is not None and args.stdout:
@@ -2828,6 +4128,28 @@ def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> 
         parser.error("--target-sample-rate must be > 0")
     if args.transient_threshold <= 0:
         parser.error("--transient-threshold must be > 0")
+    if str(args.transient_mode) not in {"off", "reset", "hybrid", "wsola"}:
+        parser.error("--transient-mode must be one of: off, reset, hybrid, wsola")
+    if not (0.0 <= float(args.transient_sensitivity) <= 1.0):
+        parser.error("--transient-sensitivity must be between 0.0 and 1.0")
+    if float(args.transient_protect_ms) <= 0.0:
+        parser.error("--transient-protect-ms must be > 0")
+    if float(args.transient_crossfade_ms) < 0.0:
+        parser.error("--transient-crossfade-ms must be >= 0")
+    if str(args.stereo_mode) not in {"independent", "mid_side_lock", "ref_channel_lock"}:
+        parser.error("--stereo-mode must be one of: independent, mid_side_lock, ref_channel_lock")
+    if int(args.ref_channel) < 0:
+        parser.error("--ref-channel must be >= 0")
+    if not (0.0 <= float(args.coherence_strength) <= 1.0):
+        parser.error("--coherence-strength must be between 0.0 and 1.0")
+    if str(args.phase_engine) not in PHASE_ENGINE_CHOICES:
+        parser.error(f"--phase-engine must be one of: {', '.join(PHASE_ENGINE_CHOICES)}")
+    if not (0.0 <= args.ambient_phase_mix <= 1.0):
+        parser.error("--ambient-phase-mix must be between 0.0 and 1.0")
+    if not (0.0 <= args.onset_credit_pull <= 1.0):
+        parser.error("--onset-credit-pull must be between 0.0 and 1.0")
+    if args.onset_credit_max < 0.0:
+        parser.error("--onset-credit-max must be >= 0.0")
     if args.formant_lifter < 0:
         parser.error("--formant-lifter must be >= 0")
     if not (0.0 <= args.formant_strength <= 1.0):
@@ -2846,6 +4168,56 @@ def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> 
         parser.error("--cuda-device must be >= 0")
     if args.pitch_map is not None and str(args.pitch_map) != "-" and not args.pitch_map.exists():
         parser.error(f"Control-map file not found: {args.pitch_map}")
+    if args.auto_profile_lookahead_seconds <= 0.0:
+        parser.error("--auto-profile-lookahead-seconds must be > 0")
+    if args.auto_segment_seconds < 0.0:
+        parser.error("--auto-segment-seconds must be >= 0")
+    if args.resume and args.checkpoint_dir is None:
+        parser.error("--resume requires --checkpoint-dir")
+    if args.manifest_append and args.manifest_json is None:
+        parser.error("--manifest-append requires --manifest-json")
+    if str(args.quality_profile) not in QUALITY_PROFILE_CHOICES:
+        parser.error(f"--quality-profile must be one of: {', '.join(QUALITY_PROFILE_CHOICES)}")
+    if str(args.preset) not in PRESET_CHOICES:
+        parser.error(f"--preset must be one of: {', '.join(PRESET_CHOICES)}")
+    if args.auto_profile and str(args.preset) not in {"none", "default"}:
+        parser.error("Use either --auto-profile or --preset (not both together).")
+    if args.multires_weights is not None and not args.multires_fusion:
+        parser.error("--multires-weights requires --multires-fusion")
+
+    if args.multires_fusion:
+        try:
+            ffts = parse_int_list(args.multires_ffts, context="--multires-ffts")
+        except ValueError as exc:
+            parser.error(str(exc))
+        if not ffts:
+            parser.error("--multires-ffts must contain at least one size")
+        if any(int(v) < 16 for v in ffts):
+            parser.error("--multires-ffts entries must be >= 16")
+        args._multires_ffts = [int(v) for v in ffts]
+
+        if args.multires_weights is None:
+            args._multires_weights = [1.0 for _ in args._multires_ffts]
+        else:
+            try:
+                weights = parse_numeric_list(args.multires_weights, context="--multires-weights")
+            except ValueError as exc:
+                parser.error(str(exc))
+            if len(weights) != len(args._multires_ffts):
+                parser.error("--multires-weights count must equal --multires-ffts count")
+            if any(float(w) < 0.0 for w in weights):
+                parser.error("--multires-weights entries must be non-negative")
+            if not any(float(w) > 0.0 for w in weights):
+                parser.error("--multires-weights must contain at least one positive value")
+            args._multires_weights = [float(w) for w in weights]
+    else:
+        args._multires_ffts = [int(args.n_fft)]
+        args._multires_weights = [1.0]
+
+    # Preserve legacy behavior while allowing explicit transient-mode overrides.
+    if str(args.transient_mode) == "reset":
+        args.transient_preserve = True
+
     validate_transform_available(args.transform, parser)
     validate_mastering_args(args, parser)
 
@@ -2854,43 +4226,119 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
             "Phase-vocoder CLI for multi-file, multi-channel time stretching and pitch shifting."
-        )
+        ),
+        formatter_class=argparse.RawTextHelpFormatter,
+        epilog=(
+            "Beginner examples:\n"
+            "  python3 pvxvoc.py input.wav --stretch 1.2 --output output.wav\n"
+            "  python3 pvxvoc.py vocal.wav --preset vocal --pitch -2 --output vocal_tuned.wav\n"
+            "  python3 pvxvoc.py speech.wav --transient-mode hybrid --stretch 1.25 --output speech_hybrid.wav\n"
+            "  python3 pvxvoc.py stereo.wav --stereo-mode mid_side_lock --coherence-strength 0.9 --stretch 1.2 --output stereo_lock.wav\n"
+            "  python3 pvxvoc.py input.wav --example all\n"
+        ),
     )
 
-    parser.add_argument("inputs", nargs="+", help="Input audio files/globs or '-' for stdin")
-    parser.add_argument(
+    parser.add_argument("inputs", nargs="*", help="Input audio files/globs or '-' for stdin")
+
+    io_args_group = parser.add_argument_group("I/O")
+    io_args_group.add_argument(
         "-o",
         "--output-dir",
         type=Path,
         default=None,
         help="Directory for output files (default: same directory as each input)",
     )
-    parser.add_argument(
+    io_args_group.add_argument(
         "--suffix",
         default="_pv",
         help="Suffix appended to output filename stem (default: _pv)",
     )
-    parser.add_argument(
+    io_args_group.add_argument(
         "--output-format",
         default=None,
         help="Output format/extension (e.g. wav, flac, aiff). Default: keep input extension.",
     )
-    parser.add_argument(
+    io_args_group.add_argument(
+        "--out",
         "--output",
+        dest="output",
         type=Path,
         default=None,
-        help="Explicit output file path (single-input mode only).",
+        help="Explicit output file path (single-input mode only). Alias: --out",
     )
-    parser.add_argument("--overwrite", action="store_true", help="Overwrite existing outputs")
-    parser.add_argument("--dry-run", action="store_true", help="Resolve settings without writing files")
-    parser.add_argument(
+    io_args_group.add_argument("--overwrite", action="store_true", help="Overwrite existing outputs")
+    io_args_group.add_argument("--dry-run", action="store_true", help="Resolve settings without writing files")
+    io_args_group.add_argument(
         "--stdout",
         action="store_true",
         help="Write processed audio to stdout stream (for piping); requires exactly one input",
     )
-    add_console_args(parser, include_no_progress_alias=True)
 
-    stft_group = parser.add_argument_group("STFT / vocoder parameters")
+    debug_group = parser.add_argument_group("Debug")
+    add_console_args(debug_group, include_no_progress_alias=True)
+
+    beginner_group = parser.add_argument_group("Beginner experience")
+    beginner_group.add_argument(
+        "--preset",
+        choices=list(PRESET_CHOICES),
+        default="none",
+        help=(
+            "High-level intent preset. Legacy: none/vocal/ambient/extreme. "
+            "New: default/vocal_studio/drums_safe/extreme_ambient/stereo_coherent."
+        ),
+    )
+    beginner_group.add_argument(
+        "--example",
+        choices=list(EXAMPLE_CHOICES),
+        default=None,
+        help="Print copy-paste example command(s) and exit.",
+    )
+    beginner_group.add_argument(
+        "--guided",
+        action="store_true",
+        help="Interactive guided mode for first-time users.",
+    )
+    beginner_group.add_argument(
+        "--stretch",
+        type=float,
+        default=None,
+        help="Alias for --time-stretch.",
+    )
+    beginner_group.add_argument(
+        "--gpu",
+        action="store_true",
+        help="Alias for --device cuda.",
+    )
+    beginner_group.add_argument(
+        "--cpu",
+        action="store_true",
+        help="Alias for --device cpu.",
+    )
+
+    planning_group = parser.add_argument_group("Performance")
+    planning_group.add_argument(
+        "--quality-profile",
+        choices=list(QUALITY_PROFILE_CHOICES),
+        default="neutral",
+        help="Named tuning profile for vocoder defaults (default: neutral)",
+    )
+    planning_group.add_argument(
+        "--auto-profile",
+        action="store_true",
+        help="Analyze input and choose a profile automatically (speech/music/percussion/ambient/extreme).",
+    )
+    planning_group.add_argument(
+        "--auto-profile-lookahead-seconds",
+        type=float,
+        default=6.0,
+        help="Seconds of audio used when estimating --auto-profile (default: 6.0).",
+    )
+    planning_group.add_argument(
+        "--auto-transform",
+        action="store_true",
+        help="Allow automatic transform selection when --transform is not explicitly set.",
+    )
+    stft_group = parser.add_argument_group("Quality/Phase")
     stft_group.add_argument("--n-fft", type=int, default=2048, help="FFT size (default: 2048)")
     stft_group.add_argument(
         "--win-length",
@@ -2937,6 +4385,30 @@ def build_parser() -> argparse.ArgumentParser:
         help="Inter-bin phase locking mode for transient fidelity (default: identity)",
     )
     stft_group.add_argument(
+        "--phase-engine",
+        choices=list(PHASE_ENGINE_CHOICES),
+        default="propagate",
+        help=(
+            "Phase synthesis engine: propagate (classic phase vocoder), "
+            "hybrid (propagated + stochastic blend), random (ambient stochastic phase)."
+        ),
+    )
+    stft_group.add_argument(
+        "--ambient-phase-mix",
+        type=float,
+        default=0.5,
+        help=(
+            "Random-phase blend when --phase-engine hybrid "
+            "(0.0=propagated only, 1.0=random only; default: 0.5)."
+        ),
+    )
+    stft_group.add_argument(
+        "--phase-random-seed",
+        type=int,
+        default=None,
+        help="Optional deterministic seed for random/hybrid phase generation.",
+    )
+    stft_group.add_argument(
         "--transient-preserve",
         action="store_true",
         help="Enable transient phase resets based on spectral flux",
@@ -2973,9 +4445,26 @@ def build_parser() -> argparse.ArgumentParser:
         default=5,
         help="Smoothing span (frames) for prescanned F0 track in --fourier-sync (default: 5)",
     )
+    stft_group.add_argument(
+        "--multires-fusion",
+        action="store_true",
+        help="Blend multiple FFT resolutions for each channel before pitch resampling.",
+    )
+    stft_group.add_argument(
+        "--multires-ffts",
+        type=str,
+        default="1024,2048,4096",
+        help="Comma-separated FFT sizes for --multires-fusion (default: 1024,2048,4096)",
+    )
+    stft_group.add_argument(
+        "--multires-weights",
+        type=str,
+        default=None,
+        help="Comma-separated fusion weights for --multires-fusion (defaults to equal weights).",
+    )
     add_runtime_args(stft_group)
 
-    time_group = parser.add_argument_group("Timing controls")
+    time_group = parser.add_argument_group("Time/Pitch")
     time_group.add_argument(
         "--time-stretch",
         "--time-stretch-factor",
@@ -2989,24 +4478,171 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Absolute target duration in seconds (overrides --time-stretch)",
     )
+    time_group.add_argument(
+        "--stretch-mode",
+        choices=["auto", "standard", "multistage"],
+        default="auto",
+        help=(
+            "Stretch strategy: standard (single pass), multistage (chained moderate passes), "
+            "or auto (multistage only for extreme ratios; default: auto)."
+        ),
+    )
+    time_group.add_argument(
+        "--extreme-time-stretch",
+        action="store_true",
+        help="Force multistage strategy even when ratio is moderate.",
+    )
+    time_group.add_argument(
+        "--extreme-stretch-threshold",
+        type=float,
+        default=2.0,
+        help="Auto-mode threshold for multistage activation (default: 2.0).",
+    )
+    time_group.add_argument(
+        "--max-stage-stretch",
+        type=float,
+        default=1.8,
+        help="Maximum per-stage ratio used in multistage mode (default: 1.8).",
+    )
+    time_group.add_argument(
+        "--onset-time-credit",
+        action="store_true",
+        help=(
+            "Enable onset-triggered time-credit scheduling to reduce transient smear "
+            "during extreme stretching."
+        ),
+    )
+    time_group.add_argument(
+        "--onset-credit-pull",
+        type=float,
+        default=0.5,
+        help=(
+            "Fraction of per-frame read advance removable while onset credit exists "
+            "(0.0..1.0, default: 0.5)."
+        ),
+    )
+    time_group.add_argument(
+        "--onset-credit-max",
+        type=float,
+        default=8.0,
+        help="Maximum accumulated onset time credit in analysis-frame units (default: 8.0).",
+    )
+    time_group.add_argument(
+        "--no-onset-realign",
+        action="store_true",
+        help=(
+            "Disable fractional read-position realignment on onsets when "
+            "--onset-time-credit is enabled."
+        ),
+    )
+    time_group.add_argument(
+        "--ambient-preset",
+        action="store_true",
+        help=(
+            "Convenience preset for ambient extreme stretch "
+            "(random phase engine, onset-time-credit, transient preserve, conservative staging)."
+        ),
+    )
+    time_group.add_argument(
+        "--auto-segment-seconds",
+        type=float,
+        default=0.0,
+        help=(
+            "Optional segment size in seconds for long jobs. "
+            "When >0, processing runs per segment with crossfade assembly."
+        ),
+    )
+    time_group.add_argument(
+        "--checkpoint-dir",
+        type=Path,
+        default=None,
+        help="Directory used to cache per-segment checkpoint chunks for resume workflows.",
+    )
+    time_group.add_argument(
+        "--checkpoint-id",
+        type=str,
+        default=None,
+        help="Optional checkpoint run identifier (default: hash of input/settings).",
+    )
+    time_group.add_argument(
+        "--resume",
+        action="store_true",
+        help="Reuse existing checkpoint chunks from --checkpoint-dir when available.",
+    )
 
-    pitch_group = parser.add_argument_group("Pitch controls")
+    transient_group = parser.add_argument_group("Transients")
+    transient_group.add_argument(
+        "--transient-mode",
+        choices=["off", "reset", "hybrid", "wsola"],
+        default="off",
+        help=(
+            "Transient handling mode: off (none), reset (phase reset), "
+            "hybrid (PV steady + WSOLA transients), or wsola (time-domain transient-safe path)."
+        ),
+    )
+    transient_group.add_argument(
+        "--transient-sensitivity",
+        type=float,
+        default=0.5,
+        help="Transient detector sensitivity in [0,1] (higher catches more onsets).",
+    )
+    transient_group.add_argument(
+        "--transient-protect-ms",
+        type=float,
+        default=30.0,
+        help="Transient protection width in milliseconds (default: 30).",
+    )
+    transient_group.add_argument(
+        "--transient-crossfade-ms",
+        type=float,
+        default=10.0,
+        help="Crossfade duration for transient/steady stitching (default: 10 ms).",
+    )
+
+    stereo_group = parser.add_argument_group("Stereo")
+    stereo_group.add_argument(
+        "--stereo-mode",
+        choices=["independent", "mid_side_lock", "ref_channel_lock"],
+        default="independent",
+        help=(
+            "Channel coherence strategy: independent (legacy), "
+            "mid_side_lock (M/S-coupled), ref_channel_lock (phase-lock to reference channel)."
+        ),
+    )
+    stereo_group.add_argument(
+        "--ref-channel",
+        type=int,
+        default=0,
+        help="Reference channel index used by --stereo-mode ref_channel_lock (default: 0).",
+    )
+    stereo_group.add_argument(
+        "--coherence-strength",
+        type=float,
+        default=0.0,
+        help="Coherence lock strength in [0,1] (0=off, 1=full lock).",
+    )
+
+    pitch_group = time_group
     pitch_mutex = pitch_group.add_mutually_exclusive_group()
     pitch_mutex.add_argument(
         "--pitch-shift-semitones",
         "--target-pitch-shift-semitones",
+        "--pitch",
+        "--semitones",
         type=float,
         default=None,
         help="Pitch shift in semitones (+12 is one octave up)",
     )
     pitch_mutex.add_argument(
         "--pitch-shift-cents",
+        "--cents",
         type=float,
         default=None,
         help="Pitch shift in cents (+1200 is one octave up)",
     )
     pitch_mutex.add_argument(
         "--pitch-shift-ratio",
+        "--ratio",
         type=str,
         default=None,
         help=(
@@ -3107,24 +4743,41 @@ def build_parser() -> argparse.ArgumentParser:
         help="Crossfade between processed map segments in milliseconds (default: 8.0).",
     )
 
-    io_group = parser.add_argument_group("Resampling / output")
-    io_group.add_argument(
+    output_group = parser.add_argument_group("Output/Mastering")
+    output_group.add_argument(
         "--target-sample-rate",
         type=int,
         default=None,
         help="Output sample rate in Hz (default: keep input rate)",
     )
-    io_group.add_argument(
+    output_group.add_argument(
         "--resample-mode",
         choices=["auto", "fft", "linear"],
         default="auto",
         help="Resampling engine (auto=fft if scipy available, else linear)",
     )
-    add_mastering_args(io_group)
-    io_group.add_argument(
+    add_mastering_args(output_group)
+    output_group.add_argument(
+        "--manifest-json",
+        type=Path,
+        default=None,
+        help="Write processing manifest JSON with per-file settings and outcomes.",
+    )
+    output_group.add_argument(
+        "--manifest-append",
+        action="store_true",
+        help="Append entries to an existing --manifest-json file instead of replacing it.",
+    )
+    output_group.add_argument(
         "--subtype",
         default=None,
         help="Output file subtype for soundfile (e.g. PCM_16, PCM_24, FLOAT)",
+    )
+
+    debug_group.add_argument(
+        "--explain-plan",
+        action="store_true",
+        help="Print resolved processing plan JSON and exit without rendering audio.",
     )
 
     return parser
@@ -3162,15 +4815,45 @@ def expand_inputs(patterns: Iterable[str]) -> list[Path]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
-    args = parser.parse_args(argv)
+    argv_list = list(sys.argv[1:] if argv is None else argv)
+    cli_flags = collect_cli_flags(argv_list)
+    args = parser.parse_args(argv_list)
+    args._cli_flags = cli_flags
+
+    if args.example is not None:
+        try:
+            print_cli_examples(args.example)
+        except ValueError as exc:
+            parser.error(str(exc))
+        return 0
+
+    if args.guided:
+        try:
+            args = run_guided_mode(args)
+        except ValueError as exc:
+            parser.error(str(exc))
+
+    # Backward-compatible transient mapping:
+    # if legacy --transient-preserve is set and transient-mode is not explicitly set,
+    # default to transient reset mode.
+    if ("--transient-mode" not in cli_flags) and bool(getattr(args, "transient_preserve", False)):
+        args.transient_mode = "reset"
+
     validate_args(args, parser)
+    if not args.inputs:
+        parser.error(
+            "No input files were provided.\n"
+            "Hint: run `python3 pvxvoc.py --example basic` for a copy-paste starter command."
+        )
 
     ensure_runtime_dependencies()
-    configure_runtime_from_args(args, parser)
 
     input_paths = expand_inputs(args.inputs)
     if not input_paths:
-        parser.error("No readable input files matched the provided paths/patterns")
+        parser.error(
+            "No readable input files matched the provided paths/patterns.\n"
+            "Hint: check the path/glob, or run `python3 pvxvoc.py --guided`."
+        )
     stdin_count = sum(1 for path in input_paths if str(path) == "-")
     if stdin_count > 1:
         parser.error("Input '-' (stdin) may only be specified once")
@@ -3188,6 +4871,73 @@ def main(argv: list[str] | None = None) -> int:
     if control_map_stdin and stdin_count:
         parser.error("stdin cannot be used for both audio input and control-map CSV")
 
+    preset_changes = apply_named_preset(
+        args,
+        preset=str(args.preset),
+        provided_flags=cli_flags,
+    )
+
+    if args.auto_profile and str(input_paths[0]) == "-":
+        parser.error("--auto-profile is not supported when audio input is stdin ('-')")
+
+    auto_features: dict[str, float] | None = None
+    active_profile = str(args.quality_profile)
+    if args.auto_profile:
+        profile_audio, profile_sr = _read_audio_input(input_paths[0])
+        if profile_audio.size == 0:
+            parser.error("Cannot auto-profile an empty input")
+        stretch_estimate = resolve_base_stretch(args, profile_audio.shape[0], profile_sr)
+        auto_features = estimate_content_features(
+            profile_audio,
+            profile_sr,
+            channel_mode=str(args.analysis_channel),
+            lookahead_seconds=float(args.auto_profile_lookahead_seconds),
+        )
+        active_profile = suggest_quality_profile(stretch_ratio=stretch_estimate, features=auto_features)
+
+    args._active_quality_profile = active_profile
+    profile_changes = apply_quality_profile_overrides(
+        args,
+        profile=active_profile,
+        provided_flags=cli_flags,
+    )
+    profile_changes = list(preset_changes) + profile_changes
+
+    if args.auto_transform:
+        resolved_transform = resolve_transform_auto(
+            requested_transform=str(args.transform),
+            profile=active_profile,
+            n_fft=int(args.n_fft),
+            provided_flags=cli_flags,
+        )
+        if resolved_transform != args.transform:
+            args.transform = resolved_transform
+            profile_changes.append("transform")
+
+    if args.ambient_preset:
+        args.phase_engine = "random"
+        args.transient_preserve = True
+        args.onset_time_credit = True
+        if str(args.stretch_mode) == "auto":
+            args.stretch_mode = "multistage"
+        args.max_stage_stretch = min(float(args.max_stage_stretch), 1.35)
+        if args._active_quality_profile == "neutral":
+            args._active_quality_profile = "ambient"
+
+    validate_args(args, parser)
+    configure_runtime_from_args(args, parser)
+
+    if console_level(args) >= _VERBOSITY_TO_LEVEL["verbose"]:
+        info = (
+            f"[info] profile={args._active_quality_profile}, "
+            f"auto_profile={'on' if args.auto_profile else 'off'}, "
+            f"auto_transform={'on' if args.auto_transform else 'off'}, "
+            f"transform={args.transform}"
+        )
+        if profile_changes:
+            info += f", overrides={','.join(sorted(set(profile_changes)))}"
+        log_message(args, info, min_level="verbose")
+
     config = VocoderConfig(
         n_fft=args.n_fft,
         win_length=args.win_length,
@@ -3197,8 +4947,15 @@ def main(argv: list[str] | None = None) -> int:
         transform=normalize_transform_name(args.transform),
         center=not args.no_center,
         phase_locking=args.phase_locking,
+        phase_engine=args.phase_engine,
+        ambient_phase_mix=args.ambient_phase_mix,
+        phase_random_seed=args.phase_random_seed,
         transient_preserve=args.transient_preserve,
         transient_threshold=args.transient_threshold,
+        onset_time_credit=args.onset_time_credit,
+        onset_credit_pull=args.onset_credit_pull,
+        onset_credit_max=args.onset_credit_max,
+        onset_realign=not args.no_onset_realign,
     )
 
     if args.output_dir is not None:
@@ -3207,6 +4964,50 @@ def main(argv: list[str] | None = None) -> int:
         args.output = args.output.resolve()
     if args.pitch_map is not None and str(args.pitch_map) != "-":
         args.pitch_map = args.pitch_map.resolve()
+    if args.checkpoint_dir is not None:
+        args.checkpoint_dir = args.checkpoint_dir.resolve()
+    if args.manifest_json is not None:
+        args.manifest_json = args.manifest_json.resolve()
+
+    if args.explain_plan:
+        plan = {
+            "active_profile": str(args._active_quality_profile),
+            "profile_overrides_applied": sorted(set(profile_changes)),
+            "auto_profile_features": auto_features,
+            "inputs": [str(path) for path in input_paths],
+            "config": {
+                "n_fft": config.n_fft,
+                "win_length": config.win_length,
+                "hop_size": config.hop_size,
+                "window": config.window,
+                "transform": config.transform,
+                "phase_locking": config.phase_locking,
+                "phase_engine": config.phase_engine,
+                "transient_mode": str(args.transient_mode),
+                "transient_sensitivity": float(args.transient_sensitivity),
+                "transient_protect_ms": float(args.transient_protect_ms),
+                "transient_crossfade_ms": float(args.transient_crossfade_ms),
+                "stereo_mode": str(args.stereo_mode),
+                "ref_channel": int(args.ref_channel),
+                "coherence_strength": float(args.coherence_strength),
+                "multires_fusion": bool(args.multires_fusion),
+                "multires_ffts": list(getattr(args, "_multires_ffts", [])),
+                "multires_weights": list(getattr(args, "_multires_weights", [])),
+            },
+            "runtime": {
+                "device_requested": str(args.device),
+                "device_active": runtime_config().active_device,
+                "cuda_device": int(args.cuda_device),
+            },
+            "io": {
+                "output_dir": None if args.output_dir is None else str(args.output_dir),
+                "stdout": bool(args.stdout),
+                "manifest_json": None if args.manifest_json is None else str(args.manifest_json),
+                "checkpoint_dir": None if args.checkpoint_dir is None else str(args.checkpoint_dir),
+            },
+        }
+        print(json.dumps(plan, indent=2, sort_keys=True))
+        return 0
 
     results: list[JobResult] = []
     failures: list[tuple[Path, Exception]] = []
@@ -3226,12 +5027,56 @@ def main(argv: list[str] | None = None) -> int:
             f"[ok] {result.input_path} -> {result.output_path} | "
             f"ch={result.channels}, sr={result.in_sr}->{result.out_sr}, "
             f"dur={in_dur:.3f}s->{out_dur:.3f}s, "
-            f"stretch={result.stretch:.6f}, pitch_ratio={result.pitch_ratio:.6f}",
+            f"stretch={result.stretch:.6f}, pitch_ratio={result.pitch_ratio:.6f}, "
+            f"profile={result.quality_profile}, stages={result.stage_count}",
             min_level="normal",
         )
 
     for path, exc in failures:
         log_error(args, f"[error] {path}: {exc}")
+
+    if args.manifest_json is not None:
+        entries: list[dict[str, Any]] = []
+        for result in results:
+            entries.append(
+                {
+                    "status": "ok",
+                    "input_path": str(result.input_path),
+                    "output_path": str(result.output_path),
+                    "in_sr": int(result.in_sr),
+                    "out_sr": int(result.out_sr),
+                    "in_samples": int(result.in_samples),
+                    "out_samples": int(result.out_samples),
+                    "channels": int(result.channels),
+                    "stretch": float(result.stretch),
+                    "pitch_ratio": float(result.pitch_ratio),
+                    "stage_count": int(result.stage_count),
+                    "control_map_segments": int(result.control_map_segments),
+                    "quality_profile": str(result.quality_profile),
+                    "checkpoint_id": result.checkpoint_id,
+                    "transform": str(config.transform),
+                    "window": str(config.window),
+                    "phase_engine": str(config.phase_engine),
+                    "transient_mode": str(args.transient_mode),
+                    "stereo_mode": str(args.stereo_mode),
+                    "coherence_strength": float(args.coherence_strength),
+                    "device": runtime_config().active_device,
+                }
+            )
+        for path, exc in failures:
+            entries.append(
+                {
+                    "status": "error",
+                    "input_path": str(path),
+                    "error": str(exc),
+                    "quality_profile": str(args._active_quality_profile),
+                }
+            )
+        write_manifest(
+            args.manifest_json,
+            entries,
+            append=bool(args.manifest_append),
+        )
 
     log_message(
         args,

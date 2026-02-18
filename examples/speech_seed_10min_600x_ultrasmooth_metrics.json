@@ -1,0 +1,65 @@
+{
+  "candidates": {
+    "9": {
+      "kernel_len": 9,
+      "jump_count_gt_0p10": 0,
+      "jump_count_gt_0p20": 0,
+      "jump_p99": 0.05362353094279609,
+      "jump_p999": 0.06801820119053527,
+      "rms_mod_diff_p99_50ms": 0.038563426217260985,
+      "rms_mod_diff_p95_50ms": 0.019452493921611025,
+      "rms": 0.20881306546359327
+    },
+    "17": {
+      "kernel_len": 17,
+      "jump_count_gt_0p10": 0,
+      "jump_count_gt_0p20": 0,
+      "jump_p99": 0.052338432447763227,
+      "jump_p999": 0.06591608176468053,
+      "rms_mod_diff_p99_50ms": 0.039243617740486667,
+      "rms_mod_diff_p95_50ms": 0.01981916456289331,
+      "rms": 0.21135416486467354
+    },
+    "33": {
+      "kernel_len": 33,
+      "jump_count_gt_0p10": 0,
+      "jump_count_gt_0p20": 0,
+      "jump_p99": 0.05029857508600618,
+      "jump_p999": 0.06300939093628771,
+      "rms_mod_diff_p99_50ms": 0.042100441747403725,
+      "rms_mod_diff_p95_50ms": 0.020913547486064957,
+      "rms": 0.2189916148316385
+    },
+    "65": {
+      "kernel_len": 65,
+      "jump_count_gt_0p10": 0,
+      "jump_count_gt_0p20": 0,
+      "jump_p99": 0.04206908193365402,
+      "jump_p999": 0.051773618358815804,
+      "rms_mod_diff_p99_50ms": 0.05154168764275622,
+      "rms_mod_diff_p95_50ms": 0.02571898176168749,
+      "rms": 0.24170662203924562
+    },
+    "129": {
+      "kernel_len": 129,
+      "jump_count_gt_0p10": 0,
+      "jump_count_gt_0p20": 0,
+      "jump_p99": 0.03465308237625534,
+      "jump_p999": 0.042506686437591014,
+      "rms_mod_diff_p99_50ms": 0.05017730745655968,
+      "rms_mod_diff_p95_50ms": 0.026859763146128823,
+      "rms": 0.2328003907521055
+    }
+  },
+  "selected": {
+    "kernel_len": 9,
+    "jump_count_gt_0p10": 0,
+    "jump_count_gt_0p20": 0,
+    "jump_p99": 0.05362353094279609,
+    "jump_p999": 0.06801820119053527,
+    "rms_mod_diff_p99_50ms": 0.038563426217260985,
+    "rms_mod_diff_p95_50ms": 0.019452493921611025,
+    "rms": 0.20881306546359327
+  },
+  "selected_file": "examples/speech_seed_10min_600x_ultrasmooth.wav"
+}

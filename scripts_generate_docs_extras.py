@@ -453,6 +453,36 @@ def generate_cookbook() -> None:
             "why": "Applies precise microtonal offset without tempo change.",
         },
         {
+            "category": "Phase-vocoder core",
+            "title": "Extreme stretch with multistage strategy",
+            "command": "python3 pvxvoc.py ambience.wav --target-duration 600 --ambient-preset --n-fft 16384 --win-length 16384 --hop-size 2048 --window kaiser --kaiser-beta 18 --output-dir out --suffix _ambient600x",
+            "why": "PaulStretch-style ambient profile for very large ratios using stochastic phase and onset time-credit controls.",
+        },
+        {
+            "category": "Phase-vocoder core",
+            "title": "Ultra-smooth speech stretch (600x)",
+            "command": "python3 pvxvoc.py speech.wav --target-duration 600 --stretch-mode standard --phase-engine propagate --phase-locking identity --n-fft 8192 --win-length 8192 --hop-size 256 --window hann --normalize peak --peak-dbfs -1 --compressor-threshold-db -30 --compressor-ratio 2.0 --compressor-attack-ms 25 --compressor-release-ms 250 --compressor-makeup-db 4 --limiter-threshold 0.95 --output-dir out --suffix _speech600x",
+            "why": "Prefers continuity and intelligibility over texture animation; avoids choppy stochastic artifacts on speech sources.",
+        },
+        {
+            "category": "Phase-vocoder core",
+            "title": "Auto-profile plan preview",
+            "command": "python3 pvxvoc.py input.wav --auto-profile --auto-transform --explain-plan",
+            "why": "Prints the resolved profile/config plan before long renders.",
+        },
+        {
+            "category": "Phase-vocoder core",
+            "title": "Multi-resolution fusion stretch",
+            "command": "python3 pvxvoc.py input.wav --multires-fusion --multires-ffts 1024,2048,4096 --multires-weights 0.2,0.35,0.45 --time-stretch 1.4 --output-dir out --suffix _multires",
+            "why": "Blends several FFT scales to reduce single-resolution bias on complex program material.",
+        },
+        {
+            "category": "Phase-vocoder core",
+            "title": "Checkpointed long render with manifest",
+            "command": "python3 pvxvoc.py long.wav --time-stretch 12 --auto-segment-seconds 0.5 --checkpoint-dir checkpoints --manifest-json reports/run_manifest.json --output-dir out --suffix _long",
+            "why": "Caches segment renders for resume workflows and writes run metadata for reproducibility.",
+        },
+        {
             "category": "Transform selection",
             "title": "Default production backend (FFT + transient protection)",
             "command": "python3 pvxvoc.py mix.wav --transform fft --time-stretch 1.07 --transient-preserve --phase-locking identity --output-dir out --suffix _fft",
@@ -547,6 +577,24 @@ def generate_cookbook() -> None:
             "title": "Dry-run output validation",
             "command": "python3 pvxdenoise.py takes/*.wav --reduction-db 8 --dry-run --output-dir out/preview",
             "why": "Checks filename resolution and collisions without writing audio.",
+        },
+        {
+            "category": "Automation",
+            "title": "A/B report generation",
+            "command": "python3 scripts_ab_compare.py --input mix.wav --a-args \"--time-stretch 1.1 --transform fft\" --b-args \"--time-stretch 1.1 --transform dct\" --out-dir reports/ab --name fft_vs_dct",
+            "why": "Creates JSON/Markdown objective reports for fast algorithm and parameter comparisons.",
+        },
+        {
+            "category": "Automation",
+            "title": "Benchmark matrix sweep",
+            "command": "python3 scripts_benchmark_matrix.py --input mix.wav --transforms fft,dft,dct --windows hann,kaiser --n-ffts 1024,2048 --devices cpu --out-dir reports/bench",
+            "why": "Produces reproducible CSV/JSON runtime matrices across transform/window/FFT combinations.",
+        },
+        {
+            "category": "Automation",
+            "title": "Quality regression check",
+            "command": "python3 scripts_quality_regression.py --input mix.wav --output out/reg.wav --render-args \"--time-stretch 1.2 --transform fft\" --baseline-json reports/baseline.json --report-json reports/regression.json",
+            "why": "Compares current renders against baseline objective metrics with configurable tolerances.",
         },
         {
             "category": "Spatial",

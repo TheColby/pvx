@@ -1,6 +1,6 @@
 {
-  "commit": "39eeaf2",
-  "commit_date": "2026-02-17T14:18:07-05:00",
+  "commit": "23925ec",
+  "commit_date": "2026-02-17T16:15:08-05:00",
   "entries": [
     {
       "action": "",
@@ -854,6 +854,26 @@
     },
     {
       "action": "",
+      "choices": [],
+      "default": 0.5,
+      "flag": "--ambient-phase-mix",
+      "help": "Random-phase blend when --phase-engine hybrid (0.0=propagated only, 1.0=random only; default: 0.5).",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "store_true",
+      "choices": [],
+      "default": null,
+      "flag": "--ambient-preset",
+      "help": "Convenience preset for ambient extreme stretch (random phase engine, onset-time-credit, transient preserve, conservative staging).",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
       "choices": [
         "first",
         "mix"
@@ -869,8 +889,88 @@
       "action": "store_true",
       "choices": [],
       "default": null,
+      "flag": "--auto-profile",
+      "help": "Analyze input and choose a profile automatically (speech/music/percussion/ambient/extreme).",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 6.0,
+      "flag": "--auto-profile-lookahead-seconds",
+      "help": "Seconds of audio used when estimating --auto-profile (default: 6.0).",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 0.0,
+      "flag": "--auto-segment-seconds",
+      "help": "Optional segment size in seconds for long jobs. When >0, processing runs per segment with crossfade assembly.",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "store_true",
+      "choices": [],
+      "default": null,
+      "flag": "--auto-transform",
+      "help": "Allow automatic transform selection when --transform is not explicitly set.",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--cents",
+      "help": "Pitch shift in cents (+1200 is one octave up)",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--checkpoint-dir",
+      "help": "Directory used to cache per-segment checkpoint chunks for resume workflows.",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--checkpoint-id",
+      "help": "Optional checkpoint run identifier (default: hash of input/settings).",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "store_true",
+      "choices": [],
+      "default": null,
       "flag": "--clip",
       "help": "Legacy alias: hard clip at +/-1.0 when set",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 0.0,
+      "flag": "--coherence-strength",
+      "help": "Coherence lock strength in [0,1] (0=off, 1=full lock).",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -986,6 +1086,16 @@
       "tool": "pvxvoc.py"
     },
     {
+      "action": "store_true",
+      "choices": [],
+      "default": null,
+      "flag": "--cpu",
+      "help": "Alias for --device cpu.",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
       "action": "",
       "choices": [],
       "default": 0,
@@ -1015,6 +1125,16 @@
       "default": null,
       "flag": "--dry-run",
       "help": "Resolve settings without writing files",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--example",
+      "help": "Print copy-paste example command(s) and exit.",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -1055,6 +1175,36 @@
       "default": null,
       "flag": "--expander-threshold-db",
       "help": "Enable downward expander below threshold dBFS",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "store_true",
+      "choices": [],
+      "default": null,
+      "flag": "--explain-plan",
+      "help": "Print resolved processing plan JSON and exit without rendering audio.",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 2.0,
+      "flag": "--extreme-stretch-threshold",
+      "help": "Auto-mode threshold for multistage activation (default: 2.0).",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "store_true",
+      "choices": [],
+      "default": null,
+      "flag": "--extreme-time-stretch",
+      "help": "Force multistage strategy even when ratio is moderate.",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -1150,6 +1300,26 @@
       "tool": "pvxvoc.py"
     },
     {
+      "action": "store_true",
+      "choices": [],
+      "default": null,
+      "flag": "--gpu",
+      "help": "Alias for --device cuda.",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "store_true",
+      "choices": [],
+      "default": null,
+      "flag": "--guided",
+      "help": "Interactive guided mode for first-time users.",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
       "action": "",
       "choices": [],
       "default": null,
@@ -1190,6 +1360,66 @@
       "tool": "pvxvoc.py"
     },
     {
+      "action": "store_true",
+      "choices": [],
+      "default": null,
+      "flag": "--manifest-append",
+      "help": "Append entries to an existing --manifest-json file instead of replacing it.",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--manifest-json",
+      "help": "Write processing manifest JSON with per-file settings and outcomes.",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 1.8,
+      "flag": "--max-stage-stretch",
+      "help": "Maximum per-stage ratio used in multistage mode (default: 1.8).",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": "1024,2048,4096",
+      "flag": "--multires-ffts",
+      "help": "Comma-separated FFT sizes for --multires-fusion (default: 1024,2048,4096)",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "store_true",
+      "choices": [],
+      "default": null,
+      "flag": "--multires-fusion",
+      "help": "Blend multiple FFT resolutions for each channel before pitch resampling.",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--multires-weights",
+      "help": "Comma-separated fusion weights for --multires-fusion (defaults to equal weights).",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
       "action": "",
       "choices": [],
       "default": 2048,
@@ -1205,6 +1435,16 @@
       "default": null,
       "flag": "--no-center",
       "help": "Disable center padding in STFT/ISTFT",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "store_true",
+      "choices": [],
+      "default": null,
+      "flag": "--no-onset-realign",
+      "help": "Disable fractional read-position realignment on onsets when --onset-time-credit is enabled.",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -1236,9 +1476,49 @@
     {
       "action": "",
       "choices": [],
+      "default": 8.0,
+      "flag": "--onset-credit-max",
+      "help": "Maximum accumulated onset time credit in analysis-frame units (default: 8.0).",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 0.5,
+      "flag": "--onset-credit-pull",
+      "help": "Fraction of per-frame read advance removable while onset credit exists (0.0..1.0, default: 0.5).",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "store_true",
+      "choices": [],
+      "default": null,
+      "flag": "--onset-time-credit",
+      "help": "Enable onset-triggered time-credit scheduling to reduce transient smear during extreme stretching.",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--out",
+      "help": "Explicit output file path (single-input mode only). Alias: --out",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
       "default": null,
       "flag": "--output",
-      "help": "Explicit output file path (single-input mode only).",
+      "help": "Explicit output file path (single-input mode only). Alias: --out",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -1285,6 +1565,16 @@
     },
     {
       "action": "",
+      "choices": [],
+      "default": "propagate",
+      "flag": "--phase-engine",
+      "help": "Phase synthesis engine: propagate (classic phase vocoder), hybrid (propagated + stochastic blend), random (ambient stochastic phase).",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
       "choices": [
         "off",
         "identity"
@@ -1292,6 +1582,26 @@
       "default": "identity",
       "flag": "--phase-locking",
       "help": "Inter-bin phase locking mode for transient fidelity (default: identity)",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--phase-random-seed",
+      "help": "Optional deterministic seed for random/hybrid phase generation.",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--pitch",
+      "help": "Pitch shift in semitones (+12 is one octave up)",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -1414,11 +1724,51 @@
       "tool": "pvxvoc.py"
     },
     {
+      "action": "",
+      "choices": [],
+      "default": "none",
+      "flag": "--preset",
+      "help": "High-level intent preset. Legacy: none/vocal/ambient/extreme. New: default/vocal_studio/drums_safe/extreme_ambient/stereo_coherent.",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": "neutral",
+      "flag": "--quality-profile",
+      "help": "Named tuning profile for vocoder defaults (default: neutral)",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
       "action": "store_true",
       "choices": [],
       "default": null,
       "flag": "--quiet",
       "help": "Reduce output and hide status bars",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--ratio",
+      "help": "Pitch ratio (>1 up, <1 down). Accepts decimals (1.5), integer ratios (3/2), and expressions (2^(1/12)).",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 0,
+      "flag": "--ref-channel",
+      "help": "Reference channel index used by --stereo-mode ref_channel_lock (default: 0).",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -1438,11 +1788,31 @@
       "tool": "pvxvoc.py"
     },
     {
+      "action": "store_true",
+      "choices": [],
+      "default": null,
+      "flag": "--resume",
+      "help": "Reuse existing checkpoint chunks from --checkpoint-dir when available.",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
       "action": "",
       "choices": [],
       "default": null,
       "flag": "--rms-dbfs",
       "help": "Target RMS dBFS when --normalize rms",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--semitones",
+      "help": "Pitch shift in semitones (+12 is one octave up)",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -1497,6 +1867,44 @@
       "default": null,
       "flag": "--stdout",
       "help": "Write processed audio to stdout stream (for piping); requires exactly one input",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [
+        "independent",
+        "mid_side_lock",
+        "ref_channel_lock"
+      ],
+      "default": "independent",
+      "flag": "--stereo-mode",
+      "help": "Channel coherence strategy: independent (legacy), mid_side_lock (M/S-coupled), ref_channel_lock (phase-lock to reference channel).",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--stretch",
+      "help": "Alias for --time-stretch.",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [
+        "auto",
+        "standard",
+        "multistage"
+      ],
+      "default": "auto",
+      "flag": "--stretch-mode",
+      "help": "Stretch strategy: standard (single pass), multistage (chained moderate passes), or auto (multistage only for extreme ratios; default: auto).",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -1602,11 +2010,56 @@
       "tool": "pvxvoc.py"
     },
     {
+      "action": "",
+      "choices": [],
+      "default": 10.0,
+      "flag": "--transient-crossfade-ms",
+      "help": "Crossfade duration for transient/steady stitching (default: 10 ms).",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [
+        "off",
+        "reset",
+        "hybrid",
+        "wsola"
+      ],
+      "default": "off",
+      "flag": "--transient-mode",
+      "help": "Transient handling mode: off (none), reset (phase reset), hybrid (PV steady + WSOLA transients), or wsola (time-domain transient-safe path).",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
       "action": "store_true",
       "choices": [],
       "default": null,
       "flag": "--transient-preserve",
       "help": "Enable transient phase resets based on spectral flux",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 30.0,
+      "flag": "--transient-protect-ms",
+      "help": "Transient protection width in milliseconds (default: 30).",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 0.5,
+      "flag": "--transient-sensitivity",
+      "help": "Transient detector sensitivity in [0,1] (higher catches more onsets).",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -1698,10 +2151,20 @@
   ],
   "unique_flags": [
     "--alpha",
+    "--ambient-phase-mix",
+    "--ambient-preset",
     "--analysis-channel",
+    "--auto-profile",
+    "--auto-profile-lookahead-seconds",
+    "--auto-segment-seconds",
+    "--auto-transform",
     "--backend",
+    "--cents",
+    "--checkpoint-dir",
+    "--checkpoint-id",
     "--chunk-ms",
     "--clip",
+    "--coherence-strength",
     "--compander-attack-ms",
     "--compander-compress-ratio",
     "--compander-expand-ratio",
@@ -1714,6 +2177,7 @@
     "--compressor-release-ms",
     "--compressor-threshold-db",
     "--confidence-floor",
+    "--cpu",
     "--crossfade-ms",
     "--cuda-device",
     "--decay",
@@ -1722,10 +2186,14 @@
     "--dry-mix",
     "--dry-run",
     "--duration",
+    "--example",
     "--expander-attack-ms",
     "--expander-ratio",
     "--expander-release-ms",
     "--expander-threshold-db",
+    "--explain-plan",
+    "--extreme-stretch-threshold",
+    "--extreme-time-stretch",
     "--f0-max",
     "--f0-min",
     "--floor",
@@ -1743,6 +2211,8 @@
     "--frame-length",
     "--freeze-time",
     "--gains",
+    "--gpu",
+    "--guided",
     "--hard-clip-level",
     "--harmonic-gain",
     "--harmonic-kernel",
@@ -1756,14 +2226,25 @@
     "--limiter-threshold",
     "--list-algorithm-package",
     "--list-tools",
+    "--manifest-append",
+    "--manifest-json",
     "--map",
+    "--max-stage-stretch",
     "--mode",
+    "--multires-ffts",
+    "--multires-fusion",
+    "--multires-weights",
     "--n-fft",
     "--no-center",
+    "--no-onset-realign",
     "--no-progress",
     "--noise-file",
     "--noise-seconds",
     "--normalize",
+    "--onset-credit-max",
+    "--onset-credit-pull",
+    "--onset-time-credit",
+    "--out",
     "--output",
     "--output-dir",
     "--output-format",
@@ -1776,7 +2257,10 @@
     "--percussive-pitch-cents",
     "--percussive-pitch-semitones",
     "--percussive-stretch",
+    "--phase-engine",
     "--phase-locking",
+    "--phase-random-seed",
+    "--pitch",
     "--pitch-conf-min",
     "--pitch-follow-stdin",
     "--pitch-lowconf-mode",
@@ -1788,18 +2272,24 @@
     "--pitch-shift-cents",
     "--pitch-shift-ratio",
     "--pitch-shift-semitones",
+    "--preset",
+    "--quality-profile",
     "--quiet",
     "--random-phase",
+    "--ratio",
     "--ratio-max",
     "--ratio-min",
     "--ratio-reference",
     "--reduction-db",
+    "--ref-channel",
     "--reference-hz",
     "--resample-mode",
+    "--resume",
     "--rms-dbfs",
     "--root",
     "--scale",
     "--scale-cents",
+    "--semitones",
     "--show-docs",
     "--silent",
     "--smooth",
@@ -1808,8 +2298,10 @@
     "--soft-clip-level",
     "--soft-clip-type",
     "--stdout",
+    "--stereo-mode",
     "--strength",
     "--stretch",
+    "--stretch-mode",
     "--subtype",
     "--suffix",
     "--target-duration",
@@ -1820,7 +2312,11 @@
     "--time-stretch",
     "--time-stretch-factor",
     "--transform",
+    "--transient-crossfade-ms",
+    "--transient-mode",
     "--transient-preserve",
+    "--transient-protect-ms",
+    "--transient-sensitivity",
     "--transient-threshold",
     "--verbose",
     "--verbosity",

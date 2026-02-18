@@ -1,0 +1,17 @@
+{
+  "file": "examples/extreme_seed_10min_ambient_audible.wav",
+  "gain_applied": 369.67735114894396,
+  "sample_rate_hz": 48000,
+  "samples": 28800000,
+  "duration_sec": 600.0,
+  "peak_abs": 0.8912509083747864,
+  "rms": 0.08096014374923317,
+  "jump_max_abs": 0.05640828609466553,
+  "jump_p99": 0.022563308477401733,
+  "jump_p999": 0.02256333827972412,
+  "jump_p9999": 0.033844977617263794,
+  "jump_p99999": 0.04512663185596466,
+  "jump_count_gt_0p10": 0,
+  "jump_count_gt_0p20": 0,
+  "jump_count_gt_0p30": 0
+}

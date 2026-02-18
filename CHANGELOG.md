@@ -1,0 +1,47 @@
+# Changelog
+
+## 2026-02-18
+
+- Added hybrid transient engine plumbing in `pvxvoc` with new modes:
+  - `--transient-mode off|reset|hybrid|wsola`
+  - `--transient-sensitivity`
+  - `--transient-protect-ms`
+  - `--transient-crossfade-ms`
+- Added deterministic WSOLA core implementation in `/Users/cleider/dev/pvx/src/pvx/core/wsola.py`.
+- Added transient detection/segmentation module in `/Users/cleider/dev/pvx/src/pvx/core/transients.py`.
+- Added stereo/multichannel coherence controls:
+  - `--stereo-mode independent|mid_side_lock|ref_channel_lock`
+  - `--ref-channel`
+  - `--coherence-strength`
+- Added channel-coherence utilities and objective coherence metrics:
+  - `/Users/cleider/dev/pvx/src/pvx/core/stereo.py`
+  - `/Users/cleider/dev/pvx/src/pvx/metrics/coherence.py`
+- Added intent preset registry in `/Users/cleider/dev/pvx/src/pvx/core/presets.py` with new presets:
+  - `default`, `vocal_studio`, `drums_safe`, `extreme_ambient`, `stereo_coherent`
+  - legacy presets remain supported (`none`, `vocal`, `ambient`, `extreme`)
+- Added benchmark suite:
+  - `/Users/cleider/dev/pvx/benchmarks/run_bench.py`
+  - `/Users/cleider/dev/pvx/benchmarks/metrics.py`
+  - baseline gate file `/Users/cleider/dev/pvx/benchmarks/baseline_small.json`
+- Added CI benchmark regression workflow:
+  - `/Users/cleider/dev/pvx/.github/workflows/bench-regression.yml`
+- Added/updated tests for transient/stereo behavior and new CLI paths.
+- Refined CLI help taxonomy with explicit sections:
+  - `I/O`, `Performance`, `Quality/Phase`, `Time/Pitch`, `Transients`, `Stereo`, `Output/Mastering`, `Debug`
+  - consolidated duplicate `Time/Pitch` blocks into a single grouped section
+- Added benchmark metric unit tests in `/Users/cleider/dev/pvx/tests/test_benchmark_metrics.py`.
+- Tuned benchmark runner defaults in `/Users/cleider/dev/pvx/benchmarks/run_bench.py`:
+  - new `--pvx-bench-profile {tuned,legacy}` switch
+  - default `tuned` deterministic profile for stronger cycle-consistency quality metrics
+- Expanded benchmark metrics in `/Users/cleider/dev/pvx/benchmarks/metrics.py` and reporting:
+  - SNR, SI-SDR, spectral convergence, envelope correlation
+  - RMS/crest deltas, bandwidth(95%) delta, ZCR delta, DC delta, clipping-ratio delta
+- Updated benchmark gate baseline in `/Users/cleider/dev/pvx/benchmarks/baseline_small.json` to match tuned profile output.
+- Added shared audio metrics table module `/Users/cleider/dev/pvx/src/pvx/core/audio_metrics.py`.
+- Added non-silent ASCII input/output metrics table printing across pvx CLIs and `pvxvoc`.
+- Expanded documentation:
+  - `/Users/cleider/dev/pvx/docs/DEV_NOTES.md`
+  - `/Users/cleider/dev/pvx/docs/QUALITY_GUIDE.md`
+  - `/Users/cleider/dev/pvx/docs/RUBBERBAND_COMPARISON.md`
+  - `/Users/cleider/dev/pvx/docs/BENCHMARKS.md`
+  - refreshed `/Users/cleider/dev/pvx/README.md`, `/Users/cleider/dev/pvx/docs/GETTING_STARTED.md`, `/Users/cleider/dev/pvx/docs/EXAMPLES.md`

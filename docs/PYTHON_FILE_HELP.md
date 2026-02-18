@@ -2,7 +2,7 @@
 
 Comprehensive reference for every Python file in this repository.
 
-Total Python files documented: **196**
+Total Python files documented: **199**
 
 ## Contents
 
@@ -25,11 +25,14 @@ Total Python files documented: **196**
 - [`pvxunison.py`](#pvxunisonpy)
 - [`pvxvoc.py`](#pvxvocpy)
 - [`pvxwarp.py`](#pvxwarppy)
+- [`scripts_ab_compare.py`](#scriptsabcomparepy)
+- [`scripts_benchmark_matrix.py`](#scriptsbenchmarkmatrixpy)
 - [`scripts_generate_docs_extras.py`](#scriptsgeneratedocsextraspy)
 - [`scripts_generate_docs_pdf.py`](#scriptsgeneratedocspdfpy)
 - [`scripts_generate_html_docs.py`](#scriptsgeneratehtmldocspy)
 - [`scripts_generate_python_docs.py`](#scriptsgeneratepythondocspy)
 - [`scripts_generate_theory_docs.py`](#scriptsgeneratetheorydocspy)
+- [`scripts_quality_regression.py`](#scriptsqualityregressionpy)
 - [`src/pvx/__init__.py`](#srcpvxinitpy)
 - [`src/pvx/algorithms/__init__.py`](#srcpvxalgorithmsinitpy)
 - [`src/pvx/algorithms/analysis_qa_and_automation/__init__.py`](#srcpvxalgorithmsanalysisqaandautomationinitpy)
@@ -407,7 +410,14 @@ usage: pvxconform.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
                      [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
                      [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
                      [--kaiser-beta KAISER_BETA]
-                     [--transform {fft,dft,czt,dct,dst,hartley}] [--no-center]
+                     [--transform {fft,dft,czt,dct,dst,hartley}]
+                     [--phase-engine {propagate,hybrid,random}]
+                     [--ambient-phase-mix AMBIENT_PHASE_MIX]
+                     [--phase-random-seed PHASE_RANDOM_SEED]
+                     [--onset-time-credit]
+                     [--onset-credit-pull ONSET_CREDIT_PULL]
+                     [--onset-credit-max ONSET_CREDIT_MAX]
+                     [--no-onset-realign] [--no-center]
                      [--device {auto,cpu,cuda}] [--cuda-device CUDA_DEVICE]
                      --map MAP [--crossfade-ms CROSSFADE_MS]
                      [--resample-mode {auto,fft,linear}]
@@ -448,15 +458,7 @@ options:
   --compressor-ratio COMPRESSOR_RATIO
                         Compressor ratio (>=1)
   --compressor-attack-ms COMPRESSOR_ATTACK_MS
-                        Compressor attack time in ms
-  --compressor-release-ms COMPRESSOR_RELEASE_MS
-                        Compressor release time in ms
-  --compressor-makeup-db COMPRESSOR_MAKEUP_DB
-                        Compressor makeup gain in dB
-  --expander-threshold-db EXPANDER_THRESHOLD_DB
-                        Enable downward expander below threshold dBFS
-  --expander-ratio EXPANDER_RATIO
-     
+                    
 ... [truncated]
 ```
 
@@ -512,7 +514,14 @@ usage: pvxdenoise.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
                      [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
                      [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
                      [--kaiser-beta KAISER_BETA]
-                     [--transform {fft,dft,czt,dct,dst,hartley}] [--no-center]
+                     [--transform {fft,dft,czt,dct,dst,hartley}]
+                     [--phase-engine {propagate,hybrid,random}]
+                     [--ambient-phase-mix AMBIENT_PHASE_MIX]
+                     [--phase-random-seed PHASE_RANDOM_SEED]
+                     [--onset-time-credit]
+                     [--onset-credit-pull ONSET_CREDIT_PULL]
+                     [--onset-credit-max ONSET_CREDIT_MAX]
+                     [--no-onset-realign] [--no-center]
                      [--device {auto,cpu,cuda}] [--cuda-device CUDA_DEVICE]
                      [--noise-seconds NOISE_SECONDS] [--noise-file NOISE_FILE]
                      [--reduction-db REDUCTION_DB] [--floor FLOOR]
@@ -554,15 +563,7 @@ options:
   --compressor-attack-ms COMPRESSOR_ATTACK_MS
                         Compressor attack time in ms
   --compressor-release-ms COMPRESSOR_RELEASE_MS
-                        Compressor release time in ms
-  --compressor-makeup-db COMPRESSOR_MAKEUP_DB
-                        Compressor makeup gain in dB
-  --expander-threshold-db EXPANDER_THRESHOLD_DB
-                        Enable downward expander below threshold dBFS
-  --expander-ratio EXPANDER_RATIO
-                        Expander ratio (>=1)
-  --expander-attack-ms EXPANDER_ATTACK_MS
-                        Expander atta
+                        Compressor rel
 ... [truncated]
 ```
 
@@ -618,9 +619,16 @@ usage: pvxdeverb.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
                     [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
                     [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
                     [--kaiser-beta KAISER_BETA]
-                    [--transform {fft,dft,czt,dct,dst,hartley}] [--no-center]
-                    [--device {auto,cpu,cuda}] [--cuda-device CUDA_DEVICE]
-                    [--strength STRENGTH] [--decay DECAY] [--floor FLOOR]
+                    [--transform {fft,dft,czt,dct,dst,hartley}]
+                    [--phase-engine {propagate,hybrid,random}]
+                    [--ambient-phase-mix AMBIENT_PHASE_MIX]
+                    [--phase-random-seed PHASE_RANDOM_SEED]
+                    [--onset-time-credit]
+                    [--onset-credit-pull ONSET_CREDIT_PULL]
+                    [--onset-credit-max ONSET_CREDIT_MAX] [--no-onset-realign]
+                    [--no-center] [--device {auto,cpu,cuda}]
+                    [--cuda-device CUDA_DEVICE] [--strength STRENGTH]
+                    [--decay DECAY] [--floor FLOOR]
                     inputs [inputs ...]
 
 Reduce spectral tails / reverberant smear
@@ -661,15 +669,7 @@ options:
                         Compressor release time in ms
   --compressor-makeup-db COMPRESSOR_MAKEUP_DB
                         Compressor makeup gain in dB
-  --expander-threshold-db EXPANDER_THRESHOLD_DB
-                        Enable downward expander below threshold dBFS
-  --expander-ratio EXPANDER_RATIO
-                        Expander ratio (>=1)
-  --expander-attack-ms EXPANDER_ATTACK_MS
-                        Expander attack time in ms
-  --expander-release-ms EXPANDER_RELEASE_MS
-                        Expander release time in ms
-  --compander-threshold-
+  --expander-threshold-db 
 ... [truncated]
 ```
 
@@ -725,7 +725,14 @@ usage: pvxformant.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
                      [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
                      [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
                      [--kaiser-beta KAISER_BETA]
-                     [--transform {fft,dft,czt,dct,dst,hartley}] [--no-center]
+                     [--transform {fft,dft,czt,dct,dst,hartley}]
+                     [--phase-engine {propagate,hybrid,random}]
+                     [--ambient-phase-mix AMBIENT_PHASE_MIX]
+                     [--phase-random-seed PHASE_RANDOM_SEED]
+                     [--onset-time-credit]
+                     [--onset-credit-pull ONSET_CREDIT_PULL]
+                     [--onset-credit-max ONSET_CREDIT_MAX]
+                     [--no-onset-realign] [--no-center]
                      [--device {auto,cpu,cuda}] [--cuda-device CUDA_DEVICE]
                      [--pitch-shift-semitones PITCH_SHIFT_SEMITONES]
                      [--pitch-shift-cents PITCH_SHIFT_CENTS]
@@ -766,15 +773,7 @@ options:
                         Integrated loudness target in LUFS
   --compressor-threshold-db COMPRESSOR_THRESHOLD_DB
                         Enable compressor above threshold dBFS
-  --compressor-ratio COMPRESSOR_RATIO
-                        Compressor ratio (>=1)
-  --compressor-attack-ms COMPRESSOR_ATTACK_MS
-                        Compressor attack time in ms
-  --compressor-release-ms COMPRESSOR_RELEASE_MS
-                        Compressor release time in ms
-  --compressor-makeup-db COMPRESSOR_MAKEUP_DB
-                        Compressor makeup gain in dB
-  --expander-threshold-db EXPANDER_THRE
+  --compressor-ratio COMPRESSOR_R
 ... [truncated]
 ```
 
@@ -830,10 +829,16 @@ usage: pvxfreeze.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
                     [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
                     [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
                     [--kaiser-beta KAISER_BETA]
-                    [--transform {fft,dft,czt,dct,dst,hartley}] [--no-center]
-                    [--device {auto,cpu,cuda}] [--cuda-device CUDA_DEVICE]
-                    [--freeze-time FREEZE_TIME] [--duration DURATION]
-                    [--random-phase]
+                    [--transform {fft,dft,czt,dct,dst,hartley}]
+                    [--phase-engine {propagate,hybrid,random}]
+                    [--ambient-phase-mix AMBIENT_PHASE_MIX]
+                    [--phase-random-seed PHASE_RANDOM_SEED]
+                    [--onset-time-credit]
+                    [--onset-credit-pull ONSET_CREDIT_PULL]
+                    [--onset-credit-max ONSET_CREDIT_MAX] [--no-onset-realign]
+                    [--no-center] [--device {auto,cpu,cuda}]
+                    [--cuda-device CUDA_DEVICE] [--freeze-time FREEZE_TIME]
+                    [--duration DURATION] [--random-phase]
                     inputs [inputs ...]
 
 Freeze a spectral slice into a sustained output
@@ -874,14 +879,7 @@ options:
                         Compressor release time in ms
   --compressor-makeup-db COMPRESSOR_MAKEUP_DB
                         Compressor makeup gain in dB
-  --expander-threshold-db EXPANDER_THRESHOLD_DB
-                        Enable downward expander below threshold dBFS
-  --expander-ratio EXPANDER_RATIO
-                        Expander ratio (>=1)
-  --expander-attack-ms EXPANDER_ATTACK_MS
-                        Expander attack time in ms
-  --expander-release-ms EXPANDER_RELEASE_MS
-                        Expander rele
+  --exp
 ... [truncated]
 ```
 
@@ -938,8 +936,15 @@ usage: pvxharmonize.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
                        [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
                        [--kaiser-beta KAISER_BETA]
                        [--transform {fft,dft,czt,dct,dst,hartley}]
-                       [--no-center] [--device {auto,cpu,cuda}]
-                       [--cuda-device CUDA_DEVICE] [--intervals INTERVALS]
+                       [--phase-engine {propagate,hybrid,random}]
+                       [--ambient-phase-mix AMBIENT_PHASE_MIX]
+                       [--phase-random-seed PHASE_RANDOM_SEED]
+                       [--onset-time-credit]
+                       [--onset-credit-pull ONSET_CREDIT_PULL]
+                       [--onset-credit-max ONSET_CREDIT_MAX]
+                       [--no-onset-realign] [--no-center]
+                       [--device {auto,cpu,cuda}] [--cuda-device CUDA_DEVICE]
+                       [--intervals INTERVALS]
                        [--intervals-cents INTERVALS_CENTS] [--gains GAINS]
                        [--pans PANS] [--force-stereo]
                        [--resample-mode {auto,fft,linear}]
@@ -978,14 +983,6 @@ options:
   --compressor-ratio COMPRESSOR_RATIO
                         Compressor ratio (>=1)
   --compressor-attack-ms COMPRESSOR_ATTACK_MS
-                        Compressor attack time in ms
-  --compressor-release-ms COMPRESSOR_RELEASE_MS
-                        Compressor release time in ms
-  --compressor-makeup-db COMPRESSOR_MAKEUP_DB
-                        Compressor makeup gain in dB
-  --expander-threshold-db EXPANDER_THRESHOLD_DB
-                        Enable downward expander below threshold dBFS
-  --expander-ratio EXPANDER_RATI
 ... [truncated]
 ```
 
@@ -1041,8 +1038,15 @@ usage: pvxlayer.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
                    [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
                    [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
                    [--kaiser-beta KAISER_BETA]
-                   [--transform {fft,dft,czt,dct,dst,hartley}] [--no-center]
-                   [--device {auto,cpu,cuda}] [--cuda-device CUDA_DEVICE]
+                   [--transform {fft,dft,czt,dct,dst,hartley}]
+                   [--phase-engine {propagate,hybrid,random}]
+                   [--ambient-phase-mix AMBIENT_PHASE_MIX]
+                   [--phase-random-seed PHASE_RANDOM_SEED]
+                   [--onset-time-credit]
+                   [--onset-credit-pull ONSET_CREDIT_PULL]
+                   [--onset-credit-max ONSET_CREDIT_MAX] [--no-onset-realign]
+                   [--no-center] [--device {auto,cpu,cuda}]
+                   [--cuda-device CUDA_DEVICE]
                    [--harmonic-stretch HARMONIC_STRETCH]
                    [--harmonic-pitch-semitones HARMONIC_PITCH_SEMITONES]
                    [--harmonic-pitch-cents HARMONIC_PITCH_CENTS]
@@ -1083,14 +1087,7 @@ options:
                         Target peak dBFS when --normalize peak
   --rms-dbfs RMS_DBFS   Target RMS dBFS when --normalize rms
   --target-lufs TARGET_LUFS
-                        Integrated loudness target in LUFS
-  --compressor-threshold-db COMPRESSOR_THRESHOLD_DB
-                        Enable compressor above threshold dBFS
-  --compressor-ratio COMPRESSOR_RATIO
-                        Compressor ratio (>=1)
-  --compressor-attack-ms COMPRESSOR_ATTACK_MS
-                        Compressor attack time in ms
-  --compressor-releas
+  
 ... [truncated]
 ```
 
@@ -1145,8 +1142,15 @@ usage: pvxmorph.py [-h] [-o OUTPUT] [--stdout] [--output-format OUTPUT_FORMAT]
                    [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
                    [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
                    [--kaiser-beta KAISER_BETA]
-                   [--transform {fft,dft,czt,dct,dst,hartley}] [--no-center]
-                   [--device {auto,cpu,cuda}] [--cuda-device CUDA_DEVICE]
+                   [--transform {fft,dft,czt,dct,dst,hartley}]
+                   [--phase-engine {propagate,hybrid,random}]
+                   [--ambient-phase-mix AMBIENT_PHASE_MIX]
+                   [--phase-random-seed PHASE_RANDOM_SEED]
+                   [--onset-time-credit]
+                   [--onset-credit-pull ONSET_CREDIT_PULL]
+                   [--onset-credit-max ONSET_CREDIT_MAX] [--no-onset-realign]
+                   [--no-center] [--device {auto,cpu,cuda}]
+                   [--cuda-device CUDA_DEVICE]
                    input_a input_b
 
 Morph two audio files in the STFT domain
@@ -1191,14 +1195,7 @@ options:
   --compander-threshold-db COMPANDER_THRESHOLD_DB
                         Enable compander threshold in dBFS
   --compander-compress-ratio COMPANDER_COMPRESS_RATIO
-                        Compander compression ratio (>=1)
-  --compander-expand-ratio COMPANDER_EXPAND_RATIO
-                        Compander expansion ratio (>=1)
-  --compander-attack-ms COMPANDER_ATTACK_MS
-                        Compander attack time in ms
-  --compander-release-ms COMPANDER_RELEASE_MS
-                        Compander release time in ms
-  --compander-makeu
+ 
 ... [truncated]
 ```
 
@@ -1254,9 +1251,16 @@ usage: pvxretune.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
                     [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
                     [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
                     [--kaiser-beta KAISER_BETA]
-                    [--transform {fft,dft,czt,dct,dst,hartley}] [--no-center]
-                    [--device {auto,cpu,cuda}] [--cuda-device CUDA_DEVICE]
-                    [--root ROOT] [--scale {chromatic,major,minor,pentatonic}]
+                    [--transform {fft,dft,czt,dct,dst,hartley}]
+                    [--phase-engine {propagate,hybrid,random}]
+                    [--ambient-phase-mix AMBIENT_PHASE_MIX]
+                    [--phase-random-seed PHASE_RANDOM_SEED]
+                    [--onset-time-credit]
+                    [--onset-credit-pull ONSET_CREDIT_PULL]
+                    [--onset-credit-max ONSET_CREDIT_MAX] [--no-onset-realign]
+                    [--no-center] [--device {auto,cpu,cuda}]
+                    [--cuda-device CUDA_DEVICE] [--root ROOT]
+                    [--scale {chromatic,major,minor,pentatonic}]
                     [--scale-cents SCALE_CENTS] [--strength STRENGTH]
                     [--chunk-ms CHUNK_MS] [--overlap-ms OVERLAP_MS]
                     [--f0-min F0_MIN] [--f0-max F0_MAX]
@@ -1296,15 +1300,7 @@ options:
   --compressor-ratio COMPRESSOR_RATIO
                         Compressor ratio (>=1)
   --compressor-attack-ms COMPRESSOR_ATTACK_MS
-                        Compressor attack time in ms
-  --compressor-release-ms COMPRESSOR_RELEASE_MS
-                        Compressor release time in ms
-  --compressor-makeup-db COMPRESSOR_MAKEUP_DB
-                        Compressor makeup gain in dB
-  --expander-threshold-db EXPANDER_THRESHOLD_DB
-                        Enable downward expander below threshold dBFS
-  --expander-ratio EXPANDER_RATIO
-    
+                        Co
 ... [truncated]
 ```
 
@@ -1361,8 +1357,14 @@ usage: pvxtransient.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
                        [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
                        [--kaiser-beta KAISER_BETA]
                        [--transform {fft,dft,czt,dct,dst,hartley}]
-                       [--no-center] [--device {auto,cpu,cuda}]
-                       [--cuda-device CUDA_DEVICE]
+                       [--phase-engine {propagate,hybrid,random}]
+                       [--ambient-phase-mix AMBIENT_PHASE_MIX]
+                       [--phase-random-seed PHASE_RANDOM_SEED]
+                       [--onset-time-credit]
+                       [--onset-credit-pull ONSET_CREDIT_PULL]
+                       [--onset-credit-max ONSET_CREDIT_MAX]
+                       [--no-onset-realign] [--no-center]
+                       [--device {auto,cpu,cuda}] [--cuda-device CUDA_DEVICE]
                        [--time-stretch TIME_STRETCH]
                        [--target-duration TARGET_DURATION]
                        [--pitch-shift-semitones PITCH_SHIFT_SEMITONES]
@@ -1400,15 +1402,7 @@ options:
   --rms-dbfs RMS_DBFS   Target RMS dBFS when --normalize rms
   --target-lufs TARGET_LUFS
                         Integrated loudness target in LUFS
-  --compressor-threshold-db COMPRESSOR_THRESHOLD_DB
-                        Enable compressor above threshold dBFS
-  --compressor-ratio COMPRESSOR_RATIO
-                        Compressor ratio (>=1)
-  --compressor-attack-ms COMPRESSOR_ATTACK_MS
-                        Compressor attack time in ms
-  --compressor-release-ms COMPRESSOR_RELEASE_MS
-                        Compressor release time in ms
-  --compressor-makeup
+  --compressor-threshold-db COMPRESSOR_T
 ... [truncated]
 ```
 
@@ -1464,11 +1458,17 @@ usage: pvxunison.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
                     [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
                     [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
                     [--kaiser-beta KAISER_BETA]
-                    [--transform {fft,dft,czt,dct,dst,hartley}] [--no-center]
-                    [--device {auto,cpu,cuda}] [--cuda-device CUDA_DEVICE]
-                    [--voices VOICES] [--detune-cents DETUNE_CENTS]
-                    [--width WIDTH] [--dry-mix DRY_MIX]
-                    [--resample-mode {auto,fft,linear}]
+                    [--transform {fft,dft,czt,dct,dst,hartley}]
+                    [--phase-engine {propagate,hybrid,random}]
+                    [--ambient-phase-mix AMBIENT_PHASE_MIX]
+                    [--phase-random-seed PHASE_RANDOM_SEED]
+                    [--onset-time-credit]
+                    [--onset-credit-pull ONSET_CREDIT_PULL]
+                    [--onset-credit-max ONSET_CREDIT_MAX] [--no-onset-realign]
+                    [--no-center] [--device {auto,cpu,cuda}]
+                    [--cuda-device CUDA_DEVICE] [--voices VOICES]
+                    [--detune-cents DETUNE_CENTS] [--width WIDTH]
+                    [--dry-mix DRY_MIX] [--resample-mode {auto,fft,linear}]
                     inputs [inputs ...]
 
 Stereo unison thickener
@@ -1508,14 +1508,7 @@ options:
   --compressor-release-ms COMPRESSOR_RELEASE_MS
                         Compressor release time in ms
   --compressor-makeup-db COMPRESSOR_MAKEUP_DB
-                        Compressor makeup gain in dB
-  --expander-threshold-db EXPANDER_THRESHOLD_DB
-                        Enable downward expander below threshold dBFS
-  --expander-ratio EXPANDER_RATIO
-                        Expander ratio (>=1)
-  --expander-attack-ms EXPANDER_ATTACK_MS
-                        Expander attack time in ms
-  --expander-release-ms EXPANDER
+           
 ... [truncated]
 ```
 
@@ -1544,19 +1537,39 @@ usage: pvxvoc.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
                  [--output-format OUTPUT_FORMAT] [--output OUTPUT]
                  [--overwrite] [--dry-run] [--stdout]
                  [--verbosity {silent,quiet,normal,verbose,debug}] [-v]
-                 [--quiet] [--silent] [--n-fft N_FFT]
+                 [--quiet] [--silent]
+                 [--quality-profile {neutral,speech,music,percussion,ambient,extreme}]
+                 [--auto-profile]
+                 [--auto-profile-lookahead-seconds AUTO_PROFILE_LOOKAHEAD_SECONDS]
+                 [--auto-transform] [--explain-plan] [--n-fft N_FFT]
                  [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
                  [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
                  [--kaiser-beta KAISER_BETA]
                  [--transform {fft,dft,czt,dct,dst,hartley}] [--no-center]
-                 [--phase-locking {off,identity}] [--transient-preserve]
+                 [--phase-locking {off,identity}]
+                 [--phase-engine {propagate,hybrid,random}]
+                 [--ambient-phase-mix AMBIENT_PHASE_MIX]
+                 [--phase-random-seed PHASE_RANDOM_SEED]
+                 [--transient-preserve]
                  [--transient-threshold TRANSIENT_THRESHOLD] [--fourier-sync]
                  [--fourier-sync-min-fft FOURIER_SYNC_MIN_FFT]
                  [--fourier-sync-max-fft FOURIER_SYNC_MAX_FFT]
                  [--fourier-sync-smooth FOURIER_SYNC_SMOOTH]
+                 [--multires-fusion] [--multires-ffts MULTIRES_FFTS]
+                 [--multires-weights MULTIRES_WEIGHTS]
                  [--device {auto,cpu,cuda}] [--cuda-device CUDA_DEVICE]
                  [--time-stretch TIME_STRETCH]
                  [--target-duration TARGET_DURATION]
+                 [--stretch-mode {auto,standard,multistage}]
+                 [--extreme-time-stretch]
+                 [--extreme-stretch-threshold EXTREME_STRETCH_THRESHOLD]
+                 [--max-stage-stretch MAX_STAGE_STRETCH] [--onset-time-credit]
+                 [--onset-credit-pull ONSET_CREDIT_PULL]
+                 [--onset-credit-max ONSET_CREDIT_MAX] [--no-onset-realign]
+                 [--ambient-preset]
+                 [--auto-segment-seconds AUTO_SEGMENT_SECONDS]
+                 [--checkpoint-dir CHECKPOINT_DIR]
+                 [--checkpoint-id CHECKPOINT_ID] [--resume]
                  [--pitch-shift-semitones PITCH_SHIFT_SEMITONES |
                  --pitch-shift-cents PITCH_SHIFT_CENTS |
                  --pitch-shift-ratio PITCH_SHIFT_RATIO |
@@ -1591,33 +1604,7 @@ usage: pvxvoc.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
                  [--compander-release-ms COMPANDER_RELEASE_MS]
                  [--compander-makeup-db COMPANDER_MAKEUP_DB]
                  [--limiter-threshold LIMITER_THRESHOLD]
-                 [--soft-clip-level SOFT_CLIP_LEVEL]
-                 [--soft-clip-type {tanh,arctan,cubic}]
-                 [--soft-clip-drive SOFT_CLIP_DRIVE]
-                 [--hard-clip-level HARD_CLIP_LEVEL] [--clip]
-                 [--subtype SUBTYPE]
-                 inputs [inputs ...]
-
-Phase-vocoder CLI for multi-file, multi-channel time stretching and pitch
-shifting.
-
-positional arguments:
-  inputs                Input audio files/globs or '-' for stdin
-
-options:
-  -h, --help            show this help message and exit
-  -o, --output-dir OUTPUT_DIR
-                        Directory for output files (default: same directory as
-                        each input)
-  --suffix SUFFIX       Suffix appended to output filename stem (default: _pv)
-  --output-format OUTPUT_FORMAT
-                        Output format/extension (e.g. wav, flac, aiff).
-                        Default: keep input extension.
-  --output OUTPUT       Explicit output file path (single-input mode only).
-  --overwrite           Overwrite existing outputs
-  --dry-run             Resolve settings without writing files
-  --stdout              Write processed audio to stdout stream (for piping);
-                 
+                 [--soft-clip-leve
 ... [truncated]
 ```
 
@@ -1673,9 +1660,16 @@ usage: pvxwarp.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
                   [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
                   [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
                   [--kaiser-beta KAISER_BETA]
-                  [--transform {fft,dft,czt,dct,dst,hartley}] [--no-center]
-                  [--device {auto,cpu,cuda}] [--cuda-device CUDA_DEVICE]
-                  --map MAP [--crossfade-ms CROSSFADE_MS]
+                  [--transform {fft,dft,czt,dct,dst,hartley}]
+                  [--phase-engine {propagate,hybrid,random}]
+                  [--ambient-phase-mix AMBIENT_PHASE_MIX]
+                  [--phase-random-seed PHASE_RANDOM_SEED]
+                  [--onset-time-credit]
+                  [--onset-credit-pull ONSET_CREDIT_PULL]
+                  [--onset-credit-max ONSET_CREDIT_MAX] [--no-onset-realign]
+                  [--no-center] [--device {auto,cpu,cuda}]
+                  [--cuda-device CUDA_DEVICE] --map MAP
+                  [--crossfade-ms CROSSFADE_MS]
                   [--resample-mode {auto,fft,linear}]
                   inputs [inputs ...]
 
@@ -1718,15 +1712,7 @@ options:
   --compressor-makeup-db COMPRESSOR_MAKEUP_DB
                         Compressor makeup gain in dB
   --expander-threshold-db EXPANDER_THRESHOLD_DB
-                        Enable downward expander below threshold dBFS
-  --expander-ratio EXPANDER_RATIO
-                        Expander ratio (>=1)
-  --expander-attack-ms EXPANDER_ATTACK_MS
-                        Expander attack time in ms
-  --expander-release-ms EXPANDER_RELEASE_MS
-                        Expander release time in ms
-  --compander-threshold-db COMPANDER_THRESHOLD_DB
-       
+                        E
 ... [truncated]
 ```
 
@@ -1737,6 +1723,36 @@ Compatibility wrapper.
 
 This root module forwards imports/execution to `pvx.cli.pvxwarp` after the
 src-layout migration.
+```
+
+## `scripts_ab_compare.py`
+
+**Purpose:** Run an A/B pvx render comparison and emit metrics reports.
+
+**Classes:** None
+**Functions:** `_metrics`, `_render`, `main`
+
+**Help commands:** `python3 scripts_ab_compare.py`, `python3 scripts_ab_compare.py --help`
+
+### Module Docstring
+
+```text
+Run an A/B pvx render comparison and emit metrics reports.
+```
+
+## `scripts_benchmark_matrix.py`
+
+**Purpose:** Benchmark matrix runner for pvxvoc transform/window/device combinations.
+
+**Classes:** None
+**Functions:** `_parse_csv_tokens`, `_run_case`, `main`
+
+**Help commands:** `python3 scripts_benchmark_matrix.py`, `python3 scripts_benchmark_matrix.py --help`
+
+### Module Docstring
+
+```text
+Benchmark matrix runner for pvxvoc transform/window/device combinations.
 ```
 
 ## `scripts_generate_docs_extras.py`
@@ -1812,6 +1828,21 @@ Generate comprehensive documentation for every Python file in the repository.
 
 ```text
 Generate GitHub-renderable theory docs (math foundations + window reference).
+```
+
+## `scripts_quality_regression.py`
+
+**Purpose:** Render a pvx case and compare objective metrics against a baseline.
+
+**Classes:** None
+**Functions:** `_metrics`, `_compare`, `main`
+
+**Help commands:** `python3 scripts_quality_regression.py`, `python3 scripts_quality_regression.py --help`
+
+### Module Docstring
+
+```text
+Render a pvx case and compare objective metrics against a baseline.
 ```
 
 ## `src/pvx/__init__.py`
@@ -6051,7 +6082,7 @@ Shared helpers for pvx DSP command-line tools.
 **Purpose:** Multi-channel phase vocoder CLI for time and pitch manipulation.
 
 **Classes:** `VocoderConfig`, `PitchConfig`, `ControlSegment`, `JobResult`, `FourierSyncPlan`, `AudioBlockResult`, `RuntimeConfig`, `ProgressBar`
-**Functions:** `add_console_args`, `console_level`, `is_quiet`, `is_silent`, `log_message`, `log_error`, `db_to_amplitude`, `cents_to_ratio`, `_eval_numeric_expr`, `parse_numeric_expression`, `parse_pitch_ratio_value`, `_has_cupy`, `_is_cupy_array`, `_array_module`, `_to_numpy`, `_to_runtime_array`, `_as_float`, `_as_bool`, `_i0`, `normalize_transform_name`, `transform_bin_count`, `_analysis_angular_velocity`, `_transform_requires_scipy`, `ensure_transform_backend_available`, `validate_transform_available`, `_resize_or_pad_1d`, `_onesided_to_full_spectrum`, `_forward_transform_numpy`, `_inverse_transform_numpy`, `_forward_transform`, `_inverse_transform`, `add_runtime_args`, `runtime_config`, `configure_runtime`, `configure_runtime_from_args`, `ensure_runtime_dependencies`, `principal_angle`, `_cosine_series_window`, `_bartlett_window`, `_bohman_window`, `_cosine_window`, `_sine_window`, `_triangular_window`, `_bartlett_hann_window`, `_tukey_window`, `_parzen_window`, `_lanczos_window`, `_welch_window`, `_gaussian_window`, `_general_gaussian_window`, `_exponential_window`, `_cauchy_window`, `_cosine_power_window`, `_hann_poisson_window`, `_general_hamming_window`, `_kaiser_window`, `make_window`, `pad_for_framing`, `stft`, `istft`, `scaled_win_length`, `resize_spectrum_bins`, `smooth_series`, `regularize_frame_lengths`, `fill_nan_with_nearest`, `lock_fft_length_to_f0`, `build_fourier_sync_plan`, `compute_transient_flags`, `find_spectral_peaks`, `apply_identity_phase_locking`, `phase_vocoder_time_stretch`, `phase_vocoder_time_stretch_fourier_sync`, `linear_resample_1d`, `resample_1d`, `force_length`, `estimate_f0_autocorrelation`, `normalize_audio`, `_envelope_coeff`, `_envelope_follower`, `_estimate_lufs_or_rms_db`, `_apply_compressor`, `_apply_expander`, `_apply_compander`, `_apply_limiter`, `_apply_soft_clip`, `add_mastering_args`, `validate_mastering_args`, `apply_mastering_chain`, `cepstral_envelope`, `apply_formant_preservation`, `choose_pitch_ratio`, `_parse_optional_float`, `parse_control_segments_csv`, `apply_control_confidence_policy`, `smooth_control_ratios`, `expand_control_segments`, `load_control_segments`, `process_audio_block`, `resolve_base_stretch`, `compute_output_path`, `_stream_format_name`, `_read_audio_input`, `_write_audio_output`, `concat_audio_chunks`, `process_file`, `force_length_multi`, `resample_multi`, `validate_args`, `build_parser`, `expand_inputs`, `main`
+**Functions:** `add_console_args`, `console_level`, `is_quiet`, `is_silent`, `log_message`, `log_error`, `clone_args_namespace`, `collect_cli_flags`, `db_to_amplitude`, `cents_to_ratio`, `_eval_numeric_expr`, `parse_numeric_expression`, `parse_pitch_ratio_value`, `_is_power_of_two`, `parse_numeric_list`, `parse_int_list`, `estimate_content_features`, `suggest_quality_profile`, `apply_quality_profile_overrides`, `resolve_transform_auto`, `_has_cupy`, `_is_cupy_array`, `_array_module`, `_to_numpy`, `_to_runtime_array`, `_as_float`, `_as_bool`, `_i0`, `normalize_transform_name`, `transform_bin_count`, `_analysis_angular_velocity`, `_transform_requires_scipy`, `ensure_transform_backend_available`, `validate_transform_available`, `_resize_or_pad_1d`, `_onesided_to_full_spectrum`, `_forward_transform_numpy`, `_inverse_transform_numpy`, `_forward_transform`, `_inverse_transform`, `add_runtime_args`, `runtime_config`, `configure_runtime`, `configure_runtime_from_args`, `ensure_runtime_dependencies`, `principal_angle`, `_cosine_series_window`, `_bartlett_window`, `_bohman_window`, `_cosine_window`, `_sine_window`, `_triangular_window`, `_bartlett_hann_window`, `_tukey_window`, `_parzen_window`, `_lanczos_window`, `_welch_window`, `_gaussian_window`, `_general_gaussian_window`, `_exponential_window`, `_cauchy_window`, `_cosine_power_window`, `_hann_poisson_window`, `_general_hamming_window`, `_kaiser_window`, `make_window`, `pad_for_framing`, `stft`, `istft`, `scaled_win_length`, `resize_spectrum_bins`, `smooth_series`, `regularize_frame_lengths`, `fill_nan_with_nearest`, `lock_fft_length_to_f0`, `build_fourier_sync_plan`, `compute_transient_flags`, `build_output_time_steps`, `create_phase_rng`, `draw_random_phase`, `apply_phase_engine`, `find_spectral_peaks`, `apply_identity_phase_locking`, `phase_vocoder_time_stretch`, `phase_vocoder_time_stretch_fourier_sync`, `compute_multistage_stretches`, `phase_vocoder_time_stretch_multistage`, `stretch_channel_with_strategy`, `phase_vocoder_time_stretch_multires_fusion`, `linear_resample_1d`, `resample_1d`, `force_length`, `estimate_f0_autocorrelation`, `normalize_audio`, `_envelope_coeff`, `_envelope_follower`, `_estimate_lufs_or_rms_db`, `_apply_compressor`, `_apply_expander`, `_apply_compander`, `_apply_limiter`, `_apply_soft_clip`, `add_mastering_args`, `validate_mastering_args`, `apply_mastering_chain`, `cepstral_envelope`, `apply_formant_preservation`, `choose_pitch_ratio`, `_parse_optional_float`, `parse_control_segments_csv`, `apply_control_confidence_policy`, `smooth_control_ratios`, `expand_control_segments`, `load_control_segments`, `process_audio_block`, `resolve_base_stretch`, `compute_output_path`, `_stream_format_name`, `_read_audio_input`, `_write_audio_output`, `concat_audio_chunks`, `build_uniform_control_segments`, `_checkpoint_job_id`, `resolve_checkpoint_context`, `load_checkpoint_chunk`, `save_checkpoint_chunk`, `write_manifest`, `process_file`, `force_length_multi`, `resample_multi`, `validate_args`, `build_parser`, `expand_inputs`, `main`
 
 **Help commands:** `python3 src/pvx/core/voc.py`, `python3 src/pvx/core/voc.py --help`
 

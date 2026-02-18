@@ -1,0 +1,16 @@
+{
+  "file": "examples/extreme_seed_10min_ambient.wav",
+  "sample_rate_hz": 48000,
+  "samples": 28800000,
+  "duration_sec": 600.0,
+  "peak_abs": 0.002410888671875,
+  "rms": 0.00021900218257847842,
+  "jump_max_abs": 0.000152587890625,
+  "jump_p99": 6.103515625e-05,
+  "jump_p999": 6.103515625e-05,
+  "jump_p9999": 9.1552734375e-05,
+  "jump_p99999": 0.0001220703125,
+  "jump_count_gt_0.10": 0,
+  "jump_count_gt_0.20": 0,
+  "jump_count_gt_0.30": 0
+}

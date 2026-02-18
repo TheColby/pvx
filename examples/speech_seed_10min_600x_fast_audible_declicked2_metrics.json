@@ -1,0 +1,13 @@
+{
+  "file": "examples/speech_seed_10min_600x_fast_audible_declicked2.wav",
+  "sample_rate_hz": 22050,
+  "samples": 13230000,
+  "duration_sec": 600.0,
+  "peak_abs": 0.8912509381337455,
+  "rms": 0.20083795263989254,
+  "jump_max_abs": 0.14886444085567246,
+  "jump_p99": 0.06818432654693762,
+  "jump_p999": 0.09483998945934569,
+  "jump_count_gt_0p10": 7679,
+  "jump_count_gt_0p20": 0
+}

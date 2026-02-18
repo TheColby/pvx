@@ -1,0 +1,15 @@
+{
+  "description": "Tiny quick-mode baseline for benchmark gate.",
+  "methods": [
+    {
+      "name": "pvx",
+      "aggregate": {
+        "log_spectral_distance": 9.30206237873105,
+        "modulation_spectrum_distance": 0.4640871342272119,
+        "transient_smear_score": 0.04994860342307662,
+        "stereo_coherence_drift": 0.0,
+        "runtime_seconds": 1.113804082997376
+      }
+    }
+  ]
+}

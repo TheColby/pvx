@@ -1,6 +1,6 @@
 # pvx Pipeline Cookbook
 
-_Generated from commit `39eeaf2` (commit date: 2026-02-17T14:18:07-05:00)._
+_Generated from commit `23925ec` (commit date: 2026-02-17T16:15:08-05:00)._
 
 Curated one-line workflows for practical chaining, mastering, microtonal processing, and batch operation.
 
@@ -13,6 +13,32 @@ python3 -m pvx.algorithms.analysis_qa_and_automation.pesq_stoi_visqol_quality_me
 ```
 
 Why: Collects objective quality indicators for regression tracking.
+
+## Automation
+
+### A/B report generation
+
+```bash
+python3 scripts_ab_compare.py --input mix.wav --a-args "--time-stretch 1.1 --transform fft" --b-args "--time-stretch 1.1 --transform dct" --out-dir reports/ab --name fft_vs_dct
+```
+
+Why: Creates JSON/Markdown objective reports for fast algorithm and parameter comparisons.
+
+### Benchmark matrix sweep
+
+```bash
+python3 scripts_benchmark_matrix.py --input mix.wav --transforms fft,dft,dct --windows hann,kaiser --n-ffts 1024,2048 --devices cpu --out-dir reports/bench
+```
+
+Why: Produces reproducible CSV/JSON runtime matrices across transform/window/FFT combinations.
+
+### Quality regression check
+
+```bash
+python3 scripts_quality_regression.py --input mix.wav --output out/reg.wav --render-args "--time-stretch 1.2 --transform fft" --baseline-json reports/baseline.json --report-json reports/regression.json
+```
+
+Why: Compares current renders against baseline objective metrics with configurable tolerances.
 
 ## Batch
 
@@ -85,6 +111,46 @@ python3 pvxvoc.py lead.wav --pitch-shift-cents -23 --time-stretch 1.0 --output-d
 ```
 
 Why: Applies precise microtonal offset without tempo change.
+
+### Extreme stretch with multistage strategy
+
+```bash
+python3 pvxvoc.py ambience.wav --target-duration 600 --ambient-preset --n-fft 16384 --win-length 16384 --hop-size 2048 --window kaiser --kaiser-beta 18 --output-dir out --suffix _ambient600x
+```
+
+Why: PaulStretch-style ambient profile for very large ratios using stochastic phase and onset time-credit controls.
+
+### Ultra-smooth speech stretch (600x)
+
+```bash
+python3 pvxvoc.py speech.wav --target-duration 600 --stretch-mode standard --phase-engine propagate --phase-locking identity --n-fft 8192 --win-length 8192 --hop-size 256 --window hann --normalize peak --peak-dbfs -1 --compressor-threshold-db -30 --compressor-ratio 2.0 --compressor-attack-ms 25 --compressor-release-ms 250 --compressor-makeup-db 4 --limiter-threshold 0.95 --output-dir out --suffix _speech600x
+```
+
+Why: Prefers continuity and intelligibility over texture animation; avoids choppy stochastic artifacts on speech sources.
+
+### Auto-profile plan preview
+
+```bash
+python3 pvxvoc.py input.wav --auto-profile --auto-transform --explain-plan
+```
+
+Why: Prints the resolved profile/config plan before long renders.
+
+### Multi-resolution fusion stretch
+
+```bash
+python3 pvxvoc.py input.wav --multires-fusion --multires-ffts 1024,2048,4096 --multires-weights 0.2,0.35,0.45 --time-stretch 1.4 --output-dir out --suffix _multires
+```
+
+Why: Blends several FFT scales to reduce single-resolution bias on complex program material.
+
+### Checkpointed long render with manifest
+
+```bash
+python3 pvxvoc.py long.wav --time-stretch 12 --auto-segment-seconds 0.5 --checkpoint-dir checkpoints --manifest-json reports/run_manifest.json --output-dir out --suffix _long
+```
+
+Why: Caches segment renders for resume workflows and writes run metadata for reproducibility.
 
 ## Pipelines
 

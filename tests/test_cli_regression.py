@@ -14,6 +14,7 @@ import tempfile
 import unittest
 import csv
 import io
+import json
 from pathlib import Path
 
 import numpy as np
@@ -229,6 +230,44 @@ class TestCLIRegression(unittest.TestCase):
             expected_len = int(round(input_audio.shape[0] * 1.12))
             self.assertAlmostEqual(output_audio.shape[0], expected_len, delta=6)
 
+    def test_cli_extreme_multistage_time_stretch(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            in_path = tmp_path / "extreme.wav"
+            input_audio, sr = write_stereo_tone(in_path, duration=0.22)
+            out_path = tmp_path / "extreme_out.wav"
+
+            cmd = [
+                sys.executable,
+                str(CLI),
+                str(in_path),
+                "--time-stretch",
+                "4.0",
+                "--stretch-mode",
+                "multistage",
+                "--max-stage-stretch",
+                "1.5",
+                "--n-fft",
+                "512",
+                "--win-length",
+                "512",
+                "--hop-size",
+                "128",
+                "--output",
+                str(out_path),
+                "--overwrite",
+                "--quiet",
+            ]
+            proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+            self.assertEqual(proc.returncode, 0, msg=proc.stderr)
+            self.assertTrue(out_path.exists())
+
+            output_audio, out_sr = sf.read(out_path, always_2d=True)
+            self.assertEqual(out_sr, sr)
+            self.assertEqual(output_audio.shape[1], 2)
+            expected_len = int(round(input_audio.shape[0] * 4.0))
+            self.assertAlmostEqual(output_audio.shape[0], expected_len, delta=10)
+
     def test_cli_pitch_shift_ratio_expression(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
@@ -280,6 +319,175 @@ class TestCLIRegression(unittest.TestCase):
             expected_len = int(round(input_audio.shape[0] * 1.05))
             self.assertAlmostEqual(output_audio.shape[0], expected_len, delta=4)
 
+    def test_cli_multires_fusion(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            in_path = tmp_path / "mr.wav"
+            input_audio, sr = write_stereo_tone(in_path, duration=0.35)
+            out_path = tmp_path / "mr_out.wav"
+
+            cmd = [
+                sys.executable,
+                str(CLI),
+                str(in_path),
+                "--multires-fusion",
+                "--multires-ffts",
+                "256,512",
+                "--multires-weights",
+                "0.45,0.55",
+                "--time-stretch",
+                "1.10",
+                "--output",
+                str(out_path),
+                "--overwrite",
+                "--quiet",
+            ]
+            proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+            self.assertEqual(proc.returncode, 0, msg=proc.stderr)
+            self.assertTrue(out_path.exists())
+
+            output_audio, out_sr = sf.read(out_path, always_2d=True)
+            self.assertEqual(out_sr, sr)
+            self.assertEqual(output_audio.shape[1], 2)
+            expected_len = int(round(input_audio.shape[0] * 1.10))
+            self.assertAlmostEqual(output_audio.shape[0], expected_len, delta=10)
+
+    def test_cli_checkpoint_resume(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            in_path = tmp_path / "cp.wav"
+            write_stereo_tone(in_path, duration=0.55)
+            checkpoint_dir = tmp_path / "ckpt"
+            out_path_a = tmp_path / "cp_a.wav"
+            out_path_b = tmp_path / "cp_b.wav"
+
+            base_cmd = [
+                sys.executable,
+                str(CLI),
+                str(in_path),
+                "--auto-segment-seconds",
+                "0.10",
+                "--checkpoint-dir",
+                str(checkpoint_dir),
+                "--time-stretch",
+                "1.25",
+                "--overwrite",
+                "--quiet",
+            ]
+
+            first = subprocess.run(base_cmd + ["--output", str(out_path_a)], cwd=ROOT, capture_output=True, text=True)
+            self.assertEqual(first.returncode, 0, msg=first.stderr)
+            self.assertTrue(out_path_a.exists())
+            self.assertTrue(any(checkpoint_dir.rglob("segment_*.npy")))
+
+            second = subprocess.run(
+                base_cmd + ["--resume", "--output", str(out_path_b)],
+                cwd=ROOT,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(second.returncode, 0, msg=second.stderr)
+            self.assertTrue(out_path_b.exists())
+
+    def test_cli_explain_plan_json(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            in_path = tmp_path / "plan.wav"
+            write_stereo_tone(in_path, duration=0.25)
+
+            cmd = [
+                sys.executable,
+                str(CLI),
+                str(in_path),
+                "--auto-profile",
+                "--auto-transform",
+                "--explain-plan",
+            ]
+            proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+            self.assertEqual(proc.returncode, 0, msg=proc.stderr)
+            payload = json.loads(proc.stdout)
+            self.assertIn("active_profile", payload)
+            self.assertIn("config", payload)
+            self.assertIn("runtime", payload)
+
+    def test_cli_example_mode_outputs_command(self) -> None:
+        cmd = [
+            sys.executable,
+            str(CLI),
+            "--example",
+            "basic",
+        ]
+        proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+        self.assertEqual(proc.returncode, 0, msg=proc.stderr)
+        self.assertIn("python3 pvxvoc.py input.wav", proc.stdout)
+
+    def test_cli_help_contains_grouped_sections(self) -> None:
+        cmd = [sys.executable, str(CLI), "--help"]
+        proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+        self.assertEqual(proc.returncode, 0, msg=proc.stderr)
+        help_text = proc.stdout
+        for heading in (
+            "I/O:",
+            "Performance:",
+            "Quality/Phase:",
+            "Time/Pitch:",
+            "Transients:",
+            "Stereo:",
+            "Output/Mastering:",
+            "Debug:",
+        ):
+            self.assertIn(heading, help_text)
+        self.assertEqual(help_text.count("Time/Pitch:"), 1)
+
+    def test_cli_transient_preserve_maps_to_reset_mode(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            in_path = tmp_path / "legacy_transient.wav"
+            write_stereo_tone(in_path, duration=0.2)
+            cmd = [
+                sys.executable,
+                str(CLI),
+                str(in_path),
+                "--transient-preserve",
+                "--explain-plan",
+            ]
+            proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+            self.assertEqual(proc.returncode, 0, msg=proc.stderr)
+            plan = json.loads(proc.stdout)
+            self.assertEqual(plan["config"]["transient_mode"], "reset")
+
+    def test_cli_preset_and_beginner_aliases(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            in_path = tmp_path / "alias_preset.wav"
+            input_audio, sr = write_stereo_tone(in_path, duration=0.35)
+            out_path = tmp_path / "alias_preset_out.wav"
+
+            cmd = [
+                sys.executable,
+                str(CLI),
+                str(in_path),
+                "--preset",
+                "vocal",
+                "--stretch",
+                "1.08",
+                "--pitch",
+                "-1",
+                "--out",
+                str(out_path),
+                "--overwrite",
+                "--quiet",
+            ]
+            proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+            self.assertEqual(proc.returncode, 0, msg=proc.stderr)
+            self.assertTrue(out_path.exists())
+
+            output_audio, out_sr = sf.read(out_path, always_2d=True)
+            self.assertEqual(out_sr, sr)
+            self.assertEqual(output_audio.shape[1], 2)
+            expected_len = int(round(input_audio.shape[0] * 1.08))
+            self.assertAlmostEqual(output_audio.shape[0], expected_len, delta=8)
+
     def test_cli_fourier_sync_non_power_of_two_fft(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
@@ -316,6 +524,120 @@ class TestCLIRegression(unittest.TestCase):
 
             expected_len = int(round(input_audio.shape[0] * 1.2))
             self.assertAlmostEqual(output_audio.shape[0], expected_len, delta=8)
+
+    def test_cli_hybrid_transient_mode_runs(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            in_path = tmp_path / "hybrid_in.wav"
+            input_audio, sr = write_stereo_tone(in_path, duration=0.35)
+            out_path = tmp_path / "hybrid_out.wav"
+
+            cmd = [
+                sys.executable,
+                str(CLI),
+                str(in_path),
+                "--transient-mode",
+                "hybrid",
+                "--transient-sensitivity",
+                "0.6",
+                "--transient-protect-ms",
+                "30",
+                "--transient-crossfade-ms",
+                "10",
+                "--time-stretch",
+                "1.12",
+                "--output",
+                str(out_path),
+                "--overwrite",
+                "--quiet",
+            ]
+            proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+            self.assertEqual(proc.returncode, 0, msg=proc.stderr)
+            self.assertTrue(out_path.exists())
+            output_audio, out_sr = sf.read(out_path, always_2d=True)
+            self.assertEqual(out_sr, sr)
+            expected_len = int(round(input_audio.shape[0] * 1.12))
+            self.assertAlmostEqual(output_audio.shape[0], expected_len, delta=8)
+
+    def test_cli_stereo_coherence_mode_runs(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            in_path = tmp_path / "stereo_lock_in.wav"
+            _, sr = write_stereo_tone(in_path, duration=0.35)
+            out_path = tmp_path / "stereo_lock_out.wav"
+
+            cmd = [
+                sys.executable,
+                str(CLI),
+                str(in_path),
+                "--stereo-mode",
+                "ref_channel_lock",
+                "--ref-channel",
+                "0",
+                "--coherence-strength",
+                "0.9",
+                "--time-stretch",
+                "1.1",
+                "--output",
+                str(out_path),
+                "--overwrite",
+                "--quiet",
+            ]
+            proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+            self.assertEqual(proc.returncode, 0, msg=proc.stderr)
+            self.assertTrue(out_path.exists())
+            output_audio, out_sr = sf.read(out_path, always_2d=True)
+            self.assertEqual(out_sr, sr)
+            self.assertEqual(output_audio.shape[1], 2)
+
+    def test_cli_quiet_prints_audio_metrics_table(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            in_path = tmp_path / "metrics_in.wav"
+            write_stereo_tone(in_path, duration=0.25)
+            out_path = tmp_path / "metrics_out.wav"
+
+            cmd = [
+                sys.executable,
+                str(CLI),
+                str(in_path),
+                "--time-stretch",
+                "1.05",
+                "--output",
+                str(out_path),
+                "--overwrite",
+                "--quiet",
+            ]
+            proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+            self.assertEqual(proc.returncode, 0, msg=proc.stderr)
+            combined = proc.stdout + "\n" + proc.stderr
+            self.assertIn("Audio Metrics", combined)
+            self.assertIn("Audio Compare Metrics", combined)
+            self.assertIn("SNR dB", combined)
+            self.assertIn("delta(last-first)", combined)
+
+    def test_cli_silent_hides_audio_metrics_table(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            in_path = tmp_path / "silent_metrics_in.wav"
+            write_stereo_tone(in_path, duration=0.25)
+            out_path = tmp_path / "silent_metrics_out.wav"
+
+            cmd = [
+                sys.executable,
+                str(CLI),
+                str(in_path),
+                "--time-stretch",
+                "1.05",
+                "--output",
+                str(out_path),
+                "--overwrite",
+                "--silent",
+            ]
+            proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+            self.assertEqual(proc.returncode, 0, msg=proc.stderr)
+            combined = proc.stdout + "\n" + proc.stderr
+            self.assertNotIn("Audio Metrics", combined)
 
     def test_regression_metrics_snapshot(self) -> None:
         from pvxvoc import VocoderConfig, phase_vocoder_time_stretch, resample_1d

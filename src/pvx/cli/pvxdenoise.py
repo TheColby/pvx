@@ -22,6 +22,7 @@ from pvx.core.common import (
     resolve_inputs,
     validate_vocoder_args,
     write_output,
+    print_input_output_metrics_table,
 )
 from pvx.core.voc import db_to_amplitude, istft, stft
 
@@ -123,6 +124,15 @@ def main(argv: list[str] | None = None) -> int:
                 )
             out = finalize_audio(out, sr, args)
             out_path = default_output_path(path, args)
+            print_input_output_metrics_table(
+                args,
+                input_label=str(path),
+                input_audio=audio,
+                input_sr=sr,
+                output_label=str(out_path),
+                output_audio=out,
+                output_sr=sr,
+            )
             write_output(out_path, out, sr, args)
             log_message(args, f"[ok] {path} -> {out_path}", min_level="verbose")
         except Exception as exc:
