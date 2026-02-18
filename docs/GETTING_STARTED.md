@@ -86,6 +86,23 @@ Key tradeoff:
 - Vocal harmonies: `pvxharmonize` with interval and pan controls.
 - Timeline-locked effects: `pvxconform` / `pvxwarp` with CSV maps.
 
+### 5.1 Use-Case Matrix (Where to start quickly)
+
+| Use case | First command to try |
+| --- | --- |
+| Speech slowdown for transcription | `python3 pvxvoc.py speech.wav --preset vocal_studio --stretch 1.25 --output speech_slow.wav` |
+| Podcast timing cleanup | `python3 pvxvoc.py voice.wav --stretch 0.95 --output voice_tight.wav` |
+| Vocal pitch correction | `python3 pvxretune.py vocal.wav --scale major --root C --output-dir out --suffix _retune` |
+| Harmonic backing voices | `python3 pvxharmonize.py lead.wav --intervals 0,4,7 --gains 1,0.8,0.65 --output-dir out` |
+| Unison widen synth | `python3 pvxunison.py synth.wav --voices 7 --detune-cents 16 --width 1.1 --output-dir out` |
+| Long ambient from short source | `python3 pvxvoc.py oneshot.wav --preset extreme_ambient --target-duration 600 --output ambient.wav` |
+| Drum-safe stretch | `python3 pvxvoc.py drums.wav --preset drums_safe --stretch 1.3 --output drums_stretch.wav` |
+| Stereo image stability | `python3 pvxvoc.py mix.wav --stretch 1.15 --stereo-mode mid_side_lock --coherence-strength 0.9 --output mix_lock.wav` |
+| Noise reduction pre-pass | `python3 pvxdenoise.py field.wav --reduction-db 8 --output-dir out --suffix _den` |
+| Room tail reduction | `python3 pvxdeverb.py room.wav --strength 0.5 --output-dir out --suffix _dry` |
+| CSV time/pitch choreography | `python3 pvxconform.py source.wav --map map_conform.csv --output-dir out` |
+| Automated quality comparison | `python3 benchmarks/run_bench.py --quick --out-dir benchmarks/out --gate --baseline benchmarks/baseline_small.json` |
+
 ## 6. Step-by-Step Walkthrough (One Small WAV)
 
 Assume `sample.wav` is about 2–5 seconds long.
@@ -188,7 +205,8 @@ Legacy presets remain available: `vocal`, `ambient`, `extreme`.
 
 ## 10. Next Steps
 
-- Run practical recipes: `docs/EXAMPLES.md`
-- Learn diagrams: `docs/DIAGRAMS.md`
+- Run practical recipes and advanced use cases (65+): `docs/EXAMPLES.md`
+- Learn architecture and DSP diagrams (26+): `docs/DIAGRAMS.md`
+- Study equation-level behavior (31 sections): `docs/MATHEMATICAL_FOUNDATIONS.md`
 - Use Python API directly: `docs/API_OVERVIEW.md`
 - Use benchmark runner: `benchmarks/run_bench.py`

@@ -7,6 +7,21 @@ Assumptions:
 - output format defaults to input extension unless overridden
 - tools using `--output-dir` and `--suffix` write inferred filenames
 
+## Use-Case Index (By Theme)
+
+| Theme | Start here | Typical tools |
+| --- | --- | --- |
+| Speech intelligibility and timing | 1, 2, 25, 61 | `pvxvoc.py` |
+| Musical pitch and formants | 3, 4, 5, 29, 37, 48 | `pvxvoc.py`, `pvxretune.py` |
+| Extreme ambient and drones | 6, 28, 45, 50, 65 | `pvxvoc.py`, `pvxfreeze.py` |
+| Transient-safe processing | 26, 30, 32, 33, 52 | `pvxvoc.py` |
+| Stereo/multichannel coherence | 27, 34, 35, 57, 58 | `pvxvoc.py` |
+| Morphing and hybrid sound design | 9, 23, 49, 55 | `pvxmorph.py`, `pvxlayer.py`, `pvxharmonize.py` |
+| Cleanup/restoration | 11, 12, 50, 53, 64 | `pvxdenoise.py`, `pvxdeverb.py` |
+| Automation and reproducibility | 13, 14, 24, 31, 44, 47, 63 | `pvxconform.py`, `pvxvoc.py`, benchmarks |
+| Transform and backend research | 40, 41, 62 | `pvxvoc.py` |
+| Live-style piping workflows | 17, 46, 59 | `pvxvoc.py` + downstream tools |
+
 ---
 
 ## 1) Slow Down Speech
@@ -777,3 +792,813 @@ python3 benchmarks/run_bench.py --quick --out-dir benchmarks/out --baseline benc
 
 **Artifacts to listen for**
 - n/a (objective benchmark command)
+
+---
+
+## 32) Transient Reset Mode for Cleaner Attacks
+
+**Command**
+```bash
+python3 pvxvoc.py drums.wav --stretch 1.22 --transient-mode reset --transient-sensitivity 0.62 --output drums_reset.wav
+```
+
+**Explanation**
+- Applies phase resets around detected onsets while leaving steady regions in PV flow.
+
+**Before/After**
+- Before: transient-rich grooves may soften at larger stretches.
+- After: snare/kick attack definition is usually sharper.
+
+**Parameters that matter most**
+- `--transient-mode reset`
+- `--transient-sensitivity`
+
+**Artifacts to listen for**
+- onset clicks if sensitivity is too high
+
+---
+
+## 33) WSOLA-Only Transient Handling
+
+**Command**
+```bash
+python3 pvxvoc.py percussion.wav --stretch 1.35 --transient-mode wsola --transient-protect-ms 35 --output percussion_wsola.wav
+```
+
+**Explanation**
+- Prioritizes time-domain overlap/similarity handling for transient regions.
+
+**Before/After**
+- Before: attack smearing in strictly spectral paths.
+- After: stronger transient solidity with different texture in sustains.
+
+**Parameters that matter most**
+- `--transient-mode wsola`
+- `--transient-protect-ms`
+
+**Artifacts to listen for**
+- grain boundaries if crossfade/protect windows are mismatched
+
+---
+
+## 34) Mid/Side Stereo Coherence Stretch
+
+**Command**
+```bash
+python3 pvxvoc.py stereo_mix.wav --stretch 1.18 --stereo-mode mid_side_lock --coherence-strength 0.9 --output stereo_ms_lock.wav
+```
+
+**Explanation**
+- Preserves stereo image geometry by constraining M/S phase behavior.
+
+**Before/After**
+- Before: image may wobble on sustained sections.
+- After: center and width usually feel more stable.
+
+**Parameters that matter most**
+- `--stereo-mode mid_side_lock`
+- `--coherence-strength`
+
+**Artifacts to listen for**
+- over-constrained width if coherence is set too high
+
+---
+
+## 35) Reference-Channel Lock for Multichannel Content
+
+**Command**
+```bash
+python3 pvxvoc.py multichannel.wav --stretch 1.12 --stereo-mode ref_channel_lock --ref-channel 0 --coherence-strength 0.85 --output multichannel_ref_lock.wav
+```
+
+**Explanation**
+- Uses one channel as phase anchor to reduce inter-channel decorrelation.
+
+**Before/After**
+- Before: surround image drift on strong harmonics.
+- After: tighter channel relationship across processing.
+
+**Parameters that matter most**
+- `--stereo-mode ref_channel_lock`
+- `--ref-channel`
+- `--coherence-strength`
+
+**Artifacts to listen for**
+- channel dominance bias if reference channel is atypical
+
+---
+
+## 36) Irrational Pitch Ratio Input
+
+**Command**
+```bash
+python3 pvxvoc.py tone.wav --stretch 1.0 --pitch-ratio "2^(1/12)" --output tone_up_1semitone_expr.wav
+```
+
+**Explanation**
+- Uses expression parsing for irrational ratio input directly on CLI.
+
+**Before/After**
+- Before: original fundamental.
+- After: +1 equal-tempered semitone.
+
+**Parameters that matter most**
+- `--pitch-ratio` expression
+- `--stretch 1.0`
+
+**Artifacts to listen for**
+- none specific for small shifts; monitor formant drift on voice
+
+---
+
+## 37) Just-Ratio Pitch Input
+
+**Command**
+```bash
+python3 pvxvoc.py tone.wav --stretch 1.0 --pitch-ratio 3/2 --output tone_perfect_fifth.wav
+```
+
+**Explanation**
+- Uses just-intonation ratio syntax for exact rational interval control.
+
+**Before/After**
+- Before: root pitch.
+- After: perfect fifth above (3:2).
+
+**Parameters that matter most**
+- `--pitch-ratio 3/2`
+
+**Artifacts to listen for**
+- beating vs reference if mixed with equal-tempered material
+
+---
+
+## 38) N-TET CSV Map (19-TET) with `pvxconform`
+
+**Command**
+```bash
+python3 pvxconform.py lead.wav --map maps/map_19tet.csv --output-dir out --suffix _19tet
+```
+
+**Explanation**
+- Applies segmentwise pitch/time map from CSV using 19-tone equal temperament ratios.
+
+**Before/After**
+- Before: 12-TET phrases.
+- After: 19-TET trajectory according to map.
+
+**Parameters that matter most**
+- `--map`
+- CSV `pitch_ratio` values
+
+**Artifacts to listen for**
+- boundary roughness if map segments are too short
+
+---
+
+## 39) Just-Intonation CSV Conform Map
+
+**Command**
+```bash
+python3 pvxconform.py choir.wav --map maps/map_just_intonation.csv --output-dir out --suffix _ji
+```
+
+**Explanation**
+- Retunes with segment ratios such as `5/4`, `6/5`, `7/4`, `9/8`.
+
+**Before/After**
+- Before: equal-tempered intonation center.
+- After: just-intonation harmonic color.
+
+**Parameters that matter most**
+- map segment durations
+- map `pitch_ratio`
+
+**Artifacts to listen for**
+- abrupt color shifts between unrelated just ratios
+
+---
+
+## 40) Transform A/B: FFT vs DCT
+
+**Command**
+```bash
+python3 pvxvoc.py source.wav --stretch 1.08 --transform fft --output fft_out.wav
+python3 pvxvoc.py source.wav --stretch 1.08 --transform dct --output dct_out.wav
+```
+
+**Explanation**
+- Compares complex-phase Fourier path against real cosine basis path.
+
+**Before/After**
+- Before: one baseline source.
+- After: two different transform-character outputs.
+
+**Parameters that matter most**
+- `--transform`
+- identical stretch/pitch settings for fair comparison
+
+**Artifacts to listen for**
+- phase character and transient envelope differences
+
+---
+
+## 41) CZT for Non-Power-of-Two Frame Setup
+
+**Command**
+```bash
+python3 pvxvoc.py source.wav --transform czt --n-fft 1536 --win-length 1536 --hop-size 384 --stretch 1.1 --output czt_1536.wav
+```
+
+**Explanation**
+- Uses chirp-z backend for a non-power-of-two frame strategy.
+
+**Before/After**
+- Before: default FFT path.
+- After: alternate numerical behavior for same macro task.
+
+**Parameters that matter most**
+- `--transform czt`
+- `--n-fft`, `--win-length`, `--hop-size`
+
+**Artifacts to listen for**
+- subtle high-frequency texture differences vs FFT
+
+---
+
+## 42) Full Mastering Chain in One Render
+
+**Command**
+```bash
+python3 pvxvoc.py mix.wav --stretch 1.03 --target-lufs -14 --compressor-threshold-db -18 --compressor-ratio 2.2 --limiter-threshold -0.9 --soft-clip-level 0.96 --output mix_mastered.wav
+```
+
+**Explanation**
+- Demonstrates integrated DSP + mastering path for one-step render.
+
+**Before/After**
+- Before: un-leveled output with higher crest variance.
+- After: controlled loudness with safety limiting/clipping.
+
+**Parameters that matter most**
+- `--target-lufs`
+- compressor and limiter thresholds
+- `--soft-clip-level`
+
+**Artifacts to listen for**
+- pumping, flattened transients, clip harshness
+
+---
+
+## 43) Safety Limiter + Hard Clip Guard
+
+**Command**
+```bash
+python3 pvxvoc.py loud_source.wav --stretch 1.0 --limiter-threshold -1.0 --hard-clip-level 0.98 --output loud_safe.wav
+```
+
+**Explanation**
+- Adds a limiter stage followed by a hard guard ceiling.
+
+**Before/After**
+- Before: possible overs and intersample spikes.
+- After: bounded peaks with predictable ceiling.
+
+**Parameters that matter most**
+- `--limiter-threshold`
+- `--hard-clip-level`
+
+**Artifacts to listen for**
+- transient flattening if limiter is overworked
+
+---
+
+## 44) Plan-Only Diagnostic (No Render)
+
+**Command**
+```bash
+python3 pvxvoc.py source.wav --auto-profile --auto-transform --manifest-json plan.json --dry-run --explain-plan
+```
+
+**Explanation**
+- Produces resolved strategy without writing output audio.
+
+**Before/After**
+- Before: no visibility into automatic decision path.
+- After: JSON and console explanation of chosen settings.
+
+**Parameters that matter most**
+- `--auto-profile`
+- `--auto-transform`
+- `--dry-run`
+
+**Artifacts to listen for**
+- n/a (planning command)
+
+---
+
+## 45) Checkpointed Long Render Workflow
+
+**Command**
+```bash
+python3 pvxvoc.py long_source.wav --target-duration 1200 --auto-segment-seconds 0.5 --checkpoint-dir .pvx_ckpt --output long_out.wav
+python3 pvxvoc.py long_source.wav --target-duration 1200 --auto-segment-seconds 0.5 --checkpoint-dir .pvx_ckpt --resume --output long_out.wav
+```
+
+**Explanation**
+- First command starts segmented checkpointed render; second resumes if interrupted.
+
+**Before/After**
+- Before: full rerender after interruption.
+- After: resumed render from saved chunk state.
+
+**Parameters that matter most**
+- `--checkpoint-dir`
+- `--auto-segment-seconds`
+- `--resume`
+
+**Artifacts to listen for**
+- chunk-boundary discontinuities if segmenting is too coarse
+
+---
+
+## 46) Multi-Tool Pipe with Streaming I/O
+
+**Command**
+```bash
+python3 pvxvoc.py input.wav --stretch 1.1 --stdout \
+| python3 pvxdenoise.py - --reduction-db 8 --stdout \
+| python3 pvxdeverb.py - --strength 0.35 --output cleaned_chain.wav
+```
+
+**Explanation**
+- Streams PCM data through multiple tools in one line.
+
+**Before/After**
+- Before: separate intermediate files.
+- After: one-pass chained processing.
+
+**Parameters that matter most**
+- upstream `--stdout`
+- downstream `-` stdin input
+
+**Artifacts to listen for**
+- cumulative artifact stacking from multiple stages
+
+---
+
+## 47) Batch Tree Processing with `find` + `xargs`
+
+**Command**
+```bash
+find sessions -name "*.wav" -print0 | xargs -0 -I{} python3 pvxvoc.py "{}" --stretch 1.05 --output-dir renders --suffix _x105 --overwrite
+```
+
+**Explanation**
+- Applies a consistent transform to an entire tree of WAV files.
+
+**Before/After**
+- Before: manual per-file invocation.
+- After: reproducible batch render set.
+
+**Parameters that matter most**
+- stable suffix conventions
+- overwrite policy
+
+**Artifacts to listen for**
+- content classes that need per-file presets instead of one global recipe
+
+---
+
+## 48) Vocal Retune by Scale/Root (`pvxretune`)
+
+**Command**
+```bash
+python3 pvxretune.py vocal.wav --scale minor --root A --f0-min 70 --f0-max 1000 --output-dir out --suffix _retune_amin
+```
+
+**Explanation**
+- Tracks monophonic F0 and snaps segments to requested tonal set.
+
+**Before/After**
+- Before: natural pitch drift.
+- After: scale-constrained melody line.
+
+**Parameters that matter most**
+- `--scale`, `--root`
+- `--f0-min`, `--f0-max`
+
+**Artifacts to listen for**
+- octave errors on noisy consonants
+
+---
+
+## 49) Harmonize Then Widen in One Pipeline
+
+**Command**
+```bash
+python3 pvxharmonize.py lead.wav --intervals 0,4,7 --gains 1,0.75,0.65 --stdout \
+| python3 pvxunison.py - --voices 5 --detune-cents 10 --width 1.0 --output harmonized_wide.wav
+```
+
+**Explanation**
+- Builds harmony stack first, then adds unison detuned width.
+
+**Before/After**
+- Before: single melodic line.
+- After: harmonized and spatially widened texture.
+
+**Parameters that matter most**
+- harmonic intervals/gains
+- unison voice count and detune
+
+**Artifacts to listen for**
+- dense masking in low-mid region
+
+---
+
+## 50) Ambient Macro-Chain (Stretch + Cleanup + Loudness)
+
+**Command**
+```bash
+python3 pvxvoc.py seed.wav --preset extreme_ambient --target-duration 600 --stdout \
+| python3 pvxdenoise.py - --reduction-db 4 --smooth 9 --stdout \
+| python3 pvxdeverb.py - --strength 0.25 --stdout \
+| python3 pvxvoc.py - --stretch 1.0 --target-lufs -18 --output ambient_final.wav
+```
+
+**Explanation**
+- Demonstrates long-form ambient generation plus light restoration and final loudness targeting.
+
+**Before/After**
+- Before: short seed sample.
+- After: long-form ambient render with controlled output level.
+
+**Parameters that matter most**
+- ambient preset stretch controls
+- cleanup strength values
+- final `--target-lufs`
+
+**Artifacts to listen for**
+- accumulated haze from over-processing
+
+---
+
+## 51) Broadcast-Style Speech Finishing (Stretch + Loudness + Safety)
+
+**Command**
+```bash
+python3 pvxvoc.py narration.wav --preset vocal_studio --stretch 1.08 --target-lufs -16 --limiter-threshold -1.0 --soft-clip-level 0.98 --hard-clip-level 0.995 --output narration_finished.wav
+```
+
+**Explanation**
+- Applies subtle timing expansion and a conservative mastering finish in one pass.
+
+**Before/After**
+- Before: untreated narration.
+- After: slightly slower pacing with controlled final loudness and peaks.
+
+**Parameters that matter most**
+- `--stretch`
+- `--target-lufs`
+- limiter/clip safety thresholds
+
+**Artifacts to listen for**
+- pumping from aggressive limiting
+- clipped consonant edges if clip levels are too low
+
+---
+
+## 52) Extreme Stretch with Checkpointed Recovery
+
+**Command**
+```bash
+python3 pvxvoc.py short_source.wav --preset extreme_ambient --target-duration 900 --auto-segment-seconds 0.25 --checkpoint-dir checkpoints/short_source --output short_source_15min.wav
+```
+
+**Explanation**
+- Runs a very large render with small recoverable segments and persistent checkpoints.
+
+**Before/After**
+- Before: short source gesture.
+- After: long ambient evolution with resumable rendering.
+
+**Parameters that matter most**
+- `--target-duration`
+- `--auto-segment-seconds`
+- `--checkpoint-dir`
+
+**Artifacts to listen for**
+- timbral drift from repeated stage boundaries
+
+---
+
+## 53) Room Recording Rehab (De-Reverb Then Stretch)
+
+**Command**
+```bash
+python3 pvxdeverb.py room_take.wav --strength 0.45 --stdout \
+| python3 pvxvoc.py - --preset vocal_studio --stretch 1.15 --output room_take_rehab.wav
+```
+
+**Explanation**
+- Reduces reverberant smear first, then performs moderate timing stretch on cleaner material.
+
+**Before/After**
+- Before: dense room reflections.
+- After: clearer direct signal with slower timing.
+
+**Parameters that matter most**
+- `pvxdeverb.py --strength`
+- `pvxvoc.py --stretch`
+
+**Artifacts to listen for**
+- metallic tails from over-dereverb
+- new blur if stretch is too large
+
+---
+
+## 54) Scale-Quantized Retune Followed by Unison Widening
+
+**Command**
+```bash
+python3 pvxretune.py lead.wav --scale major --root D --output-dir out --suffix _retuned \
+&& python3 pvxunison.py out/lead_retuned.wav --voices 5 --detune-cents 9 --width 0.9 --output-dir out --suffix _retuned_unison
+```
+
+**Explanation**
+- First constrains melody to key, then adds controlled chorus/unison width.
+
+**Before/After**
+- Before: dry monophonic lead.
+- After: tuned and widened lead texture.
+
+**Parameters that matter most**
+- retune scale/root
+- unison voices and detune
+
+**Artifacts to listen for**
+- tuning jumps on weak F0 regions
+- phasey image when width/detune are too high
+
+---
+
+## 55) Morph Then Freeze for Hybrid Pads
+
+**Command**
+```bash
+python3 pvxmorph.py bells.wav choir.wav --alpha 0.5 --output bells_choir_morph.wav \
+&& python3 pvxfreeze.py bells_choir_morph.wav --freeze-time 0.8 --duration 20 --output-dir out --suffix _frozen
+```
+
+**Explanation**
+- Builds a hybrid timbre first, then captures a stable harmonic moment as a sustained pad.
+
+**Before/After**
+- Before: two independent sources.
+- After: one blended frozen harmonic texture.
+
+**Parameters that matter most**
+- morph `--alpha`
+- freeze capture time and duration
+
+**Artifacts to listen for**
+- static texture if freeze time is poorly chosen
+
+---
+
+## 56) CUDA Attempt with Deterministic CPU Fallback Workflow
+
+**Command**
+```bash
+python3 pvxvoc.py mix.wav --device cuda --stretch 1.12 --output mix_cuda.wav || python3 pvxvoc.py mix.wav --device cpu --stretch 1.12 --output mix_cpu.wav
+```
+
+**Explanation**
+- Tries GPU first, then falls back to CPU using the same core settings.
+
+**Before/After**
+- Before: original mix timing.
+- After: consistent stretched output regardless of device path.
+
+**Parameters that matter most**
+- `--device`
+- stretch/quality controls shared between both paths
+
+**Artifacts to listen for**
+- no expected quality change between CPU and CUDA modes
+
+---
+
+## 57) 5.1/Multichannel Reference-Lock Stretch
+
+**Command**
+```bash
+python3 pvxvoc.py surround.wav --stretch 1.1 --stereo-mode ref_channel_lock --ref-channel 2 --coherence-strength 0.95 --output surround_lock.wav
+```
+
+**Explanation**
+- Anchors phase evolution to a chosen reference channel to reduce inter-channel drift.
+
+**Before/After**
+- Before: original multichannel phase relationships.
+- After: stretched output with better preserved channel coupling.
+
+**Parameters that matter most**
+- `--stereo-mode ref_channel_lock`
+- `--ref-channel`
+- `--coherence-strength`
+
+**Artifacts to listen for**
+- narrowed width if coherence is overly strong for decorrelated ambience
+
+---
+
+## 58) Mid/Side Lock with Formant-Preserving Pitch Shift
+
+**Command**
+```bash
+python3 pvxvoc.py stereo_vocal.wav --stretch 1.0 --pitch 2 --pitch-mode formant-preserving --stereo-mode mid_side_lock --coherence-strength 0.9 --output stereo_vocal_up2_lock.wav
+```
+
+**Explanation**
+- Combines vocal formant handling with stereo image preservation.
+
+**Before/After**
+- Before: natural stereo vocal.
+- After: upshifted vocal with tighter image stability.
+
+**Parameters that matter most**
+- `--pitch`, `--pitch-mode`
+- `--stereo-mode`, `--coherence-strength`
+
+**Artifacts to listen for**
+- center blur if coherence strength is too low
+
+---
+
+## 59) Confidence-Gated External Pitch Control via Pipe
+
+**Command**
+```bash
+python3 HPS-pitch-track.py A.wav | python3 pvxvoc.py B.wav --pitch-follow-stdin --pitch-conf-min 0.75 --pitch-lowconf-mode hold --pitch-map-crossfade-ms 20 --output B_pitch_follow.wav
+```
+
+**Explanation**
+- Tracks pitch trajectory from `A.wav`, then applies only high-confidence pitch control to `B.wav`.
+
+**Before/After**
+- Before: independent `B.wav` pitch contour.
+- After: `B.wav` follows trusted sections of `A.wav` pitch shape.
+
+**Parameters that matter most**
+- `--pitch-conf-min`
+- `--pitch-lowconf-mode`
+- `--pitch-map-crossfade-ms`
+
+**Artifacts to listen for**
+- contour lag if crossfade is too long
+- pitch jitter if confidence threshold is too low
+
+---
+
+## 60) Microtonal Just-Ratio Map Playback
+
+**Command**
+```bash
+python3 pvxvoc.py mono_line.wav --pitch-map maps/just_ratios.csv --pitch-map-crossfade-ms 15 --output mono_line_ji.wav
+```
+
+**Explanation**
+- Applies time-varying just-ratio pitch targets from CSV.
+
+**Before/After**
+- Before: fixed tuning.
+- After: trajectory-constrained microtonal tuning.
+
+**Parameters that matter most**
+- `--pitch-map`
+- `--pitch-map-crossfade-ms`
+
+**Artifacts to listen for**
+- step audibility if map density is too sparse
+
+---
+
+## 61) Speech Clarity Pass (Identity Lock + Conservative Window/Hop)
+
+**Command**
+```bash
+python3 pvxvoc.py lecture.wav --stretch 1.18 --phase-locking identity --n-fft 2048 --hop-size 256 --output lecture_clear_stretch.wav
+```
+
+**Explanation**
+- Uses a quality-focused speech profile manually tuned for lower phase blur.
+
+**Before/After**
+- Before: original lecture pace.
+- After: slower and clearer for note-taking.
+
+**Parameters that matter most**
+- `--phase-locking identity`
+- `--n-fft`, `--hop-size`
+
+**Artifacts to listen for**
+- mild transient smear if hop becomes too large
+
+---
+
+## 62) Transform Research A/B (FFT vs Hartley)
+
+**Command**
+```bash
+python3 pvxvoc.py source.wav --stretch 1.1 --transform fft --output source_fft.wav \
+&& python3 pvxvoc.py source.wav --stretch 1.1 --transform hartley --output source_hartley.wav
+```
+
+**Explanation**
+- Produces matched renders to compare transform-domain behavior.
+
+**Before/After**
+- Before: one reference source.
+- After: two algorithmic variants for blind listening tests.
+
+**Parameters that matter most**
+- `--transform`
+- all other parameters held constant
+
+**Artifacts to listen for**
+- fine-grain differences in high-frequency texture
+
+---
+
+## 63) Multi-Resolution Fusion With Explicit Weights
+
+**Command**
+```bash
+python3 pvxvoc.py texture.wav --stretch 1.4 --multires-fusion --multires-ffts 1024,2048,4096 --multires-weights 0.2,0.35,0.45 --output texture_multires_weighted.wav
+```
+
+**Explanation**
+- Fuses multiple FFT scales with explicit weighting rather than implicit defaults.
+
+**Before/After**
+- Before: single-scale spectral processing.
+- After: blended resolution emphasizing low-frequency stability.
+
+**Parameters that matter most**
+- `--multires-ffts`
+- `--multires-weights`
+
+**Artifacts to listen for**
+- diffuse attacks if large-FFT weight is too dominant
+
+---
+
+## 64) Conservative Field-Restoration Chain
+
+**Command**
+```bash
+python3 pvxdenoise.py field.wav --reduction-db 5 --smooth 7 --stdout \
+| python3 pvxdeverb.py - --strength 0.3 --stdout \
+| python3 pvxvoc.py - --stretch 1.0 --target-lufs -20 --limiter-threshold -1.5 --output field_restored.wav
+```
+
+**Explanation**
+- Applies light denoise + dereverb and ends with conservative loudness normalization.
+
+**Before/After**
+- Before: noisy reverberant field capture.
+- After: cleaner and level-aligned output.
+
+**Parameters that matter most**
+- denoise reduction amount
+- dereverb strength
+- final loudness/limiter settings
+
+**Artifacts to listen for**
+- chirpy residuals from over-denoise
+
+---
+
+## 65) Reproducible Ambient Session With Manifest Logging
+
+**Command**
+```bash
+python3 pvxvoc.py seed.wav --preset extreme_ambient --target-duration 600 --manifest-json sessions/ambient_manifest.json --manifest-append --output ambient_take.wav
+```
+
+**Explanation**
+- Writes run metadata into a JSON manifest for repeatable, auditable experiments.
+
+**Before/After**
+- Before: short seed sample.
+- After: long ambient render plus machine-readable run record.
+
+**Parameters that matter most**
+- `--manifest-json`
+- `--manifest-append`
+- chosen preset/stretch strategy
+
+**Artifacts to listen for**
+- broad smearing from overly aggressive stretch factors

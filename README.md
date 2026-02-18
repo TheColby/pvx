@@ -121,7 +121,7 @@ Start
 | Harmonic layering | `pvxharmonize.py` | `python3 pvxharmonize.py lead.wav --intervals 0,4,7 --gains 1,0.8,0.7 --output-dir out` |
 | Cross-source morphing | `pvxmorph.py` | `python3 pvxmorph.py a.wav b.wav --alpha 0.5 --output morph.wav` |
 
-More complete examples: `docs/EXAMPLES.md`
+More complete examples and use-case playbooks (65+ runnable recipes): `docs/EXAMPLES.md`
 
 ## Supported File Types
 
@@ -242,11 +242,15 @@ python3 benchmarks/run_bench.py --quick --out-dir benchmarks/out --baseline benc
 ## Visual Documentation
 
 See `docs/DIAGRAMS.md` for:
-- STFT analysis/resynthesis ASCII diagram
-- phase locking vs free phase diagram
-- pvx processing flow diagram
-- segment CSV flow example
-- mastering chain block diagram
+- expanded architecture and DSP atlas (Mermaid + ASCII)
+- quality-first tuning and metrics-flow diagrams
+- STFT analysis/resynthesis timelines
+- phase propagation and phase-locking diagrams
+- hybrid transient/WSOLA/stitching diagrams
+- stereo coherence mode diagrams
+- map/segment and checkpoint/resume diagrams
+- benchmark and CI gate flow diagrams
+- mastering chain and troubleshooting decision trees
 
 ## Troubleshooting
 
@@ -316,14 +320,14 @@ Most for drums, consonants, plosives, and percussive attacks. Less critical for 
 ## Progressive Documentation Map
 
 - Onboarding: `docs/GETTING_STARTED.md`
-- Example cookbook (20+ runnable commands): `docs/EXAMPLES.md`
+- Example cookbook (65+ runnable commands): `docs/EXAMPLES.md`
+- Diagram atlas (26+ architecture/DSP diagrams): `docs/DIAGRAMS.md`
+- Mathematical foundations (31 sections of equations + derivations): `docs/MATHEMATICAL_FOUNDATIONS.md`
 - API usage from Python: `docs/API_OVERVIEW.md`
-- Diagrams: `docs/DIAGRAMS.md`
 - File types and formats: `docs/FILE_TYPES.md`
 - Quality troubleshooting guide: `docs/QUALITY_GUIDE.md`
 - Rubber Band comparison notes: `docs/RUBBERBAND_COMPARISON.md`
 - Benchmark guide: `docs/BENCHMARKS.md`
-- Theory and math: `docs/MATHEMATICAL_FOUNDATIONS.md`
 - Window reference: `docs/WINDOW_REFERENCE.md`
 - Generated HTML docs: `docs/html/index.html`
 - PDF bundle: `docs/pvx_documentation.pdf`
