@@ -2,6 +2,11 @@
 
 All commands are designed to be copy-paste runnable from the repository root.
 
+Preferred invocation:
+- use unified subcommands via `pvx` (for example: `pvx voc`, `pvx freeze`, `pvx morph`)
+- legacy wrappers remain valid (`python3 pvxvoc.py`, `python3 pvxfreeze.py`, etc.)
+- quick conversion rule: replace `python3 pvxvoc.py` with `pvx voc`, `python3 pvxharmonize.py` with `pvx harmonize`, and so on
+
 Assumptions:
 - input files exist in your working directory
 - output format defaults to input extension unless overridden
@@ -11,16 +16,16 @@ Assumptions:
 
 | Theme | Start here | Typical tools |
 | --- | --- | --- |
-| Speech intelligibility and timing | 1, 2, 25, 61 | `pvxvoc.py` |
-| Musical pitch and formants | 3, 4, 5, 29, 37, 48 | `pvxvoc.py`, `pvxretune.py` |
-| Extreme ambient and drones | 6, 28, 45, 50, 65 | `pvxvoc.py`, `pvxfreeze.py` |
-| Transient-safe processing | 26, 30, 32, 33, 52 | `pvxvoc.py` |
-| Stereo/multichannel coherence | 27, 34, 35, 57, 58 | `pvxvoc.py` |
-| Morphing and hybrid sound design | 9, 23, 49, 55 | `pvxmorph.py`, `pvxlayer.py`, `pvxharmonize.py` |
-| Cleanup/restoration | 11, 12, 50, 53, 64 | `pvxdenoise.py`, `pvxdeverb.py` |
-| Automation and reproducibility | 13, 14, 24, 31, 44, 47, 63 | `pvxconform.py`, `pvxvoc.py`, benchmarks |
-| Transform and backend research | 40, 41, 62 | `pvxvoc.py` |
-| Live-style piping workflows | 17, 46, 59 | `pvxvoc.py` + downstream tools |
+| Speech intelligibility and timing | 1, 2, 25, 61 | `pvx voc` |
+| Musical pitch and formants | 3, 4, 5, 29, 37, 48 | `pvx voc`, `pvx retune` |
+| Extreme ambient and drones | 6, 28, 45, 50, 65 | `pvx voc`, `pvx freeze` |
+| Transient-safe processing | 26, 30, 32, 33, 52 | `pvx voc` |
+| Stereo/multichannel coherence | 27, 34, 35, 57, 58 | `pvx voc` |
+| Morphing and hybrid sound design | 9, 23, 49, 55 | `pvx morph`, `pvx layer`, `pvx harmonize` |
+| Cleanup/restoration | 11, 12, 50, 53, 64 | `pvx denoise`, `pvx deverb` |
+| Automation and reproducibility | 13, 14, 24, 31, 44, 47, 63 | `pvx conform`, `pvx voc`, benchmarks |
+| Transform and backend research | 40, 41, 62 | `pvx voc` |
+| Live-style piping workflows | 17, 46, 59 | `pvx voc` + downstream tools |
 
 ---
 
@@ -28,7 +33,7 @@ Assumptions:
 
 **Command**
 ```bash
-python3 pvxvoc.py speech.wav --preset vocal --stretch 1.35 --output speech_slow.wav
+pvx voc speech.wav --preset vocal --stretch 1.35 --output speech_slow.wav
 ```
 
 **Explanation**
@@ -52,7 +57,7 @@ python3 pvxvoc.py speech.wav --preset vocal --stretch 1.35 --output speech_slow.
 
 **Command**
 ```bash
-python3 pvxvoc.py speech.wav --preset vocal --stretch 0.85 --output speech_fast.wav
+pvx voc speech.wav --preset vocal --stretch 0.85 --output speech_fast.wav
 ```
 
 **Explanation**
@@ -76,7 +81,7 @@ python3 pvxvoc.py speech.wav --preset vocal --stretch 0.85 --output speech_fast.
 
 **Command**
 ```bash
-python3 pvxvoc.py vocal.wav --stretch 1.0 --pitch 3 --output vocal_up3.wav
+pvx voc vocal.wav --stretch 1.0 --pitch 3 --output vocal_up3.wav
 ```
 
 **Explanation**
@@ -100,7 +105,7 @@ python3 pvxvoc.py vocal.wav --stretch 1.0 --pitch 3 --output vocal_up3.wav
 
 **Command**
 ```bash
-python3 pvxvoc.py vocal.wav --stretch 1.0 --pitch -4 --pitch-mode formant-preserving --output vocal_down4_formant.wav
+pvx voc vocal.wav --stretch 1.0 --pitch -4 --pitch-mode formant-preserving --output vocal_down4_formant.wav
 ```
 
 **Explanation**
@@ -125,7 +130,7 @@ python3 pvxvoc.py vocal.wav --stretch 1.0 --pitch -4 --pitch-mode formant-preser
 
 **Command**
 ```bash
-python3 pvxvoc.py vocal.wav --stretch 1.2 --pitch -2 --pitch-mode formant-preserving --output vocal_stretch_formant.wav
+pvx voc vocal.wav --stretch 1.2 --pitch -2 --pitch-mode formant-preserving --output vocal_stretch_formant.wav
 ```
 
 **Explanation**
@@ -150,7 +155,7 @@ python3 pvxvoc.py vocal.wav --stretch 1.2 --pitch -2 --pitch-mode formant-preser
 
 **Command**
 ```bash
-python3 pvxvoc.py one_shot.wav --preset ambient --target-duration 600 --output one_shot_10min.wav
+pvx voc one_shot.wav --preset ambient --target-duration 600 --output one_shot_10min.wav
 ```
 
 **Explanation**
@@ -175,7 +180,7 @@ python3 pvxvoc.py one_shot.wav --preset ambient --target-duration 600 --output o
 
 **Command**
 ```bash
-python3 pvxfreeze.py guitar_chord.wav --freeze-time 0.45 --duration 12 --output-dir out --suffix _freeze
+pvx freeze guitar_chord.wav --freeze-time 0.45 --duration 12 --output-dir out --suffix _freeze
 ```
 
 **Explanation**
@@ -199,7 +204,7 @@ python3 pvxfreeze.py guitar_chord.wav --freeze-time 0.45 --duration 12 --output-
 
 **Command**
 ```bash
-python3 pvxvoc.py vocal_note.wav --target-f0 440 --pitch-mode formant-preserving --output vocal_A440.wav
+pvx voc vocal_note.wav --target-f0 440 --pitch-mode formant-preserving --output vocal_A440.wav
 ```
 
 **Explanation**
@@ -223,7 +228,7 @@ python3 pvxvoc.py vocal_note.wav --target-f0 440 --pitch-mode formant-preserving
 
 **Command**
 ```bash
-python3 pvxmorph.py source_a.wav source_b.wav --alpha 0.35 --output morph_35.wav --overwrite
+pvx morph source_a.wav source_b.wav --alpha 0.35 --output morph_35.wav --overwrite
 ```
 
 **Explanation**
@@ -246,7 +251,7 @@ python3 pvxmorph.py source_a.wav source_b.wav --alpha 0.35 --output morph_35.wav
 
 **Command**
 ```bash
-python3 pvxunison.py synth.wav --voices 7 --detune-cents 18 --width 1.2 --dry-mix 0.15 --output-dir out --suffix _uni7
+pvx unison synth.wav --voices 7 --detune-cents 18 --width 1.2 --dry-mix 0.15 --output-dir out --suffix _uni7
 ```
 
 **Explanation**
@@ -271,7 +276,7 @@ python3 pvxunison.py synth.wav --voices 7 --detune-cents 18 --width 1.2 --dry-mi
 
 **Command**
 ```bash
-python3 pvxdenoise.py field.wav --noise-seconds 0.5 --reduction-db 10 --smooth 7 --output-dir out --suffix _den
+pvx denoise field.wav --noise-seconds 0.5 --reduction-db 10 --smooth 7 --output-dir out --suffix _den
 ```
 
 **Explanation**
@@ -296,7 +301,7 @@ python3 pvxdenoise.py field.wav --noise-seconds 0.5 --reduction-db 10 --smooth 7
 
 **Command**
 ```bash
-python3 pvxdeverb.py room_voice.wav --strength 0.55 --decay 0.90 --floor 0.12 --output-dir out --suffix _dry
+pvx deverb room_voice.wav --strength 0.55 --decay 0.90 --floor 0.12 --output-dir out --suffix _dry
 ```
 
 **Explanation**
@@ -321,7 +326,7 @@ python3 pvxdeverb.py room_voice.wav --strength 0.55 --decay 0.90 --floor 0.12 --
 
 **Command**
 ```bash
-python3 pvxvoc.py phrase.wav --pitch-map map_warp.csv --output phrase_map.wav
+pvx voc phrase.wav --pitch-map map_warp.csv --output phrase_map.wav
 ```
 
 **Example `map_warp.csv`**
@@ -355,7 +360,7 @@ start_sec,end_sec,stretch
 
 **Command**
 ```bash
-python3 HPS-pitch-track.py A.wav | python3 pvxvoc.py B.wav --pitch-follow-stdin --pitch-conf-min 0.75 --output B_follow.wav
+pvx pitch-track A.wav | pvx voc B.wav --pitch-follow-stdin --pitch-conf-min 0.75 --output B_follow.wav
 ```
 
 **Explanation**
@@ -380,7 +385,7 @@ python3 HPS-pitch-track.py A.wav | python3 pvxvoc.py B.wav --pitch-follow-stdin 
 
 **Command**
 ```bash
-python3 pvxvoc.py mix.wav --gpu --stretch 1.12 --output mix_gpu.wav
+pvx voc mix.wav --gpu --stretch 1.12 --output mix_gpu.wav
 ```
 
 **Explanation**
@@ -403,7 +408,7 @@ python3 pvxvoc.py mix.wav --gpu --stretch 1.12 --output mix_gpu.wav
 
 **Command**
 ```bash
-python3 pvxvoc.py stems/*.wav --preset vocal --stretch 1.05 --output-dir out/stems --overwrite
+pvx voc stems/*.wav --preset vocal --stretch 1.05 --output-dir out/stems --overwrite
 ```
 
 **Explanation**
@@ -427,9 +432,9 @@ python3 pvxvoc.py stems/*.wav --preset vocal --stretch 1.05 --output-dir out/ste
 
 **Command**
 ```bash
-python3 pvxvoc.py input.wav --stretch 1.15 --stdout \
-  | python3 pvxdenoise.py - --reduction-db 8 --stdout \
-  | python3 pvxdeverb.py - --strength 0.4 --stdout > cleaned.wav
+pvx voc input.wav --stretch 1.15 --stdout \
+  | pvx denoise - --reduction-db 8 --stdout \
+  | pvx deverb - --strength 0.4 --stdout > cleaned.wav
 ```
 
 **Explanation**
@@ -453,7 +458,7 @@ python3 pvxvoc.py input.wav --stretch 1.15 --stdout \
 
 **Command**
 ```bash
-python3 pvxvoc.py input.wav --auto-profile --auto-transform --explain-plan
+pvx voc input.wav --auto-profile --auto-transform --explain-plan
 ```
 
 **Explanation**
@@ -475,7 +480,7 @@ python3 pvxvoc.py input.wav --auto-profile --auto-transform --explain-plan
 
 **Command**
 ```bash
-python3 pvxvoc.py input.wav --multires-fusion --multires-ffts 1024,2048,4096 --multires-weights 0.2,0.35,0.45 --stretch 1.25 --output input_multires.wav
+pvx voc input.wav --multires-fusion --multires-ffts 1024,2048,4096 --multires-weights 0.2,0.35,0.45 --stretch 1.25 --output input_multires.wav
 ```
 
 **Explanation**
@@ -498,12 +503,12 @@ python3 pvxvoc.py input.wav --multires-fusion --multires-ffts 1024,2048,4096 --m
 
 **Command (first pass)**
 ```bash
-python3 pvxvoc.py long_source.wav --preset extreme --auto-segment-seconds 0.5 --checkpoint-dir checkpoints --manifest-json reports/run_manifest.json --output long_pass1.wav
+pvx voc long_source.wav --preset extreme --auto-segment-seconds 0.5 --checkpoint-dir checkpoints --manifest-json reports/run_manifest.json --output long_pass1.wav
 ```
 
 **Command (resume)**
 ```bash
-python3 pvxvoc.py long_source.wav --preset extreme --auto-segment-seconds 0.5 --checkpoint-dir checkpoints --resume --manifest-json reports/run_manifest.json --manifest-append --output long_pass2.wav
+pvx voc long_source.wav --preset extreme --auto-segment-seconds 0.5 --checkpoint-dir checkpoints --resume --manifest-json reports/run_manifest.json --manifest-append --output long_pass2.wav
 ```
 
 **Explanation**
@@ -527,7 +532,7 @@ python3 pvxvoc.py long_source.wav --preset extreme --auto-segment-seconds 0.5 --
 
 **Command**
 ```bash
-python3 pvxharmonize.py lead.wav --intervals 0,4,7 --intervals-cents 0,4,-3 --gains 1.0,0.85,0.78 --pans -0.35,0.0,0.35 --force-stereo --output-dir out --suffix _triad
+pvx harmonize lead.wav --intervals 0,4,7 --intervals-cents 0,4,-3 --gains 1.0,0.85,0.78 --pans -0.35,0.0,0.35 --force-stereo --output-dir out --suffix _triad
 ```
 
 **Explanation**
@@ -551,7 +556,7 @@ python3 pvxharmonize.py lead.wav --intervals 0,4,7 --intervals-cents 0,4,-3 --ga
 
 **Command**
 ```bash
-python3 pvxwarp.py drums.wav --map map_warp.csv --crossfade-ms 10 --output-dir out --suffix _warp
+pvx warp drums.wav --map map_warp.csv --crossfade-ms 10 --output-dir out --suffix _warp
 ```
 
 **Explanation**
@@ -574,7 +579,7 @@ python3 pvxwarp.py drums.wav --map map_warp.csv --crossfade-ms 10 --output-dir o
 
 **Command**
 ```bash
-python3 pvxlayer.py full_mix.wav \
+pvx layer full_mix.wav \
   --harmonic-stretch 1.15 --harmonic-pitch-semitones 2 --harmonic-gain 0.95 \
   --percussive-stretch 1.00 --percussive-pitch-semitones 0 --percussive-gain 1.05 \
   --output-dir out --suffix _layered
@@ -601,7 +606,7 @@ python3 pvxlayer.py full_mix.wav \
 
 **Command**
 ```bash
-python3 pvxvoc.py input.wav --stretch 1.08 --pitch -1 \
+pvx voc input.wav --stretch 1.08 --pitch -1 \
   --manifest-json reports/pvx_runs.json --manifest-append \
   --output out/input_take1.wav
 ```
@@ -627,7 +632,7 @@ python3 pvxvoc.py input.wav --stretch 1.08 --pitch -1 \
 
 **Command**
 ```bash
-python3 pvxvoc.py speech.wav --preset vocal_studio --transient-mode hybrid --stretch 1.25 --output speech_natural.wav
+pvx voc speech.wav --preset vocal_studio --transient-mode hybrid --stretch 1.25 --output speech_natural.wav
 ```
 
 **Explanation**
@@ -651,7 +656,7 @@ python3 pvxvoc.py speech.wav --preset vocal_studio --transient-mode hybrid --str
 
 **Command**
 ```bash
-python3 pvxvoc.py drums.wav --preset drums_safe --time-stretch 1.4 --output drums_safe.wav
+pvx voc drums.wav --preset drums_safe --time-stretch 1.4 --output drums_safe.wav
 ```
 
 **Explanation**
@@ -674,7 +679,7 @@ python3 pvxvoc.py drums.wav --preset drums_safe --time-stretch 1.4 --output drum
 
 **Command**
 ```bash
-python3 pvxvoc.py wide_mix.wav --preset stereo_coherent --stretch 1.2 --output wide_mix_coherent.wav
+pvx voc wide_mix.wav --preset stereo_coherent --stretch 1.2 --output wide_mix_coherent.wav
 ```
 
 **Explanation**
@@ -697,7 +702,7 @@ python3 pvxvoc.py wide_mix.wav --preset stereo_coherent --stretch 1.2 --output w
 
 **Command**
 ```bash
-python3 pvxvoc.py one_shot.wav --preset extreme_ambient --target-duration 600 --output one_shot_ambient_10min.wav
+pvx voc one_shot.wav --preset extreme_ambient --target-duration 600 --output one_shot_ambient_10min.wav
 ```
 
 **Explanation**
@@ -721,7 +726,7 @@ python3 pvxvoc.py one_shot.wav --preset extreme_ambient --target-duration 600 --
 
 **Command**
 ```bash
-python3 pvxvoc.py vocal.wav --stretch 1.0 --pitch -4 --pitch-mode formant-preserving --output vocal_down4_formant.wav
+pvx voc vocal.wav --stretch 1.0 --pitch -4 --pitch-mode formant-preserving --output vocal_down4_formant.wav
 ```
 
 **Explanation**
@@ -745,7 +750,7 @@ python3 pvxvoc.py vocal.wav --stretch 1.0 --pitch -4 --pitch-mode formant-preser
 
 **Command**
 ```bash
-python3 pvxvoc.py source.wav \
+pvx voc source.wav \
   --transient-mode hybrid \
   --transient-sensitivity 0.65 \
   --transient-protect-ms 26 \
@@ -799,7 +804,7 @@ python3 benchmarks/run_bench.py --quick --out-dir benchmarks/out --baseline benc
 
 **Command**
 ```bash
-python3 pvxvoc.py drums.wav --stretch 1.22 --transient-mode reset --transient-sensitivity 0.62 --output drums_reset.wav
+pvx voc drums.wav --stretch 1.22 --transient-mode reset --transient-sensitivity 0.62 --output drums_reset.wav
 ```
 
 **Explanation**
@@ -822,7 +827,7 @@ python3 pvxvoc.py drums.wav --stretch 1.22 --transient-mode reset --transient-se
 
 **Command**
 ```bash
-python3 pvxvoc.py percussion.wav --stretch 1.35 --transient-mode wsola --transient-protect-ms 35 --output percussion_wsola.wav
+pvx voc percussion.wav --stretch 1.35 --transient-mode wsola --transient-protect-ms 35 --output percussion_wsola.wav
 ```
 
 **Explanation**
@@ -845,7 +850,7 @@ python3 pvxvoc.py percussion.wav --stretch 1.35 --transient-mode wsola --transie
 
 **Command**
 ```bash
-python3 pvxvoc.py stereo_mix.wav --stretch 1.18 --stereo-mode mid_side_lock --coherence-strength 0.9 --output stereo_ms_lock.wav
+pvx voc stereo_mix.wav --stretch 1.18 --stereo-mode mid_side_lock --coherence-strength 0.9 --output stereo_ms_lock.wav
 ```
 
 **Explanation**
@@ -868,7 +873,7 @@ python3 pvxvoc.py stereo_mix.wav --stretch 1.18 --stereo-mode mid_side_lock --co
 
 **Command**
 ```bash
-python3 pvxvoc.py multichannel.wav --stretch 1.12 --stereo-mode ref_channel_lock --ref-channel 0 --coherence-strength 0.85 --output multichannel_ref_lock.wav
+pvx voc multichannel.wav --stretch 1.12 --stereo-mode ref_channel_lock --ref-channel 0 --coherence-strength 0.85 --output multichannel_ref_lock.wav
 ```
 
 **Explanation**
@@ -892,7 +897,7 @@ python3 pvxvoc.py multichannel.wav --stretch 1.12 --stereo-mode ref_channel_lock
 
 **Command**
 ```bash
-python3 pvxvoc.py tone.wav --stretch 1.0 --pitch-ratio "2^(1/12)" --output tone_up_1semitone_expr.wav
+pvx voc tone.wav --stretch 1.0 --pitch-ratio "2^(1/12)" --output tone_up_1semitone_expr.wav
 ```
 
 **Explanation**
@@ -915,7 +920,7 @@ python3 pvxvoc.py tone.wav --stretch 1.0 --pitch-ratio "2^(1/12)" --output tone_
 
 **Command**
 ```bash
-python3 pvxvoc.py tone.wav --stretch 1.0 --pitch-ratio 3/2 --output tone_perfect_fifth.wav
+pvx voc tone.wav --stretch 1.0 --pitch-ratio 3/2 --output tone_perfect_fifth.wav
 ```
 
 **Explanation**
@@ -937,7 +942,7 @@ python3 pvxvoc.py tone.wav --stretch 1.0 --pitch-ratio 3/2 --output tone_perfect
 
 **Command**
 ```bash
-python3 pvxconform.py lead.wav --map maps/map_19tet.csv --output-dir out --suffix _19tet
+pvx conform lead.wav --map maps/map_19tet.csv --output-dir out --suffix _19tet
 ```
 
 **Explanation**
@@ -960,7 +965,7 @@ python3 pvxconform.py lead.wav --map maps/map_19tet.csv --output-dir out --suffi
 
 **Command**
 ```bash
-python3 pvxconform.py choir.wav --map maps/map_just_intonation.csv --output-dir out --suffix _ji
+pvx conform choir.wav --map maps/map_just_intonation.csv --output-dir out --suffix _ji
 ```
 
 **Explanation**
@@ -983,8 +988,8 @@ python3 pvxconform.py choir.wav --map maps/map_just_intonation.csv --output-dir 
 
 **Command**
 ```bash
-python3 pvxvoc.py source.wav --stretch 1.08 --transform fft --output fft_out.wav
-python3 pvxvoc.py source.wav --stretch 1.08 --transform dct --output dct_out.wav
+pvx voc source.wav --stretch 1.08 --transform fft --output fft_out.wav
+pvx voc source.wav --stretch 1.08 --transform dct --output dct_out.wav
 ```
 
 **Explanation**
@@ -1007,7 +1012,7 @@ python3 pvxvoc.py source.wav --stretch 1.08 --transform dct --output dct_out.wav
 
 **Command**
 ```bash
-python3 pvxvoc.py source.wav --transform czt --n-fft 1536 --win-length 1536 --hop-size 384 --stretch 1.1 --output czt_1536.wav
+pvx voc source.wav --transform czt --n-fft 1536 --win-length 1536 --hop-size 384 --stretch 1.1 --output czt_1536.wav
 ```
 
 **Explanation**
@@ -1030,7 +1035,7 @@ python3 pvxvoc.py source.wav --transform czt --n-fft 1536 --win-length 1536 --ho
 
 **Command**
 ```bash
-python3 pvxvoc.py mix.wav --stretch 1.03 --target-lufs -14 --compressor-threshold-db -18 --compressor-ratio 2.2 --limiter-threshold -0.9 --soft-clip-level 0.96 --output mix_mastered.wav
+pvx voc mix.wav --stretch 1.03 --target-lufs -14 --compressor-threshold-db -18 --compressor-ratio 2.2 --limiter-threshold -0.9 --soft-clip-level 0.96 --output mix_mastered.wav
 ```
 
 **Explanation**
@@ -1054,7 +1059,7 @@ python3 pvxvoc.py mix.wav --stretch 1.03 --target-lufs -14 --compressor-threshol
 
 **Command**
 ```bash
-python3 pvxvoc.py loud_source.wav --stretch 1.0 --limiter-threshold -1.0 --hard-clip-level 0.98 --output loud_safe.wav
+pvx voc loud_source.wav --stretch 1.0 --limiter-threshold -1.0 --hard-clip-level 0.98 --output loud_safe.wav
 ```
 
 **Explanation**
@@ -1077,7 +1082,7 @@ python3 pvxvoc.py loud_source.wav --stretch 1.0 --limiter-threshold -1.0 --hard-
 
 **Command**
 ```bash
-python3 pvxvoc.py source.wav --auto-profile --auto-transform --manifest-json plan.json --dry-run --explain-plan
+pvx voc source.wav --auto-profile --auto-transform --manifest-json plan.json --dry-run --explain-plan
 ```
 
 **Explanation**
@@ -1101,8 +1106,8 @@ python3 pvxvoc.py source.wav --auto-profile --auto-transform --manifest-json pla
 
 **Command**
 ```bash
-python3 pvxvoc.py long_source.wav --target-duration 1200 --auto-segment-seconds 0.5 --checkpoint-dir .pvx_ckpt --output long_out.wav
-python3 pvxvoc.py long_source.wav --target-duration 1200 --auto-segment-seconds 0.5 --checkpoint-dir .pvx_ckpt --resume --output long_out.wav
+pvx voc long_source.wav --target-duration 1200 --auto-segment-seconds 0.5 --checkpoint-dir .pvx_ckpt --output long_out.wav
+pvx voc long_source.wav --target-duration 1200 --auto-segment-seconds 0.5 --checkpoint-dir .pvx_ckpt --resume --output long_out.wav
 ```
 
 **Explanation**
@@ -1126,9 +1131,9 @@ python3 pvxvoc.py long_source.wav --target-duration 1200 --auto-segment-seconds 
 
 **Command**
 ```bash
-python3 pvxvoc.py input.wav --stretch 1.1 --stdout \
-| python3 pvxdenoise.py - --reduction-db 8 --stdout \
-| python3 pvxdeverb.py - --strength 0.35 --output cleaned_chain.wav
+pvx voc input.wav --stretch 1.1 --stdout \
+| pvx denoise - --reduction-db 8 --stdout \
+| pvx deverb - --strength 0.35 --output cleaned_chain.wav
 ```
 
 **Explanation**
@@ -1151,7 +1156,7 @@ python3 pvxvoc.py input.wav --stretch 1.1 --stdout \
 
 **Command**
 ```bash
-find sessions -name "*.wav" -print0 | xargs -0 -I{} python3 pvxvoc.py "{}" --stretch 1.05 --output-dir renders --suffix _x105 --overwrite
+find sessions -name "*.wav" -print0 | xargs -0 -I{} pvx voc "{}" --stretch 1.05 --output-dir renders --suffix _x105 --overwrite
 ```
 
 **Explanation**
@@ -1174,7 +1179,7 @@ find sessions -name "*.wav" -print0 | xargs -0 -I{} python3 pvxvoc.py "{}" --str
 
 **Command**
 ```bash
-python3 pvxretune.py vocal.wav --scale minor --root A --f0-min 70 --f0-max 1000 --output-dir out --suffix _retune_amin
+pvx retune vocal.wav --scale minor --root A --f0-min 70 --f0-max 1000 --output-dir out --suffix _retune_amin
 ```
 
 **Explanation**
@@ -1197,8 +1202,8 @@ python3 pvxretune.py vocal.wav --scale minor --root A --f0-min 70 --f0-max 1000 
 
 **Command**
 ```bash
-python3 pvxharmonize.py lead.wav --intervals 0,4,7 --gains 1,0.75,0.65 --stdout \
-| python3 pvxunison.py - --voices 5 --detune-cents 10 --width 1.0 --output harmonized_wide.wav
+pvx harmonize lead.wav --intervals 0,4,7 --gains 1,0.75,0.65 --stdout \
+| pvx unison - --voices 5 --detune-cents 10 --width 1.0 --output harmonized_wide.wav
 ```
 
 **Explanation**
@@ -1221,10 +1226,10 @@ python3 pvxharmonize.py lead.wav --intervals 0,4,7 --gains 1,0.75,0.65 --stdout 
 
 **Command**
 ```bash
-python3 pvxvoc.py seed.wav --preset extreme_ambient --target-duration 600 --stdout \
-| python3 pvxdenoise.py - --reduction-db 4 --smooth 9 --stdout \
-| python3 pvxdeverb.py - --strength 0.25 --stdout \
-| python3 pvxvoc.py - --stretch 1.0 --target-lufs -18 --output ambient_final.wav
+pvx voc seed.wav --preset extreme_ambient --target-duration 600 --stdout \
+| pvx denoise - --reduction-db 4 --smooth 9 --stdout \
+| pvx deverb - --strength 0.25 --stdout \
+| pvx voc - --stretch 1.0 --target-lufs -18 --output ambient_final.wav
 ```
 
 **Explanation**
@@ -1248,7 +1253,7 @@ python3 pvxvoc.py seed.wav --preset extreme_ambient --target-duration 600 --stdo
 
 **Command**
 ```bash
-python3 pvxvoc.py narration.wav --preset vocal_studio --stretch 1.08 --target-lufs -16 --limiter-threshold -1.0 --soft-clip-level 0.98 --hard-clip-level 0.995 --output narration_finished.wav
+pvx voc narration.wav --preset vocal_studio --stretch 1.08 --target-lufs -16 --limiter-threshold -1.0 --soft-clip-level 0.98 --hard-clip-level 0.995 --output narration_finished.wav
 ```
 
 **Explanation**
@@ -1273,7 +1278,7 @@ python3 pvxvoc.py narration.wav --preset vocal_studio --stretch 1.08 --target-lu
 
 **Command**
 ```bash
-python3 pvxvoc.py short_source.wav --preset extreme_ambient --target-duration 900 --auto-segment-seconds 0.25 --checkpoint-dir checkpoints/short_source --output short_source_15min.wav
+pvx voc short_source.wav --preset extreme_ambient --target-duration 900 --auto-segment-seconds 0.25 --checkpoint-dir checkpoints/short_source --output short_source_15min.wav
 ```
 
 **Explanation**
@@ -1297,8 +1302,8 @@ python3 pvxvoc.py short_source.wav --preset extreme_ambient --target-duration 90
 
 **Command**
 ```bash
-python3 pvxdeverb.py room_take.wav --strength 0.45 --stdout \
-| python3 pvxvoc.py - --preset vocal_studio --stretch 1.15 --output room_take_rehab.wav
+pvx deverb room_take.wav --strength 0.45 --stdout \
+| pvx voc - --preset vocal_studio --stretch 1.15 --output room_take_rehab.wav
 ```
 
 **Explanation**
@@ -1309,8 +1314,8 @@ python3 pvxdeverb.py room_take.wav --strength 0.45 --stdout \
 - After: clearer direct signal with slower timing.
 
 **Parameters that matter most**
-- `pvxdeverb.py --strength`
-- `pvxvoc.py --stretch`
+- `pvx deverb --strength`
+- `pvx voc --stretch`
 
 **Artifacts to listen for**
 - metallic tails from over-dereverb
@@ -1322,8 +1327,8 @@ python3 pvxdeverb.py room_take.wav --strength 0.45 --stdout \
 
 **Command**
 ```bash
-python3 pvxretune.py lead.wav --scale major --root D --output-dir out --suffix _retuned \
-&& python3 pvxunison.py out/lead_retuned.wav --voices 5 --detune-cents 9 --width 0.9 --output-dir out --suffix _retuned_unison
+pvx retune lead.wav --scale major --root D --output-dir out --suffix _retuned \
+&& pvx unison out/lead_retuned.wav --voices 5 --detune-cents 9 --width 0.9 --output-dir out --suffix _retuned_unison
 ```
 
 **Explanation**
@@ -1347,8 +1352,8 @@ python3 pvxretune.py lead.wav --scale major --root D --output-dir out --suffix _
 
 **Command**
 ```bash
-python3 pvxmorph.py bells.wav choir.wav --alpha 0.5 --output bells_choir_morph.wav \
-&& python3 pvxfreeze.py bells_choir_morph.wav --freeze-time 0.8 --duration 20 --output-dir out --suffix _frozen
+pvx morph bells.wav choir.wav --alpha 0.5 --output bells_choir_morph.wav \
+&& pvx freeze bells_choir_morph.wav --freeze-time 0.8 --duration 20 --output-dir out --suffix _frozen
 ```
 
 **Explanation**
@@ -1371,7 +1376,7 @@ python3 pvxmorph.py bells.wav choir.wav --alpha 0.5 --output bells_choir_morph.w
 
 **Command**
 ```bash
-python3 pvxvoc.py mix.wav --device cuda --stretch 1.12 --output mix_cuda.wav || python3 pvxvoc.py mix.wav --device cpu --stretch 1.12 --output mix_cpu.wav
+pvx voc mix.wav --device cuda --stretch 1.12 --output mix_cuda.wav || pvx voc mix.wav --device cpu --stretch 1.12 --output mix_cpu.wav
 ```
 
 **Explanation**
@@ -1394,7 +1399,7 @@ python3 pvxvoc.py mix.wav --device cuda --stretch 1.12 --output mix_cuda.wav || 
 
 **Command**
 ```bash
-python3 pvxvoc.py surround.wav --stretch 1.1 --stereo-mode ref_channel_lock --ref-channel 2 --coherence-strength 0.95 --output surround_lock.wav
+pvx voc surround.wav --stretch 1.1 --stereo-mode ref_channel_lock --ref-channel 2 --coherence-strength 0.95 --output surround_lock.wav
 ```
 
 **Explanation**
@@ -1418,7 +1423,7 @@ python3 pvxvoc.py surround.wav --stretch 1.1 --stereo-mode ref_channel_lock --re
 
 **Command**
 ```bash
-python3 pvxvoc.py stereo_vocal.wav --stretch 1.0 --pitch 2 --pitch-mode formant-preserving --stereo-mode mid_side_lock --coherence-strength 0.9 --output stereo_vocal_up2_lock.wav
+pvx voc stereo_vocal.wav --stretch 1.0 --pitch 2 --pitch-mode formant-preserving --stereo-mode mid_side_lock --coherence-strength 0.9 --output stereo_vocal_up2_lock.wav
 ```
 
 **Explanation**
@@ -1441,7 +1446,7 @@ python3 pvxvoc.py stereo_vocal.wav --stretch 1.0 --pitch 2 --pitch-mode formant-
 
 **Command**
 ```bash
-python3 HPS-pitch-track.py A.wav | python3 pvxvoc.py B.wav --pitch-follow-stdin --pitch-conf-min 0.75 --pitch-lowconf-mode hold --pitch-map-crossfade-ms 20 --output B_pitch_follow.wav
+pvx pitch-track A.wav | pvx voc B.wav --pitch-follow-stdin --pitch-conf-min 0.75 --pitch-lowconf-mode hold --pitch-map-crossfade-ms 20 --output B_pitch_follow.wav
 ```
 
 **Explanation**
@@ -1466,7 +1471,7 @@ python3 HPS-pitch-track.py A.wav | python3 pvxvoc.py B.wav --pitch-follow-stdin 
 
 **Command**
 ```bash
-python3 pvxvoc.py mono_line.wav --pitch-map maps/just_ratios.csv --pitch-map-crossfade-ms 15 --output mono_line_ji.wav
+pvx voc mono_line.wav --pitch-map maps/just_ratios.csv --pitch-map-crossfade-ms 15 --output mono_line_ji.wav
 ```
 
 **Explanation**
@@ -1489,7 +1494,7 @@ python3 pvxvoc.py mono_line.wav --pitch-map maps/just_ratios.csv --pitch-map-cro
 
 **Command**
 ```bash
-python3 pvxvoc.py lecture.wav --stretch 1.18 --phase-locking identity --n-fft 2048 --hop-size 256 --output lecture_clear_stretch.wav
+pvx voc lecture.wav --stretch 1.18 --phase-locking identity --n-fft 2048 --hop-size 256 --output lecture_clear_stretch.wav
 ```
 
 **Explanation**
@@ -1512,8 +1517,8 @@ python3 pvxvoc.py lecture.wav --stretch 1.18 --phase-locking identity --n-fft 20
 
 **Command**
 ```bash
-python3 pvxvoc.py source.wav --stretch 1.1 --transform fft --output source_fft.wav \
-&& python3 pvxvoc.py source.wav --stretch 1.1 --transform hartley --output source_hartley.wav
+pvx voc source.wav --stretch 1.1 --transform fft --output source_fft.wav \
+&& pvx voc source.wav --stretch 1.1 --transform hartley --output source_hartley.wav
 ```
 
 **Explanation**
@@ -1536,7 +1541,7 @@ python3 pvxvoc.py source.wav --stretch 1.1 --transform fft --output source_fft.w
 
 **Command**
 ```bash
-python3 pvxvoc.py texture.wav --stretch 1.4 --multires-fusion --multires-ffts 1024,2048,4096 --multires-weights 0.2,0.35,0.45 --output texture_multires_weighted.wav
+pvx voc texture.wav --stretch 1.4 --multires-fusion --multires-ffts 1024,2048,4096 --multires-weights 0.2,0.35,0.45 --output texture_multires_weighted.wav
 ```
 
 **Explanation**
@@ -1559,9 +1564,9 @@ python3 pvxvoc.py texture.wav --stretch 1.4 --multires-fusion --multires-ffts 10
 
 **Command**
 ```bash
-python3 pvxdenoise.py field.wav --reduction-db 5 --smooth 7 --stdout \
-| python3 pvxdeverb.py - --strength 0.3 --stdout \
-| python3 pvxvoc.py - --stretch 1.0 --target-lufs -20 --limiter-threshold -1.5 --output field_restored.wav
+pvx denoise field.wav --reduction-db 5 --smooth 7 --stdout \
+| pvx deverb - --strength 0.3 --stdout \
+| pvx voc - --stretch 1.0 --target-lufs -20 --limiter-threshold -1.5 --output field_restored.wav
 ```
 
 **Explanation**
@@ -1585,7 +1590,7 @@ python3 pvxdenoise.py field.wav --reduction-db 5 --smooth 7 --stdout \
 
 **Command**
 ```bash
-python3 pvxvoc.py seed.wav --preset extreme_ambient --target-duration 600 --manifest-json sessions/ambient_manifest.json --manifest-append --output ambient_take.wav
+pvx voc seed.wav --preset extreme_ambient --target-duration 600 --manifest-json sessions/ambient_manifest.json --manifest-append --output ambient_take.wav
 ```
 
 **Explanation**
@@ -1602,3 +1607,53 @@ python3 pvxvoc.py seed.wav --preset extreme_ambient --target-duration 600 --mani
 
 **Artifacts to listen for**
 - broad smearing from overly aggressive stretch factors
+
+---
+
+## 66) Managed One-Line Chain (No Manual Pipe Wiring)
+
+**Command**
+```bash
+pvx chain source.wav --pipeline "voc --stretch 1.2 | formant --mode preserve --formant-shift-ratio 1.0" --output source_chain.wav
+```
+
+**Explanation**
+- Runs serial stages with managed intermediate files.
+- Useful when you want multi-stage processing without writing long shell pipelines.
+
+**Before/After**
+- Before: single source file.
+- After: time-stretched + formant-preserved render in one managed command.
+
+**Parameters that matter most**
+- `--pipeline` stage order and settings
+- per-stage quality controls (inside the pipeline string)
+
+**Artifacts to listen for**
+- cumulative coloration when too many strong stages are chained
+
+---
+
+## 67) Chunked Stream Wrapper + Output Policy Controls
+
+**Command**
+```bash
+pvx stream source.wav --output source_stream.wav --chunk-seconds 0.2 --time-stretch 2.0 --bit-depth 24 --dither tpdf --dither-seed 7 --metadata-policy sidecar
+```
+
+**Explanation**
+- Uses `pvx stream` as a chunked wrapper over `pvx voc` for long renders.
+- Adds deterministic output policy controls and metadata sidecar emission.
+
+**Before/After**
+- Before: original source.
+- After: chunked long-form render with explicit output-depth/dither policy and sidecar metadata.
+
+**Parameters that matter most**
+- `--chunk-seconds`
+- `--bit-depth`
+- `--dither`, `--dither-seed`
+- `--metadata-policy`
+
+**Artifacts to listen for**
+- over-short chunks may increase boundary coloration

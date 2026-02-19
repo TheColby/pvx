@@ -2,7 +2,7 @@
 
 Comprehensive reference for every Python file in this repository.
 
-Total Python files documented: **199**
+Total Python files documented: **203**
 
 ## Contents
 
@@ -11,6 +11,7 @@ Total Python files documented: **199**
 - [`benchmarks/metrics.py`](#benchmarksmetricspy)
 - [`benchmarks/run_bench.py`](#benchmarksrunbenchpy)
 - [`main.py`](#mainpy)
+- [`pvx.py`](#pvxpy)
 - [`pvxalgorithms/__init__.py`](#pvxalgorithmsinitpy)
 - [`pvxalgorithms/base.py`](#pvxalgorithmsbasepy)
 - [`pvxalgorithms/registry.py`](#pvxalgorithmsregistrypy)
@@ -170,6 +171,7 @@ Total Python files documented: **199**
 - [`src/pvx/cli/__init__.py`](#srcpvxcliinitpy)
 - [`src/pvx/cli/hps_pitch_track.py`](#srcpvxclihpspitchtrackpy)
 - [`src/pvx/cli/main.py`](#srcpvxclimainpy)
+- [`src/pvx/cli/pvx.py`](#srcpvxclipvxpy)
 - [`src/pvx/cli/pvxconform.py`](#srcpvxclipvxconformpy)
 - [`src/pvx/cli/pvxdenoise.py`](#srcpvxclipvxdenoisepy)
 - [`src/pvx/cli/pvxdeverb.py`](#srcpvxclipvxdeverbpy)
@@ -185,6 +187,7 @@ Total Python files documented: **199**
 - [`src/pvx/core/__init__.py`](#srcpvxcoreinitpy)
 - [`src/pvx/core/audio_metrics.py`](#srcpvxcoreaudiometricspy)
 - [`src/pvx/core/common.py`](#srcpvxcorecommonpy)
+- [`src/pvx/core/output_policy.py`](#srcpvxcoreoutputpolicypy)
 - [`src/pvx/core/presets.py`](#srcpvxcorepresetspy)
 - [`src/pvx/core/stereo.py`](#srcpvxcorestereopy)
 - [`src/pvx/core/transients.py`](#srcpvxcoretransientspy)
@@ -204,6 +207,7 @@ Total Python files documented: **199**
 - [`tests/test_docs_pdf.py`](#teststestdocspdfpy)
 - [`tests/test_dsp.py`](#teststestdsppy)
 - [`tests/test_microtonal.py`](#teststestmicrotonalpy)
+- [`tests/test_output_policy.py`](#teststestoutputpolicypy)
 - [`tests/test_transient_and_stereo.py`](#teststesttransientandstereopy)
 
 ## `HPS-pitch-track.py`
@@ -305,7 +309,7 @@ Objective metrics for pvx benchmark comparisons.
 **Purpose:** Reproducible quality benchmark: pvx vs Rubber Band vs librosa baseline.
 
 **Classes:** `TaskSpec`
-**Functions:** `_pvx_bench_args`, `_read_audio`, `_write_audio`, `_match_channels`, `_to_mono`, `_align_pair`, `_generate_tiny_dataset`, `_run_pvx_cycle`, `_find_rubberband`, `_run_rubberband_cycle`, `_run_librosa_cycle`, `_compute_metrics`, `_aggregate`, `_render_markdown`, `_check_gate`, `main`
+**Functions:** `_sha256_bytes`, `_sha256_file`, `_parse_version`, `_collect_environment_metadata`, `_corpus_manifest_entries`, `_load_manifest`, `_write_manifest`, `_manifest_index`, `_validate_corpus_against_manifest`, `_prepare_dataset`, `_case_key`, `_diagnose_metrics`, `_method_diagnostics`, `_pvx_bench_args`, `_read_audio`, `_write_audio`, `_match_channels`, `_to_mono`, `_align_pair`, `_generate_tiny_dataset`, `_run_pvx_cycle`, `_find_rubberband`, `_run_rubberband_cycle`, `_run_librosa_cycle`, `_compute_metrics`, `_aggregate`, `_render_markdown`, `_check_gate`, `main`
 
 **Help commands:** `python3 benchmarks/run_bench.py`, `python3 benchmarks/run_bench.py --help`
 
@@ -327,17 +331,28 @@ Reproducible quality benchmark: pvx vs Rubber Band vs librosa baseline.
 ### CLI Help Snapshot
 
 ```text
-usage: main.py [-h] [--list-tools] [--list-algorithm-package] [--show-docs]
+usage: pvx [-h] [command] ...
 
-pvx toolkit navigator (tool list, algorithm package, and docs index)
+Unified CLI for pvx (audio quality first, speed second).
+Use subcommands to access all existing pvx tools from one entrypoint.
+
+positional arguments:
+  command     Subcommand name, helper command, or input path (defaults to `voc` when an input path is provided)
+  args        Arguments forwarded directly to the selected subcommand
 
 options:
-  -h, --help            show this help message and exit
-  --list-tools          Print the primary pvx CLI tools
-  --list-algorithm-package
-                        Print location of pvxalgorithms package and registry
-                        files
-  --show-docs           Print key generated documentation paths
+  -h, --help  show this help message and exit
+
+Quick start:
+  pvx voc input.wav --stretch 1.2 --output output.wav
+  pvx input.wav --stretch 1.2 --output output.wav   # defaults to `voc`
+  pvx chain input.wav --pipeline "voc --stretch 1.2 | formant --mode preserve" --output out.wav
+  pvx stream input.wav --output out.wav --chunk-seconds 0.2 --time-stretch 2.0
+  pvx list
+  pvx examples basic
+  pvx help voc
+
+Available tool commands: voc, freeze, harmonize, conform, morph, warp, formant, transient, unison, denoise, deverb, retune, layer, pitch-track
 ```
 
 ### Module Docstring
@@ -346,6 +361,24 @@ options:
 Compatibility wrapper.
 
 This root module forwards imports/execution to `pvx.cli.main` after the
+src-layout migration.
+```
+
+## `pvx.py`
+
+**Purpose:** Compatibility wrapper.
+
+**Classes:** None
+**Functions:** None
+
+**Help commands:** `python3 pvx.py`
+
+### Module Docstring
+
+```text
+Compatibility wrapper.
+
+This root module forwards imports/execution to `pvx.cli.pvx` after the
 src-layout migration.
 ```
 
@@ -420,7 +453,7 @@ src-layout migration.
 ### CLI Help Snapshot
 
 ```text
-usage: pvxconform.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
+usage: pvxconform.py [-h] [-o OUTPUT_DIR] [--output OUTPUT] [--suffix SUFFIX]
                      [--output-format OUTPUT_FORMAT] [--stdout] [--overwrite]
                      [--dry-run]
                      [--verbosity {silent,quiet,normal,verbose,debug}] [-v]
@@ -447,7 +480,10 @@ usage: pvxconform.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
                      [--soft-clip-type {tanh,arctan,cubic}]
                      [--soft-clip-drive SOFT_CLIP_DRIVE]
                      [--hard-clip-level HARD_CLIP_LEVEL] [--clip]
-                     [--subtype SUBTYPE] [--n-fft N_FFT]
+                     [--subtype SUBTYPE] [--bit-depth {inherit,16,24,32f}]
+                     [--dither {none,tpdf}] [--dither-seed DITHER_SEED]
+                     [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                     [--metadata-policy {none,sidecar,copy}] [--n-fft N_FFT]
                      [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
                      [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
                      [--kaiser-beta KAISER_BETA]
@@ -475,6 +511,9 @@ options:
   -h, --help            show this help message and exit
   -o, --output-dir OUTPUT_DIR
                         Output directory
+  --output, --out OUTPUT
+                        Explicit output file path (single-input mode only).
+                        Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _conform)
   --output-format OUTPUT_FORMAT
                         Output extension/format
@@ -491,15 +530,7 @@ options:
                         Output normalization mode
   --peak-dbfs PEAK_DBFS
                         Target peak dBFS when --normalize peak
-  --rms-dbfs RMS_DBFS   Target RMS dBFS when --normalize rms
-  --target-lufs TARGET_LUFS
-                        Integrated loudness target in LUFS
-  --compressor-threshold-db COMPRESSOR_THRESHOLD_DB
-                        Enable compressor above threshold dBFS
-  --compressor-ratio COMPRESSOR_RATIO
-                        Compressor ratio (>=1)
-  --compressor-attack-ms COMPRESSOR_ATTACK_MS
-                    
+  --rms-dbfs RMS_DBFS   Targ
 ... [truncated]
 ```
 
@@ -524,7 +555,7 @@ src-layout migration.
 ### CLI Help Snapshot
 
 ```text
-usage: pvxdenoise.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
+usage: pvxdenoise.py [-h] [-o OUTPUT_DIR] [--output OUTPUT] [--suffix SUFFIX]
                      [--output-format OUTPUT_FORMAT] [--stdout] [--overwrite]
                      [--dry-run]
                      [--verbosity {silent,quiet,normal,verbose,debug}] [-v]
@@ -551,7 +582,10 @@ usage: pvxdenoise.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
                      [--soft-clip-type {tanh,arctan,cubic}]
                      [--soft-clip-drive SOFT_CLIP_DRIVE]
                      [--hard-clip-level HARD_CLIP_LEVEL] [--clip]
-                     [--subtype SUBTYPE] [--n-fft N_FFT]
+                     [--subtype SUBTYPE] [--bit-depth {inherit,16,24,32f}]
+                     [--dither {none,tpdf}] [--dither-seed DITHER_SEED]
+                     [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                     [--metadata-policy {none,sidecar,copy}] [--n-fft N_FFT]
                      [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
                      [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
                      [--kaiser-beta KAISER_BETA]
@@ -578,6 +612,9 @@ options:
   -h, --help            show this help message and exit
   -o, --output-dir OUTPUT_DIR
                         Output directory
+  --output, --out OUTPUT
+                        Explicit output file path (single-input mode only).
+                        Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _denoise)
   --output-format OUTPUT_FORMAT
                         Output extension/format
@@ -597,14 +634,6 @@ options:
   --rms-dbfs RMS_DBFS   Target RMS dBFS when --normalize rms
   --target-lufs TARGET_LUFS
                         Integrated loudness target in LUFS
-  --compressor-threshold-db COMPRESSOR_THRESHOLD_DB
-                        Enable compressor above threshold dBFS
-  --compressor-ratio COMPRESSOR_RATIO
-                        Compressor ratio (>=1)
-  --compressor-attack-ms COMPRESSOR_ATTACK_MS
-                        Compressor attack time in ms
-  --compressor-release-ms COMPRESSOR_RELEASE_MS
-                        Compressor rel
 ... [truncated]
 ```
 
@@ -629,7 +658,7 @@ src-layout migration.
 ### CLI Help Snapshot
 
 ```text
-usage: pvxdeverb.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
+usage: pvxdeverb.py [-h] [-o OUTPUT_DIR] [--output OUTPUT] [--suffix SUFFIX]
                     [--output-format OUTPUT_FORMAT] [--stdout] [--overwrite]
                     [--dry-run]
                     [--verbosity {silent,quiet,normal,verbose,debug}] [-v]
@@ -656,7 +685,10 @@ usage: pvxdeverb.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
                     [--soft-clip-type {tanh,arctan,cubic}]
                     [--soft-clip-drive SOFT_CLIP_DRIVE]
                     [--hard-clip-level HARD_CLIP_LEVEL] [--clip]
-                    [--subtype SUBTYPE] [--n-fft N_FFT]
+                    [--subtype SUBTYPE] [--bit-depth {inherit,16,24,32f}]
+                    [--dither {none,tpdf}] [--dither-seed DITHER_SEED]
+                    [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                    [--metadata-policy {none,sidecar,copy}] [--n-fft N_FFT]
                     [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
                     [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
                     [--kaiser-beta KAISER_BETA]
@@ -681,6 +713,9 @@ options:
   -h, --help            show this help message and exit
   -o, --output-dir OUTPUT_DIR
                         Output directory
+  --output, --out OUTPUT
+                        Explicit output file path (single-input mode only).
+                        Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _deverb)
   --output-format OUTPUT_FORMAT
                         Output extension/format
@@ -702,15 +737,7 @@ options:
                         Integrated loudness target in LUFS
   --compressor-threshold-db COMPRESSOR_THRESHOLD_DB
                         Enable compressor above threshold dBFS
-  --compressor-ratio COMPRESSOR_RATIO
-                        Compressor ratio (>=1)
-  --compressor-attack-ms COMPRESSOR_ATTACK_MS
-                        Compressor attack time in ms
-  --compressor-release-ms COMPRESSOR_RELEASE_MS
-                        Compressor release time in ms
-  --compressor-makeup-db COMPRESSOR_MAKEUP_DB
-                        Compressor makeup gain in dB
-  --expander-threshold-db 
+  --compressor-ratio COMPRES
 ... [truncated]
 ```
 
@@ -735,7 +762,7 @@ src-layout migration.
 ### CLI Help Snapshot
 
 ```text
-usage: pvxformant.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
+usage: pvxformant.py [-h] [-o OUTPUT_DIR] [--output OUTPUT] [--suffix SUFFIX]
                      [--output-format OUTPUT_FORMAT] [--stdout] [--overwrite]
                      [--dry-run]
                      [--verbosity {silent,quiet,normal,verbose,debug}] [-v]
@@ -762,7 +789,10 @@ usage: pvxformant.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
                      [--soft-clip-type {tanh,arctan,cubic}]
                      [--soft-clip-drive SOFT_CLIP_DRIVE]
                      [--hard-clip-level HARD_CLIP_LEVEL] [--clip]
-                     [--subtype SUBTYPE] [--n-fft N_FFT]
+                     [--subtype SUBTYPE] [--bit-depth {inherit,16,24,32f}]
+                     [--dither {none,tpdf}] [--dither-seed DITHER_SEED]
+                     [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                     [--metadata-policy {none,sidecar,copy}] [--n-fft N_FFT]
                      [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
                      [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
                      [--kaiser-beta KAISER_BETA]
@@ -793,6 +823,9 @@ options:
   -h, --help            show this help message and exit
   -o, --output-dir OUTPUT_DIR
                         Output directory
+  --output, --out OUTPUT
+                        Explicit output file path (single-input mode only).
+                        Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _formant)
   --output-format OUTPUT_FORMAT
                         Output extension/format
@@ -806,15 +839,7 @@ options:
   --quiet               Reduce output and hide status bars
   --silent              Suppress all console output
   --normalize {none,peak,rms}
-                        Output normalization mode
-  --peak-dbfs PEAK_DBFS
-                        Target peak dBFS when --normalize peak
-  --rms-dbfs RMS_DBFS   Target RMS dBFS when --normalize rms
-  --target-lufs TARGET_LUFS
-                        Integrated loudness target in LUFS
-  --compressor-threshold-db COMPRESSOR_THRESHOLD_DB
-                        Enable compressor above threshold dBFS
-  --compressor-ratio COMPRESSOR_R
+                        Output normalization mo
 ... [truncated]
 ```
 
@@ -839,7 +864,7 @@ src-layout migration.
 ### CLI Help Snapshot
 
 ```text
-usage: pvxfreeze.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
+usage: pvxfreeze.py [-h] [-o OUTPUT_DIR] [--output OUTPUT] [--suffix SUFFIX]
                     [--output-format OUTPUT_FORMAT] [--stdout] [--overwrite]
                     [--dry-run]
                     [--verbosity {silent,quiet,normal,verbose,debug}] [-v]
@@ -866,7 +891,10 @@ usage: pvxfreeze.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
                     [--soft-clip-type {tanh,arctan,cubic}]
                     [--soft-clip-drive SOFT_CLIP_DRIVE]
                     [--hard-clip-level HARD_CLIP_LEVEL] [--clip]
-                    [--subtype SUBTYPE] [--n-fft N_FFT]
+                    [--subtype SUBTYPE] [--bit-depth {inherit,16,24,32f}]
+                    [--dither {none,tpdf}] [--dither-seed DITHER_SEED]
+                    [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                    [--metadata-policy {none,sidecar,copy}] [--n-fft N_FFT]
                     [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
                     [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
                     [--kaiser-beta KAISER_BETA]
@@ -891,6 +919,9 @@ options:
   -h, --help            show this help message and exit
   -o, --output-dir OUTPUT_DIR
                         Output directory
+  --output, --out OUTPUT
+                        Explicit output file path (single-input mode only).
+                        Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _freeze)
   --output-format OUTPUT_FORMAT
                         Output extension/format
@@ -912,15 +943,7 @@ options:
                         Integrated loudness target in LUFS
   --compressor-threshold-db COMPRESSOR_THRESHOLD_DB
                         Enable compressor above threshold dBFS
-  --compressor-ratio COMPRESSOR_RATIO
-                        Compressor ratio (>=1)
-  --compressor-attack-ms COMPRESSOR_ATTACK_MS
-                        Compressor attack time in ms
-  --compressor-release-ms COMPRESSOR_RELEASE_MS
-                        Compressor release time in ms
-  --compressor-makeup-db COMPRESSOR_MAKEUP_DB
-                        Compressor makeup gain in dB
-  --exp
+  --compr
 ... [truncated]
 ```
 
@@ -945,9 +968,9 @@ src-layout migration.
 ### CLI Help Snapshot
 
 ```text
-usage: pvxharmonize.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
-                       [--output-format OUTPUT_FORMAT] [--stdout]
-                       [--overwrite] [--dry-run]
+usage: pvxharmonize.py [-h] [-o OUTPUT_DIR] [--output OUTPUT]
+                       [--suffix SUFFIX] [--output-format OUTPUT_FORMAT]
+                       [--stdout] [--overwrite] [--dry-run]
                        [--verbosity {silent,quiet,normal,verbose,debug}] [-v]
                        [--quiet] [--silent] [--normalize {none,peak,rms}]
                        [--peak-dbfs PEAK_DBFS] [--rms-dbfs RMS_DBFS]
@@ -972,7 +995,10 @@ usage: pvxharmonize.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
                        [--soft-clip-type {tanh,arctan,cubic}]
                        [--soft-clip-drive SOFT_CLIP_DRIVE]
                        [--hard-clip-level HARD_CLIP_LEVEL] [--clip]
-                       [--subtype SUBTYPE] [--n-fft N_FFT]
+                       [--subtype SUBTYPE] [--bit-depth {inherit,16,24,32f}]
+                       [--dither {none,tpdf}] [--dither-seed DITHER_SEED]
+                       [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                       [--metadata-policy {none,sidecar,copy}] [--n-fft N_FFT]
                        [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
                        [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
                        [--kaiser-beta KAISER_BETA]
@@ -1000,6 +1026,9 @@ options:
   -h, --help            show this help message and exit
   -o, --output-dir OUTPUT_DIR
                         Output directory
+  --output, --out OUTPUT
+                        Explicit output file path (single-input mode only).
+                        Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _harm)
   --output-format OUTPUT_FORMAT
                         Output extension/format
@@ -1016,14 +1045,7 @@ options:
                         Output normalization mode
   --peak-dbfs PEAK_DBFS
                         Target peak dBFS when --normalize peak
-  --rms-dbfs RMS_DBFS   Target RMS dBFS when --normalize rms
-  --target-lufs TARGET_LUFS
-                        Integrated loudness target in LUFS
-  --compressor-threshold-db COMPRESSOR_THRESHOLD_DB
-                        Enable compressor above threshold dBFS
-  --compressor-ratio COMPRESSOR_RATIO
-                        Compressor ratio (>=1)
-  --compressor-attack-ms COMPRESSOR_ATTACK_MS
+ 
 ... [truncated]
 ```
 
@@ -1048,7 +1070,7 @@ src-layout migration.
 ### CLI Help Snapshot
 
 ```text
-usage: pvxlayer.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
+usage: pvxlayer.py [-h] [-o OUTPUT_DIR] [--output OUTPUT] [--suffix SUFFIX]
                    [--output-format OUTPUT_FORMAT] [--stdout] [--overwrite]
                    [--dry-run]
                    [--verbosity {silent,quiet,normal,verbose,debug}] [-v]
@@ -1075,7 +1097,10 @@ usage: pvxlayer.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
                    [--soft-clip-type {tanh,arctan,cubic}]
                    [--soft-clip-drive SOFT_CLIP_DRIVE]
                    [--hard-clip-level HARD_CLIP_LEVEL] [--clip]
-                   [--subtype SUBTYPE] [--n-fft N_FFT]
+                   [--subtype SUBTYPE] [--bit-depth {inherit,16,24,32f}]
+                   [--dither {none,tpdf}] [--dither-seed DITHER_SEED]
+                   [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                   [--metadata-policy {none,sidecar,copy}] [--n-fft N_FFT]
                    [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
                    [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
                    [--kaiser-beta KAISER_BETA]
@@ -1110,6 +1135,9 @@ options:
   -h, --help            show this help message and exit
   -o, --output-dir OUTPUT_DIR
                         Output directory
+  --output, --out OUTPUT
+                        Explicit output file path (single-input mode only).
+                        Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _layer)
   --output-format OUTPUT_FORMAT
                         Output extension/format
@@ -1119,16 +1147,7 @@ options:
   --dry-run             Resolve and print, but do not write files
   --verbosity {silent,quiet,normal,verbose,debug}
                         Console verbosity level
-  -v, --verbose         Increase verbosity (repeat for extra detail)
-  --quiet               Reduce output and hide status bars
-  --silent              Suppress all console output
-  --normalize {none,peak,rms}
-                        Output normalization mode
-  --peak-dbfs PEAK_DBFS
-                        Target peak dBFS when --normalize peak
-  --rms-dbfs RMS_DBFS   Target RMS dBFS when --normalize rms
-  --target-lufs TARGET_LUFS
-  
+  -v, --verbose         Increase verbosity (repeat for ext
 ... [truncated]
 ```
 
@@ -1177,7 +1196,10 @@ usage: pvxmorph.py [-h] [-o OUTPUT] [--stdout] [--output-format OUTPUT_FORMAT]
                    [--soft-clip-type {tanh,arctan,cubic}]
                    [--soft-clip-drive SOFT_CLIP_DRIVE]
                    [--hard-clip-level HARD_CLIP_LEVEL] [--clip]
-                   [--subtype SUBTYPE] [--overwrite]
+                   [--subtype SUBTYPE] [--bit-depth {inherit,16,24,32f}]
+                   [--dither {none,tpdf}] [--dither-seed DITHER_SEED]
+                   [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                   [--metadata-policy {none,sidecar,copy}] [--overwrite]
                    [--verbosity {silent,quiet,normal,verbose,debug}] [-v]
                    [--quiet] [--silent] [--n-fft N_FFT]
                    [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
@@ -1231,12 +1253,7 @@ options:
                         Expander ratio (>=1)
   --expander-attack-ms EXPANDER_ATTACK_MS
                         Expander attack time in ms
-  --expander-release-ms EXPANDER_RELEASE_MS
-                        Expander release time in ms
-  --compander-threshold-db COMPANDER_THRESHOLD_DB
-                        Enable compander threshold in dBFS
-  --compander-compress-ratio COMPANDER_COMPRESS_RATIO
- 
+  --expander-release-ms EXPANDER_REL
 ... [truncated]
 ```
 
@@ -1261,7 +1278,7 @@ src-layout migration.
 ### CLI Help Snapshot
 
 ```text
-usage: pvxretune.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
+usage: pvxretune.py [-h] [-o OUTPUT_DIR] [--output OUTPUT] [--suffix SUFFIX]
                     [--output-format OUTPUT_FORMAT] [--stdout] [--overwrite]
                     [--dry-run]
                     [--verbosity {silent,quiet,normal,verbose,debug}] [-v]
@@ -1288,7 +1305,10 @@ usage: pvxretune.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
                     [--soft-clip-type {tanh,arctan,cubic}]
                     [--soft-clip-drive SOFT_CLIP_DRIVE]
                     [--hard-clip-level HARD_CLIP_LEVEL] [--clip]
-                    [--subtype SUBTYPE] [--n-fft N_FFT]
+                    [--subtype SUBTYPE] [--bit-depth {inherit,16,24,32f}]
+                    [--dither {none,tpdf}] [--dither-seed DITHER_SEED]
+                    [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                    [--metadata-policy {none,sidecar,copy}] [--n-fft N_FFT]
                     [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
                     [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
                     [--kaiser-beta KAISER_BETA]
@@ -1317,6 +1337,9 @@ options:
   -h, --help            show this help message and exit
   -o, --output-dir OUTPUT_DIR
                         Output directory
+  --output, --out OUTPUT
+                        Explicit output file path (single-input mode only).
+                        Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _retune)
   --output-format OUTPUT_FORMAT
                         Output extension/format
@@ -1333,15 +1356,7 @@ options:
                         Output normalization mode
   --peak-dbfs PEAK_DBFS
                         Target peak dBFS when --normalize peak
-  --rms-dbfs RMS_DBFS   Target RMS dBFS when --normalize rms
-  --target-lufs TARGET_LUFS
-                        Integrated loudness target in LUFS
-  --compressor-threshold-db COMPRESSOR_THRESHOLD_DB
-                        Enable compressor above threshold dBFS
-  --compressor-ratio COMPRESSOR_RATIO
-                        Compressor ratio (>=1)
-  --compressor-attack-ms COMPRESSOR_ATTACK_MS
-                        Co
+  --rms-dbfs RMS_DBFS   Target RMS dB
 ... [truncated]
 ```
 
@@ -1366,9 +1381,9 @@ src-layout migration.
 ### CLI Help Snapshot
 
 ```text
-usage: pvxtransient.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
-                       [--output-format OUTPUT_FORMAT] [--stdout]
-                       [--overwrite] [--dry-run]
+usage: pvxtransient.py [-h] [-o OUTPUT_DIR] [--output OUTPUT]
+                       [--suffix SUFFIX] [--output-format OUTPUT_FORMAT]
+                       [--stdout] [--overwrite] [--dry-run]
                        [--verbosity {silent,quiet,normal,verbose,debug}] [-v]
                        [--quiet] [--silent] [--normalize {none,peak,rms}]
                        [--peak-dbfs PEAK_DBFS] [--rms-dbfs RMS_DBFS]
@@ -1393,7 +1408,10 @@ usage: pvxtransient.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
                        [--soft-clip-type {tanh,arctan,cubic}]
                        [--soft-clip-drive SOFT_CLIP_DRIVE]
                        [--hard-clip-level HARD_CLIP_LEVEL] [--clip]
-                       [--subtype SUBTYPE] [--n-fft N_FFT]
+                       [--subtype SUBTYPE] [--bit-depth {inherit,16,24,32f}]
+                       [--dither {none,tpdf}] [--dither-seed DITHER_SEED]
+                       [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                       [--metadata-policy {none,sidecar,copy}] [--n-fft N_FFT]
                        [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
                        [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
                        [--kaiser-beta KAISER_BETA]
@@ -1424,6 +1442,9 @@ options:
   -h, --help            show this help message and exit
   -o, --output-dir OUTPUT_DIR
                         Output directory
+  --output, --out OUTPUT
+                        Explicit output file path (single-input mode only).
+                        Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _trans)
   --output-format OUTPUT_FORMAT
                         Output extension/format
@@ -1435,15 +1456,7 @@ options:
                         Console verbosity level
   -v, --verbose         Increase verbosity (repeat for extra detail)
   --quiet               Reduce output and hide status bars
-  --silent              Suppress all console output
-  --normalize {none,peak,rms}
-                        Output normalization mode
-  --peak-dbfs PEAK_DBFS
-                        Target peak dBFS when --normalize peak
-  --rms-dbfs RMS_DBFS   Target RMS dBFS when --normalize rms
-  --target-lufs TARGET_LUFS
-                        Integrated loudness target in LUFS
-  --compressor-threshold-db COMPRESSOR_T
+  --silent     
 ... [truncated]
 ```
 
@@ -1468,7 +1481,7 @@ src-layout migration.
 ### CLI Help Snapshot
 
 ```text
-usage: pvxunison.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
+usage: pvxunison.py [-h] [-o OUTPUT_DIR] [--output OUTPUT] [--suffix SUFFIX]
                     [--output-format OUTPUT_FORMAT] [--stdout] [--overwrite]
                     [--dry-run]
                     [--verbosity {silent,quiet,normal,verbose,debug}] [-v]
@@ -1495,7 +1508,10 @@ usage: pvxunison.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
                     [--soft-clip-type {tanh,arctan,cubic}]
                     [--soft-clip-drive SOFT_CLIP_DRIVE]
                     [--hard-clip-level HARD_CLIP_LEVEL] [--clip]
-                    [--subtype SUBTYPE] [--n-fft N_FFT]
+                    [--subtype SUBTYPE] [--bit-depth {inherit,16,24,32f}]
+                    [--dither {none,tpdf}] [--dither-seed DITHER_SEED]
+                    [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                    [--metadata-policy {none,sidecar,copy}] [--n-fft N_FFT]
                     [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
                     [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
                     [--kaiser-beta KAISER_BETA]
@@ -1521,6 +1537,9 @@ options:
   -h, --help            show this help message and exit
   -o, --output-dir OUTPUT_DIR
                         Output directory
+  --output, --out OUTPUT
+                        Explicit output file path (single-input mode only).
+                        Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _unison)
   --output-format OUTPUT_FORMAT
                         Output extension/format
@@ -1541,15 +1560,7 @@ options:
   --target-lufs TARGET_LUFS
                         Integrated loudness target in LUFS
   --compressor-threshold-db COMPRESSOR_THRESHOLD_DB
-                        Enable compressor above threshold dBFS
-  --compressor-ratio COMPRESSOR_RATIO
-                        Compressor ratio (>=1)
-  --compressor-attack-ms COMPRESSOR_ATTACK_MS
-                        Compressor attack time in ms
-  --compressor-release-ms COMPRESSOR_RELEASE_MS
-                        Compressor release time in ms
-  --compressor-makeup-db COMPRESSOR_MAKEUP_DB
-           
+                       
 ... [truncated]
 ```
 
@@ -1668,7 +1679,7 @@ src-layout migration.
 ### CLI Help Snapshot
 
 ```text
-usage: pvxwarp.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
+usage: pvxwarp.py [-h] [-o OUTPUT_DIR] [--output OUTPUT] [--suffix SUFFIX]
                   [--output-format OUTPUT_FORMAT] [--stdout] [--overwrite]
                   [--dry-run]
                   [--verbosity {silent,quiet,normal,verbose,debug}] [-v]
@@ -1695,7 +1706,10 @@ usage: pvxwarp.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
                   [--soft-clip-type {tanh,arctan,cubic}]
                   [--soft-clip-drive SOFT_CLIP_DRIVE]
                   [--hard-clip-level HARD_CLIP_LEVEL] [--clip]
-                  [--subtype SUBTYPE] [--n-fft N_FFT]
+                  [--subtype SUBTYPE] [--bit-depth {inherit,16,24,32f}]
+                  [--dither {none,tpdf}] [--dither-seed DITHER_SEED]
+                  [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                  [--metadata-policy {none,sidecar,copy}] [--n-fft N_FFT]
                   [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
                   [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
                   [--kaiser-beta KAISER_BETA]
@@ -1721,6 +1735,9 @@ options:
   -h, --help            show this help message and exit
   -o, --output-dir OUTPUT_DIR
                         Output directory
+  --output, --out OUTPUT
+                        Explicit output file path (single-input mode only).
+                        Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _warp)
   --output-format OUTPUT_FORMAT
                         Output extension/format
@@ -1743,15 +1760,7 @@ options:
   --compressor-threshold-db COMPRESSOR_THRESHOLD_DB
                         Enable compressor above threshold dBFS
   --compressor-ratio COMPRESSOR_RATIO
-                        Compressor ratio (>=1)
-  --compressor-attack-ms COMPRESSOR_ATTACK_MS
-                        Compressor attack time in ms
-  --compressor-release-ms COMPRESSOR_RELEASE_MS
-                        Compressor release time in ms
-  --compressor-makeup-db COMPRESSOR_MAKEUP_DB
-                        Compressor makeup gain in dB
-  --expander-threshold-db EXPANDER_THRESHOLD_DB
-                        E
+                        Compressor ratio (>
 ... [truncated]
 ```
 
@@ -1814,7 +1823,7 @@ Generate advanced docs artifacts (coverage, limitations, benchmarks, citations, 
 **Purpose:** Generate one combined PDF from all HTML documentation pages.
 
 **Classes:** `SourcePage`, `ProgressBar`
-**Functions:** `add_console_args`, `console_level`, `is_quiet`, `is_silent`, `log`, `html_sort_key`, `collect_html_pages`, `extract_title`, `extract_main_html`, `parse_source_page`, `build_combined_html`, `discover_chromium_executable`, `run_cmd`, `render_pdf_with_chromium`, `render_pdf_with_wkhtmltopdf`, `render_pdf_with_weasyprint`, `render_pdf_with_playwright`, `build_engine_registry`, `auto_engine_order`, `render_pdf`, `parse_args`, `main`
+**Functions:** `add_console_args`, `console_level`, `is_quiet`, `is_silent`, `log`, `html_sort_key`, `collect_html_pages`, `extract_title`, `extract_main_html`, `parse_source_page`, `_rewrite_internal_links`, `build_combined_html`, `discover_chromium_executable`, `run_cmd`, `render_pdf_with_chromium`, `render_pdf_with_wkhtmltopdf`, `render_pdf_with_weasyprint`, `render_pdf_with_playwright`, `build_engine_registry`, `auto_engine_order`, `render_pdf`, `parse_args`, `main`
 
 **Help commands:** `python3 scripts_generate_docs_pdf.py`, `python3 scripts_generate_docs_pdf.py --help`
 
@@ -5507,21 +5516,32 @@ Track F0 and emit a pvx control-map CSV for pitch-follow pipelines.
 
 ## `src/pvx/cli/main.py`
 
-**Purpose:** Top-level project helper CLI.
+**Purpose:** Compatibility entrypoint for the unified pvx CLI.
 
 **Classes:** None
-**Functions:** `build_parser`, `main`
+**Functions:** None
 
-**Help commands:** `python3 src/pvx/cli/main.py`, `python3 src/pvx/cli/main.py --help`
+**Help commands:** `python3 src/pvx/cli/main.py`
 
 ### Module Docstring
 
 ```text
-Top-level project helper CLI.
+Compatibility entrypoint for the unified pvx CLI.
+```
 
-This file exists as a lightweight entrypoint that points users to the
-specialized `pvx*` command-line tools and the generated algorithm library.
-Run `python3 main.py --help` to view quick navigation commands.
+## `src/pvx/cli/pvx.py`
+
+**Purpose:** Unified top-level CLI for the pvx command suite.
+
+**Classes:** `ToolSpec`
+**Functions:** `_tool_index`, `_load_entrypoint`, `_looks_like_audio_input`, `_tool_names_csv`, `print_tools`, `print_examples`, `_prompt_text`, `_prompt_choice`, `_print_command_preview`, `run_guided_mode`, `_split_pipeline_stages`, `_token_flag`, `_run_stage_command`, `run_chain_mode`, `run_stream_mode`, `dispatch_tool`, `build_parser`, `main`
+
+**Help commands:** `python3 src/pvx/cli/pvx.py`, `python3 src/pvx/cli/pvx.py --help`
+
+### Module Docstring
+
+```text
+Unified top-level CLI for the pvx command suite.
 ```
 
 ## `src/pvx/cli/pvxconform.py`
@@ -5735,12 +5755,25 @@ Shared audio metric summaries and ASCII table rendering.
 **Purpose:** Shared helpers for pvx DSP command-line tools.
 
 **Classes:** `SegmentSpec`, `StatusBar`
-**Functions:** `add_console_args`, `console_level`, `is_quiet`, `is_silent`, `log_message`, `log_error`, `build_status_bar`, `add_common_io_args`, `add_vocoder_args`, `build_vocoder_config`, `validate_vocoder_args`, `resolve_inputs`, `read_audio`, `finalize_audio`, `write_output`, `print_input_output_metrics_table`, `default_output_path`, `_stream_format_name`, `parse_float_list`, `semitone_to_ratio`, `cents_to_ratio`, `time_pitch_shift_channel`, `time_pitch_shift_audio`, `read_segment_csv`, `concat_with_crossfade`, `ensure_runtime`
+**Functions:** `add_console_args`, `console_level`, `is_quiet`, `is_silent`, `log_message`, `log_error`, `build_status_bar`, `add_common_io_args`, `add_output_policy_args`, `add_vocoder_args`, `build_vocoder_config`, `validate_vocoder_args`, `resolve_inputs`, `read_audio`, `finalize_audio`, `write_output`, `print_input_output_metrics_table`, `default_output_path`, `_stream_format_name`, `parse_float_list`, `semitone_to_ratio`, `cents_to_ratio`, `time_pitch_shift_channel`, `time_pitch_shift_audio`, `read_segment_csv`, `concat_with_crossfade`, `ensure_runtime`
 
 ### Module Docstring
 
 ```text
 Shared helpers for pvx DSP command-line tools.
+```
+
+## `src/pvx/core/output_policy.py`
+
+**Purpose:** Shared output policy helpers for bit depth, dither, true-peak, and metadata sidecars.
+
+**Classes:** None
+**Functions:** `db_to_amplitude`, `_resample_linear_1d`, `true_peak_dbtp`, `enforce_true_peak_limit`, `resolve_output_subtype`, `subtype_bit_depth`, `apply_dither_if_needed`, `prepare_output_audio`, `source_metadata`, `write_metadata_sidecar`, `validate_output_policy_args`
+
+### Module Docstring
+
+```text
+Shared output policy helpers for bit depth, dither, true-peak, and metadata sidecars.
 ```
 
 ## `src/pvx/core/presets.py`
@@ -6026,6 +6059,21 @@ Microtonal feature tests across CSV mapping, retune, and CLI pitch paths.
 
 Ensures cents/ratio/semitone mapping behavior remains stable and that
 microtonal pitch controls produce expected conversion outputs.
+```
+
+## `tests/test_output_policy.py`
+
+**Purpose:** Unit tests for shared output policy helpers.
+
+**Classes:** `TestOutputPolicy`
+**Functions:** `_make_args`
+
+**Help commands:** `python3 tests/test_output_policy.py`, `python3 tests/test_output_policy.py --help`
+
+### Module Docstring
+
+```text
+Unit tests for shared output policy helpers.
 ```
 
 ## `tests/test_transient_and_stereo.py`

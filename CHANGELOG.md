@@ -1,5 +1,73 @@
 # Changelog
 
+## 2026-02-19
+
+- Stage 3 (pipeline ergonomics + output policy hardening) implemented:
+  - added shared output-policy core module:
+    - `/Users/cleider/dev/pvx/src/pvx/core/output_policy.py`
+  - added deterministic output policy flags across audio-output tools:
+    - `--bit-depth {inherit,16,24,32f}`
+    - `--dither {none,tpdf}` and `--dither-seed`
+    - `--true-peak-max-dbtp`
+    - `--metadata-policy {none,sidecar,copy}`
+    - retained explicit override `--subtype`
+  - integrated output-policy processing into:
+    - shared writer path `/Users/cleider/dev/pvx/src/pvx/core/common.py`
+    - `pvx voc` write path `/Users/cleider/dev/pvx/src/pvx/core/voc.py`
+  - added metadata sidecar emission (`*.metadata.json`) for reproducible output metadata.
+  - added helper workflows in unified CLI:
+    - `pvx chain` (managed multi-stage serial tool chains)
+    - `pvx stream` (chunked wrapper over `pvx voc`)
+  - updated non-`voc` tool writers to propagate source input metadata when sidecars are enabled.
+  - added/updated tests:
+    - `/Users/cleider/dev/pvx/tests/test_output_policy.py`
+    - `/Users/cleider/dev/pvx/tests/test_cli_regression.py`
+  - updated docs:
+    - `/Users/cleider/dev/pvx/README.md`
+    - `/Users/cleider/dev/pvx/docs/GETTING_STARTED.md`
+    - `/Users/cleider/dev/pvx/docs/EXAMPLES.md`
+    - `/Users/cleider/dev/pvx/docs/QUALITY_GUIDE.md`
+
+- Stage 2 (quality validation + determinism) implemented:
+  - expanded benchmark reproducibility controls in `/Users/cleider/dev/pvx/benchmarks/run_bench.py`:
+    - corpus manifest support (`--dataset-manifest`, `--refresh-manifest`, `--strict-corpus`)
+    - deterministic CPU mode controls (`--deterministic-cpu`, `--no-deterministic-cpu`)
+    - repeated determinism checks (`--determinism-runs`)
+    - output signature capture and baseline signature gating (`--gate-signatures`)
+    - row-level regression gating (`--gate-row-level`)
+  - added multi-metric directional gate rules beyond the original 4-metric gate.
+  - added automatic quality diagnostics in benchmark JSON/Markdown reports with remediation hints.
+  - added corpus hash manifest `/Users/cleider/dev/pvx/benchmarks/data/manifest.json`.
+  - updated quick baseline to include row metrics and deterministic signatures:
+    - `/Users/cleider/dev/pvx/benchmarks/baseline_small.json`
+  - updated CI benchmark gate workflow:
+    - `/Users/cleider/dev/pvx/.github/workflows/bench-regression.yml`
+  - added benchmark Stage 2 unit coverage in:
+    - `/Users/cleider/dev/pvx/tests/test_benchmark_runner.py`
+  - refreshed benchmark docs:
+    - `/Users/cleider/dev/pvx/docs/BENCHMARKS.md`
+
+- Added unified `pvx` CLI entrypoint:
+  - new module `/Users/cleider/dev/pvx/src/pvx/cli/pvx.py`
+  - new root compatibility wrapper `/Users/cleider/dev/pvx/pvx.py`
+  - new package script in `/Users/cleider/dev/pvx/pyproject.toml`: `pvx = "pvx.cli.pvx:main"`
+- Unified command dispatch now supports:
+  - subcommands for all existing tools (`voc`, `freeze`, `harmonize`, `conform`, `morph`, `warp`, `formant`, `transient`, `unison`, `denoise`, `deverb`, `retune`, `layer`, `pitch-track`)
+  - helper commands: `list`, `help`, `examples`, `guided`
+  - default shorthand: `pvx <input.wav> ...` automatically routes to `pvx voc ...`
+- Replaced legacy `main` navigator with a compatibility bridge to unified `pvx` CLI:
+  - `/Users/cleider/dev/pvx/src/pvx/cli/main.py`
+- Standardized explicit single-file output support across common CLI tools:
+  - added `--output` / `--out` in shared I/O args (`/Users/cleider/dev/pvx/src/pvx/core/common.py`)
+  - added validation for `--output` with multi-input/`--output-dir`/`--stdout` combinations
+- Updated `pvxvoc` built-in examples/help text to show unified `pvx voc ...` commands.
+- Updated beginner-facing docs for Stage 1 UX:
+  - `/Users/cleider/dev/pvx/README.md`
+  - `/Users/cleider/dev/pvx/docs/GETTING_STARTED.md`
+  - `/Users/cleider/dev/pvx/docs/EXAMPLES.md`
+- Added CLI regression tests for unified command surface and explicit output path behavior:
+  - `/Users/cleider/dev/pvx/tests/test_cli_regression.py`
+
 ## 2026-02-18
 
 - Added hybrid transient engine plumbing in `pvxvoc` with new modes:

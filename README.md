@@ -6,19 +6,52 @@ Primary project goal and differentiator:
 - audio quality first (phase coherence, transient integrity, formant stability, stereo coherence)
 - speed second (throughput/runtime tuning only after quality targets are met)
 
-It includes focused CLI tools (`pvxvoc`, `pvxfreeze`, `pvxharmonize`, `pvxretune`, `pvxmorph`, etc.), shared mastering controls, CSV-driven automation paths, microtonal support, and optional GPU acceleration.
+It includes a unified CLI (`pvx`) with focused subcommands (`voc`, `freeze`, `harmonize`, `retune`, `morph`, etc.), shared mastering controls, CSV-driven automation paths, microtonal support, and optional GPU acceleration.
 
 ## 30-Second Quick Start
 
 ```bash
 python3 -m pip install -e .
-python3 pvxvoc.py input.wav --stretch 1.20 --output output.wav
+pvx voc input.wav --stretch 1.20 --output output.wav
+```
+
+If the `pvx` script is not on your `PATH` yet, run the same command through the repository wrapper:
+
+```bash
+python3 pvx.py voc input.wav --stretch 1.20 --output output.wav
 ```
 
 What this does:
 - reads `input.wav`
 - stretches duration by 20%
 - writes `output.wav`
+
+If you prefer direct script wrappers, legacy commands are still supported (`python3 pvxvoc.py ...`, `python3 pvxfreeze.py ...`, etc.).
+
+## Unified CLI (Primary Entry Point)
+
+`pvx` is now the recommended command surface for first-time users.
+
+```bash
+pvx list
+pvx help voc
+pvx examples basic
+pvx guided
+pvx chain --example
+pvx stream --example
+```
+
+You can also use a convenience shortcut for the default vocoder path:
+
+```bash
+pvx input.wav --stretch 1.20 --output output.wav
+```
+
+This is equivalent to:
+
+```bash
+pvx voc input.wav --stretch 1.20 --output output.wav
+```
 
 ## 5-Minute Tutorial (Single-File Workflow)
 
@@ -27,25 +60,25 @@ Use one file (`voice.wav`) and run three common operations.
 1. Inspect available presets/examples:
 
 ```bash
-python3 pvxvoc.py --example all
+pvx voc --example all
 ```
 
 2. Time-stretch only:
 
 ```bash
-python3 pvxvoc.py voice.wav --stretch 1.30 --output voice_stretch.wav
+pvx voc voice.wav --stretch 1.30 --output voice_stretch.wav
 ```
 
 3. Pitch-shift only (duration unchanged):
 
 ```bash
-python3 pvxvoc.py voice.wav --stretch 1.0 --pitch -3 --output voice_down3st.wav
+pvx voc voice.wav --stretch 1.0 --pitch -3 --output voice_down3st.wav
 ```
 
 4. Pitch-shift with formant preservation:
 
 ```bash
-python3 pvxvoc.py voice.wav --stretch 1.0 --pitch -3 --pitch-mode formant-preserving --output voice_down3st_formant.wav
+pvx voc voice.wav --stretch 1.0 --pitch -3 --pitch-mode formant-preserving --output voice_down3st_formant.wav
 ```
 
 5. Quick A/B check:
@@ -90,36 +123,36 @@ Where:
 Start
  |
  +-- Need general time/pitch processing on one file or batch?
- |    -> pvxvoc.py
+ |    -> pvx voc
  |
  +-- Need sustained spectral drone from one instant?
- |    -> pvxfreeze.py
+ |    -> pvx freeze
  |
  +-- Need stacked harmony voices from one source?
- |    -> pvxharmonize.py
+ |    -> pvx harmonize
  |
  +-- Need timeline-constrained pitch/time map from CSV?
- |    -> pvxconform.py / pvxwarp.py
+ |    -> pvx conform / pvx warp
  |
  +-- Need morphing between two sources?
- |    -> pvxmorph.py
+ |    -> pvx morph
  |
  +-- Need monophonic retune to scale/root?
- |    -> pvxretune.py
+ |    -> pvx retune
  |
  +-- Need denoise or dereverb cleanup?
-      -> pvxdenoise.py / pvxdeverb.py
+      -> pvx denoise / pvx deverb
 ```
 
 ## Common Workflows
 
 | Goal | Tool | Minimal command |
 | --- | --- | --- |
-| Vocal retune / timing correction | `pvxvoc.py` | `python3 pvxvoc.py vocal.wav --preset vocal --stretch 1.05 --pitch -1 --output vocal_fix.wav` |
-| Sound-design freeze pad | `pvxfreeze.py` | `python3 pvxfreeze.py hit.wav --freeze-time 0.12 --duration 10 --output-dir out` |
-| Tempo stretch with transient care | `pvxvoc.py` | `python3 pvxvoc.py drums.wav --stretch 1.2 --transient-preserve --phase-locking identity --output drums_120.wav` |
-| Harmonic layering | `pvxharmonize.py` | `python3 pvxharmonize.py lead.wav --intervals 0,4,7 --gains 1,0.8,0.7 --output-dir out` |
-| Cross-source morphing | `pvxmorph.py` | `python3 pvxmorph.py a.wav b.wav --alpha 0.5 --output morph.wav` |
+| Vocal retune / timing correction | `pvx voc` | `pvx voc vocal.wav --preset vocal --stretch 1.05 --pitch -1 --output vocal_fix.wav` |
+| Sound-design freeze pad | `pvx freeze` | `pvx freeze hit.wav --freeze-time 0.12 --duration 10 --output-dir out` |
+| Tempo stretch with transient care | `pvx voc` | `pvx voc drums.wav --stretch 1.2 --transient-preserve --phase-locking identity --output drums_120.wav` |
+| Harmonic layering | `pvx harmonize` | `pvx harmonize lead.wav --intervals 0,4,7 --gains 1,0.8,0.7 --output-dir out` |
+| Cross-source morphing | `pvx morph` | `pvx morph a.wav b.wav --alpha 0.5 --output morph.wav` |
 
 More complete examples and use-case playbooks (65+ runnable recipes): `docs/EXAMPLES.md`
 
@@ -146,7 +179,7 @@ Full table of all currently supported audio container types: `docs/FILE_TYPES.md
 ### CUDA path
 
 ```bash
-python3 pvxvoc.py input.wav --device cuda --stretch 1.1 --output out_cuda.wav
+pvx voc input.wav --device cuda --stretch 1.1 --output out_cuda.wav
 ```
 
 Short aliases:
@@ -161,7 +194,13 @@ Short aliases:
 
 ## CLI Discoverability and UX
 
-`pvxvoc` now includes beginner UX features:
+`pvx` now provides a single command surface for discovery (`pvx list`, `pvx help <tool>`, `pvx examples`, `pvx guided`), while `pvxvoc` retains advanced controls for detailed phase-vocoder workflows.
+
+Additional helper workflows:
+- `pvx chain`: managed multi-stage chains without manually wiring per-stage `--stdout` / `-` plumbing
+- `pvx stream`: chunked long-form wrapper over `pvx voc` for simpler stream-oriented commands
+
+`pvx voc` includes beginner UX features:
 
 - Intent presets:
   - Legacy: `--preset none|vocal|ambient|extreme`
@@ -177,6 +216,8 @@ Short aliases:
   - `--ratio` -> `--pitch-shift-ratio`
   - `--out` -> `--output`
   - `--gpu` / `--cpu` -> device shortcut
+- Common output consistency:
+  - shared tools now accept explicit single-file output via `--output` / `--out` in addition to `--output-dir` + `--suffix`
 
 Plan/debug aids:
 - `--auto-profile`
@@ -200,6 +241,13 @@ Runtime metrics visibility:
   - sample rate, channels, duration, peak/RMS/crest, DC offset, ZCR, clipping %, spectral centroid, 95% bandwidth
   - plus an input-vs-output comparison table with `input`, `output`, and `delta(out-in)` columns: SNR, SI-SDR, LSD, modulation distance, spectral convergence, envelope correlation, transient smear, loudness/true-peak, and stereo drift metrics
 
+Output policy controls (shared across audio-output tools):
+- `--bit-depth {inherit,16,24,32f}`
+- `--dither {none,tpdf}` and `--dither-seed`
+- `--true-peak-max-dbtp`
+- `--metadata-policy {none,sidecar,copy}`
+- `--subtype` remains available as explicit low-level override
+
 ## Benchmarking (pvx vs Rubber Band vs librosa)
 
 Run a tiny benchmark (cycle-consistency metrics):
@@ -210,6 +258,12 @@ python3 benchmarks/run_bench.py --quick --out-dir benchmarks/out
 
 This uses the tuned deterministic profile by default (`--pvx-bench-profile tuned`).
 Use `--pvx-bench-profile legacy` to compare against the prior pvx benchmark settings.
+
+Stage 2 reproducibility controls:
+- corpus manifest + hash validation: `--dataset-manifest`, `--strict-corpus`, `--refresh-manifest`
+- deterministic CPU checks: `--deterministic-cpu`, `--determinism-runs`
+- stronger gates: `--gate-row-level`, `--gate-signatures`
+- automatic quality diagnostics are emitted in `report.md` and `report.json`
 
 Interpret benchmark priorities:
 - quality metrics are primary acceptance criteria
@@ -236,7 +290,7 @@ Notes:
 Run with regression gate against committed baseline:
 
 ```bash
-python3 benchmarks/run_bench.py --quick --out-dir benchmarks/out --baseline benchmarks/baseline_small.json --gate
+python3 benchmarks/run_bench.py --quick --out-dir benchmarks/out --strict-corpus --determinism-runs 2 --baseline benchmarks/baseline_small.json --gate --gate-row-level --gate-signatures
 ```
 
 ## Visual Documentation
@@ -257,7 +311,7 @@ See `docs/DIAGRAMS.md` for:
 ### “No readable input files matched…”
 - verify path and extension
 - quote globs in shells if needed
-- run `python3 pvxvoc.py --guided`
+- run `pvx guided` (or `pvx voc --guided`)
 
 ### Output sounds “phasier” or “smear-y”
 - enable `--phase-locking identity`
@@ -288,10 +342,22 @@ Yes. Use pitch flags with `--stretch 1.0`, e.g. `--pitch`, `--cents`, or `--rati
 ### Can I chain tools in one shell line?
 Yes. Use `--stdout` and `-` input on downstream tools.
 
+For shorter one-liners without manual pipe wiring, use managed chain mode:
+
 ```bash
-python3 pvxvoc.py input.wav --stretch 1.1 --stdout \
-  | python3 pvxdenoise.py - --reduction-db 10 --stdout \
-  | python3 pvxdeverb.py - --strength 0.4 --output cleaned.wav
+pvx chain input.wav --pipeline "voc --stretch 1.2 | formant --mode preserve" --output output_chain.wav
+```
+
+For chunked long renders through a simplified wrapper over `pvx voc`:
+
+```bash
+pvx stream input.wav --output output_stream.wav --chunk-seconds 0.2 --time-stretch 3.0
+```
+
+```bash
+pvx voc input.wav --stretch 1.1 --stdout \
+  | pvx denoise - --reduction-db 10 --stdout \
+  | pvx deverb - --strength 0.4 --output cleaned.wav
 ```
 
 ### Does pvx support microtonal workflows?
@@ -303,7 +369,7 @@ No. The repo includes non-phase-vocoder modules too (analysis, denoise, dereverb
 ## Why This Matters
 
 ### How pvx differs from `librosa` and Rubber Band
-- `librosa` is a broad analysis library; pvx is an operational CLI toolkit with production-style pipelines, shared mastering chain, map-based automation, and extensive command-line workflows.
+- `librosa` is a broad analysis library; pvx is an operational CLI toolkit with research- and production-oriented pipelines, shared mastering chain, map-based automation, and extensive command-line workflows.
 - Rubber Band is a strong dedicated stretcher; pvx emphasizes inspectable Python implementations, explicit transform/window control, CSV-driven control maps, integrated multi-tool workflows, and a quality-first tuning philosophy.
 
 ### Why phase coherence matters
@@ -329,6 +395,7 @@ Most for drums, consonants, plosives, and percussive attacks. Less critical for 
 - Rubber Band comparison notes: `docs/RUBBERBAND_COMPARISON.md`
 - Benchmark guide: `docs/BENCHMARKS.md`
 - Window reference: `docs/WINDOW_REFERENCE.md`
+- Maintainer review checklist: `docs/HOW_TO_REVIEW.md`
 - Generated HTML docs: `docs/html/index.html`
 - PDF bundle: `docs/pvx_documentation.pdf`
 
@@ -343,6 +410,23 @@ Optional CUDA:
 ```bash
 python3 -m pip install cupy-cuda12x
 ```
+
+### Installation and Runtime Matrix
+
+| Platform / Runtime | CPU mode | GPU/CUDA mode | Notes |
+| --- | --- | --- | --- |
+| Linux x86_64 | Supported | Supported (CUDA + CuPy) | Best choice for NVIDIA CUDA acceleration. |
+| Windows x86_64 | Supported | Supported (CUDA + CuPy) | Match CuPy package to installed CUDA runtime. |
+| macOS Intel | Supported | Not CUDA | Use CPU mode; Metal acceleration is not a CUDA path. |
+| macOS Apple Silicon (M1/M2/M3/M4) | Supported (native arm64) | Not CUDA | Native Apple Silicon support in CPU path; prefer quality-focused profiles first. |
+
+Primary command:
+
+```bash
+pvx voc input.wav --stretch 1.2 --output output.wav
+```
+
+Legacy wrappers remain available for backward compatibility.
 
 ## License
 

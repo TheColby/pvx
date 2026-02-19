@@ -172,3 +172,17 @@ Current deterministic control points:
 
 Planned deterministic requirement:
 - WSOLA search, transient regionization, and coherence coupling must be deterministic in CPU mode for reproducible tests/benchmarks.
+
+## Addendum: Stage 3 Implementation Snapshot (2026-02-19)
+
+Implemented after this Phase 0 note:
+
+- Shared output policy module added:
+  - `/Users/cleider/dev/pvx/src/pvx/core/output_policy.py`
+  - covers bit-depth policy, TPDF dithering, true-peak guard, and metadata sidecars
+- Integrated into both write paths:
+  - shared CLI writer: `/Users/cleider/dev/pvx/src/pvx/core/common.py`
+  - `pvxvoc` writer: `/Users/cleider/dev/pvx/src/pvx/core/voc.py`
+- Unified CLI helper commands added:
+  - `pvx chain` for managed serial multi-stage chains
+  - `pvx stream` for chunked wrapper over `pvx voc`

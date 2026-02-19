@@ -1,6 +1,6 @@
 # pvx Quality Guide
 
-This guide maps audible artifacts to concrete `pvxvoc` fixes.
+This guide maps audible artifacts to concrete `pvx voc` fixes.
 
 `pvx` operating principle:
 - quality first: artifacts and coherence issues are the primary constraints
@@ -25,13 +25,14 @@ This guide maps audible artifacts to concrete `pvxvoc` fixes.
 | Robotic vocal timbre after pitch shift | formant drift | `--pitch-mode formant-preserving`; tune `--formant-lifter` and `--formant-strength` |
 | Pumping/flat loudness | aggressive mastering chain | reduce compressor/limiter settings; disable unused mastering stages |
 | Grainy extreme stretch | ratio too high for single-stage path | `--stretch-mode multistage`; lower `--max-stage-stretch`; optionally `--multires-fusion` |
+| Unexpected overs/clipped delivery files | output policy not constrained | set `--true-peak-max-dbtp` and target `--bit-depth`; use `--dither tpdf` for PCM exports |
 
 ## 3. Practical Recipes
 
 ### Speech stretch with transient protection
 
 ```bash
-python3 pvxvoc.py speech.wav \
+pvx voc speech.wav \
   --preset vocal_studio \
   --transient-mode hybrid \
   --stretch 1.3 \
@@ -41,7 +42,7 @@ python3 pvxvoc.py speech.wav \
 ### Drum-safe stretch
 
 ```bash
-python3 pvxvoc.py drums.wav \
+pvx voc drums.wav \
   --preset drums_safe \
   --time-stretch 1.4 \
   --output drums_safe.wav
@@ -50,7 +51,7 @@ python3 pvxvoc.py drums.wav \
 ### Stereo coherence lock
 
 ```bash
-python3 pvxvoc.py mix.wav \
+pvx voc mix.wav \
   --stereo-mode ref_channel_lock \
   --ref-channel 0 \
   --coherence-strength 0.9 \
@@ -70,7 +71,7 @@ python3 pvxvoc.py mix.wav \
 
 ## 5. Debug Workflow
 
-1. Run `python3 pvxvoc.py --example all` to pick a close recipe.
+1. Run `pvx voc --example all` to pick a close recipe.
 2. Use `--dry-run --explain-plan` to inspect resolved settings.
 3. Adjust one control at a time (`transient-mode`, then `coherence-strength`, then phase/window settings).
 4. Compare A/B using short excerpts before full renders.

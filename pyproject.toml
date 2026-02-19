@@ -18,6 +18,7 @@ dependencies = [
 ]
 
 [project.scripts]
+pvx = "pvx.cli.pvx:main"
 pvxvoc = "pvx.core.voc:main"
 pvxfreeze = "pvx.cli.pvxfreeze:main"
 pvxharmonize = "pvx.cli.pvxharmonize:main"

@@ -231,7 +231,7 @@ def main(argv: list[str] | None = None) -> int:
                 output_audio=out,
                 output_sr=sr,
             )
-            write_output(out_path, out, sr, args)
+            write_output(out_path, out, sr, args, input_path=path)
             if ratios:
                 log_message(args, f"[ok] {path} -> {out_path} | median_ratio={float(np.median(ratios)):.4f}", min_level="verbose")
             else:

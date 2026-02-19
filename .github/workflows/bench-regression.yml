@@ -23,12 +23,15 @@ jobs:
           python benchmarks/run_bench.py \
             --quick \
             --out-dir benchmarks/out \
+            --strict-corpus \
+            --determinism-runs 2 \
             --baseline benchmarks/baseline_small.json \
-            --gate
+            --gate \
+            --gate-row-level \
+            --gate-signatures
       - name: Upload benchmark report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: benchmark-report
           path: benchmarks/out/
-

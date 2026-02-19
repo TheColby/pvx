@@ -58,6 +58,14 @@ from pvx.core.audio_metrics import (
     render_audio_metrics_table,
     summarize_audio_metrics,
 )
+from pvx.core.output_policy import (
+    BIT_DEPTH_CHOICES,
+    DITHER_CHOICES,
+    METADATA_POLICY_CHOICES,
+    prepare_output_audio,
+    validate_output_policy_args,
+    write_metadata_sidecar,
+)
 from pvx.core.stereo import lr_to_ms, ms_to_lr, validate_ref_channel
 from pvx.core.transients import detect_transient_regions, map_mask_to_output, smooth_binary_mask
 from pvx.core.wsola import wsola_time_stretch
@@ -326,31 +334,31 @@ _QUALITY_PROFILE_OVERRIDES: dict[str, dict[str, Any]] = {
 _EXAMPLE_COMMANDS: dict[str, tuple[str, str]] = {
     "basic": (
         "Basic time stretch",
-        "python3 pvxvoc.py input.wav --stretch 1.20 --output output.wav",
+        "pvx voc input.wav --stretch 1.20 --output output.wav",
     ),
     "vocal": (
         "Vocal-friendly preset with formant preservation",
-        "python3 pvxvoc.py vocal.wav --preset vocal --pitch -2 --output vocal_tuned.wav",
+        "pvx voc vocal.wav --preset vocal --pitch -2 --output vocal_tuned.wav",
     ),
     "ambient": (
         "Extreme ambient stretch",
-        "python3 pvxvoc.py texture.wav --preset ambient --target-duration 600 --output texture_ambient.wav",
+        "pvx voc texture.wav --preset ambient --target-duration 600 --output texture_ambient.wav",
     ),
     "extreme": (
         "Extreme long-form stretch with checkpoints",
-        "python3 pvxvoc.py source.wav --preset extreme --auto-segment-seconds 0.5 --checkpoint-dir checkpoints --output source_extreme.wav",
+        "pvx voc source.wav --preset extreme --auto-segment-seconds 0.5 --checkpoint-dir checkpoints --output source_extreme.wav",
     ),
     "drums_safe": (
         "Transient-safe drum stretch with WSOLA regions",
-        "python3 pvxvoc.py drums.wav --preset drums_safe --time-stretch 1.35 --output drums_safe.wav",
+        "pvx voc drums.wav --preset drums_safe --time-stretch 1.35 --output drums_safe.wav",
     ),
     "stereo_coherent": (
         "Stereo-coherent stretch with mid/side coupling",
-        "python3 pvxvoc.py mix_stereo.wav --preset stereo_coherent --time-stretch 1.2 --output mix_coherent.wav",
+        "pvx voc mix_stereo.wav --preset stereo_coherent --time-stretch 1.2 --output mix_coherent.wav",
     ),
     "hybrid": (
         "Hybrid transient mode (PV steady-state + WSOLA transients)",
-        "python3 pvxvoc.py speech.wav --transient-mode hybrid --transient-sensitivity 0.6 --time-stretch 1.25 --output speech_hybrid.wav",
+        "pvx voc speech.wav --transient-mode hybrid --transient-sensitivity 0.6 --time-stretch 1.25 --output speech_hybrid.wav",
     ),
     "benchmark": (
         "Benchmark pvx vs Rubber Band vs librosa (tiny suite)",
@@ -358,15 +366,15 @@ _EXAMPLE_COMMANDS: dict[str, tuple[str, str]] = {
     ),
     "gpu": (
         "CUDA render",
-        "python3 pvxvoc.py input.wav --device cuda --stretch 1.1 --output out_gpu.wav",
+        "pvx voc input.wav --device cuda --stretch 1.1 --output out_gpu.wav",
     ),
     "pipeline": (
         "Tracker sidechain pipeline",
-        "python3 HPS-pitch-track.py A.wav | python3 pvxvoc.py B.wav --pitch-follow-stdin --pitch-conf-min 0.75 --output B_follow.wav",
+        "python3 HPS-pitch-track.py A.wav | pvx voc B.wav --pitch-follow-stdin --pitch-conf-min 0.75 --output B_follow.wav",
     ),
     "csv": (
         "Segment map workflow",
-        "python3 pvxvoc.py input.wav --pitch-map map_conform.csv --output input_mapped.wav",
+        "pvx voc input.wav --pitch-map map_conform.csv --output input_mapped.wav",
     ),
 }
 
@@ -569,7 +577,7 @@ def print_cli_examples(which: str) -> None:
     if key not in EXAMPLE_CHOICES:
         raise ValueError(f"Unknown example preset: {which}")
 
-    print("pvxvoc example commands\n")
+    print("pvx voc example commands\n")
     if key == "all":
         for name in EXAMPLE_CHOICES:
             if name == "all":
@@ -3632,16 +3640,23 @@ def _read_audio_input(input_path: Path) -> tuple[np.ndarray, int]:
     return audio.astype(np.float64, copy=False), int(sr)
 
 
-def _write_audio_output(output_path: Path, audio: np.ndarray, sr: int, args: argparse.Namespace) -> None:
+def _write_audio_output(
+    output_path: Path,
+    audio: np.ndarray,
+    sr: int,
+    args: argparse.Namespace,
+    *,
+    subtype: str | None = None,
+) -> None:
     if bool(getattr(args, "stdout", False)) or str(output_path) == "-":
         stream_fmt = _stream_format_name(getattr(args, "output_format", None), output_path=output_path)
         buffer = io.BytesIO()
-        sf.write(buffer, audio, sr, format=stream_fmt, subtype=args.subtype)
+        sf.write(buffer, audio, sr, format=stream_fmt, subtype=subtype)
         sys.stdout.buffer.write(buffer.getvalue())
         sys.stdout.buffer.flush()
         return
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    sf.write(str(output_path), audio, sr, subtype=args.subtype)
+    sf.write(str(output_path), audio, sr, subtype=subtype)
 
 
 def concat_audio_chunks(chunks: list[np.ndarray], *, sr: int, crossfade_ms: float) -> np.ndarray:
@@ -3954,6 +3969,12 @@ def process_file(
         out_sr = args.target_sample_rate
 
     out_audio = apply_mastering_chain(out_audio, out_sr, args)
+    out_audio, resolved_subtype = prepare_output_audio(
+        out_audio,
+        int(out_sr),
+        args,
+        explicit_subtype=getattr(args, "subtype", None),
+    )
 
     if args.stdout:
         output_path = Path("-")
@@ -3992,7 +4013,29 @@ def process_file(
 
     if not args.dry_run:
         progress.set(0.96, "write")
-        _write_audio_output(output_path, out_audio, out_sr, args)
+        _write_audio_output(output_path, out_audio, out_sr, args, subtype=resolved_subtype)
+        sidecar = write_metadata_sidecar(
+            output_path=output_path,
+            input_path=(None if str(input_path) == "-" else input_path),
+            audio=out_audio,
+            sample_rate=int(out_sr),
+            subtype=resolved_subtype,
+            args=args,
+            extra={
+                "quality_profile": str(getattr(args, "_active_quality_profile", "neutral")),
+                "stages": int(stage_count),
+                "control_map_segments": int(len(map_segments)),
+                "checkpoint_id": checkpoint_id,
+                "transform": str(config.transform),
+                "window": str(config.window),
+                "phase_engine": str(config.phase_engine),
+                "transient_mode": str(args.transient_mode),
+                "stereo_mode": str(args.stereo_mode),
+                "coherence_strength": float(args.coherence_strength),
+            },
+        )
+        if sidecar is not None:
+            log_message(args, f"[info] metadata sidecar -> {sidecar}", min_level="verbose")
 
     if console_level(args) >= _VERBOSITY_TO_LEVEL["verbose"]:
         rt = runtime_config()
@@ -4020,6 +4063,8 @@ def process_file(
             msg += f", map_segments={len(map_segments)}"
         if checkpoint_id is not None:
             msg += f", checkpoint_id={checkpoint_id}"
+        if resolved_subtype is not None:
+            msg += f", subtype={resolved_subtype}"
         log_message(args, msg, min_level="verbose")
 
     if checkpoint_state_path is not None:
@@ -4220,6 +4265,7 @@ def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> 
 
     validate_transform_available(args.transform, parser)
     validate_mastering_args(args, parser)
+    validate_output_policy_args(args, parser)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -4230,11 +4276,11 @@ def build_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawTextHelpFormatter,
         epilog=(
             "Beginner examples:\n"
-            "  python3 pvxvoc.py input.wav --stretch 1.2 --output output.wav\n"
-            "  python3 pvxvoc.py vocal.wav --preset vocal --pitch -2 --output vocal_tuned.wav\n"
-            "  python3 pvxvoc.py speech.wav --transient-mode hybrid --stretch 1.25 --output speech_hybrid.wav\n"
-            "  python3 pvxvoc.py stereo.wav --stereo-mode mid_side_lock --coherence-strength 0.9 --stretch 1.2 --output stereo_lock.wav\n"
-            "  python3 pvxvoc.py input.wav --example all\n"
+            "  pvx voc input.wav --stretch 1.2 --output output.wav\n"
+            "  pvx voc vocal.wav --preset vocal --pitch -2 --output vocal_tuned.wav\n"
+            "  pvx voc speech.wav --transient-mode hybrid --stretch 1.25 --output speech_hybrid.wav\n"
+            "  pvx voc stereo.wav --stereo-mode mid_side_lock --coherence-strength 0.9 --stretch 1.2 --output stereo_lock.wav\n"
+            "  pvx voc input.wav --example all\n"
         ),
     )
 
@@ -4771,7 +4817,37 @@ def build_parser() -> argparse.ArgumentParser:
     output_group.add_argument(
         "--subtype",
         default=None,
-        help="Output file subtype for soundfile (e.g. PCM_16, PCM_24, FLOAT)",
+        help="Explicit libsndfile output subtype override (e.g., PCM_16, PCM_24, FLOAT)",
+    )
+    output_group.add_argument(
+        "--bit-depth",
+        choices=list(BIT_DEPTH_CHOICES),
+        default="inherit",
+        help="Output bit-depth policy (default: inherit). Ignored when --subtype is set.",
+    )
+    output_group.add_argument(
+        "--dither",
+        choices=list(DITHER_CHOICES),
+        default="none",
+        help="Dither policy before quantized writes (default: none)",
+    )
+    output_group.add_argument(
+        "--dither-seed",
+        type=int,
+        default=None,
+        help="Deterministic RNG seed for dithering (default: random seed)",
+    )
+    output_group.add_argument(
+        "--true-peak-max-dbtp",
+        type=float,
+        default=None,
+        help="Apply output gain trim to enforce max true-peak in dBTP",
+    )
+    output_group.add_argument(
+        "--metadata-policy",
+        choices=list(METADATA_POLICY_CHOICES),
+        default="none",
+        help="Output metadata policy: none, sidecar, or copy (sidecar implementation)",
     )
 
     debug_group.add_argument(
@@ -4843,7 +4919,7 @@ def main(argv: list[str] | None = None) -> int:
     if not args.inputs:
         parser.error(
             "No input files were provided.\n"
-            "Hint: run `python3 pvxvoc.py --example basic` for a copy-paste starter command."
+            "Hint: run `pvx voc --example basic` for a copy-paste starter command."
         )
 
     ensure_runtime_dependencies()
@@ -4852,7 +4928,7 @@ def main(argv: list[str] | None = None) -> int:
     if not input_paths:
         parser.error(
             "No readable input files matched the provided paths/patterns.\n"
-            "Hint: check the path/glob, or run `python3 pvxvoc.py --guided`."
+            "Hint: check the path/glob, or run `pvx voc --guided`."
         )
     stdin_count = sum(1 for path in input_paths if str(path) == "-")
     if stdin_count > 1:
@@ -5004,6 +5080,14 @@ def main(argv: list[str] | None = None) -> int:
                 "stdout": bool(args.stdout),
                 "manifest_json": None if args.manifest_json is None else str(args.manifest_json),
                 "checkpoint_dir": None if args.checkpoint_dir is None else str(args.checkpoint_dir),
+                "output_policy": {
+                    "subtype": None if args.subtype is None else str(args.subtype),
+                    "bit_depth": str(args.bit_depth),
+                    "dither": str(args.dither),
+                    "dither_seed": args.dither_seed,
+                    "true_peak_max_dbtp": args.true_peak_max_dbtp,
+                    "metadata_policy": str(args.metadata_policy),
+                },
             },
         }
         print(json.dumps(plan, indent=2, sort_keys=True))
@@ -5061,6 +5145,14 @@ def main(argv: list[str] | None = None) -> int:
                     "stereo_mode": str(args.stereo_mode),
                     "coherence_strength": float(args.coherence_strength),
                     "device": runtime_config().active_device,
+                    "output_policy": {
+                        "subtype": None if args.subtype is None else str(args.subtype),
+                        "bit_depth": str(args.bit_depth),
+                        "dither": str(args.dither),
+                        "dither_seed": args.dither_seed,
+                        "true_peak_max_dbtp": args.true_peak_max_dbtp,
+                        "metadata_policy": str(args.metadata_policy),
+                    },
                 }
             )
         for path, exc in failures:

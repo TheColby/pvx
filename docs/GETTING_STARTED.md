@@ -2,6 +2,10 @@
 
 This guide is for first-time users who want to understand what `pvx` does, why it exists, and how to get useful results without treating DSP as magic.
 
+Recommended command surface:
+- use `pvx <tool>` for all new workflows (`pvx voc`, `pvx freeze`, `pvx harmonize`, etc.)
+- legacy script wrappers (`python3 pvxvoc.py`, `python3 pvxfreeze.py`, ...) remain available for compatibility
+
 ## 1. What Problem pvx Solves
 
 Audio workflows often need one or more of the following, with controllable artifacts:
@@ -45,11 +49,11 @@ Design priority:
   - `+12 semitones` = one octave up.
   - `-12 semitones` = one octave down.
 
-In `pvxvoc.py`, duration and pitch can be controlled independently:
+In `pvx voc`, duration and pitch can be controlled independently:
 
 ```bash
-python3 pvxvoc.py input.wav --stretch 1.25 --pitch 0 --output stretched.wav
-python3 pvxvoc.py input.wav --stretch 1.0 --pitch 3 --output pitched.wav
+pvx voc input.wav --stretch 1.25 --pitch 0 --output stretched.wav
+pvx voc input.wav --stretch 1.0 --pitch 3 --output pitched.wav
 ```
 
 ## 4. Visual Mental Model of STFT
@@ -81,26 +85,26 @@ Key tradeoff:
 
 ## 5. Example Audio Scenarios
 
-- Dialogue cleanup + mild timing correction: `pvxvoc` + `pvxdenoise` + `pvxdeverb`.
-- Ambient texture from short sample: `pvxvoc --preset ambient --target-duration ...`.
-- Vocal harmonies: `pvxharmonize` with interval and pan controls.
-- Timeline-locked effects: `pvxconform` / `pvxwarp` with CSV maps.
+- Dialogue cleanup + mild timing correction: `pvx voc` + `pvx denoise` + `pvx deverb`.
+- Ambient texture from short sample: `pvx voc --preset ambient --target-duration ...`.
+- Vocal harmonies: `pvx harmonize` with interval and pan controls.
+- Timeline-locked effects: `pvx conform` / `pvx warp` with CSV maps.
 
 ### 5.1 Use-Case Matrix (Where to start quickly)
 
 | Use case | First command to try |
 | --- | --- |
-| Speech slowdown for transcription | `python3 pvxvoc.py speech.wav --preset vocal_studio --stretch 1.25 --output speech_slow.wav` |
-| Podcast timing cleanup | `python3 pvxvoc.py voice.wav --stretch 0.95 --output voice_tight.wav` |
-| Vocal pitch correction | `python3 pvxretune.py vocal.wav --scale major --root C --output-dir out --suffix _retune` |
-| Harmonic backing voices | `python3 pvxharmonize.py lead.wav --intervals 0,4,7 --gains 1,0.8,0.65 --output-dir out` |
-| Unison widen synth | `python3 pvxunison.py synth.wav --voices 7 --detune-cents 16 --width 1.1 --output-dir out` |
-| Long ambient from short source | `python3 pvxvoc.py oneshot.wav --preset extreme_ambient --target-duration 600 --output ambient.wav` |
-| Drum-safe stretch | `python3 pvxvoc.py drums.wav --preset drums_safe --stretch 1.3 --output drums_stretch.wav` |
-| Stereo image stability | `python3 pvxvoc.py mix.wav --stretch 1.15 --stereo-mode mid_side_lock --coherence-strength 0.9 --output mix_lock.wav` |
-| Noise reduction pre-pass | `python3 pvxdenoise.py field.wav --reduction-db 8 --output-dir out --suffix _den` |
-| Room tail reduction | `python3 pvxdeverb.py room.wav --strength 0.5 --output-dir out --suffix _dry` |
-| CSV time/pitch choreography | `python3 pvxconform.py source.wav --map map_conform.csv --output-dir out` |
+| Speech slowdown for transcription | `pvx voc speech.wav --preset vocal_studio --stretch 1.25 --output speech_slow.wav` |
+| Podcast timing cleanup | `pvx voc voice.wav --stretch 0.95 --output voice_tight.wav` |
+| Vocal pitch correction | `pvx retune vocal.wav --scale major --root C --output-dir out --suffix _retune` |
+| Harmonic backing voices | `pvx harmonize lead.wav --intervals 0,4,7 --gains 1,0.8,0.65 --output-dir out` |
+| Unison widen synth | `pvx unison synth.wav --voices 7 --detune-cents 16 --width 1.1 --output-dir out` |
+| Long ambient from short source | `pvx voc oneshot.wav --preset extreme_ambient --target-duration 600 --output ambient.wav` |
+| Drum-safe stretch | `pvx voc drums.wav --preset drums_safe --stretch 1.3 --output drums_stretch.wav` |
+| Stereo image stability | `pvx voc mix.wav --stretch 1.15 --stereo-mode mid_side_lock --coherence-strength 0.9 --output mix_lock.wav` |
+| Noise reduction pre-pass | `pvx denoise field.wav --reduction-db 8 --output-dir out --suffix _den` |
+| Room tail reduction | `pvx deverb room.wav --strength 0.5 --output-dir out --suffix _dry` |
+| CSV time/pitch choreography | `pvx conform source.wav --map map_conform.csv --output-dir out` |
 | Automated quality comparison | `python3 benchmarks/run_bench.py --quick --out-dir benchmarks/out --gate --baseline benchmarks/baseline_small.json` |
 
 ## 6. Step-by-Step Walkthrough (One Small WAV)
@@ -110,7 +114,7 @@ Assume `sample.wav` is about 2–5 seconds long.
 ### Step A: Baseline stretch
 
 ```bash
-python3 pvxvoc.py sample.wav --stretch 1.2 --output sample_stretch.wav
+pvx voc sample.wav --stretch 1.2 --output sample_stretch.wav
 ```
 
 Expected:
@@ -121,7 +125,7 @@ Expected:
 ### Step B: Add transient protection
 
 ```bash
-python3 pvxvoc.py sample.wav --stretch 1.2 --transient-preserve --phase-locking identity --output sample_stretch_transient.wav
+pvx voc sample.wav --stretch 1.2 --transient-preserve --phase-locking identity --output sample_stretch_transient.wav
 ```
 
 Expected:
@@ -131,7 +135,7 @@ Expected:
 ### Step C: Pitch shift with formant preservation
 
 ```bash
-python3 pvxvoc.py sample.wav --stretch 1.0 --pitch -4 --pitch-mode formant-preserving --output sample_pitch_formant.wav
+pvx voc sample.wav --stretch 1.0 --pitch -4 --pitch-mode formant-preserving --output sample_pitch_formant.wav
 ```
 
 Expected:
@@ -141,7 +145,7 @@ Expected:
 ### Step D: Auto profile planning
 
 ```bash
-python3 pvxvoc.py sample.wav --auto-profile --auto-transform --explain-plan
+pvx voc sample.wav --auto-profile --auto-transform --explain-plan
 ```
 
 Expected:
@@ -165,7 +169,7 @@ If artifacts are strong:
 ### Hybrid transient mode (recommended on speech/drums)
 
 ```bash
-python3 pvxvoc.py sample.wav \
+pvx voc sample.wav \
   --transient-mode hybrid \
   --transient-sensitivity 0.6 \
   --transient-protect-ms 30 \
@@ -181,7 +185,7 @@ What to expect:
 ### Stereo coherence lock (recommended for wide stereo sources)
 
 ```bash
-python3 pvxvoc.py stereo_mix.wav \
+pvx voc stereo_mix.wav \
   --stereo-mode mid_side_lock \
   --coherence-strength 0.9 \
   --stretch 1.2 \
@@ -203,7 +207,29 @@ Use presets when you do not want to tune many flags:
 
 Legacy presets remain available: `vocal`, `ambient`, `extreme`.
 
-## 10. Next Steps
+## 10. Simpler One-Line Pipelines
+
+If you do not want long Unix pipe chains, use managed helpers:
+
+```bash
+pvx chain sample.wav --pipeline "voc --stretch 1.2 | formant --mode preserve" --output sample_chain.wav
+pvx stream sample.wav --output sample_stream.wav --chunk-seconds 0.2 --time-stretch 2.0
+```
+
+- `pvx chain` runs serial stages with managed intermediate files.
+- `pvx stream` wraps `pvx voc` chunk/segment controls for long renders.
+
+## 11. Output Policy Controls
+
+All audio-output tools now share deterministic output policy flags:
+
+- `--bit-depth {inherit,16,24,32f}`
+- `--dither {none,tpdf}` and `--dither-seed`
+- `--true-peak-max-dbtp`
+- `--metadata-policy {none,sidecar,copy}`
+- `--subtype` for explicit low-level output subtype override
+
+## 12. Next Steps
 
 - Run practical recipes and advanced use cases (65+): `docs/EXAMPLES.md`
 - Learn architecture and DSP diagrams (26+): `docs/DIAGRAMS.md`

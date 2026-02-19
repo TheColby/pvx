@@ -1,34 +1,82 @@
 # pvx Benchmarks
 
-_Generated from commit `858658d` (commit date: 2026-02-18T16:19:55-05:00)._
+`pvx` uses a deterministic quality-first benchmark harness in `benchmarks/run_bench.py`.
 
-Reproducible benchmark summary for core STFT+ISTFT path across CPU/CUDA/Apple-Silicon-native contexts.
+Stage 2 focus:
+- objective + perceptual proxy metrics
+- deterministic CPU reproducibility checks
+- corpus hash validation via manifest
+- CI regression gating with aggregate + row-level checks
+- automatic diagnostics with recommended remediation flags
 
-## Reproduce
+## Quick CI Run
 
 ```bash
-python3 scripts_generate_docs_extras.py --run-benchmarks
+python3 benchmarks/run_bench.py \
+  --quick \
+  --out-dir benchmarks/out \
+  --strict-corpus \
+  --determinism-runs 2 \
+  --baseline benchmarks/baseline_small.json \
+  --gate \
+  --gate-row-level \
+  --gate-signatures
 ```
 
-## Benchmark Spec
+Outputs:
+- `benchmarks/out/report.json`
+- `benchmarks/out/report.md`
+- optional `benchmarks/out/summary.png` with `--plots`
 
-- Sample rate: `48000` Hz
-- Duration: `4.0` s
-- Signal recipe: sum of 4 deterministic sinusoids with linear amplitude ramp
-- STFT config: `n_fft=2048`, `win_length=2048`, `hop_size=512`, `window=hann`, `center=True`
+## Corpus And Manifest
 
-## Host
+The benchmark corpus is generated deterministically in `benchmarks/data/` and tracked by:
+- `benchmarks/data/manifest.json`
 
-- Platform: `macOS-15.1.1-arm64-arm-64bit-Mach-O`
-- Machine: `arm64`
-- Python: `3.14.3`
+Useful commands:
 
-## Results
+```bash
+# Rebuild manifest from corpus
+python3 benchmarks/run_bench.py --quick --refresh-manifest
 
-| Backend | Status | Elapsed (ms) | Peak host memory (MB) | SNR vs input (dB) | Spectral distance vs input (dB) | SNR vs CPU (dB) | Spectral distance vs CPU (dB) | Notes |
-| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| cpu | ok | 20.356 | 12.02 | 160.5928 | 0.0 | n/a | n/a |  |
-| cuda | unavailable | n/a | n/a | n/a | n/a | n/a | n/a | CUDA mode requires CuPy. Install a matching `cupy-cudaXXx` package. |
-| apple_silicon_native_cpu | ok | 20.276 | 12.02 | 160.5928 | 0.0 | 160.5928 | 0.0 |  |
+# Enforce manifest/hash consistency
+python3 benchmarks/run_bench.py --quick --strict-corpus
+```
 
-Raw machine-readable benchmark output: `docs/benchmarks/latest.json`.
+## Determinism Controls
+
+- `--deterministic-cpu` (default on):
+  - forces `--phase-random-seed 0` for pvx benchmark renders
+  - applies stable environment controls (`PYTHONHASHSEED=0`, single-thread BLAS hints)
+- `--determinism-runs N`:
+  - repeats pvx render cycle per case
+  - records hash sequences and max absolute sample delta
+  - gate fails if mismatches are detected
+
+## Gate Behavior
+
+`--gate` compares current report vs baseline report (`--baseline`).
+
+Aggregate metric directions:
+- lower-is-better metrics fail if current > baseline + tolerance
+- higher-is-better metrics fail if current < baseline - tolerance
+
+User-tunable tolerances:
+- `--tol-lsd`
+- `--tol-modspec`
+- `--tol-smear`
+- `--tol-coherence`
+
+Additional checks:
+- `--gate-row-level`: per-case row regressions
+- `--gate-signatures`: exact hash match for pvx output signatures
+
+## Diagnostics
+
+Each method now emits diagnostics in JSON and Markdown reports, for example:
+- transient smear mitigation (`--transient-mode hybrid|wsola`, hop adjustments)
+- phase/coherence fixes (`--phase-locking identity`, stereo lock modes)
+- pitch/formant recommendations (`--pitch-mode formant-preserving`)
+- perceptual-tooling notes when proxy metrics are used
+
+These diagnostics are intended to reduce iteration time when quality regresses.

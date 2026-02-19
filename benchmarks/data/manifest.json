@@ -1,0 +1,21 @@
+{
+  "entries": [
+    {
+      "channels": 2,
+      "duration_s": 1.2,
+      "name": "drum_like_stereo.wav",
+      "sample_rate": 24000,
+      "samples": 28800,
+      "sha256": "1079a16ab7d6f78741d5eab89c1774d355ebc49443abd5c8775dfd0ac9c4fedb"
+    },
+    {
+      "channels": 1,
+      "duration_s": 1.2,
+      "name": "speech_like.wav",
+      "sample_rate": 24000,
+      "samples": 28800,
+      "sha256": "ab91c9aa972bbf14c3961bbdef4dc64947c426df46e0877f4bc12d6b69d88795"
+    }
+  ],
+  "generated_utc": "2026-02-19T15:49:15Z"
+}

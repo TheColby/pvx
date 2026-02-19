@@ -20,6 +20,14 @@ from pvx.core.audio_metrics import (
     render_audio_metrics_table,
     summarize_audio_metrics,
 )
+from pvx.core.output_policy import (
+    BIT_DEPTH_CHOICES,
+    DITHER_CHOICES,
+    METADATA_POLICY_CHOICES,
+    prepare_output_audio,
+    validate_output_policy_args,
+    write_metadata_sidecar,
+)
 from pvx.core.voc import (
     PHASE_ENGINE_CHOICES,
     TRANSFORM_CHOICES,
@@ -186,6 +194,13 @@ def add_common_io_args(parser: argparse.ArgumentParser, default_suffix: str) -> 
         help="Input files/globs or '-' for stdin",
     )
     parser.add_argument("-o", "--output-dir", type=Path, default=None, help="Output directory")
+    parser.add_argument(
+        "--output",
+        "--out",
+        type=Path,
+        default=None,
+        help="Explicit output file path (single-input mode only). Alias: --out",
+    )
     parser.add_argument("--suffix", default=default_suffix, help=f"Output filename suffix (default: {default_suffix})")
     parser.add_argument("--output-format", default=None, help="Output extension/format")
     parser.add_argument(
@@ -197,7 +212,45 @@ def add_common_io_args(parser: argparse.ArgumentParser, default_suffix: str) -> 
     parser.add_argument("--dry-run", action="store_true", help="Resolve and print, but do not write files")
     add_console_args(parser)
     add_mastering_args(parser)
-    parser.add_argument("--subtype", default=None, help="libsndfile subtype (PCM_16, PCM_24, FLOAT, etc)")
+    add_output_policy_args(parser)
+
+
+def add_output_policy_args(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--subtype",
+        default=None,
+        help="Explicit libsndfile output subtype override (e.g., PCM_16, PCM_24, FLOAT)",
+    )
+    parser.add_argument(
+        "--bit-depth",
+        choices=list(BIT_DEPTH_CHOICES),
+        default="inherit",
+        help="Output bit-depth policy (default: inherit). Ignored when --subtype is set.",
+    )
+    parser.add_argument(
+        "--dither",
+        choices=list(DITHER_CHOICES),
+        default="none",
+        help="Dither policy before quantized writes (default: none)",
+    )
+    parser.add_argument(
+        "--dither-seed",
+        type=int,
+        default=None,
+        help="Deterministic RNG seed for dithering (default: random seed)",
+    )
+    parser.add_argument(
+        "--true-peak-max-dbtp",
+        type=float,
+        default=None,
+        help="Apply output gain trim to enforce max true-peak in dBTP",
+    )
+    parser.add_argument(
+        "--metadata-policy",
+        choices=list(METADATA_POLICY_CHOICES),
+        default="none",
+        help="Output metadata policy: none, sidecar, or copy (sidecar implementation)",
+    )
 
 
 def add_vocoder_args(
@@ -336,6 +389,7 @@ def validate_vocoder_args(args: argparse.Namespace, parser: argparse.ArgumentPar
         parser.error("--cuda-device must be >= 0")
     validate_transform_available(args.transform, parser)
     validate_mastering_args(args, parser)
+    validate_output_policy_args(args, parser)
 
 
 def resolve_inputs(
@@ -351,8 +405,16 @@ def resolve_inputs(
         parser.error("Input '-' (stdin) may only be specified once")
     if stdin_count and len(paths) != 1:
         parser.error("Input '-' (stdin) cannot be combined with additional input files")
-    if args is not None and bool(getattr(args, "stdout", False)) and len(paths) != 1:
-        parser.error("--stdout requires exactly one resolved input")
+    if args is not None:
+        explicit_output = getattr(args, "output", None)
+        if explicit_output is not None and bool(getattr(args, "output_dir", None)):
+            parser.error("--output cannot be combined with --output-dir")
+        if explicit_output is not None and bool(getattr(args, "stdout", False)):
+            parser.error("--output cannot be combined with --stdout")
+        if bool(getattr(args, "stdout", False)) and len(paths) != 1:
+            parser.error("--stdout requires exactly one resolved input")
+        if explicit_output is not None and len(paths) != 1:
+            parser.error("--output requires exactly one resolved input")
     return paths
 
 
@@ -371,19 +433,32 @@ def finalize_audio(audio: np.ndarray, sample_rate: int, args: argparse.Namespace
     return apply_mastering_chain(audio, int(sample_rate), args)
 
 
-def write_output(path: Path, audio: np.ndarray, sr: int, args: argparse.Namespace) -> None:
+def write_output(
+    path: Path,
+    audio: np.ndarray,
+    sr: int,
+    args: argparse.Namespace,
+    *,
+    input_path: Path | None = None,
+    metadata_extra: dict[str, object] | None = None,
+) -> None:
     to_stdout = bool(getattr(args, "stdout", False)) or str(path) == "-"
     dry_run = bool(getattr(args, "dry_run", False))
     overwrite = bool(getattr(args, "overwrite", False))
-    subtype = getattr(args, "subtype", None)
     output_format = getattr(args, "output_format", None)
+    out_audio, resolved_subtype = prepare_output_audio(
+        audio,
+        int(sr),
+        args,
+        explicit_subtype=getattr(args, "subtype", None),
+    )
 
     if to_stdout:
         if dry_run:
             return
         stream_fmt = _stream_format_name(output_format)
         buffer = io.BytesIO()
-        sf.write(buffer, audio, sr, format=stream_fmt, subtype=subtype)
+        sf.write(buffer, out_audio, sr, format=stream_fmt, subtype=resolved_subtype)
         sys.stdout.buffer.write(buffer.getvalue())
         sys.stdout.buffer.flush()
         return
@@ -393,7 +468,18 @@ def write_output(path: Path, audio: np.ndarray, sr: int, args: argparse.Namespac
     if dry_run:
         return
     path.parent.mkdir(parents=True, exist_ok=True)
-    sf.write(str(path), audio, sr, subtype=subtype)
+    sf.write(str(path), out_audio, sr, subtype=resolved_subtype)
+    sidecar = write_metadata_sidecar(
+        output_path=path,
+        input_path=input_path,
+        audio=out_audio,
+        sample_rate=int(sr),
+        subtype=resolved_subtype,
+        args=args,
+        extra=dict(metadata_extra or {}),
+    )
+    if sidecar is not None:
+        log_message(args, f"[info] metadata sidecar -> {sidecar}", min_level="verbose")
 
 
 def print_input_output_metrics_table(
@@ -425,6 +511,9 @@ def print_input_output_metrics_table(
 
 
 def default_output_path(input_path: Path, args: argparse.Namespace) -> Path:
+    explicit_output = getattr(args, "output", None)
+    if explicit_output is not None:
+        return Path(explicit_output)
     output_dir = args.output_dir.resolve() if args.output_dir is not None else None
     source = Path("stdin.wav") if str(input_path) == "-" else input_path
     return compute_output_path(source, output_dir, args.suffix, args.output_format)

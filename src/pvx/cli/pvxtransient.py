@@ -129,7 +129,7 @@ def main(argv: list[str] | None = None) -> int:
                 output_audio=out,
                 output_sr=sr,
             )
-            write_output(out_path, out, sr, args)
+            write_output(out_path, out, sr, args, input_path=path)
             log_message(args, f"[ok] {path} -> {out_path} | stretch={stretch:.4f} pitch={pitch_ratio:.4f}", min_level="verbose")
         except Exception as exc:
             failures += 1

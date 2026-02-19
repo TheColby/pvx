@@ -15,6 +15,7 @@ from pvx.core.audio_metrics import (
 )
 from pvx.core.common import (
     add_console_args,
+    add_output_policy_args,
     add_vocoder_args,
     build_status_bar,
     build_vocoder_config,
@@ -89,7 +90,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--alpha", type=float, default=0.5, help="Morph amount 0..1 (0=A, 1=B)")
     add_mastering_args(parser)
-    parser.add_argument("--subtype", default=None)
+    add_output_policy_args(parser)
     parser.add_argument("--overwrite", action="store_true")
     add_console_args(parser)
     add_vocoder_args(parser, default_n_fft=2048, default_win_length=2048, default_hop_size=512)
@@ -160,7 +161,19 @@ def main(argv: list[str] | None = None) -> int:
             title="Audio Compare Metrics (out vs inB)",
         )
         log_message(args, f"{metrics_table}\n{compare_a}\n{compare_b}", min_level="quiet")
-        write_output(out_path, out, sr_a, args)
+        write_output(
+            out_path,
+            out,
+            sr_a,
+            args,
+            metadata_extra={
+                "morph": {
+                    "input_a": str(args.input_a),
+                    "input_b": str(args.input_b),
+                    "alpha": float(args.alpha),
+                }
+            },
+        )
         log_message(args, f"[ok] {args.input_a} + {args.input_b} -> {out_path}", min_level="verbose")
         status.step(1, out_path.name)
         status.finish("done")

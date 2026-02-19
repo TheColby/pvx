@@ -4,8 +4,11 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
+import os
+import platform
 import shutil
 import subprocess
 import sys
@@ -127,12 +130,233 @@ ALL_METRIC_KEYS: list[str] = [
     *SPATIAL_ARTIFACT_KEYS,
 ]
 
+CASE_GATE_RULES: dict[str, tuple[str, float]] = {
+    "log_spectral_distance": ("max", 0.40),
+    "modulation_spectrum_distance": ("max", 0.10),
+    "transient_smear_score": ("max", 0.06),
+    "stereo_coherence_drift": ("max", 0.08),
+    "spectral_convergence": ("max", 0.03),
+    "perceptual_proxy_fraction": ("max", 0.05),
+    "phasiness_index": ("max", 0.06),
+    "musical_noise_index": ("max", 0.06),
+    "pre_echo_score": ("max", 0.06),
+    "f0_rmse_cents": ("max", 10.0),
+    "snr_db": ("min", 1.50),
+    "si_sdr_db": ("min", 1.50),
+    "envelope_correlation": ("min", 0.03),
+    "onset_f1": ("min", 0.05),
+    "voicing_f1": ("min", 0.05),
+}
+
 
 @dataclass(frozen=True)
 class TaskSpec:
     name: str
     kind: str  # "stretch" | "pitch"
     value: float
+
+
+def _sha256_bytes(payload: bytes) -> str:
+    return hashlib.sha256(payload).hexdigest()
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            if not chunk:
+                break
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _parse_version(mod_name: str) -> str | None:
+    try:
+        module = __import__(mod_name)
+    except Exception:
+        return None
+    return str(getattr(module, "__version__", "unknown"))
+
+
+def _collect_environment_metadata(*, deterministic_cpu: bool) -> dict[str, Any]:
+    return {
+        "python": sys.version.split()[0],
+        "platform": platform.platform(),
+        "machine": platform.machine(),
+        "processor": platform.processor(),
+        "deterministic_cpu": bool(deterministic_cpu),
+        "numpy_version": str(np.__version__),
+        "soundfile_version": _parse_version("soundfile"),
+        "scipy_version": _parse_version("scipy"),
+        "librosa_version": _parse_version("librosa"),
+        "rubberband_available": bool(_find_rubberband()),
+        "env_controls": {
+            "PYTHONHASHSEED": os.environ.get("PYTHONHASHSEED"),
+            "OMP_NUM_THREADS": os.environ.get("OMP_NUM_THREADS"),
+            "OPENBLAS_NUM_THREADS": os.environ.get("OPENBLAS_NUM_THREADS"),
+            "MKL_NUM_THREADS": os.environ.get("MKL_NUM_THREADS"),
+            "NUMEXPR_NUM_THREADS": os.environ.get("NUMEXPR_NUM_THREADS"),
+        },
+    }
+
+
+def _corpus_manifest_entries(paths: list[Path]) -> list[dict[str, Any]]:
+    entries: list[dict[str, Any]] = []
+    for path in sorted(paths, key=lambda p: p.name):
+        audio, sr = _read_audio(path)
+        channels = int(audio.shape[1]) if audio.ndim == 2 else 1
+        entries.append(
+            {
+                "name": path.name,
+                "sha256": _sha256_file(path),
+                "sample_rate": int(sr),
+                "samples": int(audio.shape[0]),
+                "channels": channels,
+                "duration_s": float(audio.shape[0] / max(1, sr)),
+            }
+        )
+    return entries
+
+
+def _load_manifest(manifest_path: Path) -> dict[str, Any] | None:
+    if not manifest_path.exists():
+        return None
+    try:
+        payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    if not isinstance(payload, dict):
+        return None
+    return payload
+
+
+def _write_manifest(manifest_path: Path, data_paths: list[Path]) -> dict[str, Any]:
+    payload = {
+        "generated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "entries": _corpus_manifest_entries(data_paths),
+    }
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
+    manifest_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return payload
+
+
+def _manifest_index(payload: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    out: dict[str, dict[str, Any]] = {}
+    for row in payload.get("entries", []):
+        if not isinstance(row, dict):
+            continue
+        name = row.get("name")
+        if isinstance(name, str):
+            out[name] = row
+    return out
+
+
+def _validate_corpus_against_manifest(data_paths: list[Path], payload: dict[str, Any]) -> list[str]:
+    issues: list[str] = []
+    index = _manifest_index(payload)
+    for path in sorted(data_paths, key=lambda p: p.name):
+        row = index.get(path.name)
+        if row is None:
+            issues.append(f"manifest missing entry for {path.name}")
+            continue
+        sha = str(row.get("sha256", ""))
+        now_sha = _sha256_file(path)
+        if sha != now_sha:
+            issues.append(f"hash mismatch for {path.name}: manifest={sha} current={now_sha}")
+    for name in sorted(index):
+        if not any(path.name == name for path in data_paths):
+            issues.append(f"manifest entry has no file in corpus: {name}")
+    return issues
+
+
+def _prepare_dataset(
+    *,
+    data_dir: Path,
+    manifest_path: Path,
+    refresh_manifest: bool,
+    strict_corpus: bool,
+) -> tuple[list[Path], dict[str, Any], list[str]]:
+    data_paths = _generate_tiny_dataset(data_dir)
+    issues: list[str] = []
+
+    if refresh_manifest or not manifest_path.exists():
+        payload = _write_manifest(manifest_path, data_paths)
+        return data_paths, payload, issues
+
+    payload = _load_manifest(manifest_path)
+    if payload is None:
+        issues.append(f"Corpus manifest unreadable at {manifest_path}")
+        payload = _write_manifest(manifest_path, data_paths)
+        return data_paths, payload, issues
+
+    issues.extend(_validate_corpus_against_manifest(data_paths, payload))
+    if issues:
+        if strict_corpus:
+            return data_paths, payload, issues
+        payload = _write_manifest(manifest_path, data_paths)
+    return data_paths, payload, issues
+
+
+def _case_key(input_path: Path, task: TaskSpec) -> str:
+    return f"{input_path.stem}:{task.name}"
+
+
+def _diagnose_metrics(metrics: dict[str, float]) -> list[str]:
+    suggestions: list[str] = []
+    transient_smear = float(metrics.get("transient_smear_score", math.nan))
+    onset_f1 = float(metrics.get("onset_f1", math.nan))
+    phasey = float(metrics.get("phasiness_index", math.nan))
+    musical_noise = float(metrics.get("musical_noise_index", math.nan))
+    stereo_drift = float(metrics.get("stereo_coherence_drift", math.nan))
+    env_corr = float(metrics.get("envelope_correlation", math.nan))
+    snr = float(metrics.get("snr_db", math.nan))
+    f0_err = float(metrics.get("f0_rmse_cents", math.nan))
+    proxy_frac = float(metrics.get("perceptual_proxy_fraction", math.nan))
+
+    if np.isfinite(transient_smear) and transient_smear > 0.08:
+        suggestions.append(
+            "High transient smear: try `--transient-mode hybrid` or `--transient-mode wsola`, raise `--transient-sensitivity`, and reduce `--hop-size`."
+        )
+    if np.isfinite(onset_f1) and onset_f1 < 0.80:
+        suggestions.append(
+            "Weak onset retention: use `--transient-mode reset|hybrid` and shorten `--transient-protect-ms`/`--transient-crossfade-ms` for sharper attacks."
+        )
+    if np.isfinite(phasey) and phasey > 0.15:
+        suggestions.append(
+            "Phasiness detected: keep `--phase-engine propagate`, enable `--phase-locking identity`, and avoid overly large single-stage stretch ratios."
+        )
+    if np.isfinite(musical_noise) and musical_noise > 0.12:
+        suggestions.append(
+            "Musical-noise tendency: increase `--n-fft` (or enable `--multires-fusion`) and use moderate multistage stretch settings."
+        )
+    if np.isfinite(stereo_drift) and stereo_drift > 0.20:
+        suggestions.append(
+            "Stereo coherence drift is elevated: prefer `--stereo-mode mid_side_lock` or `--stereo-mode ref_channel_lock --coherence-strength 0.8+`."
+        )
+    if np.isfinite(env_corr) and env_corr < 0.90:
+        suggestions.append(
+            "Envelope correlation dropped: reduce stretch intensity, increase overlap, and enable transient protection."
+        )
+    if np.isfinite(snr) and snr < 12.0:
+        suggestions.append(
+            "Low SNR indicates heavy deviation: verify if the transform is intentionally aggressive; otherwise tighten phase/transient settings."
+        )
+    if np.isfinite(f0_err) and f0_err > 25.0:
+        suggestions.append(
+            "Pitch-tracking drift is high: use `--pitch-mode formant-preserving`, tighten f0 bounds, and validate source voicing assumptions."
+        )
+    if np.isfinite(proxy_frac) and proxy_frac > 0.0:
+        suggestions.append(
+            "Some perceptual metrics used deterministic proxies. Install/reference external tools (`VISQOL_BIN`, `POLQA_BIN`, `PEAQ_BIN`) for standards-grade scoring."
+        )
+    if not suggestions:
+        suggestions.append("No major artifacts detected under current benchmark thresholds.")
+    return suggestions
+
+
+def _method_diagnostics(method_name: str, aggregate: dict[str, float]) -> list[str]:
+    entries = _diagnose_metrics(aggregate)
+    return [f"{method_name}: {line}" for line in entries]
 
 
 def _pvx_bench_args(
@@ -274,11 +498,16 @@ def _run_pvx_cycle(
     *,
     py_executable: str,
     tuned_profile: bool,
-) -> tuple[np.ndarray, int, float]:
+    deterministic_cpu: bool,
+    tag: str = "pvx",
+) -> tuple[np.ndarray, int, float, Path, Path]:
     t0 = time.perf_counter()
-    stage1 = out_dir / f"{input_path.stem}_{task.name}_pvx_stage1.wav"
-    stage2 = out_dir / f"{input_path.stem}_{task.name}_pvx_cycle.wav"
+    stage1 = out_dir / f"{input_path.stem}_{task.name}_{tag}_stage1.wav"
+    stage2 = out_dir / f"{input_path.stem}_{task.name}_{tag}_cycle.wav"
     profile_args = _pvx_bench_args(input_path, task, tuned=tuned_profile)
+    deterministic_args: list[str] = []
+    if deterministic_cpu:
+        deterministic_args.extend(["--phase-random-seed", "0"])
 
     base_cmd = [
         py_executable,
@@ -288,6 +517,7 @@ def _run_pvx_cycle(
         "cpu",
         "--quiet",
         "--overwrite",
+        *deterministic_args,
         *profile_args,
     ]
     if task.kind == "stretch":
@@ -310,6 +540,7 @@ def _run_pvx_cycle(
             "--overwrite",
             "--output",
             str(stage2),
+            *deterministic_args,
             *profile_args,
         ]
     else:
@@ -337,16 +568,24 @@ def _run_pvx_cycle(
             "--overwrite",
             "--output",
             str(stage2),
+            *deterministic_args,
             *profile_args,
         ]
 
+    env = os.environ.copy()
+    if deterministic_cpu:
+        env["PYTHONHASHSEED"] = "0"
+        env.setdefault("OMP_NUM_THREADS", "1")
+        env.setdefault("OPENBLAS_NUM_THREADS", "1")
+        env.setdefault("MKL_NUM_THREADS", "1")
+        env.setdefault("NUMEXPR_NUM_THREADS", "1")
     for cmd in (forward, inverse):
-        proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+        proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, env=env)
         if proc.returncode != 0:
             raise RuntimeError(proc.stderr.strip() or "pvx command failed")
 
     recon, sr = _read_audio(stage2)
-    return recon, sr, float(time.perf_counter() - t0)
+    return recon, sr, float(time.perf_counter() - t0), stage1, stage2
 
 
 def _find_rubberband() -> str | None:
@@ -547,7 +786,14 @@ def _aggregate(rows: list[dict[str, Any]]) -> dict[str, float]:
     keys = [key for key in rows[0].keys() if key not in excluded]
     out: dict[str, float] = {}
     for key in keys:
-        vals = [float(row[key]) for row in rows if np.isfinite(float(row[key]))]
+        vals: list[float] = []
+        for row in rows:
+            try:
+                value = float(row[key])
+            except Exception:
+                continue
+            if np.isfinite(value):
+                vals.append(value)
         out[key] = float(np.mean(vals)) if vals else math.nan
     return out
 
@@ -557,6 +803,42 @@ def _render_markdown(payload: dict[str, Any]) -> str:
     lines.append("# pvx Benchmark Report")
     lines.append("")
     lines.append("Cycle-consistency benchmark (forward transform + inverse transform).")
+    env = payload.get("environment", {})
+    if isinstance(env, dict):
+        lines.append("")
+        lines.append("## Environment")
+        lines.append("")
+        lines.append(f"- Python: `{env.get('python', 'unknown')}`")
+        lines.append(f"- Platform: `{env.get('platform', 'unknown')}`")
+        lines.append(f"- Machine: `{env.get('machine', 'unknown')}`")
+        lines.append(f"- Deterministic CPU mode: `{env.get('deterministic_cpu', False)}`")
+        lines.append("")
+    corpus = payload.get("corpus", {})
+    if isinstance(corpus, dict):
+        lines.append("## Corpus")
+        lines.append("")
+        lines.append(f"- Data dir: `{corpus.get('data_dir', 'unknown')}`")
+        lines.append(f"- Manifest: `{corpus.get('manifest_path', 'unknown')}`")
+        lines.append(f"- Manifest validated: `{corpus.get('manifest_valid', False)}`")
+        entries = corpus.get("entries", [])
+        if isinstance(entries, list) and entries:
+            lines.append("")
+            lines.append("| File | SHA256 (short) | SR | Samples | Channels |")
+            lines.append("| --- | --- | ---: | ---: | ---: |")
+            for row in entries:
+                if not isinstance(row, dict):
+                    continue
+                sha = str(row.get("sha256", ""))
+                short_sha = sha[:12] if sha else "n/a"
+                lines.append(
+                    "| {name} | `{sha}` | {sr} | {samples} | {channels} |".format(
+                        name=str(row.get("name", "unknown")),
+                        sha=short_sha,
+                        sr=int(row.get("sample_rate", 0) or 0),
+                        samples=int(row.get("samples", 0) or 0),
+                        channels=int(row.get("channels", 0) or 0),
+                    )
+                )
     lines.append("")
     lines.append("| Method | Cases | LSD | ModSpec | Transient Smear | Stereo Coherence Drift | Mean Runtime (s) | Status |")
     lines.append("| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |")
@@ -676,6 +958,30 @@ def _render_markdown(payload: dict[str, Any]) -> str:
     lines.append("- PEAQ ODG is best near 0 and worse toward -4.")
     lines.append("- Proxy Fraction shows how many perceptual metrics used deterministic proxy fallback instead of external reference tooling.")
     lines.append("")
+    lines.append("## Quality Diagnostics")
+    lines.append("")
+    for method in payload.get("methods", []):
+        name = str(method.get("name", "unknown"))
+        diagnostics = method.get("diagnostics", [])
+        if not isinstance(diagnostics, list) or not diagnostics:
+            lines.append(f"- `{name}`: no diagnostics available.")
+            continue
+        lines.append(f"- `{name}`")
+        for row in diagnostics:
+            lines.append(f"  - {row}")
+    determinism = payload.get("determinism", {})
+    if isinstance(determinism, dict):
+        lines.append("")
+        lines.append("## Determinism")
+        lines.append("")
+        lines.append(f"- Enabled: `{determinism.get('enabled', False)}`")
+        lines.append(f"- Re-runs per case: `{determinism.get('runs', 1)}`")
+        lines.append(f"- Mismatch count: `{determinism.get('mismatch_count', 0)}`")
+        if determinism.get("mismatch_cases"):
+            lines.append("- Mismatch cases:")
+            for case in determinism.get("mismatch_cases", []):
+                lines.append(f"  - `{case}`")
+    lines.append("")
     lines.append("## Tasks")
     for task in payload.get("tasks", []):
         lines.append(f"- `{task['name']}`: {task['kind']} value={task['value']}")
@@ -687,40 +993,113 @@ def _check_gate(
     payload: dict[str, Any],
     baseline_payload: dict[str, Any],
     *,
-    tol_lsd: float,
-    tol_modspec: float,
-    tol_smear: float,
-    tol_coherence: float,
+    rule_overrides: dict[str, tuple[str, float]],
+    row_level: bool,
+    signature_gate: bool,
 ) -> list[str]:
+    def _method_maps(report: dict[str, Any]) -> dict[str, dict[str, Any]]:
+        methods: dict[str, dict[str, Any]] = {}
+        for method in report.get("methods", []):
+            name = str(method.get("name", "unknown"))
+            methods[name] = method
+        return methods
+
+    def _safe_float(v: Any) -> float:
+        try:
+            return float(v)
+        except Exception:
+            return float("nan")
+
+    def _case_index(rows: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+        out: dict[str, dict[str, Any]] = {}
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            key = f"{row.get('input', 'unknown')}::{row.get('task', 'unknown')}"
+            out[key] = row
+        return out
+
     failures: list[str] = []
-    current = {
-        m["name"]: m.get("aggregate", {})
-        for m in payload.get("methods", [])
-    }
-    base = {
-        m["name"]: m.get("aggregate", {})
-        for m in baseline_payload.get("methods", [])
-    }
-    if "pvx" not in current or "pvx" not in base:
+    current_methods = _method_maps(payload)
+    baseline_methods = _method_maps(baseline_payload)
+    if "pvx" not in current_methods or "pvx" not in baseline_methods:
         failures.append("Baseline gate requires pvx aggregate metrics in both current and baseline reports.")
         return failures
 
-    mapping = {
-        "log_spectral_distance": float(tol_lsd),
-        "modulation_spectrum_distance": float(tol_modspec),
-        "transient_smear_score": float(tol_smear),
-        "stereo_coherence_drift": float(tol_coherence),
-    }
-    for key, tol in mapping.items():
-        now = float(current["pvx"].get(key, math.nan))
-        old = float(base["pvx"].get(key, math.nan))
+    current_agg = current_methods["pvx"].get("aggregate", {})
+    baseline_agg = baseline_methods["pvx"].get("aggregate", {})
+    rules = dict(CASE_GATE_RULES)
+    rules.update(rule_overrides)
+
+    for key, (direction, tol) in rules.items():
+        now = _safe_float(current_agg.get(key, math.nan))
+        old = _safe_float(baseline_agg.get(key, math.nan))
         if not np.isfinite(now) or not np.isfinite(old):
-            failures.append(f"Metric unavailable for gate: {key}")
+            # Skip unavailable metrics unless baseline explicitly has a finite value.
+            if np.isfinite(old) or np.isfinite(now):
+                failures.append(f"Metric unavailable for gate: {key}")
             continue
-        if now > old + tol:
-            failures.append(
-                f"{key} regressed: current={now:.6f}, baseline={old:.6f}, tol={tol:.6f}"
-            )
+        if direction == "max":
+            if now > old + float(tol):
+                failures.append(
+                    f"{key} regressed: current={now:.6f}, baseline={old:.6f}, tol={float(tol):.6f}"
+                )
+        elif direction == "min":
+            if now < old - float(tol):
+                failures.append(
+                    f"{key} regressed: current={now:.6f}, baseline={old:.6f}, tol={float(tol):.6f} (higher is better)"
+                )
+        else:
+            failures.append(f"Unsupported gate direction for {key}: {direction}")
+
+    if row_level:
+        current_rows = current_methods["pvx"].get("rows", [])
+        baseline_rows = baseline_methods["pvx"].get("rows", [])
+        if isinstance(current_rows, list) and isinstance(baseline_rows, list):
+            cur_idx = _case_index(current_rows)
+            base_idx = _case_index(baseline_rows)
+            for case_key, base_row in base_idx.items():
+                cur_row = cur_idx.get(case_key)
+                if cur_row is None:
+                    failures.append(f"Missing current row for baseline case: {case_key}")
+                    continue
+                for metric, (direction, tol) in rules.items():
+                    base_val = _safe_float(base_row.get(metric, math.nan))
+                    cur_val = _safe_float(cur_row.get(metric, math.nan))
+                    if not np.isfinite(base_val) or not np.isfinite(cur_val):
+                        continue
+                    # Row-level gate is slightly looser than aggregate gate.
+                    row_tol = float(tol) * 1.25
+                    if direction == "max" and cur_val > base_val + row_tol:
+                        failures.append(
+                            f"row {case_key} metric {metric} regressed: current={cur_val:.6f}, baseline={base_val:.6f}, tol={row_tol:.6f}"
+                        )
+                    if direction == "min" and cur_val < base_val - row_tol:
+                        failures.append(
+                            f"row {case_key} metric {metric} regressed: current={cur_val:.6f}, baseline={base_val:.6f}, tol={row_tol:.6f} (higher is better)"
+                        )
+
+    if signature_gate:
+        cur_sig = current_methods["pvx"].get("signatures", {})
+        base_sig = baseline_methods["pvx"].get("signatures", {})
+        if isinstance(cur_sig, dict) and isinstance(base_sig, dict) and base_sig:
+            for case_key, old_hash in base_sig.items():
+                now_hash = cur_sig.get(case_key)
+                if now_hash is None:
+                    failures.append(f"Missing signature for case: {case_key}")
+                    continue
+                if str(now_hash) != str(old_hash):
+                    failures.append(
+                        f"Signature mismatch for {case_key}: current={now_hash} baseline={old_hash}"
+                    )
+        elif signature_gate:
+            failures.append("Signature gate enabled but signatures are missing in current or baseline report.")
+
+    current_determinism = payload.get("determinism", {})
+    if isinstance(current_determinism, dict):
+        mismatch_count = int(current_determinism.get("mismatch_count", 0) or 0)
+        if mismatch_count > 0:
+            failures.append(f"Determinism check failed with {mismatch_count} mismatch case(s).")
     return failures
 
 
@@ -728,11 +1107,52 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Run pvx quality benchmarks against Rubber Band and librosa.")
     parser.add_argument("--out-dir", type=Path, default=ROOT / "benchmarks" / "out")
     parser.add_argument("--data-dir", type=Path, default=ROOT / "benchmarks" / "data")
+    parser.add_argument(
+        "--dataset-manifest",
+        type=Path,
+        default=ROOT / "benchmarks" / "data" / "manifest.json",
+        help="Corpus manifest with file hashes and metadata for reproducibility checks.",
+    )
+    parser.add_argument(
+        "--refresh-manifest",
+        action="store_true",
+        help="Rebuild corpus manifest from current generated corpus.",
+    )
+    parser.add_argument(
+        "--strict-corpus",
+        action="store_true",
+        help="Fail when corpus files do not match --dataset-manifest.",
+    )
     parser.add_argument("--quick", action="store_true", help="Run tiny subset for CI / smoke testing.")
     parser.add_argument("--plots", action="store_true", help="Save summary plots (requires matplotlib).")
     parser.add_argument("--python", default=sys.executable, help="Python executable for pvx CLI invocations.")
     parser.add_argument("--baseline", type=Path, default=None, help="Optional baseline JSON for regression gate.")
     parser.add_argument("--gate", action="store_true", help="Enable baseline regression gate checks.")
+    parser.add_argument("--gate-row-level", action="store_true", help="Enable per-case row-level gate checks.")
+    parser.add_argument(
+        "--gate-signatures",
+        action="store_true",
+        help="Require output signature hashes to match the baseline exactly.",
+    )
+    parser.add_argument(
+        "--determinism-runs",
+        type=int,
+        default=2,
+        help="Number of repeated pvx renders per case for determinism checking (default: 2).",
+    )
+    parser.add_argument(
+        "--deterministic-cpu",
+        dest="deterministic_cpu",
+        action="store_true",
+        default=True,
+        help="Force deterministic CPU controls when running pvx benchmarks (default: enabled).",
+    )
+    parser.add_argument(
+        "--no-deterministic-cpu",
+        dest="deterministic_cpu",
+        action="store_false",
+        help="Disable deterministic CPU controls for exploratory benchmarking.",
+    )
     parser.add_argument("--tol-lsd", type=float, default=0.40)
     parser.add_argument("--tol-modspec", type=float, default=0.10)
     parser.add_argument("--tol-smear", type=float, default=0.06)
@@ -744,10 +1164,24 @@ def main(argv: list[str] | None = None) -> int:
         help="pvx benchmark profile: tuned (recommended) or legacy.",
     )
     args = parser.parse_args(argv)
+    if int(args.determinism_runs) < 1:
+        parser.error("--determinism-runs must be >= 1")
 
     out_dir = args.out_dir.resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
-    data_paths = _generate_tiny_dataset(args.data_dir.resolve())
+    data_dir = args.data_dir.resolve()
+    manifest_path = args.dataset_manifest.resolve()
+    data_paths, manifest_payload, manifest_issues = _prepare_dataset(
+        data_dir=data_dir,
+        manifest_path=manifest_path,
+        refresh_manifest=bool(args.refresh_manifest),
+        strict_corpus=bool(args.strict_corpus),
+    )
+    if manifest_issues:
+        for issue in manifest_issues:
+            print(f"[corpus] {issue}", file=sys.stderr)
+        if args.strict_corpus:
+            return 1
     if args.quick:
         data_paths = data_paths[:1]
 
@@ -760,6 +1194,8 @@ def main(argv: list[str] | None = None) -> int:
 
     rb_exe = _find_rubberband()
     methods: list[dict[str, Any]] = []
+    determinism_checks: list[dict[str, Any]] = []
+    determinism_mismatch_cases: list[str] = []
 
     method_specs: list[tuple[str, str]] = [("pvx", "active"), ("librosa", "active")]
     if rb_exe is not None:
@@ -769,6 +1205,7 @@ def main(argv: list[str] | None = None) -> int:
 
     for method_name, method_status in method_specs:
         rows: list[dict[str, Any]] = []
+        signatures: dict[str, str] = {}
         status = method_status
         note = ""
         if method_name == "rubberband" and rb_exe is None:
@@ -780,13 +1217,49 @@ def main(argv: list[str] | None = None) -> int:
                     continue
                 try:
                     if method_name == "pvx":
-                        recon, sr, elapsed = _run_pvx_cycle(
+                        recon, sr, elapsed, _stage1, stage2 = _run_pvx_cycle(
                             path,
                             task,
                             out_dir,
                             py_executable=args.python,
                             tuned_profile=(str(args.pvx_bench_profile) != "legacy"),
+                            deterministic_cpu=bool(args.deterministic_cpu),
+                            tag="pvx",
                         )
+                        case = _case_key(path, task)
+                        signatures[case] = _sha256_file(stage2)
+
+                        if int(args.determinism_runs) > 1:
+                            hash_seq = [signatures[case]]
+                            max_abs = 0.0
+                            for run_idx in range(2, int(args.determinism_runs) + 1):
+                                recon_det, sr_det, _elapsed_det, _stage1_det, stage2_det = _run_pvx_cycle(
+                                    path,
+                                    task,
+                                    out_dir,
+                                    py_executable=args.python,
+                                    tuned_profile=(str(args.pvx_bench_profile) != "legacy"),
+                                    deterministic_cpu=bool(args.deterministic_cpu),
+                                    tag=f"pvx_det{run_idx}",
+                                )
+                                hash_seq.append(_sha256_file(stage2_det))
+                                recon_ref = _match_channels(np.asarray(recon, dtype=np.float64), ref_audio.shape[1])
+                                recon_cmp = _match_channels(np.asarray(recon_det, dtype=np.float64), ref_audio.shape[1])
+                                min_len_det = min(recon_ref.shape[0], recon_cmp.shape[0])
+                                if min_len_det > 0:
+                                    diff = np.abs(recon_ref[:min_len_det] - recon_cmp[:min_len_det])
+                                    max_abs = max(max_abs, float(np.max(diff)))
+                            mismatch = any(h != hash_seq[0] for h in hash_seq[1:])
+                            determinism_checks.append(
+                                {
+                                    "case": case,
+                                    "hashes": hash_seq,
+                                    "max_abs": float(max_abs),
+                                    "match": not mismatch,
+                                }
+                            )
+                            if mismatch:
+                                determinism_mismatch_cases.append(case)
                     elif method_name == "rubberband":
                         assert rb_exe is not None
                         recon, sr, elapsed = _run_rubberband_cycle(path, task, out_dir, rb_exe=rb_exe)
@@ -819,13 +1292,16 @@ def main(argv: list[str] | None = None) -> int:
                 }
                 rows.append(row)
 
+        aggregate = _aggregate(rows)
         methods.append(
             {
                 "name": method_name,
                 "status": status,
                 "note": note,
                 "cases": len(rows),
-                "aggregate": _aggregate(rows),
+                "aggregate": aggregate,
+                "diagnostics": _method_diagnostics(method_name, aggregate),
+                "signatures": signatures,
                 "rows": rows,
             }
         )
@@ -835,6 +1311,21 @@ def main(argv: list[str] | None = None) -> int:
         "quick": bool(args.quick),
         "inputs": [str(p) for p in data_paths],
         "tasks": [task.__dict__ for task in tasks],
+        "environment": _collect_environment_metadata(deterministic_cpu=bool(args.deterministic_cpu)),
+        "corpus": {
+            "data_dir": str(data_dir),
+            "manifest_path": str(manifest_path),
+            "manifest_valid": len(manifest_issues) == 0,
+            "manifest_issues": list(manifest_issues),
+            "entries": manifest_payload.get("entries", []),
+        },
+        "determinism": {
+            "enabled": bool(int(args.determinism_runs) > 1),
+            "runs": int(args.determinism_runs),
+            "mismatch_count": len(determinism_mismatch_cases),
+            "mismatch_cases": sorted(set(determinism_mismatch_cases)),
+            "checks": determinism_checks,
+        },
         "methods": methods,
     }
 
@@ -872,13 +1363,18 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.gate and args.baseline is not None:
         baseline = json.loads(args.baseline.resolve().read_text(encoding="utf-8"))
+        overrides: dict[str, tuple[str, float]] = {
+            "log_spectral_distance": ("max", float(args.tol_lsd)),
+            "modulation_spectrum_distance": ("max", float(args.tol_modspec)),
+            "transient_smear_score": ("max", float(args.tol_smear)),
+            "stereo_coherence_drift": ("max", float(args.tol_coherence)),
+        }
         failures = _check_gate(
             payload,
             baseline,
-            tol_lsd=float(args.tol_lsd),
-            tol_modspec=float(args.tol_modspec),
-            tol_smear=float(args.tol_smear),
-            tol_coherence=float(args.tol_coherence),
+            rule_overrides=overrides,
+            row_level=bool(args.gate_row_level),
+            signature_gate=bool(args.gate_signatures),
         )
         if failures:
             for failure in failures:
