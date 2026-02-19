@@ -510,66 +510,6 @@
     "url": "https://en.wikipedia.org/wiki/Low-frequency_oscillation"
   },
   {
-    "term": "Beamforming",
-    "category": "Spatial Audio and Multichannel",
-    "description": "Spatial filtering using multiple microphones/loudspeakers. Array geometry and steering parameters dominate directivity and noise/interference suppression behavior.",
-    "url": "https://en.wikipedia.org/wiki/Beamforming"
-  },
-  {
-    "term": "Delay-and-sum beamformer",
-    "category": "Spatial Audio and Multichannel",
-    "description": "Align-and-average array beamformer. In pvx multichannel workflows this directly influences localization cues, interchannel coherence, and translation to speaker or headphone playback.",
-    "url": "https://en.wikipedia.org/wiki/Beamforming"
-  },
-  {
-    "term": "MVDR beamformer",
-    "category": "Spatial Audio and Multichannel",
-    "description": "Minimum variance distortionless response beamforming. MVDR minimizes output power while preserving a desired look direction, improving interference rejection.",
-    "url": "https://en.wikipedia.org/wiki/Minimum_variance_distortionless_response"
-  },
-  {
-    "term": "Generalized sidelobe canceller (GSC)",
-    "category": "Spatial Audio and Multichannel",
-    "description": "Adaptive beamforming with blocking matrix branch. In pvx multichannel workflows this directly influences localization cues, interchannel coherence, and translation to speaker or headphone playback.",
-    "url": "https://scholar.google.com/scholar?q=generalized+sidelobe+canceller"
-  },
-  {
-    "term": "Superdirective beamforming",
-    "category": "Spatial Audio and Multichannel",
-    "description": "Beamforming with sharpened directivity often with regularization. In pvx multichannel workflows this directly influences localization cues, interchannel coherence, and translation to speaker or headphone playback.",
-    "url": "https://scholar.google.com/scholar?q=superdirective+beamforming"
-  },
-  {
-    "term": "Direction of arrival (DoA)",
-    "category": "Spatial Audio and Multichannel",
-    "description": "Estimated source direction from array measurements. DoA estimates are often the control signal for adaptive steering, tracking, or scene-aware processing.",
-    "url": "https://en.wikipedia.org/wiki/Direction_of_arrival"
-  },
-  {
-    "term": "GCC-PHAT",
-    "category": "Spatial Audio and Multichannel",
-    "description": "Time-delay estimation using phase transform weighting. In pvx multichannel workflows this directly influences localization cues, interchannel coherence, and translation to speaker or headphone playback.",
-    "url": "https://scholar.google.com/scholar?q=GCC-PHAT"
-  },
-  {
-    "term": "Ambisonics",
-    "category": "Spatial Audio and Multichannel",
-    "description": "3D audio representation using spherical harmonics. Ambisonic domains allow scene rotation and format conversion before final speaker/headphone decoding.",
-    "url": "https://en.wikipedia.org/wiki/Ambisonics"
-  },
-  {
-    "term": "First-order ambisonics (FOA)",
-    "category": "Spatial Audio and Multichannel",
-    "description": "4-channel WXYZ ambisonic format. In pvx multichannel workflows this directly influences localization cues, interchannel coherence, and translation to speaker or headphone playback.",
-    "url": "https://en.wikipedia.org/wiki/Ambisonics"
-  },
-  {
-    "term": "Higher-order ambisonics (HOA)",
-    "category": "Spatial Audio and Multichannel",
-    "description": "Ambisonics beyond first order for higher spatial resolution. In pvx multichannel workflows this directly influences localization cues, interchannel coherence, and translation to speaker or headphone playback.",
-    "url": "https://en.wikipedia.org/wiki/Ambisonics"
-  },
-  {
     "term": "Binaural rendering",
     "category": "Spatial Audio and Multichannel",
     "description": "Headphone rendering preserving spatial localization cues. HRTF quality and listener assumptions strongly affect externalization and localization realism.",

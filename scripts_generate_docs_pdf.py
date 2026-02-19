@@ -14,6 +14,7 @@ import subprocess
 import sys
 import tempfile
 from typing import Callable
+from urllib.parse import urlsplit
 
 
 @dataclass(frozen=True)
@@ -161,13 +162,65 @@ def parse_source_page(path: Path) -> SourcePage:
     return SourcePage(path=path, title=title, main_html=main_html)
 
 
+def _rewrite_internal_links(
+    html_text: str,
+    *,
+    source_page: Path,
+    docs_html_dir: Path,
+    page_anchor_map: dict[str, str],
+) -> str:
+    pattern = re.compile(r'(<a\b[^>]*?\bhref=)(["\'])([^"\']*)(\2)', flags=re.IGNORECASE)
+    docs_html_dir = docs_html_dir.resolve()
+    source_dir = source_page.parent.resolve()
+
+    def replace(match: re.Match[str]) -> str:
+        prefix = match.group(1)
+        quote = match.group(2)
+        href = match.group(3)
+
+        if not href:
+            return match.group(0)
+        href_l = href.lower()
+        if href_l.startswith(("#", "http://", "https://", "mailto:", "tel:", "javascript:", "data:")):
+            return match.group(0)
+
+        parsed = urlsplit(href)
+        if parsed.scheme or parsed.netloc:
+            return match.group(0)
+
+        target_path = parsed.path
+        fragment = parsed.fragment
+        if not target_path:
+            return match.group(0)
+
+        try:
+            resolved = (source_dir / target_path).resolve()
+            rel = resolved.relative_to(docs_html_dir).as_posix()
+        except Exception:
+            return match.group(0)
+
+        target_anchor = page_anchor_map.get(rel)
+        if target_anchor is None:
+            return match.group(0)
+
+        rewritten = f"#{fragment}" if fragment else f"#{target_anchor}"
+        return f"{prefix}{quote}{rewritten}{quote}"
+
+    return pattern.sub(replace, html_text)
+
+
 def build_combined_html(pages: list[SourcePage], docs_html_dir: Path) -> str:
     style_path = docs_html_dir / "style.css"
     external_css = style_path.read_text(encoding="utf-8") if style_path.exists() else ""
 
     sections: list[str] = []
+    page_anchor_map: dict[str, str] = {}
+    for idx, page in enumerate(pages):
+        rel = page.path.relative_to(docs_html_dir).as_posix()
+        page_anchor_map[rel] = f"doc-page-{idx + 1:03d}"
+
     toc_rows = "".join(
-        f"<li><strong>{idx + 1:02d}.</strong> {escape(page.title)} <span class=\"src\">({escape(str(page.path.relative_to(docs_html_dir)))})</span></li>"
+        f"<li><strong>{idx + 1:02d}.</strong> <a href=\"#{page_anchor_map[page.path.relative_to(docs_html_dir).as_posix()]}\">{escape(page.title)}</a> <span class=\"src\">({escape(str(page.path.relative_to(docs_html_dir)))})</span></li>"
         for idx, page in enumerate(pages)
     )
 
@@ -183,10 +236,18 @@ def build_combined_html(pages: list[SourcePage], docs_html_dir: Path) -> str:
     sections.append(cover)
 
     for idx, page in enumerate(pages):
+        rel = page.path.relative_to(docs_html_dir).as_posix()
+        page_anchor = page_anchor_map[rel]
+        page_html = _rewrite_internal_links(
+            page.main_html,
+            source_page=page.path,
+            docs_html_dir=docs_html_dir,
+            page_anchor_map=page_anchor_map,
+        )
         sections.append(
-            "<section class=\"doc-section\">"
+            f"<section class=\"doc-section\" id=\"{page_anchor}\">"
             f"<header class=\"doc-header\"><h1>{escape(page.title)}</h1><p class=\"src\">Source: {escape(str(page.path.relative_to(docs_html_dir)))}</p></header>"
-            f"<div class=\"doc-main\">{page.main_html}</div>"
+            f"<div class=\"doc-main\">{page_html}</div>"
             "</section>"
         )
         if idx != len(pages) - 1:

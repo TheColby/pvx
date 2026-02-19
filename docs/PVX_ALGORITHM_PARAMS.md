@@ -10,11 +10,6 @@ Use these keys as `**params` when calling module `process(audio, sample_rate, **
 ## `am_fm_ring_modulation_blocks`
 - `freq_hz`
 
-## `ambisonic_binaural_rendering`
-- `head_itd_ms`
-- `head_ild_db`
-- `azimuth_deg`
-
 ## `auto_parameter_tuning_bayesian_optimization`
 - `target_centroid`
 
@@ -79,26 +74,11 @@ Use these keys as `**params` when calling module `process(audio, sample_rate, **
 - `mix`
 - `seed`
 
-## `delay_and_sum_beamforming`
-- `steer_deg`
-- `spacing_m`
-- `sound_speed`
-
 ## `demucs_style_stem_separation_backend`
 - No algorithm-specific keys (uses generic/default path).
 
-## `diffuse_field_coherence_masking`
-- `coherence_threshold`
-- `floor`
-
 ## `diffusion_based_speech_audio_denoise`
 - No algorithm-specific keys (uses generic/default path).
-
-## `direction_of_arrival_grid_tracking`
-- `spacing_m`
-- `sound_speed`
-- `frame`
-- `hop`
 
 ## `drr_guided_dereverb`
 - No algorithm-specific keys (uses generic/default path).
@@ -109,10 +89,6 @@ Use these keys as `**params` when calling module `process(audio, sample_rate, **
 ## `envelope_followed_modulation_routing`
 - `depth`
 
-## `first_order_ambisonic_encode_decode`
-- `azimuth_deg`
-- `elevation_deg`
-
 ## `formant_lfo_modulation`
 - `lfo_hz`
 
@@ -122,12 +98,6 @@ Use these keys as `**params` when calling module `process(audio, sample_rate, **
 ## `freeze_grain_morphing`
 - `grain`
 - `start`
-
-## `generalized_sidelobe_canceller`
-- `mu`
-- `steer_deg`
-- `spacing_m`
-- `sound_speed`
 
 ## `grain_cloud_pitch_textures`
 - `seed`
@@ -144,12 +114,6 @@ Use these keys as `**params` when calling module `process(audio, sample_rate, **
 
 ## `harmonic_product_spectrum_hps`
 - No algorithm-specific keys (uses generic/default path).
-
-## `higher_order_ambisonic_rotation`
-- `yaw_deg`
-
-## `hoa_order_truncation_and_upmix`
-- `target_channels`
 
 ## `ica_bss_for_multichannel_stems`
 - No algorithm-specific keys (uses generic/default path).
@@ -206,12 +170,6 @@ Use these keys as `**params` when calling module `process(audio, sample_rate, **
 
 ## `multichannel_wiener_postfilter`
 - `noise_floor`
-
-## `mvdr_beamformer_wideband`
-- `steer_deg`
-- `spacing_m`
-- `sound_speed`
-- `diag_load`
 
 ## `neural_dereverb_module`
 - No algorithm-specific keys (uses generic/default path).
@@ -313,11 +271,6 @@ Use these keys as `**params` when calling module `process(audio, sample_rate, **
 - `phase_drift`
 - `transform`
 
-## `spatial_room_impulse_convolution`
-- `decay_s`
-- `rir_length`
-- `seed`
-
 ## `spectral_blur_smear`
 - No algorithm-specific keys (uses generic/default path).
 
@@ -346,9 +299,6 @@ Use these keys as `**params` when calling module `process(audio, sample_rate, **
 ## `spectral_tremolo`
 - `lfo_hz`
 
-## `spherical_harmonic_diffuse_enhancement`
-- `diffuse_mix`
-
 ## `stereo_width_frequency_dependent_control`
 - `width_low`
 - `width_high`
@@ -365,12 +315,6 @@ Use these keys as `**params` when calling module `process(audio, sample_rate, **
 
 ## `subharmonic_summation`
 - No algorithm-specific keys (uses generic/default path).
-
-## `superdirective_beamformer`
-- `steer_deg`
-- `spacing_m`
-- `sound_speed`
-- `aperture`
 
 ## `swipe`
 - No algorithm-specific keys (uses generic/default path).

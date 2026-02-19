@@ -468,66 +468,6 @@ ALGORITHM_REGISTRY = {
         'theme': 'Spatial and Multichannel',
         'module': 'pvx.algorithms.spatial_and_multichannel.imaging_and_panning.phase_aligned_mid_side_field_rotation',
     },
-    'spatial_and_multichannel.delay_and_sum_beamforming': {
-        'name': 'Delay-and-sum beamforming',
-        'theme': 'Spatial and Multichannel',
-        'module': 'pvx.algorithms.spatial_and_multichannel.beamforming_and_directionality.delay_and_sum_beamforming',
-    },
-    'spatial_and_multichannel.mvdr_beamformer_wideband': {
-        'name': 'MVDR beamformer (wideband)',
-        'theme': 'Spatial and Multichannel',
-        'module': 'pvx.algorithms.spatial_and_multichannel.beamforming_and_directionality.mvdr_beamformer_wideband',
-    },
-    'spatial_and_multichannel.generalized_sidelobe_canceller': {
-        'name': 'Generalized sidelobe canceller',
-        'theme': 'Spatial and Multichannel',
-        'module': 'pvx.algorithms.spatial_and_multichannel.beamforming_and_directionality.generalized_sidelobe_canceller',
-    },
-    'spatial_and_multichannel.superdirective_beamformer': {
-        'name': 'Superdirective beamformer',
-        'theme': 'Spatial and Multichannel',
-        'module': 'pvx.algorithms.spatial_and_multichannel.beamforming_and_directionality.superdirective_beamformer',
-    },
-    'spatial_and_multichannel.diffuse_field_coherence_masking': {
-        'name': 'Diffuse-field coherence masking',
-        'theme': 'Spatial and Multichannel',
-        'module': 'pvx.algorithms.spatial_and_multichannel.beamforming_and_directionality.diffuse_field_coherence_masking',
-    },
-    'spatial_and_multichannel.direction_of_arrival_grid_tracking': {
-        'name': 'Direction-of-arrival grid tracking',
-        'theme': 'Spatial and Multichannel',
-        'module': 'pvx.algorithms.spatial_and_multichannel.beamforming_and_directionality.direction_of_arrival_grid_tracking',
-    },
-    'spatial_and_multichannel.first_order_ambisonic_encode_decode': {
-        'name': 'First-order ambisonic encode/decode',
-        'theme': 'Spatial and Multichannel',
-        'module': 'pvx.algorithms.spatial_and_multichannel.ambisonics_and_immersive.first_order_ambisonic_encode_decode',
-    },
-    'spatial_and_multichannel.higher_order_ambisonic_rotation': {
-        'name': 'Higher-order ambisonic rotation',
-        'theme': 'Spatial and Multichannel',
-        'module': 'pvx.algorithms.spatial_and_multichannel.ambisonics_and_immersive.higher_order_ambisonic_rotation',
-    },
-    'spatial_and_multichannel.ambisonic_binaural_rendering': {
-        'name': 'Ambisonic binaural rendering',
-        'theme': 'Spatial and Multichannel',
-        'module': 'pvx.algorithms.spatial_and_multichannel.ambisonics_and_immersive.ambisonic_binaural_rendering',
-    },
-    'spatial_and_multichannel.spherical_harmonic_diffuse_enhancement': {
-        'name': 'Spherical-harmonic diffuse enhancement',
-        'theme': 'Spatial and Multichannel',
-        'module': 'pvx.algorithms.spatial_and_multichannel.ambisonics_and_immersive.spherical_harmonic_diffuse_enhancement',
-    },
-    'spatial_and_multichannel.hoa_order_truncation_and_upmix': {
-        'name': 'HOA order truncation and upmix',
-        'theme': 'Spatial and Multichannel',
-        'module': 'pvx.algorithms.spatial_and_multichannel.ambisonics_and_immersive.hoa_order_truncation_and_upmix',
-    },
-    'spatial_and_multichannel.spatial_room_impulse_convolution': {
-        'name': 'Spatial room impulse convolution',
-        'theme': 'Spatial and Multichannel',
-        'module': 'pvx.algorithms.spatial_and_multichannel.ambisonics_and_immersive.spatial_room_impulse_convolution',
-    },
     'spatial_and_multichannel.pvx_interchannel_phase_locking': {
         'name': 'pvx interchannel phase locking',
         'theme': 'Spatial and Multichannel',

@@ -1,6 +1,6 @@
 {
-  "commit": "23925ec",
-  "commit_date": "2026-02-17T16:15:08-05:00",
+  "commit": "858658d",
+  "commit_date": "2026-02-18T16:19:55-05:00",
   "group_limits": {
     "analysis_qa_and_automation": {
       "assumption": "Feature extraction settings align with domain (speech vs music etc.).",
@@ -732,15 +732,6 @@
     ],
     "spatial_and_multichannel": [
       {
-        "algorithm_id": "spatial_and_multichannel.ambisonic_binaural_rendering",
-        "assumptions": "Channel geometry/order and timing metadata are correct.",
-        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
-        "module": "pvx.algorithms.spatial_and_multichannel.ambisonics_and_immersive.ambisonic_binaural_rendering",
-        "name": "Ambisonic binaural rendering",
-        "theme": "Spatial and Multichannel",
-        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
-      },
-      {
         "algorithm_id": "spatial_and_multichannel.binaural_itd_ild_synthesis",
         "assumptions": "Channel geometry/order and timing metadata are correct.",
         "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
@@ -795,69 +786,6 @@
         "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
       },
       {
-        "algorithm_id": "spatial_and_multichannel.delay_and_sum_beamforming",
-        "assumptions": "Channel geometry/order and timing metadata are correct. Array spacing and steering assumptions should match real geometry.",
-        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment. Steering mismatch causes target suppression or sidelobe leakage.",
-        "module": "pvx.algorithms.spatial_and_multichannel.beamforming_and_directionality.delay_and_sum_beamforming",
-        "name": "Delay-and-sum beamforming",
-        "theme": "Spatial and Multichannel",
-        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown. Avoid with uncertain microphone spacing/ordering."
-      },
-      {
-        "algorithm_id": "spatial_and_multichannel.diffuse_field_coherence_masking",
-        "assumptions": "Channel geometry/order and timing metadata are correct.",
-        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
-        "module": "pvx.algorithms.spatial_and_multichannel.beamforming_and_directionality.diffuse_field_coherence_masking",
-        "name": "Diffuse-field coherence masking",
-        "theme": "Spatial and Multichannel",
-        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
-      },
-      {
-        "algorithm_id": "spatial_and_multichannel.direction_of_arrival_grid_tracking",
-        "assumptions": "Channel geometry/order and timing metadata are correct.",
-        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
-        "module": "pvx.algorithms.spatial_and_multichannel.beamforming_and_directionality.direction_of_arrival_grid_tracking",
-        "name": "Direction-of-arrival grid tracking",
-        "theme": "Spatial and Multichannel",
-        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
-      },
-      {
-        "algorithm_id": "spatial_and_multichannel.first_order_ambisonic_encode_decode",
-        "assumptions": "Channel geometry/order and timing metadata are correct.",
-        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
-        "module": "pvx.algorithms.spatial_and_multichannel.ambisonics_and_immersive.first_order_ambisonic_encode_decode",
-        "name": "First-order ambisonic encode/decode",
-        "theme": "Spatial and Multichannel",
-        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
-      },
-      {
-        "algorithm_id": "spatial_and_multichannel.generalized_sidelobe_canceller",
-        "assumptions": "Channel geometry/order and timing metadata are correct.",
-        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
-        "module": "pvx.algorithms.spatial_and_multichannel.beamforming_and_directionality.generalized_sidelobe_canceller",
-        "name": "Generalized sidelobe canceller",
-        "theme": "Spatial and Multichannel",
-        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
-      },
-      {
-        "algorithm_id": "spatial_and_multichannel.higher_order_ambisonic_rotation",
-        "assumptions": "Channel geometry/order and timing metadata are correct.",
-        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
-        "module": "pvx.algorithms.spatial_and_multichannel.ambisonics_and_immersive.higher_order_ambisonic_rotation",
-        "name": "Higher-order ambisonic rotation",
-        "theme": "Spatial and Multichannel",
-        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
-      },
-      {
-        "algorithm_id": "spatial_and_multichannel.hoa_order_truncation_and_upmix",
-        "assumptions": "Channel geometry/order and timing metadata are correct.",
-        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
-        "module": "pvx.algorithms.spatial_and_multichannel.ambisonics_and_immersive.hoa_order_truncation_and_upmix",
-        "name": "HOA order truncation and upmix",
-        "theme": "Spatial and Multichannel",
-        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
-      },
-      {
         "algorithm_id": "spatial_and_multichannel.microphone_array_calibration_tones",
         "assumptions": "Channel geometry/order and timing metadata are correct.",
         "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
@@ -883,15 +811,6 @@
         "name": "Multichannel Wiener postfilter",
         "theme": "Spatial and Multichannel",
         "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
-      },
-      {
-        "algorithm_id": "spatial_and_multichannel.mvdr_beamformer_wideband",
-        "assumptions": "Channel geometry/order and timing metadata are correct. Array spacing and steering assumptions should match real geometry.",
-        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment. Steering mismatch causes target suppression or sidelobe leakage.",
-        "module": "pvx.algorithms.spatial_and_multichannel.beamforming_and_directionality.mvdr_beamformer_wideband",
-        "name": "MVDR beamformer (wideband)",
-        "theme": "Spatial and Multichannel",
-        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown. Avoid with uncertain microphone spacing/ordering."
       },
       {
         "algorithm_id": "spatial_and_multichannel.phase_aligned_mid_side_field_rotation",
@@ -984,29 +903,11 @@
         "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
       },
       {
-        "algorithm_id": "spatial_and_multichannel.spatial_room_impulse_convolution",
-        "assumptions": "Channel geometry/order and timing metadata are correct.",
-        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
-        "module": "pvx.algorithms.spatial_and_multichannel.ambisonics_and_immersive.spatial_room_impulse_convolution",
-        "name": "Spatial room impulse convolution",
-        "theme": "Spatial and Multichannel",
-        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
-      },
-      {
         "algorithm_id": "spatial_and_multichannel.spectral_spatial_granulator",
         "assumptions": "Channel geometry/order and timing metadata are correct.",
         "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
         "module": "pvx.algorithms.spatial_and_multichannel.creative_spatial_fx.spectral_spatial_granulator",
         "name": "Spectral spatial granulator",
-        "theme": "Spatial and Multichannel",
-        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
-      },
-      {
-        "algorithm_id": "spatial_and_multichannel.spherical_harmonic_diffuse_enhancement",
-        "assumptions": "Channel geometry/order and timing metadata are correct.",
-        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment.",
-        "module": "pvx.algorithms.spatial_and_multichannel.ambisonics_and_immersive.spherical_harmonic_diffuse_enhancement",
-        "name": "Spherical-harmonic diffuse enhancement",
         "theme": "Spatial and Multichannel",
         "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
       },
@@ -1027,15 +928,6 @@
         "name": "Stochastic spatial diffusion cloud",
         "theme": "Spatial and Multichannel",
         "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown."
-      },
-      {
-        "algorithm_id": "spatial_and_multichannel.superdirective_beamformer",
-        "assumptions": "Channel geometry/order and timing metadata are correct. Array spacing and steering assumptions should match real geometry.",
-        "failure_modes": "Spatial collapse, combing, or localization bias from misalignment. Steering mismatch causes target suppression or sidelobe leakage.",
-        "module": "pvx.algorithms.spatial_and_multichannel.beamforming_and_directionality.superdirective_beamformer",
-        "name": "Superdirective beamformer",
-        "theme": "Spatial and Multichannel",
-        "when_not_to_use": "Avoid blind spatial processing when channel order/calibration is unknown. Avoid with uncertain microphone spacing/ordering."
       },
       {
         "algorithm_id": "spatial_and_multichannel.transaural_crosstalk_cancellation",

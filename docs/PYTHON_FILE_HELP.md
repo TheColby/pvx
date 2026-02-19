@@ -7,6 +7,9 @@ Total Python files documented: **199**
 ## Contents
 
 - [`HPS-pitch-track.py`](#HPS-pitch-trackpy)
+- [`benchmarks/__init__.py`](#benchmarksinitpy)
+- [`benchmarks/metrics.py`](#benchmarksmetricspy)
+- [`benchmarks/run_bench.py`](#benchmarksrunbenchpy)
 - [`main.py`](#mainpy)
 - [`pvxalgorithms/__init__.py`](#pvxalgorithmsinitpy)
 - [`pvxalgorithms/base.py`](#pvxalgorithmsbasepy)
@@ -119,20 +122,6 @@ Total Python files documented: **199**
 - [`src/pvx/algorithms/separation_and_decomposition/tensor_decomposition_cp_tucker.py`](#srcpvxalgorithmsseparationanddecompositiontensordecompositioncptuckerpy)
 - [`src/pvx/algorithms/separation_and_decomposition/u_net_vocal_accompaniment_split.py`](#srcpvxalgorithmsseparationanddecompositionunetvocalaccompanimentsplitpy)
 - [`src/pvx/algorithms/spatial_and_multichannel/__init__.py`](#srcpvxalgorithmsspatialandmultichannelinitpy)
-- [`src/pvx/algorithms/spatial_and_multichannel/ambisonics_and_immersive/__init__.py`](#srcpvxalgorithmsspatialandmultichannelambisonicsandimmersiveinitpy)
-- [`src/pvx/algorithms/spatial_and_multichannel/ambisonics_and_immersive/ambisonic_binaural_rendering.py`](#srcpvxalgorithmsspatialandmultichannelambisonicsandimmersiveambisonicbinauralrenderingpy)
-- [`src/pvx/algorithms/spatial_and_multichannel/ambisonics_and_immersive/first_order_ambisonic_encode_decode.py`](#srcpvxalgorithmsspatialandmultichannelambisonicsandimmersivefirstorderambisonicencodedecodepy)
-- [`src/pvx/algorithms/spatial_and_multichannel/ambisonics_and_immersive/higher_order_ambisonic_rotation.py`](#srcpvxalgorithmsspatialandmultichannelambisonicsandimmersivehigherorderambisonicrotationpy)
-- [`src/pvx/algorithms/spatial_and_multichannel/ambisonics_and_immersive/hoa_order_truncation_and_upmix.py`](#srcpvxalgorithmsspatialandmultichannelambisonicsandimmersivehoaordertruncationandupmixpy)
-- [`src/pvx/algorithms/spatial_and_multichannel/ambisonics_and_immersive/spatial_room_impulse_convolution.py`](#srcpvxalgorithmsspatialandmultichannelambisonicsandimmersivespatialroomimpulseconvolutionpy)
-- [`src/pvx/algorithms/spatial_and_multichannel/ambisonics_and_immersive/spherical_harmonic_diffuse_enhancement.py`](#srcpvxalgorithmsspatialandmultichannelambisonicsandimmersivesphericalharmonicdiffuseenhancementpy)
-- [`src/pvx/algorithms/spatial_and_multichannel/beamforming_and_directionality/__init__.py`](#srcpvxalgorithmsspatialandmultichannelbeamforminganddirectionalityinitpy)
-- [`src/pvx/algorithms/spatial_and_multichannel/beamforming_and_directionality/delay_and_sum_beamforming.py`](#srcpvxalgorithmsspatialandmultichannelbeamforminganddirectionalitydelayandsumbeamformingpy)
-- [`src/pvx/algorithms/spatial_and_multichannel/beamforming_and_directionality/diffuse_field_coherence_masking.py`](#srcpvxalgorithmsspatialandmultichannelbeamforminganddirectionalitydiffusefieldcoherencemaskingpy)
-- [`src/pvx/algorithms/spatial_and_multichannel/beamforming_and_directionality/direction_of_arrival_grid_tracking.py`](#srcpvxalgorithmsspatialandmultichannelbeamforminganddirectionalitydirectionofarrivalgridtrackingpy)
-- [`src/pvx/algorithms/spatial_and_multichannel/beamforming_and_directionality/generalized_sidelobe_canceller.py`](#srcpvxalgorithmsspatialandmultichannelbeamforminganddirectionalitygeneralizedsidelobecancellerpy)
-- [`src/pvx/algorithms/spatial_and_multichannel/beamforming_and_directionality/mvdr_beamformer_wideband.py`](#srcpvxalgorithmsspatialandmultichannelbeamforminganddirectionalitymvdrbeamformerwidebandpy)
-- [`src/pvx/algorithms/spatial_and_multichannel/beamforming_and_directionality/superdirective_beamformer.py`](#srcpvxalgorithmsspatialandmultichannelbeamforminganddirectionalitysuperdirectivebeamformerpy)
 - [`src/pvx/algorithms/spatial_and_multichannel/creative_spatial_fx/__init__.py`](#srcpvxalgorithmsspatialandmultichannelcreativespatialfxinitpy)
 - [`src/pvx/algorithms/spatial_and_multichannel/creative_spatial_fx/binaural_motion_trajectory_designer.py`](#srcpvxalgorithmsspatialandmultichannelcreativespatialfxbinauralmotiontrajectorydesignerpy)
 - [`src/pvx/algorithms/spatial_and_multichannel/creative_spatial_fx/decorrelated_reverb_upmix.py`](#srcpvxalgorithmsspatialandmultichannelcreativespatialfxdecorrelatedreverbupmixpy)
@@ -194,17 +183,28 @@ Total Python files documented: **199**
 - [`src/pvx/cli/pvxunison.py`](#srcpvxclipvxunisonpy)
 - [`src/pvx/cli/pvxwarp.py`](#srcpvxclipvxwarppy)
 - [`src/pvx/core/__init__.py`](#srcpvxcoreinitpy)
+- [`src/pvx/core/audio_metrics.py`](#srcpvxcoreaudiometricspy)
 - [`src/pvx/core/common.py`](#srcpvxcorecommonpy)
+- [`src/pvx/core/presets.py`](#srcpvxcorepresetspy)
+- [`src/pvx/core/stereo.py`](#srcpvxcorestereopy)
+- [`src/pvx/core/transients.py`](#srcpvxcoretransientspy)
 - [`src/pvx/core/voc.py`](#srcpvxcorevocpy)
+- [`src/pvx/core/wsola.py`](#srcpvxcorewsolapy)
+- [`src/pvx/metrics/__init__.py`](#srcpvxmetricsinitpy)
+- [`src/pvx/metrics/coherence.py`](#srcpvxmetricscoherencepy)
 - [`src/pvxalgorithms/__init__.py`](#srcpvxalgorithmsinitpy)
 - [`src/pvxalgorithms/base.py`](#srcpvxalgorithmsbasepy)
 - [`src/pvxalgorithms/registry.py`](#srcpvxalgorithmsregistrypy)
 - [`tests/test_algorithms_generated.py`](#teststestalgorithmsgeneratedpy)
+- [`tests/test_audio_metrics.py`](#teststestaudiometricspy)
+- [`tests/test_benchmark_metrics.py`](#teststestbenchmarkmetricspy)
+- [`tests/test_benchmark_runner.py`](#teststestbenchmarkrunnerpy)
 - [`tests/test_cli_regression.py`](#teststestcliregressionpy)
 - [`tests/test_docs_coverage.py`](#teststestdocscoveragepy)
 - [`tests/test_docs_pdf.py`](#teststestdocspdfpy)
 - [`tests/test_dsp.py`](#teststestdsppy)
 - [`tests/test_microtonal.py`](#teststestmicrotonalpy)
+- [`tests/test_transient_and_stereo.py`](#teststesttransientandstereopy)
 
 ## `HPS-pitch-track.py`
 
@@ -272,6 +272,47 @@ options:
 
 ```text
 Compatibility wrapper for the HPS pitch tracker CLI.
+```
+
+## `benchmarks/__init__.py`
+
+**Purpose:** Benchmark utilities for pvx quality regression.
+
+**Classes:** None
+**Functions:** None
+
+### Module Docstring
+
+```text
+Benchmark utilities for pvx quality regression.
+```
+
+## `benchmarks/metrics.py`
+
+**Purpose:** Objective metrics for pvx benchmark comparisons.
+
+**Classes:** `OptionalMetricValue`
+**Functions:** `_match_length`, `_principal_angle`, `_to_mono`, `_stft_complex`, `_stft_mag_db`, `_resample_signal`, `_onset_envelope`, `_detect_onsets`, `_match_events`, `_attack_time_ms`, `_f0_track_and_voicing`, `_hnr_track`, `_cross_correlation_lag_samples`, `_run_external_quality_tool`, `_proxy_quality_scalar`, `log_spectral_distance`, `modulation_spectrum_distance`, `transient_smear_score`, `signal_to_noise_ratio_db`, `si_sdr_db`, `spectral_convergence`, `envelope_correlation`, `rms_level_delta_db`, `crest_factor_delta_db`, `bandwidth_95_delta_hz`, `zero_crossing_rate_delta`, `dc_offset_delta`, `clipping_ratio_delta`, `integrated_lufs_delta_lu`, `short_term_lufs_delta_lu`, `loudness_range_delta_lu`, `true_peak_delta_dbtp`, `pesq_mos_lqo`, `stoi_score`, `visqol_mos_lqo`, `polqa_mos_lqo`, `peaq_odg`, `f0_rmse_cents`, `voicing_f1_score`, `harmonic_to_noise_ratio_drift_db`, `onset_precision_recall_f1`, `attack_time_error_ms`, `ild_drift_db`, `itd_drift_ms`, `interchannel_phase_deviation_by_band`, `phasiness_index`, `musical_noise_index`, `pre_echo_score`, `stereo_coherence_drift`
+
+### Module Docstring
+
+```text
+Objective metrics for pvx benchmark comparisons.
+```
+
+## `benchmarks/run_bench.py`
+
+**Purpose:** Reproducible quality benchmark: pvx vs Rubber Band vs librosa baseline.
+
+**Classes:** `TaskSpec`
+**Functions:** `_pvx_bench_args`, `_read_audio`, `_write_audio`, `_match_channels`, `_to_mono`, `_align_pair`, `_generate_tiny_dataset`, `_run_pvx_cycle`, `_find_rubberband`, `_run_rubberband_cycle`, `_run_librosa_cycle`, `_compute_metrics`, `_aggregate`, `_render_markdown`, `_check_gate`, `main`
+
+**Help commands:** `python3 benchmarks/run_bench.py`, `python3 benchmarks/run_bench.py --help`
+
+### Module Docstring
+
+```text
+Reproducible quality benchmark: pvx vs Rubber Band vs librosa baseline.
 ```
 
 ## `main.py`
@@ -1534,15 +1575,18 @@ src-layout migration.
 
 ```text
 usage: pvxvoc.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
-                 [--output-format OUTPUT_FORMAT] [--output OUTPUT]
-                 [--overwrite] [--dry-run] [--stdout]
+                 [--output-format OUTPUT_FORMAT] [--out OUTPUT] [--overwrite]
+                 [--dry-run] [--stdout]
                  [--verbosity {silent,quiet,normal,verbose,debug}] [-v]
                  [--quiet] [--silent]
+                 [--preset {none,default,vocal,ambient,extreme,vocal_studio,drums_safe,extreme_ambient,stereo_coherent}]
+                 [--example {all,basic,vocal,ambient,extreme,drums_safe,stereo_coherent,hybrid,benchmark,gpu,pipeline,csv}]
+                 [--guided] [--stretch STRETCH] [--gpu] [--cpu]
                  [--quality-profile {neutral,speech,music,percussion,ambient,extreme}]
                  [--auto-profile]
                  [--auto-profile-lookahead-seconds AUTO_PROFILE_LOOKAHEAD_SECONDS]
-                 [--auto-transform] [--explain-plan] [--n-fft N_FFT]
-                 [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
+                 [--auto-transform] [--n-fft N_FFT] [--win-length WIN_LENGTH]
+                 [--hop-size HOP_SIZE]
                  [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
                  [--kaiser-beta KAISER_BETA]
                  [--transform {fft,dft,czt,dct,dst,hartley}] [--no-center]
@@ -1570,6 +1614,13 @@ usage: pvxvoc.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
                  [--auto-segment-seconds AUTO_SEGMENT_SECONDS]
                  [--checkpoint-dir CHECKPOINT_DIR]
                  [--checkpoint-id CHECKPOINT_ID] [--resume]
+                 [--transient-mode {off,reset,hybrid,wsola}]
+                 [--transient-sensitivity TRANSIENT_SENSITIVITY]
+                 [--transient-protect-ms TRANSIENT_PROTECT_MS]
+                 [--transient-crossfade-ms TRANSIENT_CROSSFADE_MS]
+                 [--stereo-mode {independent,mid_side_lock,ref_channel_lock}]
+                 [--ref-channel REF_CHANNEL]
+                 [--coherence-strength COHERENCE_STRENGTH]
                  [--pitch-shift-semitones PITCH_SHIFT_SEMITONES |
                  --pitch-shift-cents PITCH_SHIFT_CENTS |
                  --pitch-shift-ratio PITCH_SHIFT_RATIO |
@@ -1592,19 +1643,7 @@ usage: pvxvoc.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
                  [--compressor-ratio COMPRESSOR_RATIO]
                  [--compressor-attack-ms COMPRESSOR_ATTACK_MS]
                  [--compressor-release-ms COMPRESSOR_RELEASE_MS]
-                 [--compressor-makeup-db COMPRESSOR_MAKEUP_DB]
-                 [--expander-threshold-db EXPANDER_THRESHOLD_DB]
-                 [--expander-ratio EXPANDER_RATIO]
-                 [--expander-attack-ms EXPANDER_ATTACK_MS]
-                 [--expander-release-ms EXPANDER_RELEASE_MS]
-                 [--compander-threshold-db COMPANDER_THRESHOLD_DB]
-                 [--compander-compress-ratio COMPANDER_COMPRESS_RATIO]
-                 [--compander-expand-ratio COMPANDER_EXPAND_RATIO]
-                 [--compander-attack-ms COMPANDER_ATTACK_MS]
-                 [--compander-release-ms COMPANDER_RELEASE_MS]
-                 [--compander-makeup-db COMPANDER_MAKEUP_DB]
-                 [--limiter-threshold LIMITER_THRESHOLD]
-                 [--soft-clip-leve
+                 [--compressor-makeup-db COMPRESSOR_M
 ... [truncated]
 ```
 
@@ -1790,7 +1829,7 @@ Generate one combined PDF from all HTML documentation pages.
 **Purpose:** Generate grouped HTML documentation for pvx algorithms and research references.
 
 **Classes:** None
-**Functions:** `git_commit_meta`, `scholar`, `slugify`, `dedupe_papers`, `_upgrade_paper_url`, `upgrade_paper_urls`, `load_extra_papers`, `load_glossary`, `infer_glossary_terms`, `glossary_links_html`, `load_json`, `classify_reference_url`, `window_entries`, `window_tradeoffs`, `_split_top_level_once`, `_extract_params_get_calls`, `extract_algorithm_param_specs`, `extract_algorithm_params`, `extract_module_cli_flags`, `collect_algorithm_module_flags`, `sample_value_from_default`, `format_sample_params`, `compute_unique_cli_flags`, `grouped_algorithms`, `html_page`, `write_style_css`, `render_index`, `module_path_from_meta`, `render_group_pages`, `render_papers_page`, `render_glossary_page`, `render_math_page`, `render_windows_page`, `render_architecture_page`, `render_cli_flags_page`, `render_limitations_page`, `render_benchmarks_page`, `render_cookbook_page`, `render_citations_page`, `write_docs_root_index`, `main`
+**Functions:** `git_commit_meta`, `scholar`, `_contains_out_of_scope_text`, `_is_out_of_scope_paper`, `_is_out_of_scope_glossary`, `slugify`, `dedupe_papers`, `_upgrade_paper_url`, `upgrade_paper_urls`, `load_extra_papers`, `load_glossary`, `infer_glossary_terms`, `glossary_links_html`, `load_json`, `classify_reference_url`, `window_entries`, `window_tradeoffs`, `_split_top_level_once`, `_extract_params_get_calls`, `extract_algorithm_param_specs`, `extract_algorithm_params`, `extract_module_cli_flags`, `collect_algorithm_module_flags`, `sample_value_from_default`, `format_sample_params`, `compute_unique_cli_flags`, `grouped_algorithms`, `html_page`, `write_style_css`, `render_index`, `module_path_from_meta`, `render_group_pages`, `render_papers_page`, `render_glossary_page`, `render_math_page`, `render_windows_page`, `render_architecture_page`, `render_cli_flags_page`, `render_limitations_page`, `render_benchmarks_page`, `render_cookbook_page`, `render_citations_page`, `write_docs_root_index`, `main`
 
 **Help commands:** `python3 scripts_generate_html_docs.py`
 
@@ -2132,7 +2171,7 @@ I/O contract, and parameter-routing behavior.
 **Purpose:** Shared DSP utilities and implementations for pvx algorithm modules.
 
 **Classes:** `AlgorithmResult`
-**Functions:** `coerce_audio`, `maybe_librosa`, `maybe_loudnorm`, `build_metadata`, `normalize_peak`, `ensure_length`, `resample_length`, `envelope_follower`, `soft_clip`, `_resolve_transform_name`, `_stft_config`, `stft_multi`, `istft_multi`, `spectral_sharpen`, `spectral_blur`, `hpss_split`, `time_stretch`, `pitch_shift`, `overlap_add_frames`, `granular_time_stretch`, `spectral_gate`, `spectral_subtract_denoise`, `mmse_like_denoise`, `minimum_statistics_denoise`, `simple_declick`, `simple_declip`, `dereverb_decay_subtract`, `dereverb_wpe_style`, `compressor`, `upward_compressor`, `true_peak_limit`, `transient_shaper`, `spectral_dynamics`, `split_bands`, `multiband_compression`, `cross_synthesis`, `spectral_convolution`, `spectral_freeze`, `phase_randomize`, `formant_warp`, `resonator_bank`, `spectral_contrast_exaggerate`, `rhythmic_gate`, `ring_mod`, `spectral_tremolo`, `envelope_modulation`, `estimate_f0_track`, `nearest_scale_freq`, `variable_pitch_shift`, `detect_key_from_chroma`, `cqt_or_stft`, `icqt_or_istft`, `_dispatch_time_scale`, `_dispatch_pitch_tracking`, `_scale_cents_from_name`, `_dispatch_retune`, `_dispatch_transforms`, `_dispatch_separation`, `_dispatch_denoise`, `_dispatch_dereverb`, `_lufs_estimate`, `_dispatch_dynamics`, `_dispatch_creative`, `_dispatch_granular`, `_dispatch_analysis`, `_spatial_to_channels`, `_spatial_fractional_delay`, `_spatial_apply_delays`, `_spatial_circular_gains`, `_spatial_gcc_delay`, `_spatial_estimate_channel_delays`, `_spatial_foa_encode`, `_spatial_rotate_foa`, `_spatial_foa_decode_stereo`, `_spatial_synthetic_rir`, `_dispatch_spatial`, `run_algorithm`
+**Functions:** `coerce_audio`, `maybe_librosa`, `maybe_loudnorm`, `build_metadata`, `normalize_peak`, `ensure_length`, `resample_length`, `envelope_follower`, `soft_clip`, `_resolve_transform_name`, `_stft_config`, `stft_multi`, `istft_multi`, `spectral_sharpen`, `spectral_blur`, `hpss_split`, `time_stretch`, `pitch_shift`, `overlap_add_frames`, `granular_time_stretch`, `spectral_gate`, `spectral_subtract_denoise`, `mmse_like_denoise`, `minimum_statistics_denoise`, `simple_declick`, `simple_declip`, `dereverb_decay_subtract`, `dereverb_wpe_style`, `compressor`, `upward_compressor`, `true_peak_limit`, `transient_shaper`, `spectral_dynamics`, `split_bands`, `multiband_compression`, `cross_synthesis`, `spectral_convolution`, `spectral_freeze`, `phase_randomize`, `formant_warp`, `resonator_bank`, `spectral_contrast_exaggerate`, `rhythmic_gate`, `ring_mod`, `spectral_tremolo`, `envelope_modulation`, `estimate_f0_track`, `nearest_scale_freq`, `variable_pitch_shift`, `detect_key_from_chroma`, `cqt_or_stft`, `icqt_or_istft`, `_dispatch_time_scale`, `_dispatch_pitch_tracking`, `_scale_cents_from_name`, `_dispatch_retune`, `_dispatch_transforms`, `_dispatch_separation`, `_dispatch_denoise`, `_dispatch_dereverb`, `_lufs_estimate`, `_dispatch_dynamics`, `_dispatch_creative`, `_dispatch_granular`, `_dispatch_analysis`, `_spatial_to_channels`, `_spatial_fractional_delay`, `_spatial_apply_delays`, `_spatial_circular_gains`, `_spatial_delay_by_xcorr`, `_spatial_estimate_channel_delays`, `_spatial_synthetic_rir`, `_dispatch_spatial`, `run_algorithm`
 
 ### Module Docstring
 
@@ -4190,392 +4229,6 @@ I/O contract, and parameter-routing behavior.
 Spatial and multichannel algorithm scaffolds.
 ```
 
-## `src/pvx/algorithms/spatial_and_multichannel/ambisonics_and_immersive/__init__.py`
-
-**Purpose:** Spatial and multichannel: ambisonics and immersive.
-
-**Classes:** None
-**Functions:** None
-
-### Module Docstring
-
-```text
-Spatial and multichannel: ambisonics and immersive.
-```
-
-## `src/pvx/algorithms/spatial_and_multichannel/ambisonics_and_immersive/ambisonic_binaural_rendering.py`
-
-**Purpose:** Ambisonic binaural rendering.
-
-**Algorithm ID:** `spatial_and_multichannel.ambisonic_binaural_rendering`
-**Theme:** `Spatial and Multichannel`
-**Primary API:** `process(audio, sample_rate, **params) -> AlgorithmResult`
-**Parameter docs:** see `/Users/cleider/dev/pvx/docs/pvx_ALGORITHM_PARAMS.md`.
-
-**Classes:** None
-**Functions:** `process`, `module_help_text`, `build_parser`, `main`
-
-**Help commands:** `python3 src/pvx/algorithms/spatial_and_multichannel/ambisonics_and_immersive/ambisonic_binaural_rendering.py`, `python3 src/pvx/algorithms/spatial_and_multichannel/ambisonics_and_immersive/ambisonic_binaural_rendering.py --help`
-
-### Module Docstring
-
-```text
-Ambisonic binaural rendering.
-
-Comprehensive module help:
-- Theme: Spatial and Multichannel
-- Algorithm ID: spatial_and_multichannel.ambisonic_binaural_rendering
-- Primary API: process(audio, sample_rate, **params) -> AlgorithmResult
-- Backend: delegates to pvx.algorithms.base.run_algorithm()
-
-This module is both importable and executable.
-When executed directly, it prints verbose help text describing purpose,
-I/O contract, and parameter-routing behavior.
-```
-
-## `src/pvx/algorithms/spatial_and_multichannel/ambisonics_and_immersive/first_order_ambisonic_encode_decode.py`
-
-**Purpose:** First-order ambisonic encode/decode.
-
-**Algorithm ID:** `spatial_and_multichannel.first_order_ambisonic_encode_decode`
-**Theme:** `Spatial and Multichannel`
-**Primary API:** `process(audio, sample_rate, **params) -> AlgorithmResult`
-**Parameter docs:** see `/Users/cleider/dev/pvx/docs/pvx_ALGORITHM_PARAMS.md`.
-
-**Classes:** None
-**Functions:** `process`, `module_help_text`, `build_parser`, `main`
-
-**Help commands:** `python3 src/pvx/algorithms/spatial_and_multichannel/ambisonics_and_immersive/first_order_ambisonic_encode_decode.py`, `python3 src/pvx/algorithms/spatial_and_multichannel/ambisonics_and_immersive/first_order_ambisonic_encode_decode.py --help`
-
-### Module Docstring
-
-```text
-First-order ambisonic encode/decode.
-
-Comprehensive module help:
-- Theme: Spatial and Multichannel
-- Algorithm ID: spatial_and_multichannel.first_order_ambisonic_encode_decode
-- Primary API: process(audio, sample_rate, **params) -> AlgorithmResult
-- Backend: delegates to pvx.algorithms.base.run_algorithm()
-
-This module is both importable and executable.
-When executed directly, it prints verbose help text describing purpose,
-I/O contract, and parameter-routing behavior.
-```
-
-## `src/pvx/algorithms/spatial_and_multichannel/ambisonics_and_immersive/higher_order_ambisonic_rotation.py`
-
-**Purpose:** Higher-order ambisonic rotation.
-
-**Algorithm ID:** `spatial_and_multichannel.higher_order_ambisonic_rotation`
-**Theme:** `Spatial and Multichannel`
-**Primary API:** `process(audio, sample_rate, **params) -> AlgorithmResult`
-**Parameter docs:** see `/Users/cleider/dev/pvx/docs/pvx_ALGORITHM_PARAMS.md`.
-
-**Classes:** None
-**Functions:** `process`, `module_help_text`, `build_parser`, `main`
-
-**Help commands:** `python3 src/pvx/algorithms/spatial_and_multichannel/ambisonics_and_immersive/higher_order_ambisonic_rotation.py`, `python3 src/pvx/algorithms/spatial_and_multichannel/ambisonics_and_immersive/higher_order_ambisonic_rotation.py --help`
-
-### Module Docstring
-
-```text
-Higher-order ambisonic rotation.
-
-Comprehensive module help:
-- Theme: Spatial and Multichannel
-- Algorithm ID: spatial_and_multichannel.higher_order_ambisonic_rotation
-- Primary API: process(audio, sample_rate, **params) -> AlgorithmResult
-- Backend: delegates to pvx.algorithms.base.run_algorithm()
-
-This module is both importable and executable.
-When executed directly, it prints verbose help text describing purpose,
-I/O contract, and parameter-routing behavior.
-```
-
-## `src/pvx/algorithms/spatial_and_multichannel/ambisonics_and_immersive/hoa_order_truncation_and_upmix.py`
-
-**Purpose:** HOA order truncation and upmix.
-
-**Algorithm ID:** `spatial_and_multichannel.hoa_order_truncation_and_upmix`
-**Theme:** `Spatial and Multichannel`
-**Primary API:** `process(audio, sample_rate, **params) -> AlgorithmResult`
-**Parameter docs:** see `/Users/cleider/dev/pvx/docs/pvx_ALGORITHM_PARAMS.md`.
-
-**Classes:** None
-**Functions:** `process`, `module_help_text`, `build_parser`, `main`
-
-**Help commands:** `python3 src/pvx/algorithms/spatial_and_multichannel/ambisonics_and_immersive/hoa_order_truncation_and_upmix.py`, `python3 src/pvx/algorithms/spatial_and_multichannel/ambisonics_and_immersive/hoa_order_truncation_and_upmix.py --help`
-
-### Module Docstring
-
-```text
-HOA order truncation and upmix.
-
-Comprehensive module help:
-- Theme: Spatial and Multichannel
-- Algorithm ID: spatial_and_multichannel.hoa_order_truncation_and_upmix
-- Primary API: process(audio, sample_rate, **params) -> AlgorithmResult
-- Backend: delegates to pvx.algorithms.base.run_algorithm()
-
-This module is both importable and executable.
-When executed directly, it prints verbose help text describing purpose,
-I/O contract, and parameter-routing behavior.
-```
-
-## `src/pvx/algorithms/spatial_and_multichannel/ambisonics_and_immersive/spatial_room_impulse_convolution.py`
-
-**Purpose:** Spatial room impulse convolution.
-
-**Algorithm ID:** `spatial_and_multichannel.spatial_room_impulse_convolution`
-**Theme:** `Spatial and Multichannel`
-**Primary API:** `process(audio, sample_rate, **params) -> AlgorithmResult`
-**Parameter docs:** see `/Users/cleider/dev/pvx/docs/pvx_ALGORITHM_PARAMS.md`.
-
-**Classes:** None
-**Functions:** `process`, `module_help_text`, `build_parser`, `main`
-
-**Help commands:** `python3 src/pvx/algorithms/spatial_and_multichannel/ambisonics_and_immersive/spatial_room_impulse_convolution.py`, `python3 src/pvx/algorithms/spatial_and_multichannel/ambisonics_and_immersive/spatial_room_impulse_convolution.py --help`
-
-### Module Docstring
-
-```text
-Spatial room impulse convolution.
-
-Comprehensive module help:
-- Theme: Spatial and Multichannel
-- Algorithm ID: spatial_and_multichannel.spatial_room_impulse_convolution
-- Primary API: process(audio, sample_rate, **params) -> AlgorithmResult
-- Backend: delegates to pvx.algorithms.base.run_algorithm()
-
-This module is both importable and executable.
-When executed directly, it prints verbose help text describing purpose,
-I/O contract, and parameter-routing behavior.
-```
-
-## `src/pvx/algorithms/spatial_and_multichannel/ambisonics_and_immersive/spherical_harmonic_diffuse_enhancement.py`
-
-**Purpose:** Spherical-harmonic diffuse enhancement.
-
-**Algorithm ID:** `spatial_and_multichannel.spherical_harmonic_diffuse_enhancement`
-**Theme:** `Spatial and Multichannel`
-**Primary API:** `process(audio, sample_rate, **params) -> AlgorithmResult`
-**Parameter docs:** see `/Users/cleider/dev/pvx/docs/pvx_ALGORITHM_PARAMS.md`.
-
-**Classes:** None
-**Functions:** `process`, `module_help_text`, `build_parser`, `main`
-
-**Help commands:** `python3 src/pvx/algorithms/spatial_and_multichannel/ambisonics_and_immersive/spherical_harmonic_diffuse_enhancement.py`, `python3 src/pvx/algorithms/spatial_and_multichannel/ambisonics_and_immersive/spherical_harmonic_diffuse_enhancement.py --help`
-
-### Module Docstring
-
-```text
-Spherical-harmonic diffuse enhancement.
-
-Comprehensive module help:
-- Theme: Spatial and Multichannel
-- Algorithm ID: spatial_and_multichannel.spherical_harmonic_diffuse_enhancement
-- Primary API: process(audio, sample_rate, **params) -> AlgorithmResult
-- Backend: delegates to pvx.algorithms.base.run_algorithm()
-
-This module is both importable and executable.
-When executed directly, it prints verbose help text describing purpose,
-I/O contract, and parameter-routing behavior.
-```
-
-## `src/pvx/algorithms/spatial_and_multichannel/beamforming_and_directionality/__init__.py`
-
-**Purpose:** Spatial and multichannel: beamforming and directionality.
-
-**Classes:** None
-**Functions:** None
-
-### Module Docstring
-
-```text
-Spatial and multichannel: beamforming and directionality.
-```
-
-## `src/pvx/algorithms/spatial_and_multichannel/beamforming_and_directionality/delay_and_sum_beamforming.py`
-
-**Purpose:** Delay-and-sum beamforming.
-
-**Algorithm ID:** `spatial_and_multichannel.delay_and_sum_beamforming`
-**Theme:** `Spatial and Multichannel`
-**Primary API:** `process(audio, sample_rate, **params) -> AlgorithmResult`
-**Parameter docs:** see `/Users/cleider/dev/pvx/docs/pvx_ALGORITHM_PARAMS.md`.
-
-**Classes:** None
-**Functions:** `process`, `module_help_text`, `build_parser`, `main`
-
-**Help commands:** `python3 src/pvx/algorithms/spatial_and_multichannel/beamforming_and_directionality/delay_and_sum_beamforming.py`, `python3 src/pvx/algorithms/spatial_and_multichannel/beamforming_and_directionality/delay_and_sum_beamforming.py --help`
-
-### Module Docstring
-
-```text
-Delay-and-sum beamforming.
-
-Comprehensive module help:
-- Theme: Spatial and Multichannel
-- Algorithm ID: spatial_and_multichannel.delay_and_sum_beamforming
-- Primary API: process(audio, sample_rate, **params) -> AlgorithmResult
-- Backend: delegates to pvx.algorithms.base.run_algorithm()
-
-This module is both importable and executable.
-When executed directly, it prints verbose help text describing purpose,
-I/O contract, and parameter-routing behavior.
-```
-
-## `src/pvx/algorithms/spatial_and_multichannel/beamforming_and_directionality/diffuse_field_coherence_masking.py`
-
-**Purpose:** Diffuse-field coherence masking.
-
-**Algorithm ID:** `spatial_and_multichannel.diffuse_field_coherence_masking`
-**Theme:** `Spatial and Multichannel`
-**Primary API:** `process(audio, sample_rate, **params) -> AlgorithmResult`
-**Parameter docs:** see `/Users/cleider/dev/pvx/docs/pvx_ALGORITHM_PARAMS.md`.
-
-**Classes:** None
-**Functions:** `process`, `module_help_text`, `build_parser`, `main`
-
-**Help commands:** `python3 src/pvx/algorithms/spatial_and_multichannel/beamforming_and_directionality/diffuse_field_coherence_masking.py`, `python3 src/pvx/algorithms/spatial_and_multichannel/beamforming_and_directionality/diffuse_field_coherence_masking.py --help`
-
-### Module Docstring
-
-```text
-Diffuse-field coherence masking.
-
-Comprehensive module help:
-- Theme: Spatial and Multichannel
-- Algorithm ID: spatial_and_multichannel.diffuse_field_coherence_masking
-- Primary API: process(audio, sample_rate, **params) -> AlgorithmResult
-- Backend: delegates to pvx.algorithms.base.run_algorithm()
-
-This module is both importable and executable.
-When executed directly, it prints verbose help text describing purpose,
-I/O contract, and parameter-routing behavior.
-```
-
-## `src/pvx/algorithms/spatial_and_multichannel/beamforming_and_directionality/direction_of_arrival_grid_tracking.py`
-
-**Purpose:** Direction-of-arrival grid tracking.
-
-**Algorithm ID:** `spatial_and_multichannel.direction_of_arrival_grid_tracking`
-**Theme:** `Spatial and Multichannel`
-**Primary API:** `process(audio, sample_rate, **params) -> AlgorithmResult`
-**Parameter docs:** see `/Users/cleider/dev/pvx/docs/pvx_ALGORITHM_PARAMS.md`.
-
-**Classes:** None
-**Functions:** `process`, `module_help_text`, `build_parser`, `main`
-
-**Help commands:** `python3 src/pvx/algorithms/spatial_and_multichannel/beamforming_and_directionality/direction_of_arrival_grid_tracking.py`, `python3 src/pvx/algorithms/spatial_and_multichannel/beamforming_and_directionality/direction_of_arrival_grid_tracking.py --help`
-
-### Module Docstring
-
-```text
-Direction-of-arrival grid tracking.
-
-Comprehensive module help:
-- Theme: Spatial and Multichannel
-- Algorithm ID: spatial_and_multichannel.direction_of_arrival_grid_tracking
-- Primary API: process(audio, sample_rate, **params) -> AlgorithmResult
-- Backend: delegates to pvx.algorithms.base.run_algorithm()
-
-This module is both importable and executable.
-When executed directly, it prints verbose help text describing purpose,
-I/O contract, and parameter-routing behavior.
-```
-
-## `src/pvx/algorithms/spatial_and_multichannel/beamforming_and_directionality/generalized_sidelobe_canceller.py`
-
-**Purpose:** Generalized sidelobe canceller.
-
-**Algorithm ID:** `spatial_and_multichannel.generalized_sidelobe_canceller`
-**Theme:** `Spatial and Multichannel`
-**Primary API:** `process(audio, sample_rate, **params) -> AlgorithmResult`
-**Parameter docs:** see `/Users/cleider/dev/pvx/docs/pvx_ALGORITHM_PARAMS.md`.
-
-**Classes:** None
-**Functions:** `process`, `module_help_text`, `build_parser`, `main`
-
-**Help commands:** `python3 src/pvx/algorithms/spatial_and_multichannel/beamforming_and_directionality/generalized_sidelobe_canceller.py`, `python3 src/pvx/algorithms/spatial_and_multichannel/beamforming_and_directionality/generalized_sidelobe_canceller.py --help`
-
-### Module Docstring
-
-```text
-Generalized sidelobe canceller.
-
-Comprehensive module help:
-- Theme: Spatial and Multichannel
-- Algorithm ID: spatial_and_multichannel.generalized_sidelobe_canceller
-- Primary API: process(audio, sample_rate, **params) -> AlgorithmResult
-- Backend: delegates to pvx.algorithms.base.run_algorithm()
-
-This module is both importable and executable.
-When executed directly, it prints verbose help text describing purpose,
-I/O contract, and parameter-routing behavior.
-```
-
-## `src/pvx/algorithms/spatial_and_multichannel/beamforming_and_directionality/mvdr_beamformer_wideband.py`
-
-**Purpose:** MVDR beamformer (wideband).
-
-**Algorithm ID:** `spatial_and_multichannel.mvdr_beamformer_wideband`
-**Theme:** `Spatial and Multichannel`
-**Primary API:** `process(audio, sample_rate, **params) -> AlgorithmResult`
-**Parameter docs:** see `/Users/cleider/dev/pvx/docs/pvx_ALGORITHM_PARAMS.md`.
-
-**Classes:** None
-**Functions:** `process`, `module_help_text`, `build_parser`, `main`
-
-**Help commands:** `python3 src/pvx/algorithms/spatial_and_multichannel/beamforming_and_directionality/mvdr_beamformer_wideband.py`, `python3 src/pvx/algorithms/spatial_and_multichannel/beamforming_and_directionality/mvdr_beamformer_wideband.py --help`
-
-### Module Docstring
-
-```text
-MVDR beamformer (wideband).
-
-Comprehensive module help:
-- Theme: Spatial and Multichannel
-- Algorithm ID: spatial_and_multichannel.mvdr_beamformer_wideband
-- Primary API: process(audio, sample_rate, **params) -> AlgorithmResult
-- Backend: delegates to pvx.algorithms.base.run_algorithm()
-
-This module is both importable and executable.
-When executed directly, it prints verbose help text describing purpose,
-I/O contract, and parameter-routing behavior.
-```
-
-## `src/pvx/algorithms/spatial_and_multichannel/beamforming_and_directionality/superdirective_beamformer.py`
-
-**Purpose:** Superdirective beamformer.
-
-**Algorithm ID:** `spatial_and_multichannel.superdirective_beamformer`
-**Theme:** `Spatial and Multichannel`
-**Primary API:** `process(audio, sample_rate, **params) -> AlgorithmResult`
-**Parameter docs:** see `/Users/cleider/dev/pvx/docs/pvx_ALGORITHM_PARAMS.md`.
-
-**Classes:** None
-**Functions:** `process`, `module_help_text`, `build_parser`, `main`
-
-**Help commands:** `python3 src/pvx/algorithms/spatial_and_multichannel/beamforming_and_directionality/superdirective_beamformer.py`, `python3 src/pvx/algorithms/spatial_and_multichannel/beamforming_and_directionality/superdirective_beamformer.py --help`
-
-### Module Docstring
-
-```text
-Superdirective beamformer.
-
-Comprehensive module help:
-- Theme: Spatial and Multichannel
-- Algorithm ID: spatial_and_multichannel.superdirective_beamformer
-- Primary API: process(audio, sample_rate, **params) -> AlgorithmResult
-- Backend: delegates to pvx.algorithms.base.run_algorithm()
-
-This module is both importable and executable.
-When executed directly, it prints verbose help text describing purpose,
-I/O contract, and parameter-routing behavior.
-```
-
 ## `src/pvx/algorithms/spatial_and_multichannel/creative_spatial_fx/__init__.py`
 
 **Purpose:** Spatial and multichannel: creative spatial fx.
@@ -6064,12 +5717,25 @@ Time-warp an input according to a user-provided stretch map.
 Core DSP/runtime internals shared by pvx CLI tools.
 ```
 
+## `src/pvx/core/audio_metrics.py`
+
+**Purpose:** Shared audio metric summaries and ASCII table rendering.
+
+**Classes:** `AudioMetricSummary`
+**Functions:** `_to_mono`, `_to_2d`, `_resample_1d_linear`, `_resample_audio_linear`, `_match_length`, `_principal_angle`, `_stft_complex`, `_stft_mag_db`, `_onset_envelope`, `_dbfs`, `_spectral_centroid_and_bw95`, `summarize_audio_metrics`, `_format_float`, `_ascii_table`, `render_audio_metrics_table`, `summarize_audio_comparison_metrics`, `render_audio_comparison_table`
+
+### Module Docstring
+
+```text
+Shared audio metric summaries and ASCII table rendering.
+```
+
 ## `src/pvx/core/common.py`
 
 **Purpose:** Shared helpers for pvx DSP command-line tools.
 
 **Classes:** `SegmentSpec`, `StatusBar`
-**Functions:** `add_console_args`, `console_level`, `is_quiet`, `is_silent`, `log_message`, `log_error`, `build_status_bar`, `add_common_io_args`, `add_vocoder_args`, `build_vocoder_config`, `validate_vocoder_args`, `resolve_inputs`, `read_audio`, `finalize_audio`, `write_output`, `default_output_path`, `_stream_format_name`, `parse_float_list`, `semitone_to_ratio`, `cents_to_ratio`, `time_pitch_shift_channel`, `time_pitch_shift_audio`, `read_segment_csv`, `concat_with_crossfade`, `ensure_runtime`
+**Functions:** `add_console_args`, `console_level`, `is_quiet`, `is_silent`, `log_message`, `log_error`, `build_status_bar`, `add_common_io_args`, `add_vocoder_args`, `build_vocoder_config`, `validate_vocoder_args`, `resolve_inputs`, `read_audio`, `finalize_audio`, `write_output`, `print_input_output_metrics_table`, `default_output_path`, `_stream_format_name`, `parse_float_list`, `semitone_to_ratio`, `cents_to_ratio`, `time_pitch_shift_channel`, `time_pitch_shift_audio`, `read_segment_csv`, `concat_with_crossfade`, `ensure_runtime`
 
 ### Module Docstring
 
@@ -6077,12 +5743,51 @@ Core DSP/runtime internals shared by pvx CLI tools.
 Shared helpers for pvx DSP command-line tools.
 ```
 
+## `src/pvx/core/presets.py`
+
+**Purpose:** Preset definitions for pvx processing intent modes.
+
+**Classes:** None
+**Functions:** None
+
+### Module Docstring
+
+```text
+Preset definitions for pvx processing intent modes.
+```
+
+## `src/pvx/core/stereo.py`
+
+**Purpose:** Stereo/multichannel helper utilities.
+
+**Classes:** None
+**Functions:** `validate_ref_channel`, `lr_to_ms`, `ms_to_lr`
+
+### Module Docstring
+
+```text
+Stereo/multichannel helper utilities.
+```
+
+## `src/pvx/core/transients.py`
+
+**Purpose:** Transient analysis and segmentation helpers for hybrid pvx modes.
+
+**Classes:** `TransientFeatures`, `TransientRegion`
+**Functions:** `_principal`, `_normalize_robust`, `_frame_signal`, `compute_transient_features`, `pick_onset_frames`, `_mask_to_regions`, `_enforce_min_region_samples`, `build_transient_mask`, `map_mask_to_output`, `smooth_binary_mask`, `detect_transient_regions`
+
+### Module Docstring
+
+```text
+Transient analysis and segmentation helpers for hybrid pvx modes.
+```
+
 ## `src/pvx/core/voc.py`
 
 **Purpose:** Multi-channel phase vocoder CLI for time and pitch manipulation.
 
 **Classes:** `VocoderConfig`, `PitchConfig`, `ControlSegment`, `JobResult`, `FourierSyncPlan`, `AudioBlockResult`, `RuntimeConfig`, `ProgressBar`
-**Functions:** `add_console_args`, `console_level`, `is_quiet`, `is_silent`, `log_message`, `log_error`, `clone_args_namespace`, `collect_cli_flags`, `db_to_amplitude`, `cents_to_ratio`, `_eval_numeric_expr`, `parse_numeric_expression`, `parse_pitch_ratio_value`, `_is_power_of_two`, `parse_numeric_list`, `parse_int_list`, `estimate_content_features`, `suggest_quality_profile`, `apply_quality_profile_overrides`, `resolve_transform_auto`, `_has_cupy`, `_is_cupy_array`, `_array_module`, `_to_numpy`, `_to_runtime_array`, `_as_float`, `_as_bool`, `_i0`, `normalize_transform_name`, `transform_bin_count`, `_analysis_angular_velocity`, `_transform_requires_scipy`, `ensure_transform_backend_available`, `validate_transform_available`, `_resize_or_pad_1d`, `_onesided_to_full_spectrum`, `_forward_transform_numpy`, `_inverse_transform_numpy`, `_forward_transform`, `_inverse_transform`, `add_runtime_args`, `runtime_config`, `configure_runtime`, `configure_runtime_from_args`, `ensure_runtime_dependencies`, `principal_angle`, `_cosine_series_window`, `_bartlett_window`, `_bohman_window`, `_cosine_window`, `_sine_window`, `_triangular_window`, `_bartlett_hann_window`, `_tukey_window`, `_parzen_window`, `_lanczos_window`, `_welch_window`, `_gaussian_window`, `_general_gaussian_window`, `_exponential_window`, `_cauchy_window`, `_cosine_power_window`, `_hann_poisson_window`, `_general_hamming_window`, `_kaiser_window`, `make_window`, `pad_for_framing`, `stft`, `istft`, `scaled_win_length`, `resize_spectrum_bins`, `smooth_series`, `regularize_frame_lengths`, `fill_nan_with_nearest`, `lock_fft_length_to_f0`, `build_fourier_sync_plan`, `compute_transient_flags`, `build_output_time_steps`, `create_phase_rng`, `draw_random_phase`, `apply_phase_engine`, `find_spectral_peaks`, `apply_identity_phase_locking`, `phase_vocoder_time_stretch`, `phase_vocoder_time_stretch_fourier_sync`, `compute_multistage_stretches`, `phase_vocoder_time_stretch_multistage`, `stretch_channel_with_strategy`, `phase_vocoder_time_stretch_multires_fusion`, `linear_resample_1d`, `resample_1d`, `force_length`, `estimate_f0_autocorrelation`, `normalize_audio`, `_envelope_coeff`, `_envelope_follower`, `_estimate_lufs_or_rms_db`, `_apply_compressor`, `_apply_expander`, `_apply_compander`, `_apply_limiter`, `_apply_soft_clip`, `add_mastering_args`, `validate_mastering_args`, `apply_mastering_chain`, `cepstral_envelope`, `apply_formant_preservation`, `choose_pitch_ratio`, `_parse_optional_float`, `parse_control_segments_csv`, `apply_control_confidence_policy`, `smooth_control_ratios`, `expand_control_segments`, `load_control_segments`, `process_audio_block`, `resolve_base_stretch`, `compute_output_path`, `_stream_format_name`, `_read_audio_input`, `_write_audio_output`, `concat_audio_chunks`, `build_uniform_control_segments`, `_checkpoint_job_id`, `resolve_checkpoint_context`, `load_checkpoint_chunk`, `save_checkpoint_chunk`, `write_manifest`, `process_file`, `force_length_multi`, `resample_multi`, `validate_args`, `build_parser`, `expand_inputs`, `main`
+**Functions:** `add_console_args`, `console_level`, `is_quiet`, `is_silent`, `log_message`, `log_error`, `clone_args_namespace`, `collect_cli_flags`, `print_cli_examples`, `apply_named_preset`, `_prompt_text`, `_prompt_choice`, `run_guided_mode`, `db_to_amplitude`, `cents_to_ratio`, `_eval_numeric_expr`, `parse_numeric_expression`, `parse_pitch_ratio_value`, `_is_power_of_two`, `parse_numeric_list`, `parse_int_list`, `estimate_content_features`, `suggest_quality_profile`, `apply_quality_profile_overrides`, `resolve_transform_auto`, `_has_cupy`, `_is_cupy_array`, `_array_module`, `_to_numpy`, `_to_runtime_array`, `_as_float`, `_as_bool`, `_i0`, `normalize_transform_name`, `transform_bin_count`, `_analysis_angular_velocity`, `_transform_requires_scipy`, `ensure_transform_backend_available`, `validate_transform_available`, `_resize_or_pad_1d`, `_onesided_to_full_spectrum`, `_forward_transform_numpy`, `_inverse_transform_numpy`, `_forward_transform`, `_inverse_transform`, `add_runtime_args`, `runtime_config`, `configure_runtime`, `configure_runtime_from_args`, `ensure_runtime_dependencies`, `principal_angle`, `_cosine_series_window`, `_bartlett_window`, `_bohman_window`, `_cosine_window`, `_sine_window`, `_triangular_window`, `_bartlett_hann_window`, `_tukey_window`, `_parzen_window`, `_lanczos_window`, `_welch_window`, `_gaussian_window`, `_general_gaussian_window`, `_exponential_window`, `_cauchy_window`, `_cosine_power_window`, `_hann_poisson_window`, `_general_hamming_window`, `_kaiser_window`, `make_window`, `pad_for_framing`, `stft`, `istft`, `scaled_win_length`, `resize_spectrum_bins`, `smooth_series`, `regularize_frame_lengths`, `fill_nan_with_nearest`, `lock_fft_length_to_f0`, `build_fourier_sync_plan`, `compute_transient_flags`, `build_output_time_steps`, `create_phase_rng`, `draw_random_phase`, `apply_phase_engine`, `find_spectral_peaks`, `apply_identity_phase_locking`, `phase_vocoder_time_stretch`, `phase_vocoder_time_stretch_fourier_sync`, `compute_multistage_stretches`, `phase_vocoder_time_stretch_multistage`, `stretch_channel_with_strategy`, `phase_vocoder_time_stretch_multires_fusion`, `linear_resample_1d`, `resample_1d`, `force_length`, `estimate_f0_autocorrelation`, `normalize_audio`, `_envelope_coeff`, `_envelope_follower`, `_estimate_lufs_or_rms_db`, `_apply_compressor`, `_apply_expander`, `_apply_compander`, `_apply_limiter`, `_apply_soft_clip`, `add_mastering_args`, `validate_mastering_args`, `apply_mastering_chain`, `cepstral_envelope`, `apply_formant_preservation`, `choose_pitch_ratio`, `_parse_optional_float`, `parse_control_segments_csv`, `apply_control_confidence_policy`, `smooth_control_ratios`, `expand_control_segments`, `load_control_segments`, `_lock_channel_phase_to_reference`, `process_audio_block`, `resolve_base_stretch`, `compute_output_path`, `_stream_format_name`, `_read_audio_input`, `_write_audio_output`, `concat_audio_chunks`, `build_uniform_control_segments`, `_checkpoint_job_id`, `resolve_checkpoint_context`, `load_checkpoint_chunk`, `save_checkpoint_chunk`, `write_manifest`, `process_file`, `force_length_multi`, `resample_multi`, `validate_args`, `build_parser`, `expand_inputs`, `main`
 
 **Help commands:** `python3 src/pvx/core/voc.py`, `python3 src/pvx/core/voc.py --help`
 
@@ -6090,6 +5795,45 @@ Shared helpers for pvx DSP command-line tools.
 
 ```text
 Multi-channel phase vocoder CLI for time and pitch manipulation.
+```
+
+## `src/pvx/core/wsola.py`
+
+**Purpose:** Deterministic WSOLA time-stretch primitives for transient handling.
+
+**Classes:** None
+**Functions:** `_safe_window`, `wsola_time_stretch`
+
+### Module Docstring
+
+```text
+Deterministic WSOLA time-stretch primitives for transient handling.
+```
+
+## `src/pvx/metrics/__init__.py`
+
+**Purpose:** Objective metric helpers for pvx benchmarks and tests.
+
+**Classes:** None
+**Functions:** None
+
+### Module Docstring
+
+```text
+Objective metric helpers for pvx benchmarks and tests.
+```
+
+## `src/pvx/metrics/coherence.py`
+
+**Purpose:** Inter-channel coherence drift metrics.
+
+**Classes:** None
+**Functions:** `_principal`, `_stft`, `interchannel_coherence_drift`, `stereo_coherence_drift_score`
+
+### Module Docstring
+
+```text
+Inter-channel coherence drift metrics.
 ```
 
 ## `src/pvxalgorithms/__init__.py`
@@ -6150,6 +5894,51 @@ Regression smoke tests for all generated pvx algorithm modules.
 This test verifies that every algorithm listed in `pvxalgorithms.registry`
 is importable and can process a synthetic stereo signal while returning
 finite 2D output and implemented metadata status.
+```
+
+## `tests/test_audio_metrics.py`
+
+**Purpose:** Tests for shared audio metric table utilities.
+
+**Classes:** `TestAudioMetrics`
+**Functions:** None
+
+**Help commands:** `python3 tests/test_audio_metrics.py`
+
+### Module Docstring
+
+```text
+Tests for shared audio metric table utilities.
+```
+
+## `tests/test_benchmark_metrics.py`
+
+**Purpose:** Unit tests for benchmark metric primitives.
+
+**Classes:** `TestBenchmarkMetrics`
+**Functions:** None
+
+**Help commands:** `python3 tests/test_benchmark_metrics.py`
+
+### Module Docstring
+
+```text
+Unit tests for benchmark metric primitives.
+```
+
+## `tests/test_benchmark_runner.py`
+
+**Purpose:** Tests for benchmark runner profile selection.
+
+**Classes:** `TestBenchmarkRunnerProfiles`
+**Functions:** None
+
+**Help commands:** `python3 tests/test_benchmark_runner.py`
+
+### Module Docstring
+
+```text
+Tests for benchmark runner profile selection.
 ```
 
 ## `tests/test_cli_regression.py`
@@ -6237,4 +6026,19 @@ Microtonal feature tests across CSV mapping, retune, and CLI pitch paths.
 
 Ensures cents/ratio/semitone mapping behavior remains stable and that
 microtonal pitch controls produce expected conversion outputs.
+```
+
+## `tests/test_transient_and_stereo.py`
+
+**Purpose:** Tests for hybrid transient processing and stereo coherence modes.
+
+**Classes:** `TestTransientHybridAndStereo`
+**Functions:** `_build_args`, `_phase_drift_internal`
+
+**Help commands:** `python3 tests/test_transient_and_stereo.py`
+
+### Module Docstring
+
+```text
+Tests for hybrid transient processing and stereo coherence modes.
 ```

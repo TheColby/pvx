@@ -66,6 +66,31 @@ def scholar(title: str) -> str:
     return f"https://scholar.google.com/scholar?q={quote_plus(title)}"
 
 
+OUT_OF_SCOPE_TOKENS: tuple[str, ...] = ()
+
+
+def _contains_out_of_scope_text(*parts: str) -> bool:
+    text = " ".join(parts).lower()
+    return any(token in text for token in OUT_OF_SCOPE_TOKENS)
+
+
+def _is_out_of_scope_paper(paper: dict[str, str]) -> bool:
+    return _contains_out_of_scope_text(
+        str(paper.get("category", "")),
+        str(paper.get("title", "")),
+        str(paper.get("authors", "")),
+        str(paper.get("venue", "")),
+    )
+
+
+def _is_out_of_scope_glossary(entry: dict[str, str]) -> bool:
+    return _contains_out_of_scope_text(
+        str(entry.get("term", "")),
+        str(entry.get("category", "")),
+        str(entry.get("description", "")),
+    )
+
+
 PAPERS: list[dict[str, str]] = [
     {
         "category": "Phase Vocoder Foundations",
@@ -557,14 +582,6 @@ PAPERS: list[dict[str, str]] = [
     },
     {
         "category": "Denoising, Dereverberation, and Spatial Audio",
-        "authors": "L. J. Griffiths; C. W. Jim",
-        "year": "1982",
-        "title": "An Alternative Approach to Linearly Constrained Adaptive Beamforming",
-        "venue": "IEEE Trans. Antennas and Propagation",
-        "url": "https://doi.org/10.1109/TAP.1982.1142739",
-    },
-    {
-        "category": "Denoising, Dereverberation, and Spatial Audio",
         "authors": "C. Knapp; G. Carter",
         "year": "1976",
         "title": "The Generalized Correlation Method for Estimation of Time Delay",
@@ -750,12 +767,6 @@ DEFAULT_GLOSSARY: list[dict[str, str]] = [
         "url": "https://en.wikipedia.org/wiki/Ring_modulation",
     },
     {
-        "term": "Ambisonics",
-        "category": "Spatial Audio",
-        "description": "Spherical-harmonic representation of a 3D sound field.",
-        "url": "https://en.wikipedia.org/wiki/Ambisonics",
-    },
-    {
         "term": "Binaural audio",
         "category": "Spatial Audio",
         "description": "Two-channel rendering that preserves direction cues for headphones.",
@@ -778,24 +789,6 @@ DEFAULT_GLOSSARY: list[dict[str, str]] = [
         "category": "Spatial Audio",
         "description": "Localization cue based on left-right level differences.",
         "url": "https://en.wikipedia.org/wiki/Sound_localization",
-    },
-    {
-        "term": "MVDR beamformer",
-        "category": "Spatial Audio",
-        "description": "Minimum variance distortionless response array beamformer.",
-        "url": "https://en.wikipedia.org/wiki/Minimum_variance_distortionless_response",
-    },
-    {
-        "term": "Generalized sidelobe canceller (GSC)",
-        "category": "Spatial Audio",
-        "description": "Adaptive beamforming architecture with quiescent and blocking paths.",
-        "url": scholar("generalized sidelobe canceller"),
-    },
-    {
-        "term": "GCC-PHAT",
-        "category": "Spatial Audio",
-        "description": "Generalized cross-correlation with PHAT weighting for delay estimation.",
-        "url": scholar("GCC-PHAT"),
     },
     {
         "term": "VBAP",
@@ -836,8 +829,6 @@ def dedupe_papers(papers: list[dict[str, str]]) -> list[dict[str, str]]:
 PAPER_URL_UPGRADES: dict[str, str] = {
     "MMSE short-time spectral amplitude estimator": "https://doi.org/10.1109/TASSP.1984.1164453",
     "log-MMSE speech enhancement": "https://doi.org/10.1109/TASSP.1985.1164550",
-    "generalized sidelobe canceller": "https://doi.org/10.1109/TAP.1982.1142739",
-    "GCC-PHAT": "https://doi.org/10.1109/TASSP.1976.1162830",
 }
 
 
@@ -878,7 +869,10 @@ def load_extra_papers() -> list[dict[str, str]]:
             continue
         if not {"category", "authors", "year", "title", "venue", "url"}.issubset(item):
             continue
-        records.append({k: str(item[k]) for k in ("category", "authors", "year", "title", "venue", "url")})
+        record = {k: str(item[k]) for k in ("category", "authors", "year", "title", "venue", "url")}
+        if _is_out_of_scope_paper(record):
+            continue
+        records.append(record)
     return records
 
 
@@ -902,6 +896,8 @@ def load_glossary() -> list[dict[str, str]]:
     out: list[dict[str, str]] = []
     for entry in payload:
         term_key = entry["term"].strip().lower()
+        if _is_out_of_scope_glossary(entry):
+            continue
         if term_key in seen:
             continue
         seen.add(term_key)
@@ -909,8 +905,12 @@ def load_glossary() -> list[dict[str, str]]:
     return out
 
 
-PAPERS = dedupe_papers(upgrade_paper_urls(PAPERS + load_extra_papers()))
-TECHNICAL_GLOSSARY = load_glossary()
+PAPERS = [
+    paper
+    for paper in dedupe_papers(upgrade_paper_urls(PAPERS + load_extra_papers()))
+    if not _is_out_of_scope_paper(paper)
+]
+TECHNICAL_GLOSSARY = [entry for entry in load_glossary() if not _is_out_of_scope_glossary(entry)]
 GLOSSARY_LOOKUP = {entry["term"].lower(): entry for entry in TECHNICAL_GLOSSARY}
 
 
@@ -927,7 +927,7 @@ def infer_glossary_terms(*texts: str, limit: int = 6) -> list[dict[str, str]]:
         if re.search(rf"\b{re.escape(token_norm)}\b", norm_haystack):
             matches.append(entry)
             continue
-        # Support acronym-style terms (e.g., GCC-PHAT, MVDR, LUFS) without
+        # Support acronym-style terms (e.g., LUFS, STFT) without
         # matching arbitrary substrings inside unrelated words.
         compact = re.sub(r"[^a-z0-9]+", "", token)
         if compact and len(compact) <= 8 and re.search(rf"\b{re.escape(compact)}\b", norm_haystack):
@@ -2121,12 +2121,12 @@ python3 pvxvoc.py synth_pad.wav --transform hartley --time-stretch 1.30 --output
         """
 <div class=\"card\">
   <h2>Spatial and Multichannel Highlights</h2>
-  <p><strong>Delay-and-sum beamforming:</strong> $$y[n]=\\frac{1}{M}\\sum_{m=1}^{M}x_m[n-\\tau_m]$$</p>
-  <p><strong>MVDR weights:</strong> $$\\mathbf{w}=\\frac{\\mathbf{R}^{-1}\\mathbf{d}}{\\mathbf{d}^H\\mathbf{R}^{-1}\\mathbf{d}}$$</p>
-  <p><strong>FOA encode (WXYZ):</strong> $$W=\\frac{s}{\\sqrt{2}},\\ X=s\\cos\\theta\\cos\\varphi,\\ Y=s\\sin\\theta\\cos\\varphi,\\ Z=s\\sin\\varphi$$</p>
+  <p><strong>Inter-channel phase difference:</strong> $$\\Delta\\phi_{ij}(k,t)=\\phi_i(k,t)-\\phi_j(k,t)$$</p>
+  <p><strong>Coherence-preserving objective:</strong> $$J=\\sum_{k,t}\\left|\\Delta\\phi^{out}_{ij}(k,t)-\\Delta\\phi^{in}_{ij}(k,t)\\right|$$</p>
+  <p><strong>Delay estimate:</strong> $$\\tau^*=\\arg\\max_\\tau\\,\\mathcal{F}^{-1}\\left\\{\\frac{X_i(\\omega)X_j^*(\\omega)}{|X_i(\\omega)X_j^*(\\omega)|+\\varepsilon}\\right\\}(\\tau)$$</p>
   <p class=\"small\">
-    pvx spatial modules combine beamforming, ambisonic transformations, and phase-vocoder-consistent
-    multichannel processing for robust chain composition.
+    pvx spatial modules focus on channel coherence, stable image cues, and
+    phase-vocoder-consistent multichannel processing for robust chain composition.
   </p>
 </div>
 """

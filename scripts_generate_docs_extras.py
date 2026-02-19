@@ -303,12 +303,6 @@ KEYWORD_LIMITS: list[tuple[str, str, str, str]] = [
         "Avoid fully unattended use on out-of-domain material.",
     ),
     (
-        "beamform",
-        "Array spacing and steering assumptions should match real geometry.",
-        "Steering mismatch causes target suppression or sidelobe leakage.",
-        "Avoid with uncertain microphone spacing/ordering.",
-    ),
-    (
         "retune",
         "Pitch trajectory estimates should be continuous enough for retuning.",
         "Fast F0 jumps can cause audible stepping.",
