@@ -1,12 +1,63 @@
 # pvx
 
-`pvx` is a Python toolkit for phase-vocoder and STFT-based audio processing.
+`pvx` is a Python toolkit for high-quality time and pitch processing using a phase-vocoder/STFT core.
 
 Primary project goal and differentiator:
 - audio quality first (phase coherence, transient integrity, formant stability, stereo coherence)
 - speed second (throughput/runtime tuning only after quality targets are met)
 
 It includes a unified CLI (`pvx`) with focused subcommands (`voc`, `freeze`, `harmonize`, `retune`, `morph`, etc.), shared mastering controls, CSV-driven automation paths, microtonal support, and optional GPU acceleration.
+
+## Start Here: What pvx Solves
+
+If you are new to DSP/audio engineering, think of `pvx` as a tool that lets you:
+- make audio longer or shorter without changing musical key
+- change key/pitch without changing playback speed
+- preserve clarity while doing both (especially for vocals and stereo material)
+
+`pvx` is built around the same class of methods used in modern time-stretch and pitch-shift workflows, but exposes them with practical CLI controls.
+
+### Stretch vs Pitch Shift (Plain Language)
+
+| Operation | What changes | What should stay the same |
+| --- | --- | --- |
+| Time stretch (`--stretch`) | Duration/tempo | Pitch/key |
+| Pitch shift (`--pitch`, `--cents`, `--ratio`) | Pitch/key | Duration/tempo |
+| Combined stretch + pitch | Both | Clarity, transients, stereo image (as much as possible) |
+
+Example:
+- `--stretch 2.0` means a 5-second sound becomes 10 seconds.
+- `--pitch 12` means one octave up.
+- `--pitch -12` means one octave down.
+
+## What Is a Phase Vocoder? (No Math Version)
+
+A phase vocoder is a way to process sound in very short overlapping slices.
+
+For each slice:
+1. It measures "how much of each frequency is present" and "where its phase is".
+2. It modifies timing and/or pitch in that spectral representation.
+3. It rebuilds audio from overlapping slices.
+
+Why "phase" matters:
+- If magnitudes are changed without consistent phase evolution, output can sound smeared, chorus-like, metallic, or unstable.
+- Good phase handling keeps tones continuous across frames and improves naturalness.
+
+In practical terms, `pvx` gives you controls for this quality layer:
+- phase locking
+- transient protection/hybrid modes
+- stereo coherence modes
+- formant-aware pitch workflows
+
+## Mental Model (1 Minute)
+
+Input waveform -> short overlapping frames -> frequency-domain edit -> overlap-add resynthesis -> output waveform
+
+Useful intuition:
+- window size (`--n-fft` / `--win-length`) trades time detail vs frequency detail
+- hop size (`--hop-size`) controls frame overlap density
+- larger windows often help low-frequency tonal stability
+- transient handling is important for drums/plosives/onsets
 
 ## 30-Second Quick Start
 
@@ -87,35 +138,79 @@ pvx voc voice.wav --stretch 1.0 --pitch -3 --pitch-mode formant-preserving --out
 
 ## Conceptual Overview: What Is a Phase Vocoder?
 
-A phase vocoder processes short overlapping windows of audio in the frequency domain.
+A phase vocoder uses the **short-time Fourier transform (STFT)** to repeatedly answer this question:
+"What frequencies are present in this tiny time slice, and how do their phases evolve from one slice to the next?"
 
-Analysis STFT:
+The core workflow is:
+1. Split audio into overlapping frames.
+2. Apply a window function to each frame.
+3. Transform each frame into spectral bins (magnitude + phase).
+4. Modify timing/pitch by controlling phase progression and synthesis hop.
+5. Reconstruct audio by overlap-adding all processed frames.
 
-$$
+If you are new to this, the key idea is that **phase continuity between frames** is what separates high-quality output from "phasiness" artifacts.
+
+### 1) Analysis STFT
+
+`pvx` analyzes each frame with:
+
+\[
 X_t[k] = \sum_{n=0}^{N-1} x[n+tH_a]w[n]e^{-j2\pi kn/N}
-$$
+\]
 
-Synthesis uses phase propagation to keep bins temporally coherent while changing the synthesis hop.
+where:
+- \(x[n]\) represents the input signal sample at index \(n\)
+- \(t\) represents frame index
+- \(k\) represents frequency-bin index
+- \(N\) represents frame size (`--n-fft`)
+- \(H_a\) represents analysis hop
+- \(w[n]\) represents the selected window (`--window`)
 
-$$
+Plain-English meaning:
+- each frame is windowed, then transformed
+- output bin \(X_t[k]\) is complex-valued (magnitude and phase)
+- this gives the per-frame spectral state used by downstream processing
+
+### 2) Phase-Vocoder Propagation
+
+Time stretching is controlled by phase evolution:
+
+\[
 \Delta\phi_t[k] = \mathrm{princarg}(\phi_t[k]-\phi_{t-1}[k]-\omega_kH_a)
-$$
-
-$$
+\]
+\[
 \hat\phi_t[k] = \hat\phi_{t-1}[k] + \omega_kH_s + \Delta\phi_t[k]
-$$
+\]
 
-Pitch ratio mappings:
+where:
+- \(\phi_t[k]\) is observed phase at frame \(t\), bin \(k\)
+- \(\hat\phi_t[k]\) is synthesized/output phase
+- \(\omega_k\) is nominal bin center frequency in radians/sample
+- \(H_s\) is synthesis hop (effective time-stretch control)
+- \(\mathrm{princarg}(\cdot)\) wraps phase to \((-\pi, \pi]\)
 
-$$
+Plain-English meaning:
+- first estimate the true per-bin phase advance
+- then re-accumulate phase using a new synthesis hop
+- this lets duration change while preserving spectral continuity
+
+### 3) Pitch Mapping
+
+Pitch controls map musical intervals to ratio:
+
+\[
 r = 2^{\Delta s/12} = 2^{\Delta c/1200}
-$$
+\]
 
-Where:
-- $N$: frame size (`--n-fft`)
-- $H_a$: analysis hop
-- $H_s$: synthesis hop (effective stretch control)
-- $w[n]$: window (`--window`)
+where:
+- \(r\) is pitch ratio
+- \(\Delta s\) is semitone shift (`--pitch`)
+- \(\Delta c\) is cents shift (`--cents`)
+
+Practical interpretation:
+- \(r > 1\): pitch up
+- \(r < 1\): pitch down
+- formant options control whether vocal timbre shifts with pitch or is preserved
 
 ## When To Use Which Tool (Decision Tree)
 

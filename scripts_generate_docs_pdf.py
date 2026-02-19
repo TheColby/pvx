@@ -223,6 +223,24 @@ def _extract_reference_count(main_html: str) -> int | None:
     return None
 
 
+def _annotate_display_equations(html_text: str) -> str:
+    # Add an explicit symbol legend after each displayed equation so
+    # PDF readers always see variable meanings next to the math.
+    display_eq_re = re.compile(r"(\$\$.*?\$\$|\\\[.*?\\\])", flags=re.DOTALL)
+    where_line = (
+        "<br /><span class=\"equation-where\">where "
+        "<code>x</code> represents the signal (and <code>x[n]</code> represents sample index <code>n</code>), "
+        "<code>t</code> represents frame index, "
+        "<code>k</code> represents frequency-bin index, "
+        "<code>w[n]</code> represents the analysis window, "
+        "<code>H_a</code>/<code>H_s</code> represent analysis/synthesis hop sizes, "
+        "<code>\\phi</code> represents phase, "
+        "<code>\\omega</code> represents angular frequency, "
+        "and <code>\\varepsilon</code> represents a small numerical-stability constant.</span>"
+    )
+    return display_eq_re.sub(lambda m: f"{m.group(1)}{where_line}", html_text)
+
+
 def build_combined_html(
     pages: list[SourcePage],
     docs_html_dir: Path,
@@ -279,6 +297,7 @@ def build_combined_html(
             docs_html_dir=docs_html_dir,
             page_anchor_map=page_anchor_map,
         )
+        page_html = _annotate_display_equations(page_html)
         sections.append(
             f"<section class=\"doc-section\" id=\"{page_anchor}\">"
             f"<header class=\"doc-header\"><h1>{escape(section_title)}</h1><p class=\"src\">Source: {escape(str(page.path.relative_to(docs_html_dir)))}</p></header>"
@@ -331,7 +350,26 @@ def build_combined_html(
     }}
     .doc-main table {{
       page-break-inside: auto;
+      width: 100%;
+      max-width: 100%;
+      table-layout: fixed;
+      border-collapse: collapse;
       white-space: normal !important;
+    }}
+    .doc-main th,
+    .doc-main td {{
+      white-space: normal !important;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      hyphens: auto;
+      vertical-align: top;
+    }}
+    .doc-main td code,
+    .doc-main th code,
+    .doc-main a {{
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }}
     .doc-main tr,
     .doc-main td,
@@ -345,6 +383,13 @@ def build_combined_html(
     .doc-main code {{
       white-space: pre-wrap;
       word-break: break-word;
+    }}
+    .equation-where {{
+      display: block;
+      margin-top: 0.35rem;
+      color: #354c5c;
+      font-size: 0.9rem;
+      line-height: 1.35;
     }}
     .pdf-page-break {{
       page-break-after: always;
