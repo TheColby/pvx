@@ -161,6 +161,36 @@ class TestCLIRegression(unittest.TestCase):
             expected_len = int(round(input_audio.shape[0] * 1.2))
             self.assertAlmostEqual(output_audio.shape[0], expected_len, delta=24)
 
+    def test_unified_cli_stream_wrapper_mode_runs(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            in_path = tmp_path / "stream_wrapper.wav"
+            input_audio, sr = write_stereo_tone(in_path, duration=0.24)
+            out_path = tmp_path / "stream_wrapper_out.wav"
+
+            cmd = [
+                sys.executable,
+                str(UNIFIED_CLI),
+                "stream",
+                str(in_path),
+                "--mode",
+                "wrapper",
+                "--output",
+                str(out_path),
+                "--chunk-seconds",
+                "0.08",
+                "--time-stretch",
+                "1.2",
+                "--quiet",
+            ]
+            proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+            self.assertEqual(proc.returncode, 0, msg=proc.stderr)
+            self.assertTrue(out_path.exists())
+            output_audio, out_sr = sf.read(out_path, always_2d=True)
+            self.assertEqual(out_sr, sr)
+            expected_len = int(round(input_audio.shape[0] * 1.2))
+            self.assertAlmostEqual(output_audio.shape[0], expected_len, delta=24)
+
     def test_common_tool_accepts_explicit_output_path(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
@@ -602,6 +632,12 @@ class TestCLIRegression(unittest.TestCase):
         proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
         self.assertEqual(proc.returncode, 0, msg=proc.stderr)
         self.assertIn("pvx voc input.wav", proc.stdout)
+
+    def test_unified_stream_help_includes_mode(self) -> None:
+        cmd = [sys.executable, str(UNIFIED_CLI), "stream", "--help"]
+        proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+        self.assertEqual(proc.returncode, 0, msg=proc.stderr)
+        self.assertIn("--mode {stateful,wrapper}", proc.stdout)
 
     def test_cli_help_contains_grouped_sections(self) -> None:
         cmd = [sys.executable, str(CLI), "--help"]

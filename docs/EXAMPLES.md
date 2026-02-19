@@ -1642,7 +1642,7 @@ pvx stream source.wav --output source_stream.wav --chunk-seconds 0.2 --time-stre
 ```
 
 **Explanation**
-- Uses `pvx stream` as a chunked wrapper over `pvx voc` for long renders.
+- Uses `pvx stream` stateful mode (default) for chunked long renders with continuity context.
 - Adds deterministic output policy controls and metadata sidecar emission.
 
 **Before/After**
@@ -1657,3 +1657,8 @@ pvx stream source.wav --output source_stream.wav --chunk-seconds 0.2 --time-stre
 
 **Artifacts to listen for**
 - over-short chunks may increase boundary coloration
+
+Legacy compatibility mode:
+```bash
+pvx stream source.wav --mode wrapper --output source_stream_wrapper.wav --chunk-seconds 0.2 --time-stretch 2.0
+```

@@ -13,6 +13,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
+from pvx.core.streaming import run_stateful_stream
+
 
 @dataclass(frozen=True)
 class ToolSpec:
@@ -509,6 +511,12 @@ def run_stream_mode(forwarded_args: list[str]) -> int:
     parser.add_argument("input", help="Input audio path or '-' for stdin")
     parser.add_argument("--output", "--out", dest="output", required=True, help="Output path (or '-')")
     parser.add_argument(
+        "--mode",
+        choices=["stateful", "wrapper"],
+        default="stateful",
+        help="Stream engine: stateful chunk processor (default) or wrapper compatibility mode",
+    )
+    parser.add_argument(
         "--chunk-seconds",
         type=float,
         default=0.25,
@@ -519,6 +527,12 @@ def run_stream_mode(forwarded_args: list[str]) -> int:
         type=float,
         default=0.0,
         help="Crossfade used for segment assembly in milliseconds (default: 0.0)",
+    )
+    parser.add_argument(
+        "--context-ms",
+        type=float,
+        default=None,
+        help="Optional stateful context window in milliseconds (default: auto from window/hop)",
     )
     parser.add_argument(
         "--example",
@@ -535,10 +549,22 @@ def run_stream_mode(forwarded_args: list[str]) -> int:
         parser.error("--chunk-seconds must be > 0")
     if args.crossfade_ms < 0.0:
         parser.error("--crossfade-ms must be >= 0")
+    if args.context_ms is not None and float(args.context_ms) < 0.0:
+        parser.error("--context-ms must be >= 0")
 
     passthrough_flags = {_token_flag(token) for token in passthrough if token.startswith("-")}
     if passthrough_flags & {"--output", "--out", "--stdout"}:
         parser.error("Do not pass --output/--stdout in passthrough args; use `pvx stream --output ...`")
+
+    if args.mode == "stateful":
+        return run_stateful_stream(
+            input_token=str(args.input),
+            output_token=str(args.output),
+            passthrough=list(passthrough),
+            chunk_seconds=float(args.chunk_seconds),
+            context_ms=None if args.context_ms is None else float(args.context_ms),
+            crossfade_ms=float(args.crossfade_ms),
+        )
 
     voc_args: list[str] = [str(args.input)]
     if "--auto-segment-seconds" not in passthrough_flags:

@@ -198,7 +198,7 @@ Short aliases:
 
 Additional helper workflows:
 - `pvx chain`: managed multi-stage chains without manually wiring per-stage `--stdout` / `-` plumbing
-- `pvx stream`: chunked long-form wrapper over `pvx voc` for simpler stream-oriented commands
+- `pvx stream`: stateful chunk engine for long-form streaming workflows (`--mode stateful` default, `--mode wrapper` compatibility fallback)
 
 `pvx voc` includes beginner UX features:
 
@@ -348,10 +348,16 @@ For shorter one-liners without manual pipe wiring, use managed chain mode:
 pvx chain input.wav --pipeline "voc --stretch 1.2 | formant --mode preserve" --output output_chain.wav
 ```
 
-For chunked long renders through a simplified wrapper over `pvx voc`:
+For chunked long renders through the default stateful stream engine:
 
 ```bash
 pvx stream input.wav --output output_stream.wav --chunk-seconds 0.2 --time-stretch 3.0
+```
+
+Compatibility fallback (legacy segmented-wrapper behavior):
+
+```bash
+pvx stream input.wav --mode wrapper --output output_stream.wav --chunk-seconds 0.2 --time-stretch 3.0
 ```
 
 ```bash

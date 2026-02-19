@@ -214,10 +214,12 @@ If you do not want long Unix pipe chains, use managed helpers:
 ```bash
 pvx chain sample.wav --pipeline "voc --stretch 1.2 | formant --mode preserve" --output sample_chain.wav
 pvx stream sample.wav --output sample_stream.wav --chunk-seconds 0.2 --time-stretch 2.0
+pvx stream sample.wav --mode wrapper --output sample_stream_wrapper.wav --chunk-seconds 0.2 --time-stretch 2.0
 ```
 
 - `pvx chain` runs serial stages with managed intermediate files.
-- `pvx stream` wraps `pvx voc` chunk/segment controls for long renders.
+- `pvx stream` defaults to a stateful chunk processor for smoother long-form continuity.
+- `pvx stream --mode wrapper` keeps legacy segmented-wrapper behavior.
 
 ## 11. Output Policy Controls
 

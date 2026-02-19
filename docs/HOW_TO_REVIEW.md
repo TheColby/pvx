@@ -15,6 +15,7 @@ pvx stream --help
 
 Check:
 - `chain` and `stream` helper commands appear in `pvx list`.
+- `pvx stream --help` shows `--mode {stateful,wrapper}`.
 - `pvx voc` help includes output-policy flags:
   - `--bit-depth`
   - `--dither`
@@ -42,6 +43,7 @@ Run:
 ```bash
 pvx chain test.wav --pipeline "voc --time-stretch 1.02 | formant --mode preserve" --output /tmp/pvx_chain_review.wav
 pvx stream test.wav --output /tmp/pvx_stream_review.wav --chunk-seconds 0.10 --time-stretch 1.02
+pvx stream test.wav --mode wrapper --output /tmp/pvx_stream_wrapper_review.wav --chunk-seconds 0.10 --time-stretch 1.02
 ```
 
 Check:

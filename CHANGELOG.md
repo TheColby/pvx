@@ -17,7 +17,8 @@
   - added metadata sidecar emission (`*.metadata.json`) for reproducible output metadata.
   - added helper workflows in unified CLI:
     - `pvx chain` (managed multi-stage serial tool chains)
-    - `pvx stream` (chunked wrapper over `pvx voc`)
+    - `pvx stream` now defaults to a stateful chunk engine with continuity context (`--mode stateful`)
+    - legacy segmented behavior remains available via `pvx stream --mode wrapper`
   - updated non-`voc` tool writers to propagate source input metadata when sidecars are enabled.
   - added/updated tests:
     - `/Users/cleider/dev/pvx/tests/test_output_policy.py`
