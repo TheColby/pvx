@@ -1,6 +1,6 @@
 {
-  "commit": "858658d",
-  "commit_date": "2026-02-18T16:19:55-05:00",
+  "commit": "b4bed85",
+  "commit_date": "2026-02-19T13:53:32-05:00",
   "entries": [
     {
       "action": "",
@@ -142,34 +142,107 @@
       "tool": "hps_pitch_track.py"
     },
     {
-      "action": "store_true",
+      "action": "",
+      "choices": [],
+      "default": 0.25,
+      "flag": "--chunk-seconds",
+      "help": "Chunk/segment duration for `--auto-segment-seconds` (default: 0.25)",
+      "required": false,
+      "source": "src/pvx/cli/pvx.py",
+      "tool": "pvx.py"
+    },
+    {
+      "action": "",
       "choices": [],
       "default": null,
-      "flag": "--list-algorithm-package",
-      "help": "Print location of pvxalgorithms package and registry files",
+      "flag": "--context-ms",
+      "help": "Optional stateful context window in milliseconds (default: auto from window/hop)",
       "required": false,
-      "source": "src/pvx/cli/main.py",
-      "tool": "main.py"
+      "source": "src/pvx/cli/pvx.py",
+      "tool": "pvx.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 0.0,
+      "flag": "--crossfade-ms",
+      "help": "Crossfade used for segment assembly in milliseconds (default: 0.0)",
+      "required": false,
+      "source": "src/pvx/cli/pvx.py",
+      "tool": "pvx.py"
     },
     {
       "action": "store_true",
       "choices": [],
       "default": null,
-      "flag": "--list-tools",
-      "help": "Print the primary pvx CLI tools",
+      "flag": "--example",
+      "help": "Print a copy-paste chain example and exit",
       "required": false,
-      "source": "src/pvx/cli/main.py",
-      "tool": "main.py"
+      "source": "src/pvx/cli/pvx.py",
+      "tool": "pvx.py"
     },
     {
       "action": "store_true",
       "choices": [],
       "default": null,
-      "flag": "--show-docs",
-      "help": "Print key generated documentation paths",
+      "flag": "--keep-intermediate",
+      "help": "Keep intermediate stage files after successful completion",
       "required": false,
-      "source": "src/pvx/cli/main.py",
-      "tool": "main.py"
+      "source": "src/pvx/cli/pvx.py",
+      "tool": "pvx.py"
+    },
+    {
+      "action": "",
+      "choices": [
+        "stateful",
+        "wrapper"
+      ],
+      "default": "stateful",
+      "flag": "--mode",
+      "help": "Stream engine: stateful chunk processor (default) or wrapper compatibility mode",
+      "required": false,
+      "source": "src/pvx/cli/pvx.py",
+      "tool": "pvx.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--out",
+      "help": "Final output path (or '-')",
+      "required": true,
+      "source": "src/pvx/cli/pvx.py",
+      "tool": "pvx.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--output",
+      "help": "Final output path (or '-')",
+      "required": true,
+      "source": "src/pvx/cli/pvx.py",
+      "tool": "pvx.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--pipeline",
+      "help": "Pipeline string with stages separated by '|'. Example: \"voc --stretch 1.2 | formant --mode preserve\"",
+      "required": true,
+      "source": "src/pvx/cli/pvx.py",
+      "tool": "pvx.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--work-dir",
+      "help": "Optional directory for intermediate stage files",
+      "required": false,
+      "source": "src/pvx/cli/pvx.py",
+      "tool": "pvx.py"
     },
     {
       "action": "",
@@ -623,16 +696,6 @@
     {
       "action": "",
       "choices": [],
-      "default": null,
-      "flag": "--subtype",
-      "help": "",
-      "required": false,
-      "source": "src/pvx/cli/pvxmorph.py",
-      "tool": "pvxmorph.py"
-    },
-    {
-      "action": "",
-      "choices": [],
       "default": 80.0,
       "flag": "--chunk-ms",
       "help": "Analysis/process chunk duration in ms",
@@ -928,6 +991,16 @@
     {
       "action": "",
       "choices": [],
+      "default": "inherit",
+      "flag": "--bit-depth",
+      "help": "Output bit-depth policy (default: inherit). Ignored when --subtype is set.",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
       "default": null,
       "flag": "--cents",
       "help": "Pitch shift in cents (+1200 is one octave up)",
@@ -1115,6 +1188,26 @@
       "default": "auto",
       "flag": "--device",
       "help": "Compute device: auto (prefer CUDA), cpu, or cuda",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": "none",
+      "flag": "--dither",
+      "help": "Dither policy before quantized writes (default: none)",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--dither-seed",
+      "help": "Deterministic RNG seed for dithering (default: random seed)",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -1385,6 +1478,16 @@
       "default": 1.8,
       "flag": "--max-stage-stretch",
       "help": "Maximum per-stage ratio used in multistage mode (default: 1.8).",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": "none",
+      "flag": "--metadata-policy",
+      "help": "Output metadata policy: none, sidecar, or copy (sidecar implementation)",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -1914,7 +2017,7 @@
       "choices": [],
       "default": null,
       "flag": "--subtype",
-      "help": "Output file subtype for soundfile (e.g. PCM_16, PCM_24, FLOAT)",
+      "help": "Explicit libsndfile output subtype override (e.g., PCM_16, PCM_24, FLOAT)",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -2075,6 +2178,16 @@
       "tool": "pvxvoc.py"
     },
     {
+      "action": "",
+      "choices": [],
+      "default": null,
+      "flag": "--true-peak-max-dbtp",
+      "help": "Apply output gain trim to enforce max true-peak in dBTP",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
       "action": "count",
       "choices": [],
       "default": 0,
@@ -2159,10 +2272,12 @@
     "--auto-segment-seconds",
     "--auto-transform",
     "--backend",
+    "--bit-depth",
     "--cents",
     "--checkpoint-dir",
     "--checkpoint-id",
     "--chunk-ms",
+    "--chunk-seconds",
     "--clip",
     "--coherence-strength",
     "--compander-attack-ms",
@@ -2177,12 +2292,15 @@
     "--compressor-release-ms",
     "--compressor-threshold-db",
     "--confidence-floor",
+    "--context-ms",
     "--cpu",
     "--crossfade-ms",
     "--cuda-device",
     "--decay",
     "--detune-cents",
     "--device",
+    "--dither",
+    "--dither-seed",
     "--dry-mix",
     "--dry-run",
     "--duration",
@@ -2223,13 +2341,13 @@
     "--intervals",
     "--intervals-cents",
     "--kaiser-beta",
+    "--keep-intermediate",
     "--limiter-threshold",
-    "--list-algorithm-package",
-    "--list-tools",
     "--manifest-append",
     "--manifest-json",
     "--map",
     "--max-stage-stretch",
+    "--metadata-policy",
     "--mode",
     "--multires-ffts",
     "--multires-fusion",
@@ -2260,6 +2378,7 @@
     "--phase-engine",
     "--phase-locking",
     "--phase-random-seed",
+    "--pipeline",
     "--pitch",
     "--pitch-conf-min",
     "--pitch-follow-stdin",
@@ -2290,7 +2409,6 @@
     "--scale",
     "--scale-cents",
     "--semitones",
-    "--show-docs",
     "--silent",
     "--smooth",
     "--smooth-frames",
@@ -2318,11 +2436,13 @@
     "--transient-protect-ms",
     "--transient-sensitivity",
     "--transient-threshold",
+    "--true-peak-max-dbtp",
     "--verbose",
     "--verbosity",
     "--voices",
     "--width",
     "--win-length",
-    "--window"
+    "--window",
+    "--work-dir"
   ]
 }

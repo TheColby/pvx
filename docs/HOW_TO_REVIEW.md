@@ -29,7 +29,7 @@ Run:
 
 ```bash
 python3 pvxvoc.py --help
-python3 pvx.py help voc
+python3 pvx_cli.py help voc
 ```
 
 Check:

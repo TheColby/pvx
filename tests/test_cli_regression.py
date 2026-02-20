@@ -23,7 +23,7 @@ import soundfile as sf
 
 ROOT = Path(__file__).resolve().parents[1]
 CLI = ROOT / "pvxvoc.py"
-UNIFIED_CLI = ROOT / "pvx.py"
+UNIFIED_CLI = ROOT / "pvx_cli.py"
 HPS_CLI = ROOT / "HPS-pitch-track.py"
 
 
