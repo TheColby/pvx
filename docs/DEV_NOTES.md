@@ -1,12 +1,28 @@
-# DEV Notes: `pvxvoc` Call Flow and Insertion Points (Phase 0 Recon)
+# Development (DEV) Notes: `pvxvoc` Call Flow and Insertion Points (Phase 0 Recon)
 
 This note documents the current processing path and exact insertion points for:
-- hybrid transient engine (PV + WSOLA)
+- hybrid transient engine (phase vocoder (PV) + waveform similarity overlap-add (WSOLA))
 - stereo/multichannel coherence modes
 - benchmark/regression infrastructure
-- preset/help UX refactor
+- preset/help user experience (UX) refactor
 
-No DSP behavior changes are implemented in this phase.
+## Acronym Primer
+
+- development (DEV)
+- command-line interface (CLI)
+- user experience (UX)
+- digital signal processing (DSP)
+- phase vocoder (PV)
+- waveform similarity overlap-add (WSOLA)
+- short-time Fourier transform (STFT)
+- inverse short-time Fourier transform (ISTFT)
+- central processing unit (CPU)
+- graphics processing unit (GPU)
+- Compute Unified Device Architecture (CUDA)
+- sample rate (SR)
+- fundamental frequency (F0)
+
+No digital signal processing (DSP) behavior changes are implemented in this phase.
 
 ## 1. Current `pvxvoc` Call Flow
 

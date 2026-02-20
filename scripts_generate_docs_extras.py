@@ -68,6 +68,36 @@ def generated_stamp_lines() -> list[str]:
     ]
 
 
+def acronym_primer_lines() -> list[str]:
+    return [
+        "## Acronym Primer",
+        "",
+        "- application programming interface (API)",
+        "- command-line interface (CLI)",
+        "- path environment variable (PATH)",
+        "- digital signal processing (DSP)",
+        "- short-time Fourier transform (STFT)",
+        "- inverse short-time Fourier transform (ISTFT)",
+        "- fast Fourier transform (FFT)",
+        "- discrete Fourier transform (DFT)",
+        "- central processing unit (CPU)",
+        "- graphics processing unit (GPU)",
+        "- Compute Unified Device Architecture (CUDA)",
+        "- comma-separated values (CSV)",
+        "- JavaScript Object Notation (JSON)",
+        "- HyperText Markup Language (HTML)",
+        "- Portable Document Format (PDF)",
+        "- continuous integration (CI)",
+        "- fundamental frequency (F0)",
+        "- waveform similarity overlap-add (WSOLA)",
+        "- input/output (I/O)",
+        "- root-mean-square (RMS)",
+        "- loudness units relative to full scale (LUFS)",
+        "- signal-to-noise ratio (SNR)",
+        "",
+    ]
+
+
 def write_json(path: Path, payload: Any) -> None:
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
@@ -187,9 +217,10 @@ def generate_cli_flags_reference() -> None:
     unique_flags = sorted({str(row["flag"]) for row in rows})
 
     lines: list[str] = []
-    lines.append("# pvx CLI Flags Reference")
+    lines.append("# pvx Command-Line Interface (CLI) Flags Reference")
     lines.append("")
     lines.extend(generated_stamp_lines())
+    lines.extend(acronym_primer_lines())
     lines.append("This file enumerates long-form CLI flags discovered from argparse declarations in canonical pvx CLI sources.")
     lines.append("")
     lines.append(f"Total tool+flag entries: **{len(rows)}**")
@@ -385,6 +416,7 @@ def generate_algorithm_limitations() -> None:
     lines.append("# pvx Algorithm Limitations and Applicability")
     lines.append("")
     lines.extend(generated_stamp_lines())
+    lines.extend(acronym_primer_lines())
     lines.append("This document summarizes assumptions, likely failure modes, and practical exclusion cases for each algorithm group and algorithm module.")
     lines.append("")
 
@@ -612,6 +644,7 @@ def generate_cookbook() -> None:
     lines.append("# pvx Pipeline Cookbook")
     lines.append("")
     lines.extend(generated_stamp_lines())
+    lines.extend(acronym_primer_lines())
     lines.append("Curated one-line workflows for practical chaining, mastering, microtonal processing, and batch operation.")
     lines.append("")
 
@@ -651,6 +684,7 @@ def generate_architecture_doc() -> None:
     lines.append("# pvx Architecture")
     lines.append("")
     lines.extend(generated_stamp_lines())
+    lines.extend(acronym_primer_lines())
     lines.append("System architecture for runtime processing, algorithm dispatch, and documentation pipelines.")
     lines.append("")
 
@@ -883,7 +917,25 @@ def generate_benchmarks(run_benchmarks: bool) -> None:
     lines.append("# pvx Benchmarks")
     lines.append("")
     lines.extend(generated_stamp_lines())
-    lines.append("Reproducible benchmark summary for core STFT+ISTFT path across CPU/CUDA/Apple-Silicon-native contexts.")
+    lines.extend(acronym_primer_lines())
+    lines.append("Reproducible benchmark summary for core short-time Fourier transform/inverse short-time Fourier transform (STFT/ISTFT) path across central processing unit/Compute Unified Device Architecture/Apple-Silicon-native contexts.")
+    lines.append("")
+    lines.append("## Quick Setup (Install + PATH)")
+    lines.append("")
+    lines.append("```bash")
+    lines.append("python3 -m venv .venv")
+    lines.append("source .venv/bin/activate")
+    lines.append("python3 -m pip install -e .")
+    lines.append("pvx --help")
+    lines.append("```")
+    lines.append("")
+    lines.append("If `pvx` is not found, add the virtualenv binaries to your shell path (`zsh`):")
+    lines.append("")
+    lines.append("```bash")
+    lines.append("printf 'export PATH=\"%s/.venv/bin:$PATH\"\\n' \"$(pwd)\" >> ~/.zshrc")
+    lines.append("source ~/.zshrc")
+    lines.append("pvx --help")
+    lines.append("```")
     lines.append("")
     lines.append("## Reproduce")
     lines.append("")
@@ -1013,6 +1065,7 @@ def generate_citation_docs() -> None:
     lines.append("# pvx Citation Quality Report")
     lines.append("")
     lines.extend(generated_stamp_lines())
+    lines.extend(acronym_primer_lines())
     lines.append("This report classifies bibliography URLs by citation quality and highlights entries still using search-index links.")
     lines.append("")
     lines.append(f"Total references analyzed: **{len(papers)}**")
@@ -1078,6 +1131,7 @@ def generate_docs_contract() -> None:
     lines.append("# pvx Documentation Contribution Contract")
     lines.append("")
     lines.extend(generated_stamp_lines())
+    lines.extend(acronym_primer_lines())
     lines.append("Any code change that affects behavior, parameters, algorithms, windows, outputs, or references must update generated documentation in the same PR.")
     lines.append("")
     lines.append("## Required in Every Relevant PR")
@@ -1091,14 +1145,16 @@ def generate_docs_contract() -> None:
     lines.append("```")
     lines.append("2. Ensure no doc drift remains (ignoring commit-stamp lines): `git diff --exit-code -I '^_Generated from commit' -I '^% Auto-generated by scripts_generate_docs_extras.py from commit' -I 'Generated by <code>scripts_generate_html_docs.py</code> from commit'` after generation.")
     lines.append("3. Keep README links and algorithm inventories consistent with generated docs.")
-    lines.append("4. If CLI flags changed, verify `docs/CLI_FLAGS_REFERENCE.md` and `tests/test_docs_coverage.py` pass.")
-    lines.append("5. If bibliography changed, regenerate `docs/references.bib` and `docs/CITATION_QUALITY.md`.")
+    lines.append("4. Expand each acronym on first use (for example, command-line interface (CLI), digital signal processing (DSP), short-time Fourier transform (STFT)).")
+    lines.append("5. If CLI flags changed, verify `docs/CLI_FLAGS_REFERENCE.md` and `tests/test_docs_coverage.py` pass.")
+    lines.append("6. If bibliography changed, regenerate `docs/references.bib` and `docs/CITATION_QUALITY.md`.")
     lines.append("")
 
     lines.append("## PR Checklist")
     lines.append("")
     lines.append("- [ ] Code changes reflect intended behavior.")
     lines.append("- [ ] Documentation regenerated.")
+    lines.append("- [ ] Acronyms are expanded on first use in updated docs.")
     lines.append("- [ ] Tests pass (including docs coverage checks).")
     lines.append("- [ ] New parameters or windows are mathematically documented.")
     lines.append("- [ ] New references include DOI/publisher URLs when available.")

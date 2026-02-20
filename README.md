@@ -1,16 +1,40 @@
 # pvx
 
-`pvx` is a Python toolkit for high-quality time and pitch processing using a phase-vocoder/STFT core.
+`pvx` is a Python toolkit for high-quality time and pitch processing using a phase-vocoder/short-time Fourier transform (STFT) core.
 
 Primary project goal and differentiator:
 - audio quality first (phase coherence, transient integrity, formant stability, stereo coherence)
 - speed second (throughput/runtime tuning only after quality targets are met)
 
-It includes a unified CLI (`pvx`) with focused subcommands (`voc`, `freeze`, `harmonize`, `retune`, `morph`, etc.), shared mastering controls, CSV-driven automation paths, microtonal support, and optional GPU acceleration.
+It includes a unified command-line interface (CLI) (`pvx`) with focused subcommands (`voc`, `freeze`, `harmonize`, `retune`, `morph`, etc.), shared mastering controls, comma-separated values (CSV)-driven automation paths, microtonal support, and optional graphics processing unit (GPU) acceleration.
+
+## Acronym Primer
+
+- application programming interface (API)
+- command-line interface (CLI)
+- path environment variable (PATH)
+- digital signal processing (DSP)
+- short-time Fourier transform (STFT)
+- inverse short-time Fourier transform (ISTFT)
+- fast Fourier transform (FFT)
+- discrete Fourier transform (DFT)
+- central processing unit (CPU)
+- graphics processing unit (GPU)
+- Compute Unified Device Architecture (CUDA)
+- comma-separated values (CSV)
+- JavaScript Object Notation (JSON)
+- HyperText Markup Language (HTML)
+- Portable Document Format (PDF)
+- continuous integration (CI)
+- fundamental frequency (F0)
+- waveform similarity overlap-add (WSOLA)
+- root-mean-square (RMS)
+- loudness units relative to full scale (LUFS)
+- signal-to-noise ratio (SNR)
 
 ## Start Here: What pvx Solves
 
-If you are new to DSP/audio engineering, think of `pvx` as a tool that lets you:
+If you are new to digital signal processing (DSP)/audio engineering, think of `pvx` as a tool that lets you:
 - make audio longer or shorter without changing musical key
 - change key/pitch without changing playback speed
 - preserve clarity while doing both (especially for vocals and stereo material)
@@ -62,11 +86,21 @@ Useful intuition:
 ## 30-Second Quick Start
 
 ```bash
+python3 -m venv .venv
+source .venv/bin/activate
 python3 -m pip install -e .
 pvx voc input.wav --stretch 1.20 --output output.wav
 ```
 
-If the `pvx` script is not on your `PATH` yet, run the same command through the repository wrapper:
+If `pvx` is not found after install, add the virtualenv binaries to your shell path environment variable (`PATH`):
+
+```bash
+printf 'export PATH="%s/.venv/bin:$PATH"\n' "$(pwd)" >> ~/.zshrc
+source ~/.zshrc
+pvx --help
+```
+
+If you do not want to modify the path environment variable (`PATH`), run the same command through the repository wrapper:
 
 ```bash
 python3 pvx.py voc input.wav --stretch 1.20 --output output.wav
@@ -503,7 +537,18 @@ Most for drums, consonants, plosives, and percussive attacks. Less critical for 
 ## Install
 
 ```bash
+python3 -m venv .venv
+source .venv/bin/activate
 python3 -m pip install -e .
+pvx --help
+```
+
+Persist `pvx` on your shell path (`zsh`):
+
+```bash
+printf 'export PATH="%s/.venv/bin:$PATH"\n' "$(pwd)" >> ~/.zshrc
+source ~/.zshrc
+pvx --help
 ```
 
 Optional CUDA:
@@ -525,6 +570,12 @@ Primary command:
 
 ```bash
 pvx voc input.wav --stretch 1.2 --output output.wav
+```
+
+Fallback without `PATH` updates:
+
+```bash
+python3 pvx.py voc input.wav --stretch 1.2 --output output.wav
 ```
 
 Legacy wrappers remain available for backward compatibility.

@@ -1,6 +1,14 @@
-# pvx HTML Documentation
+# pvx HyperText Markup Language (HTML) Documentation
 
 GitHub repository view generally displays `.html` files as source text rather than rendering them as web pages.
+
+## Acronym Primer
+
+- HyperText Markup Language (HTML)
+- Portable Document Format (PDF)
+- command-line interface (CLI)
+- digital signal processing (DSP)
+- short-time Fourier transform (STFT)
 
 Use this folder in one of these ways:
 

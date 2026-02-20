@@ -2,6 +2,16 @@
 
 This document is intentionally non-marketing. Both tools are strong; each has tradeoffs.
 
+## Acronym Primer
+
+- command-line interface (CLI)
+- digital audio workstation (DAW)
+- digital signal processing (DSP)
+- short-time Fourier transform (STFT)
+- waveform similarity overlap-add (WSOLA)
+- central processing unit (CPU)
+- graphics processing unit (GPU)
+
 ## 1. Scope and Design Philosophy
 
 | Topic | pvx | Rubber Band |

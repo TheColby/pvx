@@ -2,6 +2,49 @@
 
 All commands are designed to be copy-paste runnable from the repository root.
 
+## Acronym Primer
+
+- application programming interface (API)
+- command-line interface (CLI)
+- path environment variable (PATH)
+- digital signal processing (DSP)
+- short-time Fourier transform (STFT)
+- fast Fourier transform (FFT)
+- central processing unit (CPU)
+- graphics processing unit (GPU)
+- Compute Unified Device Architecture (CUDA)
+- comma-separated values (CSV)
+- JavaScript Object Notation (JSON)
+- continuous integration (CI)
+- fundamental frequency (F0)
+- waveform similarity overlap-add (WSOLA)
+- root-mean-square (RMS)
+- loudness units relative to full scale (LUFS)
+- signal-to-noise ratio (SNR)
+
+## Quick Setup (Install + PATH)
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install -e .
+pvx --help
+```
+
+If `pvx` is not found, add the virtualenv `bin` directory to your path environment variable (`PATH`) (`zsh`):
+
+```bash
+printf 'export PATH="%s/.venv/bin:$PATH"\n' "$(pwd)" >> ~/.zshrc
+source ~/.zshrc
+pvx --help
+```
+
+No-`PATH` fallback for every example command:
+
+```bash
+python3 pvx.py <tool> ...
+```
+
 Preferred invocation:
 - use unified subcommands via `pvx` (for example: `pvx voc`, `pvx freeze`, `pvx morph`)
 - legacy wrappers remain valid (`python3 pvxvoc.py`, `python3 pvxfreeze.py`, etc.)

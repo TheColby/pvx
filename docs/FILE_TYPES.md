@@ -1,7 +1,16 @@
 # Supported File Types
 
-`pvx` uses `python-soundfile` (`soundfile`) backed by `libsndfile` for audio I/O.  
+`pvx` uses `python-soundfile` (`soundfile`) backed by `libsndfile` for audio input/output (I/O).  
 This means some format support is runtime/platform dependent.
+
+## Acronym Primer
+
+- input/output (I/O)
+- command-line interface (CLI)
+- comma-separated values (CSV)
+- JavaScript Object Notation (JSON)
+- HyperText Markup Language (HTML)
+- Portable Document Format (PDF)
 
 ## I/O Behavior by Category
 

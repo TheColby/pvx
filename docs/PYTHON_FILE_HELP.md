@@ -1,8 +1,27 @@
 # Python File Documentation and Help
 
+## Acronym Primer
+
+- application programming interface (API)
+- command-line interface (CLI)
+- path environment variable (PATH)
+- digital signal processing (DSP)
+- short-time Fourier transform (STFT)
+- fast Fourier transform (FFT)
+- comma-separated values (CSV)
+- JavaScript Object Notation (JSON)
+- central processing unit (CPU)
+- graphics processing unit (GPU)
+- Compute Unified Device Architecture (CUDA)
+- root-mean-square (RMS)
+- signal-to-noise ratio (SNR)
+- fundamental frequency (F0)
+- independent component analysis (ICA)
+- non-negative matrix factorization (NMF)
+
 Comprehensive reference for every Python file in this repository.
 
-Total Python files documented: **203**
+Total Python files documented: **204**
 
 ## Contents
 
@@ -190,6 +209,7 @@ Total Python files documented: **203**
 - [`src/pvx/core/output_policy.py`](#srcpvxcoreoutputpolicypy)
 - [`src/pvx/core/presets.py`](#srcpvxcorepresetspy)
 - [`src/pvx/core/stereo.py`](#srcpvxcorestereopy)
+- [`src/pvx/core/streaming.py`](#srcpvxcorestreamingpy)
 - [`src/pvx/core/transients.py`](#srcpvxcoretransientspy)
 - [`src/pvx/core/voc.py`](#srcpvxcorevocpy)
 - [`src/pvx/core/wsola.py`](#srcpvxcorewsolapy)
@@ -1808,7 +1828,7 @@ Benchmark matrix runner for pvxvoc transform/window/device combinations.
 **Purpose:** Generate advanced docs artifacts (coverage, limitations, benchmarks, citations, cookbook, architecture).
 
 **Classes:** None
-**Functions:** `git_commit_meta`, `generated_stamp_lines`, `write_json`, `_string_literal`, `_simple_literal`, `_tool_name_for_path`, `_iter_cli_sources`, `collect_cli_flags`, `generate_cli_flags_reference`, `_unique_join`, `generate_algorithm_limitations`, `generate_cookbook`, `generate_architecture_doc`, `_spectral_distance_db`, `_snr_db`, `_make_signal`, `_benchmark_backend`, `generate_benchmarks`, `_classify_reference_url`, `_extract_doi`, `_bib_escape`, `_bib_key`, `generate_citation_docs`, `generate_docs_contract`, `main`
+**Functions:** `git_commit_meta`, `generated_stamp_lines`, `acronym_primer_lines`, `write_json`, `_string_literal`, `_simple_literal`, `_tool_name_for_path`, `_iter_cli_sources`, `collect_cli_flags`, `generate_cli_flags_reference`, `_unique_join`, `generate_algorithm_limitations`, `generate_cookbook`, `generate_architecture_doc`, `_spectral_distance_db`, `_snr_db`, `_make_signal`, `_benchmark_backend`, `generate_benchmarks`, `_classify_reference_url`, `_extract_doi`, `_bib_escape`, `_bib_key`, `generate_citation_docs`, `generate_docs_contract`, `main`
 
 **Help commands:** `python3 scripts_generate_docs_extras.py`, `python3 scripts_generate_docs_extras.py --help`
 
@@ -1823,7 +1843,7 @@ Generate advanced docs artifacts (coverage, limitations, benchmarks, citations, 
 **Purpose:** Generate one combined PDF from all HTML documentation pages.
 
 **Classes:** `SourcePage`, `ProgressBar`
-**Functions:** `add_console_args`, `console_level`, `is_quiet`, `is_silent`, `log`, `html_sort_key`, `collect_html_pages`, `extract_title`, `extract_main_html`, `parse_source_page`, `_rewrite_internal_links`, `build_combined_html`, `discover_chromium_executable`, `run_cmd`, `render_pdf_with_chromium`, `render_pdf_with_wkhtmltopdf`, `render_pdf_with_weasyprint`, `render_pdf_with_playwright`, `build_engine_registry`, `auto_engine_order`, `render_pdf`, `parse_args`, `main`
+**Functions:** `add_console_args`, `console_level`, `is_quiet`, `is_silent`, `log`, `html_sort_key`, `collect_html_pages`, `extract_title`, `extract_main_html`, `parse_source_page`, `_rewrite_internal_links`, `_extract_reference_count`, `_annotate_display_equations`, `build_combined_html`, `discover_chromium_executable`, `run_cmd`, `render_pdf_with_chromium`, `render_pdf_with_wkhtmltopdf`, `render_pdf_with_weasyprint`, `render_pdf_with_playwright`, `build_engine_registry`, `auto_engine_order`, `render_pdf`, `parse_args`, `main`
 
 **Help commands:** `python3 scripts_generate_docs_pdf.py`, `python3 scripts_generate_docs_pdf.py --help`
 
@@ -1838,7 +1858,7 @@ Generate one combined PDF from all HTML documentation pages.
 **Purpose:** Generate grouped HTML documentation for pvx algorithms and research references.
 
 **Classes:** None
-**Functions:** `git_commit_meta`, `scholar`, `_contains_out_of_scope_text`, `_is_out_of_scope_paper`, `_is_out_of_scope_glossary`, `slugify`, `dedupe_papers`, `_upgrade_paper_url`, `upgrade_paper_urls`, `load_extra_papers`, `load_glossary`, `infer_glossary_terms`, `glossary_links_html`, `load_json`, `classify_reference_url`, `window_entries`, `window_tradeoffs`, `_split_top_level_once`, `_extract_params_get_calls`, `extract_algorithm_param_specs`, `extract_algorithm_params`, `extract_module_cli_flags`, `collect_algorithm_module_flags`, `sample_value_from_default`, `format_sample_params`, `compute_unique_cli_flags`, `grouped_algorithms`, `html_page`, `write_style_css`, `render_index`, `module_path_from_meta`, `render_group_pages`, `render_papers_page`, `render_glossary_page`, `render_math_page`, `render_windows_page`, `render_architecture_page`, `render_cli_flags_page`, `render_limitations_page`, `render_benchmarks_page`, `render_cookbook_page`, `render_citations_page`, `write_docs_root_index`, `main`
+**Functions:** `git_commit_meta`, `scholar`, `_contains_out_of_scope_text`, `_is_out_of_scope_paper`, `_is_out_of_scope_glossary`, `slugify`, `dedupe_papers`, `_upgrade_paper_url`, `upgrade_paper_urls`, `load_extra_papers`, `load_glossary`, `infer_glossary_terms`, `glossary_links_html`, `load_json`, `classify_reference_url`, `window_entries`, `window_tradeoffs`, `_split_top_level_once`, `_extract_params_get_calls`, `extract_algorithm_param_specs`, `extract_algorithm_params`, `extract_module_cli_flags`, `collect_algorithm_module_flags`, `sample_value_from_default`, `format_sample_params`, `compute_unique_cli_flags`, `grouped_algorithms`, `acronym_primer_html`, `html_page`, `write_style_css`, `render_index`, `module_path_from_meta`, `render_group_pages`, `render_papers_page`, `render_glossary_page`, `render_math_page`, `render_windows_page`, `render_architecture_page`, `render_cli_flags_page`, `render_limitations_page`, `render_benchmarks_page`, `render_cookbook_page`, `render_citations_page`, `write_docs_root_index`, `main`
 
 **Help commands:** `python3 scripts_generate_html_docs.py`
 
@@ -1853,7 +1873,7 @@ Generate grouped HTML documentation for pvx algorithms and research references.
 **Purpose:** Generate comprehensive documentation for every Python file in the repository.
 
 **Classes:** None
-**Functions:** `rel`, `safe_read`, `parse_module`, `cli_help`, `extract_algorithm_params`, `generate_algorithm_param_doc`, `generate_python_help_doc`, `main`
+**Functions:** `acronym_primer_lines`, `rel`, `safe_read`, `parse_module`, `cli_help`, `extract_algorithm_params`, `generate_algorithm_param_doc`, `generate_python_help_doc`, `main`
 
 **Help commands:** `python3 scripts_generate_python_docs.py`, `python3 scripts_generate_python_docs.py --help`
 
@@ -1868,7 +1888,7 @@ Generate comprehensive documentation for every Python file in the repository.
 **Purpose:** Generate GitHub-renderable theory docs (math foundations + window reference).
 
 **Classes:** None
-**Functions:** `git_commit_meta`, `generated_stamp_lines`, `window_entries`, `window_tradeoffs`, `window_samples`, `_first_local_minimum`, `compute_window_metrics`, `_polyline_points`, `_downsample_series`, `write_line_svg`, `generate_window_assets_and_metrics`, `write_math_foundations`, `write_window_reference`, `main`
+**Functions:** `git_commit_meta`, `generated_stamp_lines`, `acronym_primer_lines`, `window_entries`, `window_tradeoffs`, `window_samples`, `_first_local_minimum`, `compute_window_metrics`, `_polyline_points`, `_downsample_series`, `write_line_svg`, `generate_window_assets_and_metrics`, `write_math_foundations`, `write_window_reference`, `main`
 
 **Help commands:** `python3 scripts_generate_theory_docs.py`
 
@@ -5800,6 +5820,19 @@ Preset definitions for pvx processing intent modes.
 
 ```text
 Stereo/multichannel helper utilities.
+```
+
+## `src/pvx/core/streaming.py`
+
+**Purpose:** Stateful chunked streaming helpers for the unified pvx CLI.
+
+**Classes:** None
+**Functions:** `_read_audio`, `_build_config`, `_resolve_voc_args_for_stream`, `_chunk_core_extract`, `_concat_exact`, `run_stateful_stream`
+
+### Module Docstring
+
+```text
+Stateful chunked streaming helpers for the unified pvx CLI.
 ```
 
 ## `src/pvx/core/transients.py`

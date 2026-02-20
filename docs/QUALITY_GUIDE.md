@@ -2,9 +2,41 @@
 
 This guide maps audible artifacts to concrete `pvx voc` fixes.
 
+## Acronym Primer
+
+- command-line interface (CLI)
+- path environment variable (PATH)
+- digital signal processing (DSP)
+- short-time Fourier transform (STFT)
+- fast Fourier transform (FFT)
+- central processing unit (CPU)
+- graphics processing unit (GPU)
+- Compute Unified Device Architecture (CUDA)
+- waveform similarity overlap-add (WSOLA)
+- root-mean-square (RMS)
+- loudness units relative to full scale (LUFS)
+- signal-to-noise ratio (SNR)
+
 `pvx` operating principle:
 - quality first: artifacts and coherence issues are the primary constraints
 - speed second: runtime tuning is applied only after quality is acceptable
+
+## 0. Quick Setup (Install + PATH)
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install -e .
+pvx --help
+```
+
+If `pvx` is not found, add the virtualenv `bin` directory to your path environment variable (`PATH`) (`zsh`):
+
+```bash
+printf 'export PATH="%s/.venv/bin:$PATH"\n' "$(pwd)" >> ~/.zshrc
+source ~/.zshrc
+pvx --help
+```
 
 ## 1. Fast Starting Presets
 

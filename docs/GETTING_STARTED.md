@@ -1,10 +1,57 @@
 # Getting Started with pvx
 
-This guide is for first-time users who want to understand what `pvx` does, why it exists, and how to get useful results without treating DSP as magic.
+This guide is for first-time users who want to understand what `pvx` does, why it exists, and how to get useful results without treating digital signal processing (DSP) as magic.
+
+## Acronym Primer
+
+- application programming interface (API)
+- command-line interface (CLI)
+- path environment variable (PATH)
+- digital signal processing (DSP)
+- short-time Fourier transform (STFT)
+- inverse short-time Fourier transform (ISTFT)
+- fast Fourier transform (FFT)
+- discrete Fourier transform (DFT)
+- central processing unit (CPU)
+- graphics processing unit (GPU)
+- Compute Unified Device Architecture (CUDA)
+- comma-separated values (CSV)
+- JavaScript Object Notation (JSON)
+- HyperText Markup Language (HTML)
+- Portable Document Format (PDF)
+- continuous integration (CI)
+- fundamental frequency (F0)
+- waveform similarity overlap-add (WSOLA)
+- root-mean-square (RMS)
+- loudness units relative to full scale (LUFS)
+- signal-to-noise ratio (SNR)
 
 Recommended command surface:
 - use `pvx <tool>` for all new workflows (`pvx voc`, `pvx freeze`, `pvx harmonize`, etc.)
 - legacy script wrappers (`python3 pvxvoc.py`, `python3 pvxfreeze.py`, ...) remain available for compatibility
+
+## 0. Quick Setup (Install + PATH)
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install -e .
+pvx --help
+```
+
+If `pvx` is not found, add the project virtualenv to your path environment variable (`PATH`) (`zsh`):
+
+```bash
+printf 'export PATH="%s/.venv/bin:$PATH"\n' "$(pwd)" >> ~/.zshrc
+source ~/.zshrc
+pvx --help
+```
+
+No-`PATH` fallback:
+
+```bash
+python3 pvx.py voc input.wav --stretch 1.2 --output output.wav
+```
 
 ## 1. What Problem pvx Solves
 
@@ -15,7 +62,7 @@ Audio workflows often need one or more of the following, with controllable artif
 - preserve transients and formants where possible
 - process many files consistently from the command line
 
-`pvx` gives you explicit control over those operations using phase-vocoder/STFT methods plus specialized companion tools (freeze, harmonize, morph, retune, denoise, dereverb).
+`pvx` gives you explicit control over those operations using phase-vocoder/short-time Fourier transform (STFT) methods plus specialized companion tools (freeze, harmonize, morph, retune, denoise, dereverb).
 
 Design priority:
 - quality first: preserve musical intent and minimize artifacts

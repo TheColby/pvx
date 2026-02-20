@@ -2,7 +2,15 @@
 
 Use this checklist to review Stage 3 changes methodically.
 
-## 1. CLI Surface
+## Acronym Primer
+
+- command-line interface (CLI)
+- digital signal processing (DSP)
+- comma-separated values (CSV)
+- JavaScript Object Notation (JSON)
+- true peak decibels relative to full scale (dBTP)
+
+## 1. Command-Line Interface (CLI) Surface
 
 Run:
 

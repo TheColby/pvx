@@ -38,6 +38,30 @@ CLI_HELP_CANDIDATES = {
 }
 
 
+def acronym_primer_lines() -> list[str]:
+    return [
+        "## Acronym Primer",
+        "",
+        "- application programming interface (API)",
+        "- command-line interface (CLI)",
+        "- path environment variable (PATH)",
+        "- digital signal processing (DSP)",
+        "- short-time Fourier transform (STFT)",
+        "- fast Fourier transform (FFT)",
+        "- comma-separated values (CSV)",
+        "- JavaScript Object Notation (JSON)",
+        "- central processing unit (CPU)",
+        "- graphics processing unit (GPU)",
+        "- Compute Unified Device Architecture (CUDA)",
+        "- root-mean-square (RMS)",
+        "- signal-to-noise ratio (SNR)",
+        "- fundamental frequency (F0)",
+        "- independent component analysis (ICA)",
+        "- non-negative matrix factorization (NMF)",
+        "",
+    ]
+
+
 def rel(path: Path) -> str:
     return str(path.relative_to(ROOT))
 
@@ -158,6 +182,7 @@ def generate_algorithm_param_doc() -> None:
     lines: list[str] = []
     lines.append("# pvx Algorithm Parameter Reference")
     lines.append("")
+    lines.extend(acronym_primer_lines())
     lines.append("This file lists per-algorithm parameter keys consumed by `pvx.algorithms.base.run_algorithm()` dispatch.")
     lines.append("Legacy import alias `pvxalgorithms.base.run_algorithm()` is still available for compatibility.")
     lines.append("Use these keys as `**params` when calling module `process(audio, sample_rate, **params)`. ")
@@ -179,6 +204,7 @@ def generate_python_help_doc() -> None:
     lines: list[str] = []
     lines.append("# Python File Documentation and Help")
     lines.append("")
+    lines.extend(acronym_primer_lines())
     lines.append("Comprehensive reference for every Python file in this repository.")
     lines.append("")
     lines.append(f"Total Python files documented: **{len(PY_FILES)}**")

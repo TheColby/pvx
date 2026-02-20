@@ -1,6 +1,26 @@
 # pvx Window Reference
 
-_Generated from commit `1a187de` (commit date: 2026-02-18T20:00:46-05:00)._
+_Generated from commit `b4bed85` (commit date: 2026-02-19T13:53:32-05:00)._
+
+## Acronym Primer
+
+- digital signal processing (DSP)
+- input/output (I/O)
+- short-time Fourier transform (STFT)
+- inverse short-time Fourier transform (ISTFT)
+- fast Fourier transform (FFT)
+- discrete Fourier transform (DFT)
+- chirp Z-transform (CZT)
+- discrete cosine transform (DCT)
+- discrete sine transform (DST)
+- central processing unit (CPU)
+- graphics processing unit (GPU)
+- Compute Unified Device Architecture (CUDA)
+- waveform similarity overlap-add (WSOLA)
+- fundamental frequency (F0)
+- equivalent noise bandwidth (ENBW)
+- root-mean-square (RMS)
+- loudness units relative to full scale (LUFS)
 
 pvx currently supports **50** analysis windows. This file defines each one mathematically and explains it in plain English.
 
