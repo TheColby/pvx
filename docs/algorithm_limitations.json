@@ -1,6 +1,6 @@
 {
-  "commit": "858658d",
-  "commit_date": "2026-02-18T16:19:55-05:00",
+  "commit": "b4bed85",
+  "commit_date": "2026-02-19T13:53:32-05:00",
   "group_limits": {
     "analysis_qa_and_automation": {
       "assumption": "Feature extraction settings align with domain (speech vs music etc.).",

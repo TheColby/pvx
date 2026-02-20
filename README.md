@@ -69,7 +69,7 @@ pvx voc input.wav --stretch 1.20 --output output.wav
 If the `pvx` script is not on your `PATH` yet, run the same command through the repository wrapper:
 
 ```bash
-python3 pvx.py voc input.wav --stretch 1.20 --output output.wav
+python3 pvx_cli.py voc input.wav --stretch 1.20 --output output.wav
 ```
 
 What this does:

@@ -2,7 +2,7 @@
 
 Comprehensive reference for every Python file in this repository.
 
-Total Python files documented: **203**
+Total Python files documented: **204**
 
 ## Contents
 
@@ -11,7 +11,7 @@ Total Python files documented: **203**
 - [`benchmarks/metrics.py`](#benchmarksmetricspy)
 - [`benchmarks/run_bench.py`](#benchmarksrunbenchpy)
 - [`main.py`](#mainpy)
-- [`pvx.py`](#pvxpy)
+- [`pvx_cli.py`](#pvxclipy)
 - [`pvxalgorithms/__init__.py`](#pvxalgorithmsinitpy)
 - [`pvxalgorithms/base.py`](#pvxalgorithmsbasepy)
 - [`pvxalgorithms/registry.py`](#pvxalgorithmsregistrypy)
@@ -190,6 +190,7 @@ Total Python files documented: **203**
 - [`src/pvx/core/output_policy.py`](#srcpvxcoreoutputpolicypy)
 - [`src/pvx/core/presets.py`](#srcpvxcorepresetspy)
 - [`src/pvx/core/stereo.py`](#srcpvxcorestereopy)
+- [`src/pvx/core/streaming.py`](#srcpvxcorestreamingpy)
 - [`src/pvx/core/transients.py`](#srcpvxcoretransientspy)
 - [`src/pvx/core/voc.py`](#srcpvxcorevocpy)
 - [`src/pvx/core/wsola.py`](#srcpvxcorewsolapy)
@@ -364,14 +365,14 @@ This root module forwards imports/execution to `pvx.cli.main` after the
 src-layout migration.
 ```
 
-## `pvx.py`
+## `pvx_cli.py`
 
 **Purpose:** Compatibility wrapper.
 
 **Classes:** None
 **Functions:** None
 
-**Help commands:** `python3 pvx.py`
+**Help commands:** `python3 pvx_cli.py`
 
 ### Module Docstring
 
@@ -509,9 +510,9 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  -o, --output-dir OUTPUT_DIR
+  -o OUTPUT_DIR, --output-dir OUTPUT_DIR
                         Output directory
-  --output, --out OUTPUT
+  --output OUTPUT, --out OUTPUT
                         Explicit output file path (single-input mode only).
                         Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _conform)
@@ -530,7 +531,7 @@ options:
                         Output normalization mode
   --peak-dbfs PEAK_DBFS
                         Target peak dBFS when --normalize peak
-  --rms-dbfs RMS_DBFS   Targ
+  --rms-db
 ... [truncated]
 ```
 
@@ -610,9 +611,9 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  -o, --output-dir OUTPUT_DIR
+  -o OUTPUT_DIR, --output-dir OUTPUT_DIR
                         Output directory
-  --output, --out OUTPUT
+  --output OUTPUT, --out OUTPUT
                         Explicit output file path (single-input mode only).
                         Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _denoise)
@@ -633,7 +634,7 @@ options:
                         Target peak dBFS when --normalize peak
   --rms-dbfs RMS_DBFS   Target RMS dBFS when --normalize rms
   --target-lufs TARGET_LUFS
-                        Integrated loudness target in LUFS
+                        Integrated loudn
 ... [truncated]
 ```
 
@@ -711,9 +712,9 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  -o, --output-dir OUTPUT_DIR
+  -o OUTPUT_DIR, --output-dir OUTPUT_DIR
                         Output directory
-  --output, --out OUTPUT
+  --output OUTPUT, --out OUTPUT
                         Explicit output file path (single-input mode only).
                         Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _deverb)
@@ -737,7 +738,7 @@ options:
                         Integrated loudness target in LUFS
   --compressor-threshold-db COMPRESSOR_THRESHOLD_DB
                         Enable compressor above threshold dBFS
-  --compressor-ratio COMPRES
+  --compre
 ... [truncated]
 ```
 
@@ -821,9 +822,9 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  -o, --output-dir OUTPUT_DIR
+  -o OUTPUT_DIR, --output-dir OUTPUT_DIR
                         Output directory
-  --output, --out OUTPUT
+  --output OUTPUT, --out OUTPUT
                         Explicit output file path (single-input mode only).
                         Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _formant)
@@ -839,7 +840,7 @@ options:
   --quiet               Reduce output and hide status bars
   --silent              Suppress all console output
   --normalize {none,peak,rms}
-                        Output normalization mo
+                        Outpu
 ... [truncated]
 ```
 
@@ -917,9 +918,9 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  -o, --output-dir OUTPUT_DIR
+  -o OUTPUT_DIR, --output-dir OUTPUT_DIR
                         Output directory
-  --output, --out OUTPUT
+  --output OUTPUT, --out OUTPUT
                         Explicit output file path (single-input mode only).
                         Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _freeze)
@@ -942,8 +943,7 @@ options:
   --target-lufs TARGET_LUFS
                         Integrated loudness target in LUFS
   --compressor-threshold-db COMPRESSOR_THRESHOLD_DB
-                        Enable compressor above threshold dBFS
-  --compr
+                        Enable compressor above thresh
 ... [truncated]
 ```
 
@@ -1024,9 +1024,9 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  -o, --output-dir OUTPUT_DIR
+  -o OUTPUT_DIR, --output-dir OUTPUT_DIR
                         Output directory
-  --output, --out OUTPUT
+  --output OUTPUT, --out OUTPUT
                         Explicit output file path (single-input mode only).
                         Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _harm)
@@ -1044,8 +1044,7 @@ options:
   --normalize {none,peak,rms}
                         Output normalization mode
   --peak-dbfs PEAK_DBFS
-                        Target peak dBFS when --normalize peak
- 
+                        Target peak dBFS when
 ... [truncated]
 ```
 
@@ -1133,9 +1132,9 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  -o, --output-dir OUTPUT_DIR
+  -o OUTPUT_DIR, --output-dir OUTPUT_DIR
                         Output directory
-  --output, --out OUTPUT
+  --output OUTPUT, --out OUTPUT
                         Explicit output file path (single-input mode only).
                         Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _layer)
@@ -1147,7 +1146,7 @@ options:
   --dry-run             Resolve and print, but do not write files
   --verbosity {silent,quiet,normal,verbose,debug}
                         Console verbosity level
-  -v, --verbose         Increase verbosity (repeat for ext
+  -v, --verbose         Increase verbosi
 ... [truncated]
 ```
 
@@ -1224,7 +1223,8 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  -o, --output OUTPUT   Output file path
+  -o OUTPUT, --output OUTPUT
+                        Output file path
   --stdout              Write processed audio to stdout stream (for piping);
                         equivalent to -o -
   --output-format OUTPUT_FORMAT
@@ -1253,7 +1253,7 @@ options:
                         Expander ratio (>=1)
   --expander-attack-ms EXPANDER_ATTACK_MS
                         Expander attack time in ms
-  --expander-release-ms EXPANDER_REL
+  --exp
 ... [truncated]
 ```
 
@@ -1335,9 +1335,9 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  -o, --output-dir OUTPUT_DIR
+  -o OUTPUT_DIR, --output-dir OUTPUT_DIR
                         Output directory
-  --output, --out OUTPUT
+  --output OUTPUT, --out OUTPUT
                         Explicit output file path (single-input mode only).
                         Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _retune)
@@ -1356,7 +1356,7 @@ options:
                         Output normalization mode
   --peak-dbfs PEAK_DBFS
                         Target peak dBFS when --normalize peak
-  --rms-dbfs RMS_DBFS   Target RMS dB
+  --rms-dbfs RMS_DB
 ... [truncated]
 ```
 
@@ -1440,9 +1440,9 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  -o, --output-dir OUTPUT_DIR
+  -o OUTPUT_DIR, --output-dir OUTPUT_DIR
                         Output directory
-  --output, --out OUTPUT
+  --output OUTPUT, --out OUTPUT
                         Explicit output file path (single-input mode only).
                         Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _trans)
@@ -1455,8 +1455,7 @@ options:
   --verbosity {silent,quiet,normal,verbose,debug}
                         Console verbosity level
   -v, --verbose         Increase verbosity (repeat for extra detail)
-  --quiet               Reduce output and hide status bars
-  --silent     
+  --quiet               Reduce output and hide status ba
 ... [truncated]
 ```
 
@@ -1535,9 +1534,9 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  -o, --output-dir OUTPUT_DIR
+  -o OUTPUT_DIR, --output-dir OUTPUT_DIR
                         Output directory
-  --output, --out OUTPUT
+  --output OUTPUT, --out OUTPUT
                         Explicit output file path (single-input mode only).
                         Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _unison)
@@ -1560,7 +1559,7 @@ options:
   --target-lufs TARGET_LUFS
                         Integrated loudness target in LUFS
   --compressor-threshold-db COMPRESSOR_THRESHOLD_DB
-                       
+
 ... [truncated]
 ```
 
@@ -1632,11 +1631,9 @@ usage: pvxvoc.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
                  [--stereo-mode {independent,mid_side_lock,ref_channel_lock}]
                  [--ref-channel REF_CHANNEL]
                  [--coherence-strength COHERENCE_STRENGTH]
-                 [--pitch-shift-semitones PITCH_SHIFT_SEMITONES |
-                 --pitch-shift-cents PITCH_SHIFT_CENTS |
-                 --pitch-shift-ratio PITCH_SHIFT_RATIO |
-                 --target-f0 TARGET_F0] [--analysis-channel {first,mix}]
-                 [--f0-min F0_MIN] [--f0-max F0_MAX]
+                 [--pitch-shift-semitones PITCH_SHIFT_SEMITONES | --pitch-shift-cents PITCH_SHIFT_CENTS | --pitch-shift-ratio PITCH_SHIFT_RATIO | --target-f0 TARGET_F0]
+                 [--analysis-channel {first,mix}] [--f0-min F0_MIN]
+                 [--f0-max F0_MAX]
                  [--pitch-mode {standard,formant-preserving}]
                  [--formant-lifter FORMANT_LIFTER]
                  [--formant-strength FORMANT_STRENGTH]
@@ -1654,7 +1651,8 @@ usage: pvxvoc.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
                  [--compressor-ratio COMPRESSOR_RATIO]
                  [--compressor-attack-ms COMPRESSOR_ATTACK_MS]
                  [--compressor-release-ms COMPRESSOR_RELEASE_MS]
-                 [--compressor-makeup-db COMPRESSOR_M
+                 [--compressor-makeup-db COMPRESSOR_MAKEUP_DB]
+                 [--expa
 ... [truncated]
 ```
 
@@ -1733,9 +1731,9 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  -o, --output-dir OUTPUT_DIR
+  -o OUTPUT_DIR, --output-dir OUTPUT_DIR
                         Output directory
-  --output, --out OUTPUT
+  --output OUTPUT, --out OUTPUT
                         Explicit output file path (single-input mode only).
                         Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _warp)
@@ -1760,7 +1758,7 @@ options:
   --compressor-threshold-db COMPRESSOR_THRESHOLD_DB
                         Enable compressor above threshold dBFS
   --compressor-ratio COMPRESSOR_RATIO
-                        Compressor ratio (>
+                        C
 ... [truncated]
 ```
 
@@ -1823,7 +1821,7 @@ Generate advanced docs artifacts (coverage, limitations, benchmarks, citations, 
 **Purpose:** Generate one combined PDF from all HTML documentation pages.
 
 **Classes:** `SourcePage`, `ProgressBar`
-**Functions:** `add_console_args`, `console_level`, `is_quiet`, `is_silent`, `log`, `html_sort_key`, `collect_html_pages`, `extract_title`, `extract_main_html`, `parse_source_page`, `_rewrite_internal_links`, `build_combined_html`, `discover_chromium_executable`, `run_cmd`, `render_pdf_with_chromium`, `render_pdf_with_wkhtmltopdf`, `render_pdf_with_weasyprint`, `render_pdf_with_playwright`, `build_engine_registry`, `auto_engine_order`, `render_pdf`, `parse_args`, `main`
+**Functions:** `add_console_args`, `console_level`, `is_quiet`, `is_silent`, `log`, `html_sort_key`, `collect_html_pages`, `extract_title`, `extract_main_html`, `parse_source_page`, `_rewrite_internal_links`, `_extract_reference_count`, `_annotate_display_equations`, `build_combined_html`, `discover_chromium_executable`, `run_cmd`, `render_pdf_with_chromium`, `render_pdf_with_wkhtmltopdf`, `render_pdf_with_weasyprint`, `render_pdf_with_playwright`, `build_engine_registry`, `auto_engine_order`, `render_pdf`, `parse_args`, `main`
 
 **Help commands:** `python3 scripts_generate_docs_pdf.py`, `python3 scripts_generate_docs_pdf.py --help`
 
@@ -5800,6 +5798,19 @@ Preset definitions for pvx processing intent modes.
 
 ```text
 Stereo/multichannel helper utilities.
+```
+
+## `src/pvx/core/streaming.py`
+
+**Purpose:** Stateful chunked streaming helpers for the unified pvx CLI.
+
+**Classes:** None
+**Functions:** `_read_audio`, `_build_config`, `_resolve_voc_args_for_stream`, `_chunk_core_extract`, `_concat_exact`, `run_stateful_stream`
+
+### Module Docstring
+
+```text
+Stateful chunked streaming helpers for the unified pvx CLI.
 ```
 
 ## `src/pvx/core/transients.py`
