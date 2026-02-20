@@ -1809,10 +1809,11 @@ def render_group_pages(groups: OrderedDict[str, list[tuple[str, dict[str, str]]]
             for name, count in subgroup_counts.items()
         )
 
+        subgroup_none = '<span class="small">None</span>'
         content = (
             f"<div class=\"card\"><p><strong>Theme:</strong> {escape(theme)}</p>"
             f"<p><strong>Folder:</strong> <code>{escape(folder)}</code> | <strong>Algorithms:</strong> {len(items)}</p>"
-            f"<p><strong>Subgroups:</strong> {subgroup_pills or '<span class="small">None</span>'}</p>"
+            f"<p><strong>Subgroups:</strong> {subgroup_pills or subgroup_none}</p>"
             "</div>"
             "<table>"
             "<thead><tr><th>Algorithm ID</th><th>Name</th><th>Subgroup</th><th>Module Path</th><th>Parameter keys</th><th>Concept links</th></tr></thead>"

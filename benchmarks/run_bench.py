@@ -1015,7 +1015,7 @@ def _check_gate(
         for row in rows:
             if not isinstance(row, dict):
                 continue
-            key = f"{row.get('input', 'unknown')}::{row.get('task', 'unknown')}"
+            key = f"{Path(row.get('input', 'unknown')).name}::{row.get('task', 'unknown')}"
             out[key] = row
         return out
 
