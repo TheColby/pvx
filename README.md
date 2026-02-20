@@ -8,30 +8,6 @@ Primary project goal and differentiator:
 
 It includes a unified command-line interface (CLI) (`pvx`) with focused subcommands (`voc`, `freeze`, `harmonize`, `retune`, `morph`, etc.), shared mastering controls, comma-separated values (CSV)-driven automation paths, microtonal support, and optional graphics processing unit (GPU) acceleration.
 
-## Acronym Primer
-
-- application programming interface (API)
-- command-line interface (CLI)
-- path environment variable (PATH)
-- digital signal processing (DSP)
-- short-time Fourier transform (STFT)
-- inverse short-time Fourier transform (ISTFT)
-- fast Fourier transform (FFT)
-- discrete Fourier transform (DFT)
-- central processing unit (CPU)
-- graphics processing unit (GPU)
-- Compute Unified Device Architecture (CUDA)
-- comma-separated values (CSV)
-- JavaScript Object Notation (JSON)
-- HyperText Markup Language (HTML)
-- Portable Document Format (PDF)
-- continuous integration (CI)
-- fundamental frequency (F0)
-- waveform similarity overlap-add (WSOLA)
-- root-mean-square (RMS)
-- loudness units relative to full scale (LUFS)
-- signal-to-noise ratio (SNR)
-
 ## Start Here: What pvx Solves
 
 If you are new to digital signal processing (DSP)/audio engineering, think of `pvx` as a tool that lets you:
@@ -188,40 +164,40 @@ If you are new to this, the key idea is that **phase continuity between frames**
 
 `pvx` analyzes each frame with:
 
-\[
+$$
 X_t[k] = \sum_{n=0}^{N-1} x[n+tH_a]w[n]e^{-j2\pi kn/N}
-\]
+$$
 
 where:
-- \(x[n]\) represents the input signal sample at index \(n\)
-- \(t\) represents frame index
-- \(k\) represents frequency-bin index
-- \(N\) represents frame size (`--n-fft`)
-- \(H_a\) represents analysis hop
-- \(w[n]\) represents the selected window (`--window`)
+- $x[n]$ represents the input signal sample at index $n$
+- $t$ represents frame index
+- $k$ represents frequency-bin index
+- $N$ represents frame size (`--n-fft`)
+- $H_a$ represents analysis hop
+- $w[n]$ represents the selected window (`--window`)
 
 Plain-English meaning:
 - each frame is windowed, then transformed
-- output bin \(X_t[k]\) is complex-valued (magnitude and phase)
+- output bin $X_t[k]$ is complex-valued (magnitude and phase)
 - this gives the per-frame spectral state used by downstream processing
 
 ### 2) Phase-Vocoder Propagation
 
 Time stretching is controlled by phase evolution:
 
-\[
+$$
 \Delta\phi_t[k] = \mathrm{princarg}(\phi_t[k]-\phi_{t-1}[k]-\omega_kH_a)
-\]
-\[
+$$
+$$
 \hat\phi_t[k] = \hat\phi_{t-1}[k] + \omega_kH_s + \Delta\phi_t[k]
-\]
+$$
 
 where:
-- \(\phi_t[k]\) is observed phase at frame \(t\), bin \(k\)
-- \(\hat\phi_t[k]\) is synthesized/output phase
-- \(\omega_k\) is nominal bin center frequency in radians/sample
-- \(H_s\) is synthesis hop (effective time-stretch control)
-- \(\mathrm{princarg}(\cdot)\) wraps phase to \((-\pi, \pi]\)
+- $\phi_t[k]$ is observed phase at frame $t$, bin $k$
+- $\hat\phi_t[k]$ is synthesized/output phase
+- $\omega_k$ is nominal bin center frequency in radians/sample
+- $H_s$ is synthesis hop (effective time-stretch control)
+- $\mathrm{princarg}(\cdot)$ wraps phase to $(-\pi, \pi]$
 
 Plain-English meaning:
 - first estimate the true per-bin phase advance
@@ -232,18 +208,18 @@ Plain-English meaning:
 
 Pitch controls map musical intervals to ratio:
 
-\[
+$$
 r = 2^{\Delta s/12} = 2^{\Delta c/1200}
-\]
+$$
 
 where:
-- \(r\) is pitch ratio
-- \(\Delta s\) is semitone shift (`--pitch`)
-- \(\Delta c\) is cents shift (`--cents`)
+- $r$ is pitch ratio
+- $\Delta s$ is semitone shift (`--pitch`)
+- $\Delta c$ is cents shift (`--cents`)
 
 Practical interpretation:
-- \(r > 1\): pitch up
-- \(r < 1\): pitch down
+- $r > 1$: pitch up
+- $r < 1$: pitch down
 - formant options control whether vocal timbre shifts with pitch or is preserved
 
 ## When To Use Which Tool (Decision Tree)

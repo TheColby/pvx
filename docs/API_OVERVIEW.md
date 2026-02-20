@@ -2,22 +2,6 @@
 
 This guide shows how to use `pvx` as a Python library instead of shell commands.
 
-## Acronym Primer
-
-- application programming interface (API)
-- command-line interface (CLI)
-- path environment variable (PATH)
-- digital signal processing (DSP)
-- short-time Fourier transform (STFT)
-- fast Fourier transform (FFT)
-- central processing unit (CPU)
-- graphics processing unit (GPU)
-- Compute Unified Device Architecture (CUDA)
-- comma-separated values (CSV)
-- JavaScript Object Notation (JSON)
-- fundamental frequency (F0)
-- signal-to-noise ratio (SNR)
-
 ## 0) Quick Setup (Install + PATH)
 
 ```bash

@@ -3,19 +3,6 @@
 This document provides expanded architecture and digital signal processing (DSP) flow diagrams for pvx.
 Diagrams are a mix of Mermaid (GitHub-rendered) and ASCII (terminal-friendly).
 
-## Acronym Primer
-
-- command-line interface (CLI)
-- digital signal processing (DSP)
-- short-time Fourier transform (STFT)
-- inverse short-time Fourier transform (ISTFT)
-- fast Fourier transform (FFT)
-- central processing unit (CPU)
-- graphics processing unit (GPU)
-- Compute Unified Device Architecture (CUDA)
-- waveform similarity overlap-add (WSOLA)
-- fundamental frequency (F0)
-
 ## 1) End-to-End pvxvoc Flow
 
 ```mermaid

@@ -1,24 +1,5 @@
 # pvx Algorithm Parameter Reference
 
-## Acronym Primer
-
-- application programming interface (API)
-- command-line interface (CLI)
-- path environment variable (PATH)
-- digital signal processing (DSP)
-- short-time Fourier transform (STFT)
-- fast Fourier transform (FFT)
-- comma-separated values (CSV)
-- JavaScript Object Notation (JSON)
-- central processing unit (CPU)
-- graphics processing unit (GPU)
-- Compute Unified Device Architecture (CUDA)
-- root-mean-square (RMS)
-- signal-to-noise ratio (SNR)
-- fundamental frequency (F0)
-- independent component analysis (ICA)
-- non-negative matrix factorization (NMF)
-
 This file lists per-algorithm parameter keys consumed by `pvx.algorithms.base.run_algorithm()` dispatch.
 Legacy import alias `pvxalgorithms.base.run_algorithm()` is still available for compatibility.
 Use these keys as `**params` when calling module `process(audio, sample_rate, **params)`. 

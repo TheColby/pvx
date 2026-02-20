@@ -1,26 +1,6 @@
 # pvx Mathematical Foundations
 
-_Generated from commit `b4bed85` (commit date: 2026-02-19T13:53:32-05:00)._
-
-## Acronym Primer
-
-- digital signal processing (DSP)
-- input/output (I/O)
-- short-time Fourier transform (STFT)
-- inverse short-time Fourier transform (ISTFT)
-- fast Fourier transform (FFT)
-- discrete Fourier transform (DFT)
-- chirp Z-transform (CZT)
-- discrete cosine transform (DCT)
-- discrete sine transform (DST)
-- central processing unit (CPU)
-- graphics processing unit (GPU)
-- Compute Unified Device Architecture (CUDA)
-- waveform similarity overlap-add (WSOLA)
-- fundamental frequency (F0)
-- equivalent noise bandwidth (ENBW)
-- root-mean-square (RMS)
-- loudness units relative to full scale (LUFS)
+_Generated from commit `dcc235a` (commit date: 2026-02-20T11:48:06-05:00)._
 
 This document explains the core signal-processing equations used by pvx, with plain-English interpretation.
 All equations are written in GitHub-renderable LaTeX and are intended to render directly in normal GitHub Markdown view.
@@ -161,7 +141,7 @@ Compressor gain law (conceptual):
 
 $$
 g(x)=\begin{cases}
-1, & |x|\le T \
+1, & |x|\le T \\
 \left(\frac{T+(|x|-T)/R}{|x|}\right), & |x|>T
 \end{cases}
 $$

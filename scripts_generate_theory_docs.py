@@ -57,32 +57,6 @@ def generated_stamp_lines() -> list[str]:
         "",
     ]
 
-
-def acronym_primer_lines() -> list[str]:
-    return [
-        "## Acronym Primer",
-        "",
-        "- digital signal processing (DSP)",
-        "- input/output (I/O)",
-        "- short-time Fourier transform (STFT)",
-        "- inverse short-time Fourier transform (ISTFT)",
-        "- fast Fourier transform (FFT)",
-        "- discrete Fourier transform (DFT)",
-        "- chirp Z-transform (CZT)",
-        "- discrete cosine transform (DCT)",
-        "- discrete sine transform (DST)",
-        "- central processing unit (CPU)",
-        "- graphics processing unit (GPU)",
-        "- Compute Unified Device Architecture (CUDA)",
-        "- waveform similarity overlap-add (WSOLA)",
-        "- fundamental frequency (F0)",
-        "- equivalent noise bandwidth (ENBW)",
-        "- root-mean-square (RMS)",
-        "- loudness units relative to full scale (LUFS)",
-        "",
-    ]
-
-
 def window_entries() -> list[dict[str, str]]:
     entries: list[dict[str, str]] = []
     for name in voc_core.WINDOW_CHOICES:
@@ -498,7 +472,6 @@ def write_math_foundations() -> None:
     lines.append("# pvx Mathematical Foundations")
     lines.append("")
     lines.extend(generated_stamp_lines())
-    lines.extend(acronym_primer_lines())
     lines.append("This document explains the core signal-processing equations used by pvx, with plain-English interpretation.")
     lines.append("All equations are written in GitHub-renderable LaTeX and are intended to render directly in normal GitHub Markdown view.")
     lines.append("")
@@ -638,7 +611,7 @@ def write_math_foundations() -> None:
     lines.append("")
     lines.append("$$")
     lines.append("g(x)=\\begin{cases}")
-    lines.append("1, & |x|\\le T \\")
+    lines.append("1, & |x|\\le T \\\\")
     lines.append("\\left(\\frac{T+(|x|-T)/R}{|x|}\\right), & |x|>T")
     lines.append("\\end{cases}")
     lines.append("$$")
@@ -678,7 +651,6 @@ def write_window_reference() -> None:
     lines.append("# pvx Window Reference")
     lines.append("")
     lines.extend(generated_stamp_lines())
-    lines.extend(acronym_primer_lines())
     lines.append(f"pvx currently supports **{len(entries)}** analysis windows. This file defines each one mathematically and explains it in plain English.")
     lines.append("")
     lines.append("## Notation")

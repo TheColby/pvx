@@ -2,34 +2,6 @@
 
 This guide is for first-time users who want to understand what `pvx` does, why it exists, and how to get useful results without treating digital signal processing (DSP) as magic.
 
-## Acronym Primer
-
-- application programming interface (API)
-- command-line interface (CLI)
-- path environment variable (PATH)
-- digital signal processing (DSP)
-- short-time Fourier transform (STFT)
-- inverse short-time Fourier transform (ISTFT)
-- fast Fourier transform (FFT)
-- discrete Fourier transform (DFT)
-- central processing unit (CPU)
-- graphics processing unit (GPU)
-- Compute Unified Device Architecture (CUDA)
-- comma-separated values (CSV)
-- JavaScript Object Notation (JSON)
-- HyperText Markup Language (HTML)
-- Portable Document Format (PDF)
-- continuous integration (CI)
-- fundamental frequency (F0)
-- waveform similarity overlap-add (WSOLA)
-- root-mean-square (RMS)
-- loudness units relative to full scale (LUFS)
-- signal-to-noise ratio (SNR)
-
-Recommended command surface:
-- use `pvx <tool>` for all new workflows (`pvx voc`, `pvx freeze`, `pvx harmonize`, etc.)
-- legacy script wrappers (`python3 pvxvoc.py`, `python3 pvxfreeze.py`, ...) remain available for compatibility
-
 ## 0. Quick Setup (Install + PATH)
 
 ```bash

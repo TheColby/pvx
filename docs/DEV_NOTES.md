@@ -6,24 +6,6 @@ This note documents the current processing path and exact insertion points for:
 - benchmark/regression infrastructure
 - preset/help user experience (UX) refactor
 
-## Acronym Primer
-
-- development (DEV)
-- command-line interface (CLI)
-- user experience (UX)
-- digital signal processing (DSP)
-- phase vocoder (PV)
-- waveform similarity overlap-add (WSOLA)
-- short-time Fourier transform (STFT)
-- inverse short-time Fourier transform (ISTFT)
-- central processing unit (CPU)
-- graphics processing unit (GPU)
-- Compute Unified Device Architecture (CUDA)
-- sample rate (SR)
-- fundamental frequency (F0)
-
-No digital signal processing (DSP) behavior changes are implemented in this phase.
-
 ## 1. Current `pvxvoc` Call Flow
 
 Primary entrypoint:

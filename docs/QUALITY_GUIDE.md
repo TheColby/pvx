@@ -2,25 +2,6 @@
 
 This guide maps audible artifacts to concrete `pvx voc` fixes.
 
-## Acronym Primer
-
-- command-line interface (CLI)
-- path environment variable (PATH)
-- digital signal processing (DSP)
-- short-time Fourier transform (STFT)
-- fast Fourier transform (FFT)
-- central processing unit (CPU)
-- graphics processing unit (GPU)
-- Compute Unified Device Architecture (CUDA)
-- waveform similarity overlap-add (WSOLA)
-- root-mean-square (RMS)
-- loudness units relative to full scale (LUFS)
-- signal-to-noise ratio (SNR)
-
-`pvx` operating principle:
-- quality first: artifacts and coherence issues are the primary constraints
-- speed second: runtime tuning is applied only after quality is acceptable
-
 ## 0. Quick Setup (Install + PATH)
 
 ```bash
