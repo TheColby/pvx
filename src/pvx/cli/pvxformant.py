@@ -11,6 +11,7 @@ import numpy as np
 from pvx.core.common import (
     add_common_io_args,
     add_vocoder_args,
+    build_examples_epilog,
     build_status_bar,
     build_vocoder_config,
     cents_to_ratio,
@@ -64,7 +65,21 @@ def formant_process_channel(
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Formant shift/preserve processor")
+    parser = argparse.ArgumentParser(
+        description="Formant shift/preserve processor",
+        formatter_class=argparse.RawTextHelpFormatter,
+        epilog=build_examples_epilog(
+            [
+                "pvx formant vocal.wav --mode preserve --pitch-shift-semitones -3 --output vocal_down3_preserve.wav",
+                "pvx formant voice.wav --mode shift --formant-shift-ratio 1.15 --output voice_brighter.wav",
+                "pvx formant input.wav --mode preserve --pitch-shift-cents 35 --stdout | pvx deverb - --strength 0.2 --output input_formant_chain.wav",
+            ],
+            notes=[
+                "Use --mode preserve to retain vocal identity during pitch moves.",
+                "Use --formant-shift-ratio > 1.0 to raise formants, < 1.0 to lower them.",
+            ],
+        ),
+    )
     add_common_io_args(parser, default_suffix="_formant")
     add_vocoder_args(parser, default_n_fft=2048, default_win_length=2048, default_hop_size=512)
     parser.add_argument("--pitch-shift-semitones", type=float, default=0.0, help="Optional pitch shift before formant stage")

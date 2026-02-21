@@ -35,6 +35,25 @@ Assumptions:
 - output format defaults to input extension unless overridden
 - tools using `--output-dir` and `--suffix` write inferred filenames
 
+## Starter Path (Run These First)
+
+If you are new to `pvx`, run these in order:
+
+```bash
+pvx voc input.wav --stretch 1.2 --output step1_stretch.wav
+pvx voc input.wav --stretch 1.0 --pitch -3 --output step2_pitch.wav
+pvx voc input.wav --stretch 1.0 --pitch -3 --pitch-mode formant-preserving --output step3_pitch_formant.wav
+pvx voc drums.wav --preset drums_safe --stretch 1.25 --output step4_drums.wav
+pvx voc mix.wav --stretch 1.2 --stereo-mode mid_side_lock --coherence-strength 0.9 --output step5_stereo.wav
+```
+
+Expected audible progression:
+- `step1`: timing changes only
+- `step2`: pitch changes only
+- `step3`: pitch change with improved vocal timbre stability
+- `step4`: better attack retention on percussive material
+- `step5`: more stable stereo image during stretch
+
 ## Use-Case Index (By Theme)
 
 | Theme | Start here | Typical tools |
@@ -1685,3 +1704,186 @@ Legacy compatibility mode:
 ```bash
 pvx stream source.wav --mode wrapper --output source_stream_wrapper.wav --chunk-seconds 0.2 --time-stretch 2.0
 ```
+
+---
+
+## 68) Dynamic Stretch via Direct CSV Flag Input
+
+**Command**
+```bash
+pvx voc source.wav --stretch controls/stretch.csv --interp linear --output source_dyn_stretch.wav
+```
+
+**Example `controls/stretch.csv`**
+```csv
+time_sec,value
+0.0,1.0
+1.0,1.2
+2.0,1.6
+3.0,2.0
+```
+
+**Explanation**
+- Uses a time-varying control-rate signal directly on `--stretch` (no legacy `--pitch-map` wrapper needed).
+- Interpolates control points with `--interp linear` (default mode).
+
+**Before/After**
+- Before: fixed global stretch ratio.
+- After: continuously changing stretch trajectory over time.
+
+**Parameters that matter most**
+- `--stretch <csv/json>`
+- `--interp`
+- `--order` (if polynomial)
+
+**Artifacts to listen for**
+- excessive local tempo curvature from over-aggressive control points
+- boundary coloration if your control points force rapid ratio changes
+
+---
+
+## 69) Dynamic Pitch Ratio via JSON + Polynomial Interpolation
+
+**Command**
+```bash
+pvx voc vocal.wav --pitch-shift-ratio controls/pitch_curve.json --interp polynomial --order 3 --output vocal_dyn_pitch.wav
+```
+
+**Example `controls/pitch_curve.json`**
+```json
+{
+  "points": [
+    {"time_sec": 0.0, "value": 1.0},
+    {"time_sec": 0.8, "value": 1.122462048},
+    {"time_sec": 1.6, "value": 1.334839854},
+    {"time_sec": 2.4, "value": 1.0}
+  ]
+}
+```
+
+**Explanation**
+- Drives pitch from a JSON control-rate signal attached directly to `--pitch-shift-ratio`.
+- `--interp polynomial --order 3` fits a smooth polynomial trajectory through points.
+
+**Before/After**
+- Before: static transposition.
+- After: continuous pitch contour over time.
+
+**Parameters that matter most**
+- `--pitch-shift-ratio <csv/json>`
+- `--interp`
+- `--order`
+
+**Artifacts to listen for**
+- over/undershoot from high-order polynomial fitting
+- formant drift if large excursions are used without formant-preserving mode
+
+---
+
+## 70) Stairstep (Sample-and-Hold) Control Mode
+
+**Command**
+```bash
+pvx voc phrase.wav --stretch controls/step_stretch.csv --interp none --output phrase_step_control.wav
+```
+
+**Example `controls/step_stretch.csv`**
+```csv
+start_sec,end_sec,value
+0.0,0.5,1.0
+0.5,1.0,1.25
+1.0,1.5,0.9
+1.5,2.0,1.1
+```
+
+**Explanation**
+- Uses stairstep control (`--interp none`) with piecewise constant parameter regions.
+- Best when you explicitly want quantized timeline regions.
+
+**Before/After**
+- Before: smooth or fixed trajectory.
+- After: discrete region-based time changes.
+
+**Parameters that matter most**
+- `--interp none`
+- segment boundaries
+- control `value`
+
+**Artifacts to listen for**
+- audible discontinuities if regions are too short or jumps are too large
+
+---
+
+## 71) Dynamic Analysis Resolution (N-FFT + Hop Size Maps)
+
+**Command**
+```bash
+pvx voc source.wav --n-fft controls/nfft.csv --hop-size controls/hop.csv --stretch 1.2 --output source_dyn_resolution.wav
+```
+
+**Example `controls/nfft.csv`**
+```csv
+time_sec,value
+0.0,1024
+2.0,2048
+4.0,4096
+```
+
+**Example `controls/hop.csv`**
+```csv
+time_sec,value
+0.0,128
+2.0,256
+4.0,512
+```
+
+**Explanation**
+- Time-varying spectral resolution can trade transient precision and tonal stability across song sections.
+- Useful for research workflows where you want section-dependent analysis behavior.
+
+**Before/After**
+- Before: one fixed analysis resolution for the whole render.
+- After: section-adaptive STFT resolution.
+
+**Parameters that matter most**
+- `--n-fft <csv/json>`
+- `--hop-size <csv/json>`
+- `--win-length` (static or dynamic)
+
+**Artifacts to listen for**
+- timbral shifts at parameter-transition boundaries
+- mismatched hop/window trajectories causing roughness
+
+---
+
+## 72) Stateful Stream Mode with Dynamic Stretch CSV
+
+**Command**
+```bash
+pvx stream input.wav --output output_stream.wav --chunk-seconds 0.2 --stretch controls/stretch.csv --interp linear
+```
+
+**Example `controls/stretch.csv`**
+```csv
+time_sec,value
+0.0,1.0
+3.0,1.4
+6.0,2.0
+```
+
+**Explanation**
+- Uses chunked stateful stream processing with the same control-file interface as `pvx voc`.
+- The stretch value is sampled from the interpolated trajectory for each processed chunk.
+
+**Before/After**
+- Before: one global stretch factor.
+- After: evolving stretch profile over time, while staying in stream mode.
+
+**Parameters that matter most**
+- `--chunk-seconds`
+- `--stretch <csv/json>`
+- `--interp`
+
+**Artifacts to listen for**
+- chunk-boundary texture changes if `--chunk-seconds` is too short
+- abrupt pacing changes from steep control curves

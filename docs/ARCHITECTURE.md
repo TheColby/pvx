@@ -1,6 +1,6 @@
 # pvx Architecture
 
-_Generated from commit `dcc235a` (commit date: 2026-02-20T11:48:06-05:00)._
+_Generated from commit `97bcd59` (commit date: 2026-02-20T12:18:46-05:00)._
 
 System architecture for runtime processing, algorithm dispatch, and documentation pipelines.
 

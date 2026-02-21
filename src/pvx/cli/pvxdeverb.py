@@ -11,6 +11,7 @@ import numpy as np
 from pvx.core.common import (
     add_common_io_args,
     add_vocoder_args,
+    build_examples_epilog,
     build_status_bar,
     build_vocoder_config,
     default_output_path,
@@ -55,7 +56,21 @@ def deverb_channel(
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Reduce spectral tails / reverberant smear")
+    parser = argparse.ArgumentParser(
+        description="Reduce spectral tails / reverberant smear",
+        formatter_class=argparse.RawTextHelpFormatter,
+        epilog=build_examples_epilog(
+            [
+                "pvx deverb room.wav --strength 0.45 --decay 0.92 --floor 0.12 --output room_dry.wav",
+                "pvx deverb speech.wav --strength 0.3 --decay 0.88 --output speech_tight.wav",
+                "pvx deverb hall.wav --strength 0.5 --stdout | pvx voc - --stretch 1.2 --output hall_dry_stretch.wav",
+            ],
+            notes=[
+                "Lower --decay for faster tail suppression.",
+                "Raise --floor to avoid over-thinning sustained tones.",
+            ],
+        ),
+    )
     add_common_io_args(parser, default_suffix="_deverb")
     add_vocoder_args(parser, default_n_fft=2048, default_win_length=2048, default_hop_size=512)
     parser.add_argument("--strength", type=float, default=0.45, help="Tail suppression strength 0..1")

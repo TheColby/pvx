@@ -11,6 +11,7 @@ import numpy as np
 from pvx.core.common import (
     add_common_io_args,
     add_vocoder_args,
+    build_examples_epilog,
     build_status_bar,
     build_vocoder_config,
     cents_to_ratio,
@@ -64,7 +65,21 @@ def split_hpss(signal: np.ndarray, config, hk: int, pk: int) -> tuple[np.ndarray
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Split into harmonic/percussive layers and process independently")
+    parser = argparse.ArgumentParser(
+        description="Split into harmonic/percussive layers and process independently",
+        formatter_class=argparse.RawTextHelpFormatter,
+        epilog=build_examples_epilog(
+            [
+                "pvx layer input.wav --harmonic-stretch 1.3 --percussive-stretch 1.0 --output layered.wav",
+                "pvx layer drumsynth.wav --harmonic-pitch-semitones -5 --percussive-pitch-cents 20 --output drumsynth_split.wav",
+                "pvx layer source.wav --harmonic-gain 1.1 --percussive-gain 0.8 --stdout | pvx deverb - --strength 0.2 --output source_layer_deverb.wav",
+            ],
+            notes=[
+                "Harmonic/percussive kernel sizes control separation aggressiveness.",
+                "Use independent stretch/pitch settings to design hybrid textures.",
+            ],
+        ),
+    )
     add_common_io_args(parser, default_suffix="_layer")
     add_vocoder_args(parser, default_n_fft=2048, default_win_length=2048, default_hop_size=512)
     parser.add_argument("--harmonic-stretch", type=float, default=1.0)

@@ -12,6 +12,7 @@ from pvx.core.common import (
     SegmentSpec,
     add_common_io_args,
     add_vocoder_args,
+    build_examples_epilog,
     build_status_bar,
     build_vocoder_config,
     concat_with_crossfade,
@@ -53,7 +54,19 @@ def build_parser() -> argparse.ArgumentParser:
             "Conform audio to a CSV map. CSV columns: start_sec,end_sec,stretch,"
             " and one pitch field: pitch_semitones or pitch_cents or pitch_ratio "
             "(pitch_ratio accepts decimals, fractions like 3/2, or expressions like 2^(1/12))"
-        )
+        ),
+        formatter_class=argparse.RawTextHelpFormatter,
+        epilog=build_examples_epilog(
+            [
+                "pvx conform input.wav --map map_conform.csv --output conformed.wav",
+                "pvx conform vocal.wav --map map_just_intonation.csv --crossfade-ms 12 --output vocal_ji.wav",
+                "pvx conform source.wav --map map_warp.csv --stdout | pvx denoise - --reduction-db 6 --output source_conform_clean.wav",
+            ],
+            notes=[
+                "Map CSV requires start_sec,end_sec,stretch plus one pitch column.",
+                "pitch_ratio accepts decimals, integer ratios (3/2), and expressions (2^(1/12)).",
+            ],
+        ),
     )
     add_common_io_args(parser, default_suffix="_conform")
     add_vocoder_args(parser, default_n_fft=2048, default_win_length=2048, default_hop_size=512)

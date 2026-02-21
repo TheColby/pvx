@@ -11,6 +11,7 @@ import numpy as np
 from pvx.core.common import (
     add_common_io_args,
     add_vocoder_args,
+    build_examples_epilog,
     build_status_bar,
     build_vocoder_config,
     default_output_path,
@@ -38,7 +39,21 @@ def pan_stereo(signal: np.ndarray, pan: float) -> np.ndarray:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Generate harmonized voices from an input")
+    parser = argparse.ArgumentParser(
+        description="Generate harmonized voices from an input",
+        formatter_class=argparse.RawTextHelpFormatter,
+        epilog=build_examples_epilog(
+            [
+                "pvx harmonize vocal.wav --intervals 0,4,7 --gains 1,0.8,0.7 --output vocal_triad.wav",
+                "pvx harmonize lead.wav --intervals 0,3,7,10 --intervals-cents 0,0,0,-12 --force-stereo --output lead_stack.wav",
+                "pvx harmonize phrase.wav --intervals 0,7 --pans -0.6,0.6 --stdout | pvx deverb - --strength 0.25 --output phrase_wide.wav",
+            ],
+            notes=[
+                "Match --gains and --pans list lengths to --intervals for predictable voice balancing.",
+                "Fractional semitone intervals are supported for microtonal harmonization.",
+            ],
+        ),
+    )
     add_common_io_args(parser, default_suffix="_harm")
     add_vocoder_args(parser, default_n_fft=2048, default_win_length=2048, default_hop_size=512)
     parser.add_argument("--intervals", default="0,4,7", help="Comma-separated semitone intervals per voice (supports fractional values)")

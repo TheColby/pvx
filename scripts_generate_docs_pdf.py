@@ -101,6 +101,7 @@ CORE_ORDER = [
     "architecture.html",
     "math.html",
     "windows.html",
+    "papers.html",
     "glossary.html",
     "limitations.html",
     "benchmarks.html",
@@ -131,10 +132,6 @@ def collect_html_pages(docs_html_dir: Path, include_groups: bool) -> list[Path]:
 
     pages = [p for p in pages if p.is_file()]
     pages.sort(key=lambda p: html_sort_key(p, docs_html_dir))
-    # Keep the full bibliography as a terminal appendix in the combined PDF.
-    papers_pages = [p for p in pages if p.name == "papers.html"]
-    non_papers_pages = [p for p in pages if p.name != "papers.html"]
-    pages = [*non_papers_pages, *papers_pages]
     return pages
 
 
@@ -348,28 +345,64 @@ def build_combined_html(
     .doc-main nav {{
       display: none !important;
     }}
+    .doc-main .table-scroll {{
+      overflow: visible !important;
+    }}
     .doc-main table {{
       page-break-inside: auto;
       width: 100%;
       max-width: 100%;
-      table-layout: fixed;
+      table-layout: auto;
       border-collapse: collapse;
       white-space: normal !important;
     }}
     .doc-main th,
     .doc-main td {{
       white-space: normal !important;
-      overflow-wrap: anywhere;
-      word-break: break-word;
+      overflow-wrap: break-word;
+      word-break: normal;
       hyphens: auto;
       vertical-align: top;
     }}
     .doc-main td code,
-    .doc-main th code,
+    .doc-main th code {{
+      white-space: normal;
+      overflow-wrap: break-word;
+      word-break: normal;
+    }}
     .doc-main a {{
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
-      word-break: break-word;
+      white-space: normal;
+      overflow-wrap: break-word;
+      word-break: normal;
+    }}
+    .doc-main table.papers-table {{
+      table-layout: fixed;
+      font-size: 0.88rem;
+    }}
+    .doc-main table.papers-table col.col-year {{ width: 8%; }}
+    .doc-main table.papers-table col.col-authors {{ width: 19%; }}
+    .doc-main table.papers-table col.col-title {{ width: 41%; }}
+    .doc-main table.papers-table col.col-venue {{ width: 20%; }}
+    .doc-main table.papers-table col.col-linktype {{ width: 8%; }}
+    .doc-main table.papers-table col.col-link {{ width: 4%; }}
+    .doc-main table.papers-table th,
+    .doc-main table.papers-table td {{
+      padding: 6px 8px;
+    }}
+    .doc-main table.papers-table td.paper-year,
+    .doc-main table.papers-table td.paper-linktype,
+    .doc-main table.papers-table td.paper-link,
+    .doc-main table.papers-table th.papers-col-year,
+    .doc-main table.papers-table th.papers-col-linktype,
+    .doc-main table.papers-table th.papers-col-link {{
+      white-space: nowrap !important;
+      hyphens: none;
+    }}
+    .doc-main table.papers-table td.paper-linktype code,
+    .doc-main table.papers-table td.paper-link a {{
+      white-space: nowrap !important;
+      word-break: normal;
+      overflow-wrap: normal;
     }}
     .doc-main tr,
     .doc-main td,
@@ -382,6 +415,7 @@ def build_combined_html(
     .doc-main pre,
     .doc-main code {{
       white-space: pre-wrap;
+      overflow-wrap: anywhere;
       word-break: break-word;
     }}
     .equation-where {{

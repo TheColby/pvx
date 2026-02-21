@@ -12,6 +12,7 @@ import numpy as np
 from pvx.core.common import (
     add_common_io_args,
     add_vocoder_args,
+    build_examples_epilog,
     build_status_bar,
     build_vocoder_config,
     default_output_path,
@@ -38,7 +39,21 @@ def pan_gains(pan: float) -> tuple[float, float]:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Stereo unison thickener")
+    parser = argparse.ArgumentParser(
+        description="Stereo unison thickener",
+        formatter_class=argparse.RawTextHelpFormatter,
+        epilog=build_examples_epilog(
+            [
+                "pvx unison synth.wav --voices 7 --detune-cents 18 --width 1.2 --output synth_unison.wav",
+                "pvx unison vocal.wav --voices 5 --detune-cents 9 --dry-mix 0.35 --output vocal_double.wav",
+                "pvx unison lead.wav --voices 9 --detune-cents 24 --stdout | pvx deverb - --strength 0.2 --output lead_wide_clean.wav",
+            ],
+            notes=[
+                "Increase --voices and --detune-cents for denser chorusing.",
+                "Use --dry-mix to keep articulation from the original signal.",
+            ],
+        ),
+    )
     add_common_io_args(parser, default_suffix="_unison")
     add_vocoder_args(parser, default_n_fft=2048, default_win_length=2048, default_hop_size=512)
     parser.add_argument("--voices", type=int, default=5, help="Number of unison voices")

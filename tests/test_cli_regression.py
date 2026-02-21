@@ -286,6 +286,238 @@ class TestCLIRegression(unittest.TestCase):
             self.assertGreater(output_audio.shape[0], 0)
             self.assertNotEqual(output_audio.shape[0], input_audio.shape[0])
 
+    def test_cli_dynamic_stretch_csv_linear(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            in_path = tmp_path / "dyn_stretch_in.wav"
+            input_audio, sr = write_mono_tone(in_path, duration=0.45, freq_hz=240.0)
+            map_path = tmp_path / "stretch.csv"
+            map_path.write_text(
+                "time_sec,value\n"
+                "0.0,1.0\n"
+                "0.22,1.6\n"
+                "0.45,2.0\n",
+                encoding="utf-8",
+            )
+            out_path = tmp_path / "dyn_stretch_out.wav"
+            cmd = [
+                sys.executable,
+                str(CLI),
+                str(in_path),
+                "--stretch",
+                str(map_path),
+                "--interp",
+                "linear",
+                "--output",
+                str(out_path),
+                "--overwrite",
+                "--quiet",
+            ]
+            proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+            self.assertEqual(proc.returncode, 0, msg=proc.stderr)
+            self.assertTrue(out_path.exists())
+            output_audio, out_sr = sf.read(out_path, always_2d=True)
+            self.assertEqual(out_sr, sr)
+            self.assertEqual(output_audio.shape[1], 1)
+            self.assertGreater(output_audio.shape[0], input_audio.shape[0])
+
+    def test_cli_dynamic_pitch_ratio_json(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            in_path = tmp_path / "dyn_pitch_in.wav"
+            input_audio, sr = write_mono_tone(in_path, duration=0.45, freq_hz=220.0)
+            map_path = tmp_path / "pitch.json"
+            payload = {
+                "interpolation": "polynomial",
+                "order": 3,
+                "points": [
+                    {"time_sec": 0.0, "value": 1.0},
+                    {"time_sec": 0.2, "value": 2 ** (2 / 12)},
+                    {"time_sec": 0.45, "value": 2 ** (5 / 12)},
+                ],
+            }
+            map_path.write_text(json.dumps(payload), encoding="utf-8")
+            out_path = tmp_path / "dyn_pitch_out.wav"
+            cmd = [
+                sys.executable,
+                str(CLI),
+                str(in_path),
+                "--time-stretch",
+                "1.0",
+                "--pitch-shift-ratio",
+                str(map_path),
+                "--interp",
+                "linear",
+                "--output",
+                str(out_path),
+                "--overwrite",
+                "--quiet",
+            ]
+            proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+            self.assertEqual(proc.returncode, 0, msg=proc.stderr)
+            self.assertTrue(out_path.exists())
+            output_audio, out_sr = sf.read(out_path, always_2d=True)
+            self.assertEqual(out_sr, sr)
+            self.assertEqual(output_audio.shape[1], 1)
+            self.assertGreater(output_audio.shape[0], 0)
+            self.assertAlmostEqual(output_audio.shape[0], input_audio.shape[0], delta=16)
+
+    def test_cli_dynamic_pitch_ratio_persists_across_validation_passes(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            in_path = tmp_path / "dyn_pitch_plan_in.wav"
+            write_mono_tone(in_path, duration=0.35, freq_hz=220.0)
+            map_path = tmp_path / "pitch_plan.json"
+            payload = {
+                "points": [
+                    {"time_sec": 0.0, "value": 1.0},
+                    {"time_sec": 0.35, "value": 2 ** (3 / 12)},
+                ],
+            }
+            map_path.write_text(json.dumps(payload), encoding="utf-8")
+            cmd = [
+                sys.executable,
+                str(CLI),
+                str(in_path),
+                "--pitch-shift-ratio",
+                str(map_path),
+                "--interp",
+                "linear",
+                "--explain-plan",
+            ]
+            proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+            self.assertEqual(proc.returncode, 0, msg=proc.stderr)
+            plan = json.loads(proc.stdout)
+            controls = plan.get("io", {}).get("dynamic_controls", [])
+            self.assertTrue(any(item.get("parameter") == "pitch_ratio" for item in controls))
+
+    def test_cli_dynamic_nfft_persists_across_validation_passes(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            in_path = tmp_path / "dyn_nfft_plan_in.wav"
+            write_mono_tone(in_path, duration=0.35, freq_hz=220.0)
+            map_path = tmp_path / "nfft_plan.csv"
+            map_path.write_text(
+                "time_sec,value\n"
+                "0.0,1024\n"
+                "0.35,4096\n",
+                encoding="utf-8",
+            )
+            cmd = [
+                sys.executable,
+                str(CLI),
+                str(in_path),
+                "--n-fft",
+                str(map_path),
+                "--interp",
+                "linear",
+                "--explain-plan",
+            ]
+            proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+            self.assertEqual(proc.returncode, 0, msg=proc.stderr)
+            plan = json.loads(proc.stdout)
+            controls = plan.get("io", {}).get("dynamic_controls", [])
+            self.assertTrue(any(item.get("parameter") == "n_fft" for item in controls))
+
+    def test_cli_dynamic_formant_lifter_csv(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            in_path = tmp_path / "dyn_formant_in.wav"
+            write_mono_tone(in_path, duration=0.4, freq_hz=220.0)
+            lifter_path = tmp_path / "lifter.csv"
+            lifter_path.write_text(
+                "time_sec,value\n"
+                "0.0,16\n"
+                "0.2,32\n"
+                "0.4,64\n",
+                encoding="utf-8",
+            )
+            out_path = tmp_path / "dyn_formant_out.wav"
+            cmd = [
+                sys.executable,
+                str(CLI),
+                str(in_path),
+                "--pitch-mode",
+                "formant-preserving",
+                "--pitch-shift-semitones",
+                "3",
+                "--formant-lifter",
+                str(lifter_path),
+                "--interp",
+                "linear",
+                "--output",
+                str(out_path),
+                "--overwrite",
+                "--quiet",
+            ]
+            proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+            self.assertEqual(proc.returncode, 0, msg=proc.stderr)
+            self.assertTrue(out_path.exists())
+            output_audio, out_sr = sf.read(out_path, always_2d=True)
+            self.assertEqual(out_sr, 24000)
+            self.assertEqual(output_audio.shape[1], 1)
+            self.assertGreater(output_audio.shape[0], 0)
+
+    def test_unified_cli_stream_dynamic_stretch_csv(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            in_path = tmp_path / "stream_dyn.wav"
+            input_audio, sr = write_stereo_tone(in_path, duration=0.3)
+            stretch_path = tmp_path / "stream_stretch.csv"
+            stretch_path.write_text(
+                "time_sec,value\n"
+                "0.0,1.0\n"
+                "0.15,1.6\n"
+                "0.3,2.0\n",
+                encoding="utf-8",
+            )
+            out_path = tmp_path / "stream_dyn_out.wav"
+            cmd = [
+                sys.executable,
+                str(UNIFIED_CLI),
+                "stream",
+                str(in_path),
+                "--output",
+                str(out_path),
+                "--chunk-seconds",
+                "0.1",
+                "--stretch",
+                str(stretch_path),
+                "--interp",
+                "linear",
+                "--quiet",
+            ]
+            proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+            self.assertEqual(proc.returncode, 0, msg=proc.stderr)
+            self.assertTrue(out_path.exists())
+            output_audio, out_sr = sf.read(out_path, always_2d=True)
+            self.assertEqual(out_sr, sr)
+            self.assertEqual(output_audio.shape[1], 2)
+            self.assertGreater(output_audio.shape[0], input_audio.shape[0])
+
+    def test_cli_dynamic_control_rejects_legacy_pitch_map_combination(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            in_path = tmp_path / "dyn_conflict_in.wav"
+            write_mono_tone(in_path, duration=0.3, freq_hz=220.0)
+            stretch_path = tmp_path / "stretch.csv"
+            stretch_path.write_text("time_sec,value\n0.0,1.0\n0.3,1.4\n", encoding="utf-8")
+            pitch_map = tmp_path / "legacy_map.csv"
+            pitch_map.write_text("start_sec,end_sec,stretch,pitch_ratio\n0.0,0.3,1.0,1.0\n", encoding="utf-8")
+            cmd = [
+                sys.executable,
+                str(CLI),
+                str(in_path),
+                "--stretch",
+                str(stretch_path),
+                "--pitch-map",
+                str(pitch_map),
+                "--quiet",
+            ]
+            proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+            self.assertNotEqual(proc.returncode, 0)
+            self.assertIn("Dynamic per-parameter control files cannot be combined", proc.stderr)
+
     def test_cli_output_policy_sidecar_and_bit_depth(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)

@@ -245,16 +245,14 @@ options:
   -h, --help            show this help message and exit
   --output OUTPUT       Output CSV path (default: '-' for stdout)
   --backend {auto,pyin,acf}
-                        Pitch backend (default: auto -> pyin if available,
-                        else acf)
+                        Pitch backend (default: auto -> pyin if available, else acf)
   --fmin FMIN           Minimum F0 in Hz (default: 50)
   --fmax FMAX           Maximum F0 in Hz (default: 1200)
   --frame-length FRAME_LENGTH
                         Frame length in samples (default: 2048)
   --hop-size HOP_SIZE   Hop size in samples (default: 256)
   --ratio-reference {median,mean,first,hz}
-                        Reference for emitted pitch_ratio values (default:
-                        median voiced f0).
+                        Reference for emitted pitch_ratio values (default: median voiced f0).
   --reference-hz REFERENCE_HZ
                         Reference frequency in Hz when --ratio-reference hz.
   --ratio-min RATIO_MIN
@@ -271,6 +269,15 @@ options:
   -v, --verbose         Increase verbosity (repeat for extra detail)
   --quiet               Reduce output and hide status bars
   --silent              Suppress all console output
+
+Examples:
+  pvx pitch-track guide.wav --output guide_pitch.csv
+  pvx pitch-track guide.wav --backend pyin --ratio-reference hz --reference-hz 440 --output guide_to_a440.csv
+  pvx pitch-track guide.wav --output - | pvx voc target.wav --pitch-map-stdin --output followed.wav
+
+Notes:
+  - Default output columns: start_sec,end_sec,stretch,pitch_ratio,confidence.
+  - Use --confidence-floor to gate unreliable pitch estimates.
 ```
 
 ### Module Docstring
@@ -501,9 +508,7 @@ usage: pvxconform.py [-h] [-o OUTPUT_DIR] [--output OUTPUT] [--suffix SUFFIX]
                      [--resample-mode {auto,fft,linear}]
                      inputs [inputs ...]
 
-Conform audio to a CSV map. CSV columns: start_sec,end_sec,stretch, and one
-pitch field: pitch_semitones or pitch_cents or pitch_ratio (pitch_ratio
-accepts decimals, fractions like 3/2, or expressions like 2^(1/12))
+Conform audio to a CSV map. CSV columns: start_sec,end_sec,stretch, and one pitch field: pitch_semitones or pitch_cents or pitch_ratio (pitch_ratio accepts decimals, fractions like 3/2, or expressions like 2^(1/12))
 
 positional arguments:
   inputs                Input files/globs or '-' for stdin
@@ -513,13 +518,11 @@ options:
   -o, --output-dir OUTPUT_DIR
                         Output directory
   --output, --out OUTPUT
-                        Explicit output file path (single-input mode only).
-                        Alias: --out
+                        Explicit output file path (single-input mode only). Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _conform)
   --output-format OUTPUT_FORMAT
                         Output extension/format
-  --stdout              Write processed audio to stdout stream (for piping);
-                        requires exactly one input
+  --stdout              Write processed audio to stdout stream (for piping); requires exactly one input
   --overwrite           Overwrite existing outputs
   --dry-run             Resolve and print, but do not write files
   --verbosity {silent,quiet,normal,verbose,debug}
@@ -531,7 +534,8 @@ options:
                         Output normalization mode
   --peak-dbfs PEAK_DBFS
                         Target peak dBFS when --normalize peak
-  --rms-dbfs RMS_DBFS   Targ
+  --rms-dbfs RMS_DBFS   Target RMS dBFS when --normalize rms
+  --target-lufs
 ... [truncated]
 ```
 
@@ -614,13 +618,11 @@ options:
   -o, --output-dir OUTPUT_DIR
                         Output directory
   --output, --out OUTPUT
-                        Explicit output file path (single-input mode only).
-                        Alias: --out
+                        Explicit output file path (single-input mode only). Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _denoise)
   --output-format OUTPUT_FORMAT
                         Output extension/format
-  --stdout              Write processed audio to stdout stream (for piping);
-                        requires exactly one input
+  --stdout              Write processed audio to stdout stream (for piping); requires exactly one input
   --overwrite           Overwrite existing outputs
   --dry-run             Resolve and print, but do not write files
   --verbosity {silent,quiet,normal,verbose,debug}
@@ -635,6 +637,7 @@ options:
   --rms-dbfs RMS_DBFS   Target RMS dBFS when --normalize rms
   --target-lufs TARGET_LUFS
                         Integrated loudness target in LUFS
+  --compressor-threshold-db COMPRESSOR_THRESHOL
 ... [truncated]
 ```
 
@@ -715,13 +718,11 @@ options:
   -o, --output-dir OUTPUT_DIR
                         Output directory
   --output, --out OUTPUT
-                        Explicit output file path (single-input mode only).
-                        Alias: --out
+                        Explicit output file path (single-input mode only). Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _deverb)
   --output-format OUTPUT_FORMAT
                         Output extension/format
-  --stdout              Write processed audio to stdout stream (for piping);
-                        requires exactly one input
+  --stdout              Write processed audio to stdout stream (for piping); requires exactly one input
   --overwrite           Overwrite existing outputs
   --dry-run             Resolve and print, but do not write files
   --verbosity {silent,quiet,normal,verbose,debug}
@@ -738,7 +739,8 @@ options:
                         Integrated loudness target in LUFS
   --compressor-threshold-db COMPRESSOR_THRESHOLD_DB
                         Enable compressor above threshold dBFS
-  --compressor-ratio COMPRES
+  --compressor-ratio COMPRESSOR_RATIO
+                        Compressor rat
 ... [truncated]
 ```
 
@@ -825,13 +827,11 @@ options:
   -o, --output-dir OUTPUT_DIR
                         Output directory
   --output, --out OUTPUT
-                        Explicit output file path (single-input mode only).
-                        Alias: --out
+                        Explicit output file path (single-input mode only). Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _formant)
   --output-format OUTPUT_FORMAT
                         Output extension/format
-  --stdout              Write processed audio to stdout stream (for piping);
-                        requires exactly one input
+  --stdout              Write processed audio to stdout stream (for piping); requires exactly one input
   --overwrite           Overwrite existing outputs
   --dry-run             Resolve and print, but do not write files
   --verbosity {silent,quiet,normal,verbose,debug}
@@ -840,7 +840,9 @@ options:
   --quiet               Reduce output and hide status bars
   --silent              Suppress all console output
   --normalize {none,peak,rms}
-                        Output normalization mo
+                        Output normalization mode
+  --peak-dbfs PEAK_DBFS
+                     
 ... [truncated]
 ```
 
@@ -921,13 +923,11 @@ options:
   -o, --output-dir OUTPUT_DIR
                         Output directory
   --output, --out OUTPUT
-                        Explicit output file path (single-input mode only).
-                        Alias: --out
+                        Explicit output file path (single-input mode only). Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _freeze)
   --output-format OUTPUT_FORMAT
                         Output extension/format
-  --stdout              Write processed audio to stdout stream (for piping);
-                        requires exactly one input
+  --stdout              Write processed audio to stdout stream (for piping); requires exactly one input
   --overwrite           Overwrite existing outputs
   --dry-run             Resolve and print, but do not write files
   --verbosity {silent,quiet,normal,verbose,debug}
@@ -944,7 +944,8 @@ options:
                         Integrated loudness target in LUFS
   --compressor-threshold-db COMPRESSOR_THRESHOLD_DB
                         Enable compressor above threshold dBFS
-  --compr
+  --compressor-ratio COMPRESSOR_RATIO
+                   
 ... [truncated]
 ```
 
@@ -1028,13 +1029,11 @@ options:
   -o, --output-dir OUTPUT_DIR
                         Output directory
   --output, --out OUTPUT
-                        Explicit output file path (single-input mode only).
-                        Alias: --out
+                        Explicit output file path (single-input mode only). Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _harm)
   --output-format OUTPUT_FORMAT
                         Output extension/format
-  --stdout              Write processed audio to stdout stream (for piping);
-                        requires exactly one input
+  --stdout              Write processed audio to stdout stream (for piping); requires exactly one input
   --overwrite           Overwrite existing outputs
   --dry-run             Resolve and print, but do not write files
   --verbosity {silent,quiet,normal,verbose,debug}
@@ -1046,7 +1045,7 @@ options:
                         Output normalization mode
   --peak-dbfs PEAK_DBFS
                         Target peak dBFS when --normalize peak
- 
+  --rms-dbfs RMS_DBFS   Target RMS dBFS when --no
 ... [truncated]
 ```
 
@@ -1137,18 +1136,17 @@ options:
   -o, --output-dir OUTPUT_DIR
                         Output directory
   --output, --out OUTPUT
-                        Explicit output file path (single-input mode only).
-                        Alias: --out
+                        Explicit output file path (single-input mode only). Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _layer)
   --output-format OUTPUT_FORMAT
                         Output extension/format
-  --stdout              Write processed audio to stdout stream (for piping);
-                        requires exactly one input
+  --stdout              Write processed audio to stdout stream (for piping); requires exactly one input
   --overwrite           Overwrite existing outputs
   --dry-run             Resolve and print, but do not write files
   --verbosity {silent,quiet,normal,verbose,debug}
                         Console verbosity level
-  -v, --verbose         Increase verbosity (repeat for ext
+  -v, --verbose         Increase verbosity (repeat for extra detail)
+  --quiet               Reduce output
 ... [truncated]
 ```
 
@@ -1226,8 +1224,7 @@ positional arguments:
 options:
   -h, --help            show this help message and exit
   -o, --output OUTPUT   Output file path
-  --stdout              Write processed audio to stdout stream (for piping);
-                        equivalent to -o -
+  --stdout              Write processed audio to stdout stream (for piping); equivalent to -o -
   --output-format OUTPUT_FORMAT
                         Output extension/format; for --stdout defaults to wav
   --alpha ALPHA         Morph amount 0..1 (0=A, 1=B)
@@ -1254,7 +1251,8 @@ options:
                         Expander ratio (>=1)
   --expander-attack-ms EXPANDER_ATTACK_MS
                         Expander attack time in ms
-  --expander-release-ms EXPANDER_REL
+  --expander-release-ms EXPANDER_RELEASE_MS
+                
 ... [truncated]
 ```
 
@@ -1339,13 +1337,11 @@ options:
   -o, --output-dir OUTPUT_DIR
                         Output directory
   --output, --out OUTPUT
-                        Explicit output file path (single-input mode only).
-                        Alias: --out
+                        Explicit output file path (single-input mode only). Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _retune)
   --output-format OUTPUT_FORMAT
                         Output extension/format
-  --stdout              Write processed audio to stdout stream (for piping);
-                        requires exactly one input
+  --stdout              Write processed audio to stdout stream (for piping); requires exactly one input
   --overwrite           Overwrite existing outputs
   --dry-run             Resolve and print, but do not write files
   --verbosity {silent,quiet,normal,verbose,debug}
@@ -1357,7 +1353,8 @@ options:
                         Output normalization mode
   --peak-dbfs PEAK_DBFS
                         Target peak dBFS when --normalize peak
-  --rms-dbfs RMS_DBFS   Target RMS dB
+  --rms-dbfs RMS_DBFS   Target RMS dBFS when --normalize rms
+  --target-lufs TARGET_L
 ... [truncated]
 ```
 
@@ -1444,20 +1441,19 @@ options:
   -o, --output-dir OUTPUT_DIR
                         Output directory
   --output, --out OUTPUT
-                        Explicit output file path (single-input mode only).
-                        Alias: --out
+                        Explicit output file path (single-input mode only). Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _trans)
   --output-format OUTPUT_FORMAT
                         Output extension/format
-  --stdout              Write processed audio to stdout stream (for piping);
-                        requires exactly one input
+  --stdout              Write processed audio to stdout stream (for piping); requires exactly one input
   --overwrite           Overwrite existing outputs
   --dry-run             Resolve and print, but do not write files
   --verbosity {silent,quiet,normal,verbose,debug}
                         Console verbosity level
   -v, --verbose         Increase verbosity (repeat for extra detail)
   --quiet               Reduce output and hide status bars
-  --silent     
+  --silent              Suppress all console output
+  --normali
 ... [truncated]
 ```
 
@@ -1539,13 +1535,11 @@ options:
   -o, --output-dir OUTPUT_DIR
                         Output directory
   --output, --out OUTPUT
-                        Explicit output file path (single-input mode only).
-                        Alias: --out
+                        Explicit output file path (single-input mode only). Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _unison)
   --output-format OUTPUT_FORMAT
                         Output extension/format
-  --stdout              Write processed audio to stdout stream (for piping);
-                        requires exactly one input
+  --stdout              Write processed audio to stdout stream (for piping); requires exactly one input
   --overwrite           Overwrite existing outputs
   --dry-run             Resolve and print, but do not write files
   --verbosity {silent,quiet,normal,verbose,debug}
@@ -1561,7 +1555,8 @@ options:
   --target-lufs TARGET_LUFS
                         Integrated loudness target in LUFS
   --compressor-threshold-db COMPRESSOR_THRESHOLD_DB
-                       
+                        Enable compressor above threshold dBFS
+  --comp
 ... [truncated]
 ```
 
@@ -1626,7 +1621,8 @@ usage: pvxvoc.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
                  [--auto-segment-seconds AUTO_SEGMENT_SECONDS]
                  [--checkpoint-dir CHECKPOINT_DIR]
                  [--checkpoint-id CHECKPOINT_ID] [--resume]
-                 [--transient-mode {off,reset,hybrid,wsola}]
+                 [--interp {none,linear,nearest,cubic,polynomial}]
+                 [--order ORDER] [--transient-mode {off,reset,hybrid,wsola}]
                  [--transient-sensitivity TRANSIENT_SENSITIVITY]
                  [--transient-protect-ms TRANSIENT_PROTECT_MS]
                  [--transient-crossfade-ms TRANSIENT_CROSSFADE_MS]
@@ -1654,8 +1650,7 @@ usage: pvxvoc.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
                  [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
                  [--compressor-ratio COMPRESSOR_RATIO]
                  [--compressor-attack-ms COMPRESSOR_ATTACK_MS]
-                 [--compressor-release-ms COMPRESSOR_RELEASE_MS]
-                 [--compressor-makeup-db COMPRESSOR_M
+                 [--compressor-rele
 ... [truncated]
 ```
 
@@ -1737,13 +1732,11 @@ options:
   -o, --output-dir OUTPUT_DIR
                         Output directory
   --output, --out OUTPUT
-                        Explicit output file path (single-input mode only).
-                        Alias: --out
+                        Explicit output file path (single-input mode only). Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _warp)
   --output-format OUTPUT_FORMAT
                         Output extension/format
-  --stdout              Write processed audio to stdout stream (for piping);
-                        requires exactly one input
+  --stdout              Write processed audio to stdout stream (for piping); requires exactly one input
   --overwrite           Overwrite existing outputs
   --dry-run             Resolve and print, but do not write files
   --verbosity {silent,quiet,normal,verbose,debug}
@@ -1761,7 +1754,8 @@ options:
   --compressor-threshold-db COMPRESSOR_THRESHOLD_DB
                         Enable compressor above threshold dBFS
   --compressor-ratio COMPRESSOR_RATIO
-                        Compressor ratio (>
+                        Compressor ratio (>=1)
+  --compressor-attack-ms COMPRESSOR_ATTACK_M
 ... [truncated]
 ```
 
@@ -5756,7 +5750,7 @@ Shared audio metric summaries and ASCII table rendering.
 **Purpose:** Shared helpers for pvx DSP command-line tools.
 
 **Classes:** `SegmentSpec`, `StatusBar`
-**Functions:** `add_console_args`, `console_level`, `is_quiet`, `is_silent`, `log_message`, `log_error`, `build_status_bar`, `add_common_io_args`, `add_output_policy_args`, `add_vocoder_args`, `build_vocoder_config`, `validate_vocoder_args`, `resolve_inputs`, `read_audio`, `finalize_audio`, `write_output`, `print_input_output_metrics_table`, `default_output_path`, `_stream_format_name`, `parse_float_list`, `semitone_to_ratio`, `cents_to_ratio`, `time_pitch_shift_channel`, `time_pitch_shift_audio`, `read_segment_csv`, `concat_with_crossfade`, `ensure_runtime`
+**Functions:** `add_console_args`, `build_examples_epilog`, `console_level`, `is_quiet`, `is_silent`, `log_message`, `log_error`, `build_status_bar`, `add_common_io_args`, `add_output_policy_args`, `add_vocoder_args`, `build_vocoder_config`, `validate_vocoder_args`, `resolve_inputs`, `read_audio`, `finalize_audio`, `write_output`, `print_input_output_metrics_table`, `default_output_path`, `_stream_format_name`, `parse_float_list`, `semitone_to_ratio`, `cents_to_ratio`, `time_pitch_shift_channel`, `time_pitch_shift_audio`, `read_segment_csv`, `concat_with_crossfade`, `ensure_runtime`
 
 ### Module Docstring
 
@@ -5833,8 +5827,8 @@ Transient analysis and segmentation helpers for hybrid pvx modes.
 
 **Purpose:** Multi-channel phase vocoder CLI for time and pitch manipulation.
 
-**Classes:** `VocoderConfig`, `PitchConfig`, `ControlSegment`, `JobResult`, `FourierSyncPlan`, `AudioBlockResult`, `RuntimeConfig`, `ProgressBar`
-**Functions:** `add_console_args`, `console_level`, `is_quiet`, `is_silent`, `log_message`, `log_error`, `clone_args_namespace`, `collect_cli_flags`, `print_cli_examples`, `apply_named_preset`, `_prompt_text`, `_prompt_choice`, `run_guided_mode`, `db_to_amplitude`, `cents_to_ratio`, `_eval_numeric_expr`, `parse_numeric_expression`, `parse_pitch_ratio_value`, `_is_power_of_two`, `parse_numeric_list`, `parse_int_list`, `estimate_content_features`, `suggest_quality_profile`, `apply_quality_profile_overrides`, `resolve_transform_auto`, `_has_cupy`, `_is_cupy_array`, `_array_module`, `_to_numpy`, `_to_runtime_array`, `_as_float`, `_as_bool`, `_i0`, `normalize_transform_name`, `transform_bin_count`, `_analysis_angular_velocity`, `_transform_requires_scipy`, `ensure_transform_backend_available`, `validate_transform_available`, `_resize_or_pad_1d`, `_onesided_to_full_spectrum`, `_forward_transform_numpy`, `_inverse_transform_numpy`, `_forward_transform`, `_inverse_transform`, `add_runtime_args`, `runtime_config`, `configure_runtime`, `configure_runtime_from_args`, `ensure_runtime_dependencies`, `principal_angle`, `_cosine_series_window`, `_bartlett_window`, `_bohman_window`, `_cosine_window`, `_sine_window`, `_triangular_window`, `_bartlett_hann_window`, `_tukey_window`, `_parzen_window`, `_lanczos_window`, `_welch_window`, `_gaussian_window`, `_general_gaussian_window`, `_exponential_window`, `_cauchy_window`, `_cosine_power_window`, `_hann_poisson_window`, `_general_hamming_window`, `_kaiser_window`, `make_window`, `pad_for_framing`, `stft`, `istft`, `scaled_win_length`, `resize_spectrum_bins`, `smooth_series`, `regularize_frame_lengths`, `fill_nan_with_nearest`, `lock_fft_length_to_f0`, `build_fourier_sync_plan`, `compute_transient_flags`, `build_output_time_steps`, `create_phase_rng`, `draw_random_phase`, `apply_phase_engine`, `find_spectral_peaks`, `apply_identity_phase_locking`, `phase_vocoder_time_stretch`, `phase_vocoder_time_stretch_fourier_sync`, `compute_multistage_stretches`, `phase_vocoder_time_stretch_multistage`, `stretch_channel_with_strategy`, `phase_vocoder_time_stretch_multires_fusion`, `linear_resample_1d`, `resample_1d`, `force_length`, `estimate_f0_autocorrelation`, `normalize_audio`, `_envelope_coeff`, `_envelope_follower`, `_estimate_lufs_or_rms_db`, `_apply_compressor`, `_apply_expander`, `_apply_compander`, `_apply_limiter`, `_apply_soft_clip`, `add_mastering_args`, `validate_mastering_args`, `apply_mastering_chain`, `cepstral_envelope`, `apply_formant_preservation`, `choose_pitch_ratio`, `_parse_optional_float`, `parse_control_segments_csv`, `apply_control_confidence_policy`, `smooth_control_ratios`, `expand_control_segments`, `load_control_segments`, `_lock_channel_phase_to_reference`, `process_audio_block`, `resolve_base_stretch`, `compute_output_path`, `_stream_format_name`, `_read_audio_input`, `_write_audio_output`, `concat_audio_chunks`, `build_uniform_control_segments`, `_checkpoint_job_id`, `resolve_checkpoint_context`, `load_checkpoint_chunk`, `save_checkpoint_chunk`, `write_manifest`, `process_file`, `force_length_multi`, `resample_multi`, `validate_args`, `build_parser`, `expand_inputs`, `main`
+**Classes:** `VocoderConfig`, `PitchConfig`, `ControlSegment`, `DynamicControlRef`, `DynamicControlSignal`, `JobResult`, `FourierSyncPlan`, `AudioBlockResult`, `RuntimeConfig`, `ProgressBar`
+**Functions:** `add_console_args`, `console_level`, `is_quiet`, `is_silent`, `log_message`, `log_error`, `clone_args_namespace`, `collect_cli_flags`, `print_cli_examples`, `apply_named_preset`, `_prompt_text`, `_prompt_choice`, `run_guided_mode`, `db_to_amplitude`, `cents_to_ratio`, `_eval_numeric_expr`, `parse_numeric_expression`, `parse_pitch_ratio_value`, `_is_power_of_two`, `parse_numeric_list`, `parse_int_list`, `_looks_like_control_signal_reference`, `_parse_scalar_cli_value`, `_parse_int_cli_value`, `_parse_control_signal_value`, `_coerce_control_interp`, `_control_value_column_candidates`, `_deduplicate_points`, `_normalize_control_points`, `_parse_csv_control_points`, `_parse_json_control_points`, `load_dynamic_control_signal`, `_sample_dynamic_signal`, `estimate_content_features`, `suggest_quality_profile`, `apply_quality_profile_overrides`, `resolve_transform_auto`, `_has_cupy`, `_is_cupy_array`, `_array_module`, `_to_numpy`, `_to_runtime_array`, `_as_float`, `_as_bool`, `_i0`, `normalize_transform_name`, `transform_bin_count`, `_analysis_angular_velocity`, `_transform_requires_scipy`, `ensure_transform_backend_available`, `validate_transform_available`, `_resize_or_pad_1d`, `_onesided_to_full_spectrum`, `_forward_transform_numpy`, `_inverse_transform_numpy`, `_forward_transform`, `_inverse_transform`, `add_runtime_args`, `runtime_config`, `configure_runtime`, `configure_runtime_from_args`, `ensure_runtime_dependencies`, `principal_angle`, `_cosine_series_window`, `_bartlett_window`, `_bohman_window`, `_cosine_window`, `_sine_window`, `_triangular_window`, `_bartlett_hann_window`, `_tukey_window`, `_parzen_window`, `_lanczos_window`, `_welch_window`, `_gaussian_window`, `_general_gaussian_window`, `_exponential_window`, `_cauchy_window`, `_cosine_power_window`, `_hann_poisson_window`, `_general_hamming_window`, `_kaiser_window`, `make_window`, `pad_for_framing`, `stft`, `istft`, `scaled_win_length`, `resize_spectrum_bins`, `smooth_series`, `regularize_frame_lengths`, `fill_nan_with_nearest`, `lock_fft_length_to_f0`, `build_fourier_sync_plan`, `compute_transient_flags`, `build_output_time_steps`, `create_phase_rng`, `draw_random_phase`, `apply_phase_engine`, `find_spectral_peaks`, `apply_identity_phase_locking`, `phase_vocoder_time_stretch`, `phase_vocoder_time_stretch_fourier_sync`, `compute_multistage_stretches`, `phase_vocoder_time_stretch_multistage`, `stretch_channel_with_strategy`, `phase_vocoder_time_stretch_multires_fusion`, `linear_resample_1d`, `resample_1d`, `force_length`, `estimate_f0_autocorrelation`, `normalize_audio`, `_envelope_coeff`, `_envelope_follower`, `_estimate_lufs_or_rms_db`, `_apply_compressor`, `_apply_expander`, `_apply_compander`, `_apply_limiter`, `_apply_soft_clip`, `add_mastering_args`, `validate_mastering_args`, `apply_mastering_chain`, `cepstral_envelope`, `apply_formant_preservation`, `choose_pitch_ratio`, `_parse_optional_float`, `parse_control_segments_csv`, `apply_control_confidence_policy`, `smooth_control_ratios`, `expand_control_segments`, `load_control_segments`, `_lock_channel_phase_to_reference`, `process_audio_block`, `resolve_base_stretch`, `build_vocoder_config_from_args`, `_finalize_dynamic_segment_values`, `build_dynamic_control_segments`, `compute_output_path`, `_stream_format_name`, `_read_audio_input`, `_write_audio_output`, `concat_audio_chunks`, `build_uniform_control_segments`, `_checkpoint_job_id`, `resolve_checkpoint_context`, `load_checkpoint_chunk`, `save_checkpoint_chunk`, `write_manifest`, `process_file`, `force_length_multi`, `resample_multi`, `validate_args`, `build_parser`, `expand_inputs`, `main`
 
 **Help commands:** `python3 src/pvx/core/voc.py`, `python3 src/pvx/core/voc.py --help`
 

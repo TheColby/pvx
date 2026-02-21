@@ -114,9 +114,18 @@ TOOL_SPECS: tuple[ToolSpec, ...] = (
 
 EXAMPLE_COMMANDS: dict[str, tuple[str, str]] = {
     "basic": ("Basic stretch", "pvx voc input.wav --stretch 1.20 --output output.wav"),
+    "speech": ("Slow speech for review", "pvx voc speech.wav --preset vocal_studio --stretch 1.30 --output speech_slow.wav"),
     "vocal": (
         "Vocal pitch/formant correction",
         "pvx voc vocal.wav --preset vocal_studio --pitch -2 --output vocal_fixed.wav",
+    ),
+    "retune": (
+        "Scale retune",
+        "pvx retune vocal.wav --root C --scale major --strength 0.85 --output vocal_retuned.wav",
+    ),
+    "freeze": (
+        "Freeze a spectral moment",
+        "pvx freeze hit.wav --freeze-time 0.2 --duration 10 --output hit_freeze.wav",
     ),
     "ambient": (
         "Extreme ambient stretch",
@@ -129,6 +138,18 @@ EXAMPLE_COMMANDS: dict[str, tuple[str, str]] = {
     "morph": (
         "Source morph",
         "pvx morph source_a.wav source_b.wav --alpha 0.4 --output morph.wav",
+    ),
+    "map": (
+        "Time/pitch map conform",
+        "pvx conform source.wav --map map_conform.csv --output source_conformed.wav",
+    ),
+    "microtonal": (
+        "Microtonal pitch ratio",
+        "pvx voc input.wav --stretch 1.0 --ratio 3/2 --output input_perfect_fifth.wav",
+    ),
+    "pipe": (
+        "Short one-line pipe",
+        "pvx voc input.wav --stretch 1.2 --stdout | pvx deverb - --strength 0.3 --output output.wav",
     ),
     "pipeline": (
         "Pitch-follow pipeline",

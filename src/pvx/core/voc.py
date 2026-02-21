@@ -43,6 +43,11 @@ except Exception:  # pragma: no cover - optional dependency
     scipy_czt = None
 
 try:
+    from scipy.interpolate import CubicSpline as scipy_cubic_spline
+except Exception:  # pragma: no cover - optional dependency
+    scipy_cubic_spline = None
+
+try:
     import cupy as cp
 except Exception:  # pragma: no cover - optional dependency
     cp = None
@@ -133,9 +138,11 @@ LowConfidenceMode = Literal["hold", "unity", "interp"]
 TransientMode = Literal["off", "reset", "hybrid", "wsola"]
 StereoMode = Literal["independent", "mid_side_lock", "ref_channel_lock"]
 ProgressCallback = Callable[[int, int], None]
+ControlInterpolationMode = Literal["none", "linear", "nearest", "cubic", "polynomial"]
 
 TRANSFORM_CHOICES: tuple[TransformMode, ...] = ("fft", "dft", "czt", "dct", "dst", "hartley")
 PHASE_ENGINE_CHOICES: tuple[PhaseEngineMode, ...] = ("propagate", "hybrid", "random")
+CONTROL_INTERP_CHOICES: tuple[ControlInterpolationMode, ...] = ("none", "linear", "nearest", "cubic", "polynomial")
 QUALITY_PROFILE_CHOICES: tuple[str, ...] = (
     "neutral",
     "speech",
@@ -143,6 +150,30 @@ QUALITY_PROFILE_CHOICES: tuple[str, ...] = (
     "percussion",
     "ambient",
     "extreme",
+)
+
+_DYNAMIC_NUMERIC_ARG_SPECS: tuple[tuple[str, str, Literal["float", "int"], float], ...] = (
+    ("time_stretch", "time_stretch", "float", 1.0),
+    ("extreme_stretch_threshold", "extreme_stretch_threshold", "float", 2.0),
+    ("max_stage_stretch", "max_stage_stretch", "float", 1.8),
+    ("n_fft", "n_fft", "int", 2048.0),
+    ("win_length", "win_length", "int", 2048.0),
+    ("hop_size", "hop_size", "int", 512.0),
+    ("kaiser_beta", "kaiser_beta", "float", 14.0),
+    ("fourier_sync_min_fft", "fourier_sync_min_fft", "int", 256.0),
+    ("fourier_sync_max_fft", "fourier_sync_max_fft", "int", 8192.0),
+    ("fourier_sync_smooth", "fourier_sync_smooth", "int", 5.0),
+    ("ambient_phase_mix", "ambient_phase_mix", "float", 0.5),
+    ("transient_threshold", "transient_threshold", "float", 2.0),
+    ("transient_sensitivity", "transient_sensitivity", "float", 0.5),
+    ("transient_protect_ms", "transient_protect_ms", "float", 30.0),
+    ("transient_crossfade_ms", "transient_crossfade_ms", "float", 10.0),
+    ("coherence_strength", "coherence_strength", "float", 0.0),
+    ("onset_credit_pull", "onset_credit_pull", "float", 0.5),
+    ("onset_credit_max", "onset_credit_max", "float", 8.0),
+    ("formant_lifter", "formant_lifter", "int", 32.0),
+    ("formant_strength", "formant_strength", "float", 1.0),
+    ("formant_max_gain_db", "formant_max_gain_db", "float", 12.0),
 )
 EXAMPLE_CHOICES: tuple[str, ...] = (
     "all",
@@ -194,6 +225,25 @@ class ControlSegment:
     stretch: float
     pitch_ratio: float
     confidence: float | None = None
+    overrides: dict[str, Any] | None = None
+
+
+@dataclass(frozen=True)
+class DynamicControlRef:
+    parameter: str
+    path: Path
+    value_kind: Literal["float", "int", "pitch_ratio", "pitch_semitones", "pitch_cents"]
+    interpolation: ControlInterpolationMode
+    order: int
+
+
+@dataclass(frozen=True)
+class DynamicControlSignal:
+    parameter: str
+    interpolation: ControlInterpolationMode
+    order: int
+    times_sec: np.ndarray
+    values: np.ndarray
 
 
 @dataclass(frozen=True)
@@ -821,6 +871,430 @@ def parse_int_list(value: str, *, context: str) -> list[int]:
         out.append(rounded)
     return out
 
+
+def _looks_like_control_signal_reference(value: Any) -> bool:
+    if isinstance(value, Path):
+        suffix = value.suffix.lower()
+        return suffix in {".csv", ".json"}
+    if not isinstance(value, str):
+        return False
+    text = str(value).strip()
+    if not text:
+        return False
+    candidate = Path(text)
+    suffix = candidate.suffix.lower()
+    if suffix in {".csv", ".json"}:
+        return True
+    return candidate.exists() and candidate.is_file() and suffix in {".csv", ".json"}
+
+
+def _parse_scalar_cli_value(value: Any, *, context: str) -> float:
+    if isinstance(value, bool):
+        raise ValueError(f"{context} must be numeric")
+    if isinstance(value, (int, float)):
+        out = float(value)
+    else:
+        out = parse_numeric_expression(str(value), context=context)
+    if not math.isfinite(out):
+        raise ValueError(f"{context} must be finite")
+    return float(out)
+
+
+def _parse_int_cli_value(value: Any, *, context: str) -> int:
+    out = _parse_scalar_cli_value(value, context=context)
+    rounded = int(round(out))
+    if abs(out - rounded) > 1e-9:
+        raise ValueError(f"{context} must be an integer")
+    return int(rounded)
+
+
+def _parse_control_signal_value(
+    value: Any,
+    *,
+    value_kind: Literal["float", "int", "pitch_ratio", "pitch_semitones", "pitch_cents"],
+    context: str,
+) -> float:
+    if value_kind == "float":
+        return float(_parse_scalar_cli_value(value, context=context))
+    if value_kind == "int":
+        return float(_parse_int_cli_value(value, context=context))
+    if value_kind == "pitch_ratio":
+        return float(parse_pitch_ratio_value(value, context=context))
+    if value_kind == "pitch_semitones":
+        semi = _parse_scalar_cli_value(value, context=context)
+        return float(2.0 ** (semi / 12.0))
+    if value_kind == "pitch_cents":
+        cents = _parse_scalar_cli_value(value, context=context)
+        return float(cents_to_ratio(cents))
+    raise ValueError(f"Unsupported control value kind: {value_kind}")
+
+
+def _coerce_control_interp(value: Any, *, context: str) -> ControlInterpolationMode:
+    text = str(value).strip().lower()
+    if text not in CONTROL_INTERP_CHOICES:
+        raise ValueError(
+            f"{context} must be one of: {', '.join(CONTROL_INTERP_CHOICES)}"
+        )
+    return text  # type: ignore[return-value]
+
+
+def _control_value_column_candidates(parameter: str) -> tuple[str, ...]:
+    base = parameter.strip().lower()
+    if base == "time_stretch":
+        return (
+            "value",
+            "stretch",
+            "time_stretch",
+            "time-stretch",
+            "time_stretch_factor",
+            "time-stretch-factor",
+        )
+    if base == "pitch_ratio":
+        return ("value", "pitch_ratio", "ratio")
+    return (
+        "value",
+        base,
+        base.replace("_", "-"),
+    )
+
+
+def _deduplicate_points(times: np.ndarray, values: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    if times.size == 0:
+        return times, values
+    out_t: list[float] = []
+    out_v: list[float] = []
+    for t, v in zip(times, values):
+        if out_t and abs(float(t) - out_t[-1]) <= 1e-12:
+            out_v[-1] = float(v)
+            continue
+        out_t.append(float(t))
+        out_v.append(float(v))
+    return np.asarray(out_t, dtype=np.float64), np.asarray(out_v, dtype=np.float64)
+
+
+def _normalize_control_points(
+    times: np.ndarray,
+    values: np.ndarray,
+    *,
+    total_seconds: float,
+) -> tuple[np.ndarray, np.ndarray]:
+    if times.size == 0:
+        raise ValueError("Control signal has no points")
+    order = np.argsort(times)
+    times = np.asarray(times[order], dtype=np.float64)
+    values = np.asarray(values[order], dtype=np.float64)
+    finite = np.isfinite(times) & np.isfinite(values)
+    times = times[finite]
+    values = values[finite]
+    if times.size == 0:
+        raise ValueError("Control signal has no finite points")
+    times = np.clip(times, 0.0, max(0.0, float(total_seconds)))
+    times, values = _deduplicate_points(times, values)
+    if times.size == 0:
+        raise ValueError("Control signal has no usable points")
+    if times[0] > 0.0:
+        times = np.insert(times, 0, 0.0)
+        values = np.insert(values, 0, values[0])
+    if total_seconds > 0.0 and times[-1] < total_seconds:
+        times = np.append(times, total_seconds)
+        values = np.append(values, values[-1])
+    if total_seconds > 0.0 and times.size == 1:
+        times = np.append(times, total_seconds)
+        values = np.append(values, values[0])
+    return times, values
+
+
+def _parse_csv_control_points(
+    payload: str,
+    *,
+    parameter: str,
+    value_kind: Literal["float", "int", "pitch_ratio", "pitch_semitones", "pitch_cents"],
+    source_label: str,
+) -> tuple[np.ndarray, np.ndarray]:
+    reader = csv.DictReader(io.StringIO(payload))
+    fields = [str(name).strip().lower() for name in (reader.fieldnames or []) if name is not None]
+    if not fields:
+        raise ValueError(f"{source_label}: CSV is empty or missing header")
+
+    has_point_time = any(name in fields for name in ("time_sec", "time", "t"))
+    has_segment_time = "start_sec" in fields and "end_sec" in fields
+    candidates = _control_value_column_candidates(parameter)
+
+    value_column = next((name for name in candidates if name in fields), None)
+    if value_column is None:
+        excluded = {"time_sec", "time", "t", "start_sec", "end_sec"}
+        extras = [name for name in fields if name not in excluded]
+        if len(extras) == 1:
+            value_column = extras[0]
+    if value_column is None:
+        raise ValueError(
+            f"{source_label}: could not infer value column; expected one of {list(candidates)}"
+        )
+
+    times: list[float] = []
+    values: list[float] = []
+    row_count = 0
+    for row_idx, row in enumerate(reader, start=2):
+        row_count += 1
+        norm: dict[str, str] = {}
+        for key, raw in row.items():
+            if key is None:
+                continue
+            norm[str(key).strip().lower()] = "" if raw is None else str(raw).strip()
+
+        value_text = norm.get(value_column, "")
+        if not value_text:
+            continue
+        parsed_value = _parse_control_signal_value(
+            value_text,
+            value_kind=value_kind,
+            context=f"{source_label} row {row_idx} {value_column}",
+        )
+
+        if has_segment_time and norm.get("start_sec", "") and norm.get("end_sec", ""):
+            start = _parse_scalar_cli_value(norm["start_sec"], context=f"{source_label} row {row_idx} start_sec")
+            end = _parse_scalar_cli_value(norm["end_sec"], context=f"{source_label} row {row_idx} end_sec")
+            if end <= start:
+                continue
+            times.extend([float(start), float(end)])
+            values.extend([float(parsed_value), float(parsed_value)])
+            continue
+
+        if has_point_time:
+            time_text = norm.get("time_sec", "") or norm.get("time", "") or norm.get("t", "")
+            if not time_text:
+                continue
+            t = _parse_scalar_cli_value(time_text, context=f"{source_label} row {row_idx} time")
+            times.append(float(t))
+            values.append(float(parsed_value))
+            continue
+
+        raise ValueError(
+            f"{source_label}: CSV must include time_sec/time (point mode) "
+            "or start_sec/end_sec (segment mode)"
+        )
+
+    if row_count == 0 or not times:
+        raise ValueError(f"{source_label}: CSV contains no usable control rows")
+    return np.asarray(times, dtype=np.float64), np.asarray(values, dtype=np.float64)
+
+
+def _parse_json_control_points(
+    payload: Any,
+    *,
+    parameter: str,
+    value_kind: Literal["float", "int", "pitch_ratio", "pitch_semitones", "pitch_cents"],
+    source_label: str,
+) -> tuple[np.ndarray, np.ndarray, ControlInterpolationMode | None, int | None]:
+    interpolation_override: ControlInterpolationMode | None = None
+    order_override: int | None = None
+
+    root = payload
+    if isinstance(root, dict) and isinstance(root.get("parameters"), dict):
+        params = root["parameters"]
+        candidate = params.get(parameter)
+        if candidate is None and parameter == "time_stretch":
+            candidate = params.get("stretch")
+        if candidate is None:
+            candidate = params.get("value")
+        if candidate is not None:
+            root = candidate
+
+    if isinstance(root, dict):
+        interp_raw = root.get("interp", root.get("interpolation"))
+        if interp_raw is not None:
+            interpolation_override = _coerce_control_interp(
+                interp_raw,
+                context=f"{source_label} interpolation",
+            )
+        if root.get("order") is not None:
+            order_override = _parse_int_cli_value(
+                root.get("order"),
+                context=f"{source_label} order",
+            )
+
+    if isinstance(root, dict):
+        if isinstance(root.get("points"), list):
+            points = root["points"]
+        elif isinstance(root.get("control"), list):
+            points = root["control"]
+        elif isinstance(root.get("segments"), list):
+            points = root["segments"]
+        else:
+            points = None
+    elif isinstance(root, list):
+        points = root
+    else:
+        points = None
+
+    times: list[float] = []
+    values: list[float] = []
+
+    if isinstance(points, list):
+        for idx, entry in enumerate(points, start=1):
+            if isinstance(entry, dict) and {"start_sec", "end_sec"}.issubset(set(entry.keys())):
+                start = _parse_scalar_cli_value(
+                    entry.get("start_sec"),
+                    context=f"{source_label} segment {idx} start_sec",
+                )
+                end = _parse_scalar_cli_value(
+                    entry.get("end_sec"),
+                    context=f"{source_label} segment {idx} end_sec",
+                )
+                if end <= start:
+                    continue
+                value_raw = entry.get("value", entry.get(parameter, entry.get("stretch")))
+                if value_raw is None:
+                    raise ValueError(f"{source_label} segment {idx} missing value")
+                value = _parse_control_signal_value(
+                    value_raw,
+                    value_kind=value_kind,
+                    context=f"{source_label} segment {idx} value",
+                )
+                times.extend([float(start), float(end)])
+                values.extend([float(value), float(value)])
+                continue
+
+            if isinstance(entry, dict):
+                time_raw = entry.get("time_sec", entry.get("time", entry.get("t")))
+                value_raw = entry.get("value", entry.get(parameter, entry.get("stretch")))
+                if time_raw is None or value_raw is None:
+                    raise ValueError(f"{source_label} point {idx} must include time and value")
+                t = _parse_scalar_cli_value(time_raw, context=f"{source_label} point {idx} time")
+                value = _parse_control_signal_value(
+                    value_raw,
+                    value_kind=value_kind,
+                    context=f"{source_label} point {idx} value",
+                )
+                times.append(float(t))
+                values.append(float(value))
+                continue
+
+            if isinstance(entry, (list, tuple)) and len(entry) >= 2:
+                t = _parse_scalar_cli_value(entry[0], context=f"{source_label} point {idx} time")
+                value = _parse_control_signal_value(
+                    entry[1],
+                    value_kind=value_kind,
+                    context=f"{source_label} point {idx} value",
+                )
+                times.append(float(t))
+                values.append(float(value))
+                continue
+
+            raise ValueError(f"{source_label}: unsupported control point format at index {idx}")
+    elif isinstance(root, dict):
+        numeric_keys = []
+        for key, val in root.items():
+            key_text = str(key).strip()
+            if key_text in {"interp", "interpolation", "order", "parameters"}:
+                continue
+            try:
+                t = _parse_scalar_cli_value(key_text, context=f"{source_label} time key")
+            except ValueError:
+                continue
+            value = _parse_control_signal_value(
+                val,
+                value_kind=value_kind,
+                context=f"{source_label} value at {key_text}",
+            )
+            numeric_keys.append((float(t), float(value)))
+        if numeric_keys:
+            numeric_keys.sort(key=lambda item: item[0])
+            for t, v in numeric_keys:
+                times.append(t)
+                values.append(v)
+
+    if not times:
+        raise ValueError(f"{source_label}: JSON contains no usable control points")
+    return (
+        np.asarray(times, dtype=np.float64),
+        np.asarray(values, dtype=np.float64),
+        interpolation_override,
+        order_override,
+    )
+
+
+def load_dynamic_control_signal(
+    ref: DynamicControlRef,
+    *,
+    total_seconds: float,
+) -> DynamicControlSignal:
+    if not ref.path.exists():
+        raise ValueError(f"Control signal file not found: {ref.path}")
+    payload = ref.path.read_text(encoding="utf-8")
+    suffix = ref.path.suffix.lower()
+    interp = ref.interpolation
+    order = ref.order
+    if suffix == ".json":
+        root = json.loads(payload)
+        times, values, interp_override, order_override = _parse_json_control_points(
+            root,
+            parameter=ref.parameter,
+            value_kind=ref.value_kind,
+            source_label=str(ref.path),
+        )
+        if interp_override is not None:
+            interp = interp_override
+        if order_override is not None:
+            order = int(order_override)
+    else:
+        times, values = _parse_csv_control_points(
+            payload,
+            parameter=ref.parameter,
+            value_kind=ref.value_kind,
+            source_label=str(ref.path),
+        )
+    times, values = _normalize_control_points(times, values, total_seconds=total_seconds)
+    return DynamicControlSignal(
+        parameter=ref.parameter,
+        interpolation=interp,
+        order=max(1, int(order)),
+        times_sec=times,
+        values=values,
+    )
+
+
+def _sample_dynamic_signal(signal: DynamicControlSignal, query_sec: np.ndarray) -> np.ndarray:
+    if signal.times_sec.size == 0:
+        raise ValueError("Dynamic control signal has no points")
+    if signal.times_sec.size == 1:
+        return np.full(query_sec.shape, float(signal.values[0]), dtype=np.float64)
+
+    x = signal.times_sec
+    y = signal.values
+    mode = signal.interpolation
+
+    if mode == "none":
+        idx = np.searchsorted(x, query_sec, side="right") - 1
+        idx = np.clip(idx, 0, x.size - 1)
+        return y[idx]
+
+    if mode == "nearest":
+        idx = np.searchsorted(x, query_sec, side="left")
+        idx = np.clip(idx, 0, x.size - 1)
+        prev_idx = np.clip(idx - 1, 0, x.size - 1)
+        choose_prev = np.abs(query_sec - x[prev_idx]) <= np.abs(query_sec - x[idx])
+        chosen = np.where(choose_prev, prev_idx, idx)
+        return y[chosen]
+
+    if mode == "linear":
+        return np.interp(query_sec, x, y)
+
+    if mode == "cubic":
+        if scipy_cubic_spline is not None and x.size >= 4:
+            spline = scipy_cubic_spline(x, y, bc_type="natural", extrapolate=True)
+            return np.asarray(spline(query_sec), dtype=np.float64)
+        return np.interp(query_sec, x, y)
+
+    if mode == "polynomial":
+        degree = min(max(1, int(signal.order)), x.size - 1)
+        try:
+            coeffs = np.polyfit(x, y, deg=degree)
+            return np.polyval(coeffs, query_sec)
+        except Exception:
+            return np.interp(query_sec, x, y)
+
+    return np.interp(query_sec, x, y)
 
 def estimate_content_features(
     audio: np.ndarray,
@@ -3589,7 +4063,178 @@ def process_audio_block(
 def resolve_base_stretch(args: argparse.Namespace, in_samples: int, sr: int) -> float:
     if args.target_duration is not None:
         return args.target_duration * sr / max(in_samples, 1)
-    return args.time_stretch
+    value = args.time_stretch
+    if _looks_like_control_signal_reference(value):
+        return 1.0
+    return float(_parse_scalar_cli_value(value, context="--time-stretch"))
+
+
+def build_vocoder_config_from_args(args: argparse.Namespace) -> VocoderConfig:
+    return VocoderConfig(
+        n_fft=int(args.n_fft),
+        win_length=int(args.win_length),
+        hop_size=int(args.hop_size),
+        window=str(args.window),
+        kaiser_beta=float(args.kaiser_beta),
+        transform=normalize_transform_name(str(args.transform)),
+        center=not bool(args.no_center),
+        phase_locking=str(args.phase_locking),  # type: ignore[arg-type]
+        phase_engine=str(args.phase_engine),  # type: ignore[arg-type]
+        ambient_phase_mix=float(args.ambient_phase_mix),
+        phase_random_seed=args.phase_random_seed,
+        transient_preserve=bool(args.transient_preserve),
+        transient_threshold=float(args.transient_threshold),
+        onset_time_credit=bool(args.onset_time_credit),
+        onset_credit_pull=float(args.onset_credit_pull),
+        onset_credit_max=float(args.onset_credit_max),
+        onset_realign=not bool(args.no_onset_realign),
+    )
+
+
+def _finalize_dynamic_segment_values(
+    *,
+    args: argparse.Namespace,
+    stretch: float,
+    pitch_ratio: float,
+    overrides: dict[str, float],
+) -> tuple[float, float, dict[str, Any]]:
+    out: dict[str, Any] = {}
+
+    stretch = max(1e-8, float(stretch))
+    pitch_ratio = max(1e-8, float(pitch_ratio))
+
+    if any(key in overrides for key in ("n_fft", "win_length", "hop_size")):
+        n_fft = int(round(overrides.get("n_fft", float(args.n_fft))))
+        win_length = int(round(overrides.get("win_length", float(args.win_length))))
+        hop_size = int(round(overrides.get("hop_size", float(args.hop_size))))
+        n_fft = max(16, n_fft)
+        win_length = max(1, min(win_length, n_fft))
+        hop_size = max(1, min(hop_size, win_length))
+        out["n_fft"] = n_fft
+        out["win_length"] = win_length
+        out["hop_size"] = hop_size
+
+    if "kaiser_beta" in overrides:
+        out["kaiser_beta"] = max(0.0, float(overrides["kaiser_beta"]))
+    if "fourier_sync_min_fft" in overrides:
+        out["fourier_sync_min_fft"] = max(16, int(round(float(overrides["fourier_sync_min_fft"]))))
+    if "fourier_sync_max_fft" in overrides:
+        max_fft = max(16, int(round(float(overrides["fourier_sync_max_fft"]))))
+        min_fft = int(out.get("fourier_sync_min_fft", int(getattr(args, "fourier_sync_min_fft", 256))))
+        out["fourier_sync_max_fft"] = max(min_fft, max_fft)
+    if "fourier_sync_smooth" in overrides:
+        out["fourier_sync_smooth"] = max(1, int(round(float(overrides["fourier_sync_smooth"]))))
+    if "ambient_phase_mix" in overrides:
+        out["ambient_phase_mix"] = float(np.clip(overrides["ambient_phase_mix"], 0.0, 1.0))
+    if "transient_threshold" in overrides:
+        out["transient_threshold"] = max(1e-9, float(overrides["transient_threshold"]))
+    if "transient_sensitivity" in overrides:
+        out["transient_sensitivity"] = float(np.clip(overrides["transient_sensitivity"], 0.0, 1.0))
+    if "transient_protect_ms" in overrides:
+        out["transient_protect_ms"] = max(1e-9, float(overrides["transient_protect_ms"]))
+    if "transient_crossfade_ms" in overrides:
+        out["transient_crossfade_ms"] = max(0.0, float(overrides["transient_crossfade_ms"]))
+    if "coherence_strength" in overrides:
+        out["coherence_strength"] = float(np.clip(overrides["coherence_strength"], 0.0, 1.0))
+    if "onset_credit_pull" in overrides:
+        out["onset_credit_pull"] = float(np.clip(overrides["onset_credit_pull"], 0.0, 1.0))
+    if "onset_credit_max" in overrides:
+        out["onset_credit_max"] = max(0.0, float(overrides["onset_credit_max"]))
+    if "extreme_stretch_threshold" in overrides:
+        out["extreme_stretch_threshold"] = max(1.0000001, float(overrides["extreme_stretch_threshold"]))
+    if "max_stage_stretch" in overrides:
+        out["max_stage_stretch"] = max(1.0000001, float(overrides["max_stage_stretch"]))
+    if "formant_lifter" in overrides:
+        out["formant_lifter"] = max(0, int(round(float(overrides["formant_lifter"]))))
+    if "formant_strength" in overrides:
+        out["formant_strength"] = float(np.clip(overrides["formant_strength"], 0.0, 1.0))
+    if "formant_max_gain_db" in overrides:
+        out["formant_max_gain_db"] = max(1e-9, float(overrides["formant_max_gain_db"]))
+
+    return stretch, pitch_ratio, out
+
+
+def build_dynamic_control_segments(
+    *,
+    args: argparse.Namespace,
+    sr: int,
+    total_seconds: float,
+    base_stretch: float,
+    base_pitch_ratio: float,
+) -> list[ControlSegment]:
+    refs: dict[str, DynamicControlRef] = dict(getattr(args, "_dynamic_control_refs", {}) or {})
+    if not refs:
+        return []
+
+    signals: list[DynamicControlSignal] = []
+    for parameter, ref in refs.items():
+        signal = load_dynamic_control_signal(ref, total_seconds=total_seconds)
+        if signal.parameter != parameter:
+            signal = DynamicControlSignal(
+                parameter=parameter,
+                interpolation=signal.interpolation,
+                order=signal.order,
+                times_sec=signal.times_sec,
+                values=signal.values,
+            )
+        signals.append(signal)
+    if not signals:
+        return []
+
+    boundaries: set[float] = {0.0, max(0.0, float(total_seconds))}
+    for signal in signals:
+        boundaries.update(float(t) for t in signal.times_sec)
+
+    if any(signal.interpolation != "none" for signal in signals):
+        hop_seconds = max(1.0 / float(sr), float(args.hop_size) / float(sr))
+        cursor = hop_seconds
+        while cursor < total_seconds:
+            boundaries.add(float(cursor))
+            cursor += hop_seconds
+
+    edges = np.asarray(sorted(boundaries), dtype=np.float64)
+    edges = np.clip(edges, 0.0, max(0.0, float(total_seconds)))
+    edges, _dummy = _deduplicate_points(edges, np.zeros_like(edges))
+    if edges.size < 2:
+        edges = np.asarray([0.0, max(0.0, float(total_seconds))], dtype=np.float64)
+
+    mids = 0.5 * (edges[:-1] + edges[1:])
+    sampled: dict[str, np.ndarray] = {}
+    for signal in signals:
+        sampled[signal.parameter] = _sample_dynamic_signal(signal, mids)
+
+    out: list[ControlSegment] = []
+    for idx, (start_sec, end_sec) in enumerate(zip(edges[:-1], edges[1:])):
+        if end_sec <= start_sec:
+            continue
+        stretch = float(base_stretch)
+        pitch_ratio = float(base_pitch_ratio)
+        overrides: dict[str, float] = {}
+        for parameter, values in sampled.items():
+            value = float(values[idx])
+            if parameter == "time_stretch":
+                stretch = value
+            elif parameter == "pitch_ratio":
+                pitch_ratio = value
+            else:
+                overrides[parameter] = value
+        stretch, pitch_ratio, clean = _finalize_dynamic_segment_values(
+            args=args,
+            stretch=stretch,
+            pitch_ratio=pitch_ratio,
+            overrides=overrides,
+        )
+        out.append(
+            ControlSegment(
+                start_sec=float(start_sec),
+                end_sec=float(end_sec),
+                stretch=float(stretch),
+                pitch_ratio=float(pitch_ratio),
+                confidence=1.0,
+                overrides=(clean if clean else None),
+            )
+        )
+    return out
 
 
 def compute_output_path(
@@ -3829,10 +4474,11 @@ def process_file(
     progress.set(0.08, "analyze")
     pitch = choose_pitch_ratio(args, audio, sr)
     base_stretch = resolve_base_stretch(args, audio.shape[0], sr)
+    use_dynamic_controls = bool(getattr(args, "_dynamic_control_refs", {}))
     use_control_map = bool(args.pitch_map is not None) or bool(args.pitch_map_stdin)
     auto_segment_seconds = float(getattr(args, "auto_segment_seconds", 0.0))
-    use_auto_segments = (not use_control_map) and (auto_segment_seconds > 0.0)
-    segment_mode = use_control_map or use_auto_segments
+    use_auto_segments = (not use_control_map) and (not use_dynamic_controls) and (auto_segment_seconds > 0.0)
+    segment_mode = use_control_map or use_auto_segments or use_dynamic_controls
     map_segments: list[ControlSegment] = []
     internal_stretch = base_stretch * pitch.ratio
     sync_plan: FourierSyncPlan | None = None
@@ -3844,7 +4490,15 @@ def process_file(
     if segment_mode:
         progress.set(0.10, "map")
         total_seconds = audio.shape[0] / float(sr)
-        if use_control_map:
+        if use_dynamic_controls:
+            map_segments = build_dynamic_control_segments(
+                args=args,
+                sr=sr,
+                total_seconds=total_seconds,
+                base_stretch=base_stretch,
+                base_pitch_ratio=pitch.ratio,
+            )
+        elif use_control_map:
             raw_segments = load_control_segments(
                 args,
                 default_stretch=base_stretch,
@@ -3899,11 +4553,21 @@ def process_file(
                 reused = True
             else:
                 piece = audio[start:end, :]
+                segment_args = args
+                segment_config = config
+                if seg.overrides:
+                    segment_args = clone_args_namespace(args)
+                    for key, value in seg.overrides.items():
+                        setattr(segment_args, key, value)
+                    if str(getattr(segment_args, "transient_mode", "off")) == "reset":
+                        segment_args.transient_preserve = True
+                    segment_config = build_vocoder_config_from_args(segment_args)
+
                 block = process_audio_block(
                     piece,
                     sr,
-                    args,
-                    config,
+                    segment_args,
+                    segment_config,
                     stretch=seg.stretch,
                     pitch_ratio=seg.pitch_ratio,
                 )
@@ -3926,10 +4590,13 @@ def process_file(
                 checkpoint_state_path.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
 
         progress.set(0.88, "assemble")
+        crossfade_ms = float(args.pitch_map_crossfade_ms)
+        if use_auto_segments or use_dynamic_controls:
+            crossfade_ms = 0.0
         out_audio = concat_audio_chunks(
             chunk_list,
             sr=sr,
-            crossfade_ms=args.pitch_map_crossfade_ms,
+            crossfade_ms=crossfade_ms,
         )
         if map_segments:
             durations = np.array(
@@ -4025,6 +4692,16 @@ def process_file(
                 "quality_profile": str(getattr(args, "_active_quality_profile", "neutral")),
                 "stages": int(stage_count),
                 "control_map_segments": int(len(map_segments)),
+                "dynamic_controls": [
+                    {
+                        "parameter": ref.parameter,
+                        "path": str(ref.path),
+                        "value_kind": ref.value_kind,
+                        "interp": ref.interpolation,
+                        "order": int(ref.order),
+                    }
+                    for ref in dict(getattr(args, "_dynamic_control_refs", {}) or {}).values()
+                ],
                 "checkpoint_id": checkpoint_id,
                 "transform": str(config.transform),
                 "window": str(config.window),
@@ -4049,7 +4726,8 @@ def process_file(
             f"stereo_mode={args.stereo_mode}, coherence={float(args.coherence_strength):.2f}, "
             f"pitch_mode={args.pitch_mode}, "
             f"fourier_sync={'on' if args.fourier_sync else 'off'}, "
-            f"device={rt.active_device}, control_map={'on' if segment_mode else 'off'}, "
+            f"device={rt.active_device}, control_mode="
+            f"{'dynamic' if use_dynamic_controls else ('map' if use_control_map else ('auto' if use_auto_segments else 'off'))}, "
             f"stretch_mode={args.stretch_mode}, stages={stage_count}"
         )
         if pitch.source_f0_hz is not None:
@@ -4115,8 +4793,146 @@ def resample_multi(audio: np.ndarray, output_samples: int, mode: ResampleMode) -
 
 
 def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
+    raw_dynamic_values: dict[str, str] = dict(getattr(args, "_dynamic_control_raw_values", {}) or {})
+    for attr_name, raw_value in raw_dynamic_values.items():
+        if hasattr(args, attr_name):
+            setattr(args, attr_name, raw_value)
+
     if args.stretch is not None:
-        args.time_stretch = float(args.stretch)
+        args.time_stretch = args.stretch
+
+    interp_mode = _coerce_control_interp(getattr(args, "interp", "linear"), context="--interp")
+    args.interp = interp_mode
+    args.order = _parse_int_cli_value(getattr(args, "order", 3), context="--order")
+    if int(args.order) < 1:
+        parser.error("--order must be >= 1")
+
+    dynamic_refs: dict[str, DynamicControlRef] = {}
+
+    for attr, parameter, value_kind, default_value in _DYNAMIC_NUMERIC_ARG_SPECS:
+        raw = getattr(args, attr)
+        if _looks_like_control_signal_reference(raw):
+            ref = DynamicControlRef(
+                parameter=parameter,
+                path=Path(str(raw)).expanduser(),
+                value_kind=value_kind,
+                interpolation=interp_mode,
+                order=int(args.order),
+            )
+            if str(ref.path) == "-":
+                parser.error(f"Dynamic control for --{attr.replace('_', '-')} does not support stdin ('-')")
+            if ref.path.suffix.lower() not in {".csv", ".json"}:
+                parser.error(
+                    f"--{attr.replace('_', '-')} control file must use .csv or .json extension: {ref.path}"
+                )
+            dynamic_refs[parameter] = ref
+            raw_dynamic_values[attr] = str(ref.path)
+            if value_kind == "int":
+                setattr(args, attr, int(round(default_value)))
+            else:
+                setattr(args, attr, float(default_value))
+        else:
+            raw_dynamic_values.pop(attr, None)
+            try:
+                if value_kind == "int":
+                    setattr(
+                        args,
+                        attr,
+                        _parse_int_cli_value(raw, context=f"--{attr.replace('_', '-')}"),
+                    )
+                else:
+                    setattr(
+                        args,
+                        attr,
+                        _parse_scalar_cli_value(raw, context=f"--{attr.replace('_', '-')}"),
+                    )
+            except ValueError as exc:
+                parser.error(str(exc))
+
+    pitch_ratio = getattr(args, "pitch_shift_ratio", None)
+    if pitch_ratio is not None:
+        if _looks_like_control_signal_reference(pitch_ratio):
+            ref = DynamicControlRef(
+                parameter="pitch_ratio",
+                path=Path(str(pitch_ratio)).expanduser(),
+                value_kind="pitch_ratio",
+                interpolation=interp_mode,
+                order=int(args.order),
+            )
+            if str(ref.path) == "-":
+                parser.error("--pitch-shift-ratio dynamic control does not support stdin ('-')")
+            if ref.path.suffix.lower() not in {".csv", ".json"}:
+                parser.error(f"--pitch-shift-ratio control file must be .csv or .json: {ref.path}")
+            dynamic_refs["pitch_ratio"] = ref
+            raw_dynamic_values["pitch_shift_ratio"] = str(ref.path)
+            args.pitch_shift_ratio = None
+        else:
+            raw_dynamic_values.pop("pitch_shift_ratio", None)
+            try:
+                args.pitch_shift_ratio = parse_pitch_ratio_value(
+                    pitch_ratio,
+                    context="--pitch-shift-ratio",
+                )
+            except ValueError as exc:
+                parser.error(str(exc))
+
+    pitch_semitones = getattr(args, "pitch_shift_semitones", None)
+    if pitch_semitones is not None:
+        if _looks_like_control_signal_reference(pitch_semitones):
+            ref = DynamicControlRef(
+                parameter="pitch_ratio",
+                path=Path(str(pitch_semitones)).expanduser(),
+                value_kind="pitch_semitones",
+                interpolation=interp_mode,
+                order=int(args.order),
+            )
+            if str(ref.path) == "-":
+                parser.error("--pitch-shift-semitones dynamic control does not support stdin ('-')")
+            if ref.path.suffix.lower() not in {".csv", ".json"}:
+                parser.error(f"--pitch-shift-semitones control file must be .csv or .json: {ref.path}")
+            dynamic_refs["pitch_ratio"] = ref
+            raw_dynamic_values["pitch_shift_semitones"] = str(ref.path)
+            args.pitch_shift_semitones = None
+        else:
+            raw_dynamic_values.pop("pitch_shift_semitones", None)
+            try:
+                args.pitch_shift_semitones = _parse_scalar_cli_value(
+                    pitch_semitones,
+                    context="--pitch-shift-semitones",
+                )
+            except ValueError as exc:
+                parser.error(str(exc))
+
+    pitch_cents = getattr(args, "pitch_shift_cents", None)
+    if pitch_cents is not None:
+        if _looks_like_control_signal_reference(pitch_cents):
+            ref = DynamicControlRef(
+                parameter="pitch_ratio",
+                path=Path(str(pitch_cents)).expanduser(),
+                value_kind="pitch_cents",
+                interpolation=interp_mode,
+                order=int(args.order),
+            )
+            if str(ref.path) == "-":
+                parser.error("--pitch-shift-cents dynamic control does not support stdin ('-')")
+            if ref.path.suffix.lower() not in {".csv", ".json"}:
+                parser.error(f"--pitch-shift-cents control file must be .csv or .json: {ref.path}")
+            dynamic_refs["pitch_ratio"] = ref
+            raw_dynamic_values["pitch_shift_cents"] = str(ref.path)
+            args.pitch_shift_cents = None
+        else:
+            raw_dynamic_values.pop("pitch_shift_cents", None)
+            try:
+                args.pitch_shift_cents = _parse_scalar_cli_value(
+                    pitch_cents,
+                    context="--pitch-shift-cents",
+                )
+            except ValueError as exc:
+                parser.error(str(exc))
+
+    args._dynamic_control_refs = dynamic_refs
+    args._dynamic_control_raw_values = raw_dynamic_values
+
     if args.gpu and args.cpu:
         parser.error("Choose only one of --gpu or --cpu.")
     if args.gpu:
@@ -4155,16 +4971,15 @@ def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> 
         parser.error("--pitch-map-smooth-ms must be >= 0")
     if args.pitch_map_crossfade_ms < 0.0:
         parser.error("--pitch-map-crossfade-ms must be >= 0")
+    if dynamic_refs and (args.pitch_map is not None or args.pitch_map_stdin):
+        parser.error("Dynamic per-parameter control files cannot be combined with --pitch-map/--pitch-map-stdin")
+    if "time_stretch" in dynamic_refs and args.target_duration is not None:
+        parser.error("--target-duration cannot be combined with dynamic --time-stretch control files")
+    for ref in dynamic_refs.values():
+        if not ref.path.exists():
+            parser.error(f"Dynamic control file not found: {ref.path}")
     if args.pitch_map_stdin and args.pitch_map is not None and str(args.pitch_map) != "-":
         parser.error("--pitch-map-stdin cannot be combined with --pitch-map path")
-    if args.pitch_shift_ratio is not None:
-        try:
-            args.pitch_shift_ratio = parse_pitch_ratio_value(
-                args.pitch_shift_ratio,
-                context="--pitch-shift-ratio",
-            )
-        except ValueError as exc:
-            parser.error(str(exc))
     if args.target_f0 is not None and args.target_f0 <= 0:
         parser.error("--target-f0 must be > 0")
     if args.f0_min <= 0 or args.f0_max <= 0 or args.f0_min >= args.f0_max:
@@ -4280,6 +5095,7 @@ def build_parser() -> argparse.ArgumentParser:
             "  pvx voc vocal.wav --preset vocal --pitch -2 --output vocal_tuned.wav\n"
             "  pvx voc speech.wav --transient-mode hybrid --stretch 1.25 --output speech_hybrid.wav\n"
             "  pvx voc stereo.wav --stereo-mode mid_side_lock --coherence-strength 0.9 --stretch 1.2 --output stereo_lock.wav\n"
+            "  pvx voc input.wav --stretch controls/stretch.csv --interp linear --output output.wav\n"
             "  pvx voc input.wav --example all\n"
         ),
     )
@@ -4346,9 +5162,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     beginner_group.add_argument(
         "--stretch",
-        type=float,
+        type=str,
         default=None,
-        help="Alias for --time-stretch.",
+        help="Alias for --time-stretch. Accepts scalar or control file (.csv/.json).",
     )
     beginner_group.add_argument(
         "--gpu",
@@ -4385,18 +5201,23 @@ def build_parser() -> argparse.ArgumentParser:
         help="Allow automatic transform selection when --transform is not explicitly set.",
     )
     stft_group = parser.add_argument_group("Quality/Phase")
-    stft_group.add_argument("--n-fft", type=int, default=2048, help="FFT size (default: 2048)")
+    stft_group.add_argument(
+        "--n-fft",
+        type=str,
+        default=2048,
+        help="FFT size (default: 2048). Accepts scalar or control file (.csv/.json).",
+    )
     stft_group.add_argument(
         "--win-length",
-        type=int,
+        type=str,
         default=2048,
-        help="Window length in samples (default: 2048)",
+        help="Window length in samples (default: 2048). Accepts scalar or control file (.csv/.json).",
     )
     stft_group.add_argument(
         "--hop-size",
-        type=int,
+        type=str,
         default=512,
-        help="Hop size in samples (default: 512)",
+        help="Hop size in samples (default: 512). Accepts scalar or control file (.csv/.json).",
     )
     stft_group.add_argument(
         "--window",
@@ -4406,9 +5227,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     stft_group.add_argument(
         "--kaiser-beta",
-        type=float,
+        type=str,
         default=14.0,
-        help="Kaiser window beta parameter used when --window kaiser (default: 14.0)",
+        help="Kaiser window beta parameter used when --window kaiser (default: 14.0). Accepts scalar or control file (.csv/.json).",
     )
     stft_group.add_argument(
         "--transform",
@@ -4441,11 +5262,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     stft_group.add_argument(
         "--ambient-phase-mix",
-        type=float,
+        type=str,
         default=0.5,
         help=(
             "Random-phase blend when --phase-engine hybrid "
-            "(0.0=propagated only, 1.0=random only; default: 0.5)."
+            "(0.0=propagated only, 1.0=random only; default: 0.5). "
+            "Accepts scalar or control file (.csv/.json)."
         ),
     )
     stft_group.add_argument(
@@ -4461,9 +5283,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     stft_group.add_argument(
         "--transient-threshold",
-        type=float,
+        type=str,
         default=2.0,
-        help="Spectral-flux multiplier for transient detection (default: 2.0)",
+        help="Spectral-flux multiplier for transient detection (default: 2.0). Accepts scalar or control file (.csv/.json).",
     )
     stft_group.add_argument(
         "--fourier-sync",
@@ -4475,21 +5297,21 @@ def build_parser() -> argparse.ArgumentParser:
     )
     stft_group.add_argument(
         "--fourier-sync-min-fft",
-        type=int,
+        type=str,
         default=256,
-        help="Minimum frame FFT size for --fourier-sync (default: 256)",
+        help="Minimum frame FFT size for --fourier-sync (default: 256). Accepts scalar or control file (.csv/.json).",
     )
     stft_group.add_argument(
         "--fourier-sync-max-fft",
-        type=int,
+        type=str,
         default=8192,
-        help="Maximum frame FFT size for --fourier-sync (default: 8192)",
+        help="Maximum frame FFT size for --fourier-sync (default: 8192). Accepts scalar or control file (.csv/.json).",
     )
     stft_group.add_argument(
         "--fourier-sync-smooth",
-        type=int,
+        type=str,
         default=5,
-        help="Smoothing span (frames) for prescanned F0 track in --fourier-sync (default: 5)",
+        help="Smoothing span (frames) for prescanned F0 track in --fourier-sync (default: 5). Accepts scalar or control file (.csv/.json).",
     )
     stft_group.add_argument(
         "--multires-fusion",
@@ -4514,9 +5336,9 @@ def build_parser() -> argparse.ArgumentParser:
     time_group.add_argument(
         "--time-stretch",
         "--time-stretch-factor",
-        type=float,
+        type=str,
         default=1.0,
-        help="Final duration multiplier (1.0=unchanged, 2.0=2x longer)",
+        help="Final duration multiplier (1.0=unchanged, 2.0=2x longer). Accepts scalar or control file (.csv/.json).",
     )
     time_group.add_argument(
         "--target-duration",
@@ -4540,15 +5362,15 @@ def build_parser() -> argparse.ArgumentParser:
     )
     time_group.add_argument(
         "--extreme-stretch-threshold",
-        type=float,
+        type=str,
         default=2.0,
-        help="Auto-mode threshold for multistage activation (default: 2.0).",
+        help="Auto-mode threshold for multistage activation (default: 2.0). Accepts scalar or control file (.csv/.json).",
     )
     time_group.add_argument(
         "--max-stage-stretch",
-        type=float,
+        type=str,
         default=1.8,
-        help="Maximum per-stage ratio used in multistage mode (default: 1.8).",
+        help="Maximum per-stage ratio used in multistage mode (default: 1.8). Accepts scalar or control file (.csv/.json).",
     )
     time_group.add_argument(
         "--onset-time-credit",
@@ -4560,18 +5382,18 @@ def build_parser() -> argparse.ArgumentParser:
     )
     time_group.add_argument(
         "--onset-credit-pull",
-        type=float,
+        type=str,
         default=0.5,
         help=(
             "Fraction of per-frame read advance removable while onset credit exists "
-            "(0.0..1.0, default: 0.5)."
+            "(0.0..1.0, default: 0.5). Accepts scalar or control file (.csv/.json)."
         ),
     )
     time_group.add_argument(
         "--onset-credit-max",
-        type=float,
+        type=str,
         default=8.0,
-        help="Maximum accumulated onset time credit in analysis-frame units (default: 8.0).",
+        help="Maximum accumulated onset time credit in analysis-frame units (default: 8.0). Accepts scalar or control file (.csv/.json).",
     )
     time_group.add_argument(
         "--no-onset-realign",
@@ -4615,6 +5437,21 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Reuse existing checkpoint chunks from --checkpoint-dir when available.",
     )
+    time_group.add_argument(
+        "--interp",
+        choices=list(CONTROL_INTERP_CHOICES),
+        default="linear",
+        help=(
+            "Interpolation mode for time-varying control signals loaded from CSV/JSON "
+            "(default: linear)."
+        ),
+    )
+    time_group.add_argument(
+        "--order",
+        type=int,
+        default=3,
+        help="Polynomial order for --interp polynomial (default: 3).",
+    )
 
     transient_group = parser.add_argument_group("Transients")
     transient_group.add_argument(
@@ -4628,21 +5465,21 @@ def build_parser() -> argparse.ArgumentParser:
     )
     transient_group.add_argument(
         "--transient-sensitivity",
-        type=float,
+        type=str,
         default=0.5,
-        help="Transient detector sensitivity in [0,1] (higher catches more onsets).",
+        help="Transient detector sensitivity in [0,1] (higher catches more onsets). Accepts scalar or control file (.csv/.json).",
     )
     transient_group.add_argument(
         "--transient-protect-ms",
-        type=float,
+        type=str,
         default=30.0,
-        help="Transient protection width in milliseconds (default: 30).",
+        help="Transient protection width in milliseconds (default: 30). Accepts scalar or control file (.csv/.json).",
     )
     transient_group.add_argument(
         "--transient-crossfade-ms",
-        type=float,
+        type=str,
         default=10.0,
-        help="Crossfade duration for transient/steady stitching (default: 10 ms).",
+        help="Crossfade duration for transient/steady stitching (default: 10 ms). Accepts scalar or control file (.csv/.json).",
     )
 
     stereo_group = parser.add_argument_group("Stereo")
@@ -4663,9 +5500,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     stereo_group.add_argument(
         "--coherence-strength",
-        type=float,
+        type=str,
         default=0.0,
-        help="Coherence lock strength in [0,1] (0=off, 1=full lock).",
+        help="Coherence lock strength in [0,1] (0=off, 1=full lock). Accepts scalar or control file (.csv/.json).",
     )
 
     pitch_group = time_group
@@ -4675,16 +5512,16 @@ def build_parser() -> argparse.ArgumentParser:
         "--target-pitch-shift-semitones",
         "--pitch",
         "--semitones",
-        type=float,
+        type=str,
         default=None,
-        help="Pitch shift in semitones (+12 is one octave up)",
+        help="Pitch shift in semitones (+12 is one octave up). Accepts scalar or control file (.csv/.json).",
     )
     pitch_mutex.add_argument(
         "--pitch-shift-cents",
         "--cents",
-        type=float,
+        type=str,
         default=None,
-        help="Pitch shift in cents (+1200 is one octave up)",
+        help="Pitch shift in cents (+1200 is one octave up). Accepts scalar or control file (.csv/.json).",
     )
     pitch_mutex.add_argument(
         "--pitch-shift-ratio",
@@ -4693,7 +5530,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help=(
             "Pitch ratio (>1 up, <1 down). Accepts decimals (1.5), "
-            "integer ratios (3/2), and expressions (2^(1/12))."
+            "integer ratios (3/2), expressions (2^(1/12)), or a control file (.csv/.json)."
         ),
     )
     pitch_mutex.add_argument(
@@ -4728,21 +5565,21 @@ def build_parser() -> argparse.ArgumentParser:
     )
     pitch_group.add_argument(
         "--formant-lifter",
-        type=int,
+        type=str,
         default=32,
-        help="Cepstral lifter cutoff for formant envelope extraction (default: 32)",
+        help="Cepstral lifter cutoff for formant envelope extraction (default: 32). Accepts scalar or control file (.csv/.json).",
     )
     pitch_group.add_argument(
         "--formant-strength",
-        type=float,
+        type=str,
         default=1.0,
-        help="Formant correction blend 0..1 when pitch mode is formant-preserving (default: 1.0)",
+        help="Formant correction blend 0..1 when pitch mode is formant-preserving (default: 1.0). Accepts scalar or control file (.csv/.json).",
     )
     pitch_group.add_argument(
         "--formant-max-gain-db",
-        type=float,
+        type=str,
         default=12.0,
-        help="Max per-bin formant correction gain in dB (default: 12)",
+        help="Max per-bin formant correction gain in dB (default: 12). Accepts scalar or control file (.csv/.json).",
     )
     pitch_group.add_argument(
         "--pitch-map",
@@ -4980,10 +5817,16 @@ def main(argv: list[str] | None = None) -> int:
     profile_changes = list(preset_changes) + profile_changes
 
     if args.auto_transform:
+        n_fft_for_auto = 2048
+        try:
+            if not _looks_like_control_signal_reference(getattr(args, "n_fft", 2048)):
+                n_fft_for_auto = _parse_int_cli_value(getattr(args, "n_fft", 2048), context="--n-fft")
+        except ValueError:
+            n_fft_for_auto = 2048
         resolved_transform = resolve_transform_auto(
             requested_transform=str(args.transform),
             profile=active_profile,
-            n_fft=int(args.n_fft),
+            n_fft=int(n_fft_for_auto),
             provided_flags=cli_flags,
         )
         if resolved_transform != args.transform:
@@ -5014,25 +5857,7 @@ def main(argv: list[str] | None = None) -> int:
             info += f", overrides={','.join(sorted(set(profile_changes)))}"
         log_message(args, info, min_level="verbose")
 
-    config = VocoderConfig(
-        n_fft=args.n_fft,
-        win_length=args.win_length,
-        hop_size=args.hop_size,
-        window=args.window,
-        kaiser_beta=args.kaiser_beta,
-        transform=normalize_transform_name(args.transform),
-        center=not args.no_center,
-        phase_locking=args.phase_locking,
-        phase_engine=args.phase_engine,
-        ambient_phase_mix=args.ambient_phase_mix,
-        phase_random_seed=args.phase_random_seed,
-        transient_preserve=args.transient_preserve,
-        transient_threshold=args.transient_threshold,
-        onset_time_credit=args.onset_time_credit,
-        onset_credit_pull=args.onset_credit_pull,
-        onset_credit_max=args.onset_credit_max,
-        onset_realign=not args.no_onset_realign,
-    )
+    config = build_vocoder_config_from_args(args)
 
     if args.output_dir is not None:
         args.output_dir = args.output_dir.resolve()
@@ -5040,6 +5865,17 @@ def main(argv: list[str] | None = None) -> int:
         args.output = args.output.resolve()
     if args.pitch_map is not None and str(args.pitch_map) != "-":
         args.pitch_map = args.pitch_map.resolve()
+    if getattr(args, "_dynamic_control_refs", None):
+        resolved_refs: dict[str, DynamicControlRef] = {}
+        for key, ref in dict(args._dynamic_control_refs).items():
+            resolved_refs[key] = DynamicControlRef(
+                parameter=ref.parameter,
+                path=ref.path.resolve(),
+                value_kind=ref.value_kind,
+                interpolation=ref.interpolation,
+                order=ref.order,
+            )
+        args._dynamic_control_refs = resolved_refs
     if args.checkpoint_dir is not None:
         args.checkpoint_dir = args.checkpoint_dir.resolve()
     if args.manifest_json is not None:
@@ -5080,6 +5916,16 @@ def main(argv: list[str] | None = None) -> int:
                 "stdout": bool(args.stdout),
                 "manifest_json": None if args.manifest_json is None else str(args.manifest_json),
                 "checkpoint_dir": None if args.checkpoint_dir is None else str(args.checkpoint_dir),
+                "dynamic_controls": [
+                    {
+                        "parameter": ref.parameter,
+                        "path": str(ref.path),
+                        "value_kind": ref.value_kind,
+                        "interp": ref.interpolation,
+                        "order": int(ref.order),
+                    }
+                    for ref in dict(getattr(args, "_dynamic_control_refs", {}) or {}).values()
+                ],
                 "output_policy": {
                     "subtype": None if args.subtype is None else str(args.subtype),
                     "bit_depth": str(args.bit_depth),

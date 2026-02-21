@@ -12,6 +12,7 @@ from pvx.core.common import (
     SegmentSpec,
     add_common_io_args,
     add_vocoder_args,
+    build_examples_epilog,
     build_status_bar,
     build_vocoder_config,
     concat_with_crossfade,
@@ -48,7 +49,21 @@ def fill_stretch_segments(segments: list[SegmentSpec], total_s: float) -> list[S
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Apply variable time-stretch map from CSV")
+    parser = argparse.ArgumentParser(
+        description="Apply variable time-stretch map from CSV",
+        formatter_class=argparse.RawTextHelpFormatter,
+        epilog=build_examples_epilog(
+            [
+                "pvx warp input.wav --map map_warp.csv --output warped.wav",
+                "pvx warp speech.wav --map map_slowfast.csv --crossfade-ms 14 --output speech_timeline.wav",
+                "pvx warp source.wav --map map_warp.csv --stdout | pvx deverb - --strength 0.3 --output warped_dry.wav",
+            ],
+            notes=[
+                "Warp map CSV format: start_sec,end_sec,stretch.",
+                "Use higher --crossfade-ms when segment edges click.",
+            ],
+        ),
+    )
     add_common_io_args(parser, default_suffix="_warp")
     add_vocoder_args(parser, default_n_fft=2048, default_win_length=2048, default_hop_size=512)
     parser.add_argument("--map", required=True, type=Path, help="CSV map with start_sec,end_sec,stretch")

@@ -17,6 +17,7 @@ from pvx.core.common import (
     add_console_args,
     add_output_policy_args,
     add_vocoder_args,
+    build_examples_epilog,
     build_status_bar,
     build_vocoder_config,
     ensure_runtime,
@@ -74,7 +75,21 @@ def morph_pair(
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Morph two audio files in the STFT domain")
+    parser = argparse.ArgumentParser(
+        description="Morph two audio files in the STFT domain",
+        formatter_class=argparse.RawTextHelpFormatter,
+        epilog=build_examples_epilog(
+            [
+                "pvx morph source_a.wav source_b.wav --alpha 0.35 --output morph_35.wav",
+                "pvx morph vocal.wav strings.wav --alpha 0.6 --n-fft 4096 --hop-size 512 --output vocal_strings.wav",
+                "pvx morph a.wav b.wav --alpha 0.5 --stdout | pvx freeze - --freeze-time 0.8 --duration 12 --output morph_freeze.wav",
+            ],
+            notes=[
+                "--alpha 0.0 keeps input A, --alpha 1.0 keeps input B.",
+                "Only one morph input can be '-' (stdin).",
+            ],
+        ),
+    )
     parser.add_argument("input_a", type=Path, help="Input A path or '-' for stdin")
     parser.add_argument("input_b", type=Path, help="Input B path or '-' for stdin")
     parser.add_argument("-o", "--output", type=Path, default=None, help="Output file path")

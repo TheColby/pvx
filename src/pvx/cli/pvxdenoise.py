@@ -11,6 +11,7 @@ import numpy as np
 from pvx.core.common import (
     add_common_io_args,
     add_vocoder_args,
+    build_examples_epilog,
     build_status_bar,
     build_vocoder_config,
     default_output_path,
@@ -69,7 +70,21 @@ def denoise_channel(
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Spectral subtraction denoiser")
+    parser = argparse.ArgumentParser(
+        description="Spectral subtraction denoiser",
+        formatter_class=argparse.RawTextHelpFormatter,
+        epilog=build_examples_epilog(
+            [
+                "pvx denoise field.wav --noise-seconds 0.5 --reduction-db 10 --output field_clean.wav",
+                "pvx denoise interview.wav --noise-file roomtone.wav --reduction-db 8 --smooth 7 --output interview_clean.wav",
+                "pvx denoise noisy.wav --reduction-db 6 --stdout | pvx deverb - --strength 0.3 --output noisy_cleanup.wav",
+            ],
+            notes=[
+                "Use --noise-file when leading silence is unavailable.",
+                "Too much --reduction-db can create musical noise artifacts.",
+            ],
+        ),
+    )
     add_common_io_args(parser, default_suffix="_denoise")
     add_vocoder_args(parser, default_n_fft=2048, default_win_length=2048, default_hop_size=512)
     parser.add_argument("--noise-seconds", type=float, default=0.35, help="Noise profile duration from start")

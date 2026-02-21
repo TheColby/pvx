@@ -89,6 +89,26 @@ def add_console_args(
         )
 
 
+def build_examples_epilog(
+    examples: Iterable[str],
+    *,
+    notes: Iterable[str] | None = None,
+) -> str:
+    """Return a compact, RawTextHelpFormatter-friendly examples block."""
+    lines = ["Examples:"]
+    for example in examples:
+        text = str(example).strip()
+        if text:
+            lines.append(f"  {text}")
+    note_lines = [str(note).strip() for note in (notes or []) if str(note).strip()]
+    if note_lines:
+        lines.append("")
+        lines.append("Notes:")
+        for note in note_lines:
+            lines.append(f"  - {note}")
+    return "\n".join(lines)
+
+
 def console_level(args: argparse.Namespace) -> int:
     cached = getattr(args, "_console_level_cache", None)
     if cached is not None:

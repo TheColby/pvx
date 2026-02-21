@@ -11,6 +11,7 @@ import numpy as np
 from pvx.core.common import (
     add_common_io_args,
     add_vocoder_args,
+    build_examples_epilog,
     build_status_bar,
     build_vocoder_config,
     default_output_path,
@@ -62,7 +63,21 @@ def freeze_channel(
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Freeze a spectral slice into a sustained output")
+    parser = argparse.ArgumentParser(
+        description="Freeze a spectral slice into a sustained output",
+        formatter_class=argparse.RawTextHelpFormatter,
+        epilog=build_examples_epilog(
+            [
+                "pvx freeze input.wav --freeze-time 0.25 --duration 8 --output output_freeze.wav",
+                "pvx freeze pad.wav --freeze-time 0.9 --duration 30 --random-phase --output pad_air.wav",
+                "pvx freeze input.wav --freeze-time 0.4 --duration 6 --stdout | pvx deverb - --strength 0.35 --output cleaned.wav",
+            ],
+            notes=[
+                "Use --freeze-time to choose the spectral moment to sustain.",
+                "Enable --random-phase for more animated ambient textures.",
+            ],
+        ),
+    )
     add_common_io_args(parser, default_suffix="_freeze")
     add_vocoder_args(parser, default_n_fft=2048, default_win_length=2048, default_hop_size=256)
     parser.add_argument("--freeze-time", type=float, default=0.2, help="Freeze anchor time in seconds")

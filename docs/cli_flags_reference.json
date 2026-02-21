@@ -1,6 +1,6 @@
 {
-  "commit": "dcc235a",
-  "commit_date": "2026-02-20T11:48:06-05:00",
+  "commit": "97bcd59",
+  "commit_date": "2026-02-20T12:18:46-05:00",
   "entries": [
     {
       "action": "",
@@ -920,7 +920,7 @@
       "choices": [],
       "default": 0.5,
       "flag": "--ambient-phase-mix",
-      "help": "Random-phase blend when --phase-engine hybrid (0.0=propagated only, 1.0=random only; default: 0.5).",
+      "help": "Random-phase blend when --phase-engine hybrid (0.0=propagated only, 1.0=random only; default: 0.5). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -1003,7 +1003,7 @@
       "choices": [],
       "default": null,
       "flag": "--cents",
-      "help": "Pitch shift in cents (+1200 is one octave up)",
+      "help": "Pitch shift in cents (+1200 is one octave up). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -1043,7 +1043,7 @@
       "choices": [],
       "default": 0.0,
       "flag": "--coherence-strength",
-      "help": "Coherence lock strength in [0,1] (0=off, 1=full lock).",
+      "help": "Coherence lock strength in [0,1] (0=off, 1=full lock). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -1287,7 +1287,7 @@
       "choices": [],
       "default": 2.0,
       "flag": "--extreme-stretch-threshold",
-      "help": "Auto-mode threshold for multistage activation (default: 2.0).",
+      "help": "Auto-mode threshold for multistage activation (default: 2.0). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -1327,7 +1327,7 @@
       "choices": [],
       "default": 32,
       "flag": "--formant-lifter",
-      "help": "Cepstral lifter cutoff for formant envelope extraction (default: 32)",
+      "help": "Cepstral lifter cutoff for formant envelope extraction (default: 32). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -1337,7 +1337,7 @@
       "choices": [],
       "default": 12.0,
       "flag": "--formant-max-gain-db",
-      "help": "Max per-bin formant correction gain in dB (default: 12)",
+      "help": "Max per-bin formant correction gain in dB (default: 12). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -1347,7 +1347,7 @@
       "choices": [],
       "default": 1.0,
       "flag": "--formant-strength",
-      "help": "Formant correction blend 0..1 when pitch mode is formant-preserving (default: 1.0)",
+      "help": "Formant correction blend 0..1 when pitch mode is formant-preserving (default: 1.0). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -1367,7 +1367,7 @@
       "choices": [],
       "default": 8192,
       "flag": "--fourier-sync-max-fft",
-      "help": "Maximum frame FFT size for --fourier-sync (default: 8192)",
+      "help": "Maximum frame FFT size for --fourier-sync (default: 8192). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -1377,7 +1377,7 @@
       "choices": [],
       "default": 256,
       "flag": "--fourier-sync-min-fft",
-      "help": "Minimum frame FFT size for --fourier-sync (default: 256)",
+      "help": "Minimum frame FFT size for --fourier-sync (default: 256). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -1387,7 +1387,7 @@
       "choices": [],
       "default": 5,
       "flag": "--fourier-sync-smooth",
-      "help": "Smoothing span (frames) for prescanned F0 track in --fourier-sync (default: 5)",
+      "help": "Smoothing span (frames) for prescanned F0 track in --fourier-sync (default: 5). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -1427,7 +1427,17 @@
       "choices": [],
       "default": 512,
       "flag": "--hop-size",
-      "help": "Hop size in samples (default: 512)",
+      "help": "Hop size in samples (default: 512). Accepts scalar or control file (.csv/.json).",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": "linear",
+      "flag": "--interp",
+      "help": "Interpolation mode for time-varying control signals loaded from CSV/JSON (default: linear).",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -1437,7 +1447,7 @@
       "choices": [],
       "default": 14.0,
       "flag": "--kaiser-beta",
-      "help": "Kaiser window beta parameter used when --window kaiser (default: 14.0)",
+      "help": "Kaiser window beta parameter used when --window kaiser (default: 14.0). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -1477,7 +1487,7 @@
       "choices": [],
       "default": 1.8,
       "flag": "--max-stage-stretch",
-      "help": "Maximum per-stage ratio used in multistage mode (default: 1.8).",
+      "help": "Maximum per-stage ratio used in multistage mode (default: 1.8). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -1527,7 +1537,7 @@
       "choices": [],
       "default": 2048,
       "flag": "--n-fft",
-      "help": "FFT size (default: 2048)",
+      "help": "FFT size (default: 2048). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -1581,7 +1591,7 @@
       "choices": [],
       "default": 8.0,
       "flag": "--onset-credit-max",
-      "help": "Maximum accumulated onset time credit in analysis-frame units (default: 8.0).",
+      "help": "Maximum accumulated onset time credit in analysis-frame units (default: 8.0). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -1591,7 +1601,7 @@
       "choices": [],
       "default": 0.5,
       "flag": "--onset-credit-pull",
-      "help": "Fraction of per-frame read advance removable while onset credit exists (0.0..1.0, default: 0.5).",
+      "help": "Fraction of per-frame read advance removable while onset credit exists (0.0..1.0, default: 0.5). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -1602,6 +1612,16 @@
       "default": null,
       "flag": "--onset-time-credit",
       "help": "Enable onset-triggered time-credit scheduling to reduce transient smear during extreme stretching.",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc.py"
+    },
+    {
+      "action": "",
+      "choices": [],
+      "default": 3,
+      "flag": "--order",
+      "help": "Polynomial order for --interp polynomial (default: 3).",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -1704,7 +1724,7 @@
       "choices": [],
       "default": null,
       "flag": "--pitch",
-      "help": "Pitch shift in semitones (+12 is one octave up)",
+      "help": "Pitch shift in semitones (+12 is one octave up). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -1801,7 +1821,7 @@
       "choices": [],
       "default": null,
       "flag": "--pitch-shift-cents",
-      "help": "Pitch shift in cents (+1200 is one octave up)",
+      "help": "Pitch shift in cents (+1200 is one octave up). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -1811,7 +1831,7 @@
       "choices": [],
       "default": null,
       "flag": "--pitch-shift-ratio",
-      "help": "Pitch ratio (>1 up, <1 down). Accepts decimals (1.5), integer ratios (3/2), and expressions (2^(1/12)).",
+      "help": "Pitch ratio (>1 up, <1 down). Accepts decimals (1.5), integer ratios (3/2), expressions (2^(1/12)), or a control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -1821,7 +1841,7 @@
       "choices": [],
       "default": null,
       "flag": "--pitch-shift-semitones",
-      "help": "Pitch shift in semitones (+12 is one octave up)",
+      "help": "Pitch shift in semitones (+12 is one octave up). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -1861,7 +1881,7 @@
       "choices": [],
       "default": null,
       "flag": "--ratio",
-      "help": "Pitch ratio (>1 up, <1 down). Accepts decimals (1.5), integer ratios (3/2), and expressions (2^(1/12)).",
+      "help": "Pitch ratio (>1 up, <1 down). Accepts decimals (1.5), integer ratios (3/2), expressions (2^(1/12)), or a control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -1915,7 +1935,7 @@
       "choices": [],
       "default": null,
       "flag": "--semitones",
-      "help": "Pitch shift in semitones (+12 is one octave up)",
+      "help": "Pitch shift in semitones (+12 is one octave up). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -1993,7 +2013,7 @@
       "choices": [],
       "default": null,
       "flag": "--stretch",
-      "help": "Alias for --time-stretch.",
+      "help": "Alias for --time-stretch. Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -2067,7 +2087,7 @@
       "choices": [],
       "default": null,
       "flag": "--target-pitch-shift-semitones",
-      "help": "Pitch shift in semitones (+12 is one octave up)",
+      "help": "Pitch shift in semitones (+12 is one octave up). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -2087,7 +2107,7 @@
       "choices": [],
       "default": 1.0,
       "flag": "--time-stretch",
-      "help": "Final duration multiplier (1.0=unchanged, 2.0=2x longer)",
+      "help": "Final duration multiplier (1.0=unchanged, 2.0=2x longer). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -2097,7 +2117,7 @@
       "choices": [],
       "default": 1.0,
       "flag": "--time-stretch-factor",
-      "help": "Final duration multiplier (1.0=unchanged, 2.0=2x longer)",
+      "help": "Final duration multiplier (1.0=unchanged, 2.0=2x longer). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -2117,7 +2137,7 @@
       "choices": [],
       "default": 10.0,
       "flag": "--transient-crossfade-ms",
-      "help": "Crossfade duration for transient/steady stitching (default: 10 ms).",
+      "help": "Crossfade duration for transient/steady stitching (default: 10 ms). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -2152,7 +2172,7 @@
       "choices": [],
       "default": 30.0,
       "flag": "--transient-protect-ms",
-      "help": "Transient protection width in milliseconds (default: 30).",
+      "help": "Transient protection width in milliseconds (default: 30). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -2162,7 +2182,7 @@
       "choices": [],
       "default": 0.5,
       "flag": "--transient-sensitivity",
-      "help": "Transient detector sensitivity in [0,1] (higher catches more onsets).",
+      "help": "Transient detector sensitivity in [0,1] (higher catches more onsets). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -2172,7 +2192,7 @@
       "choices": [],
       "default": 2.0,
       "flag": "--transient-threshold",
-      "help": "Spectral-flux multiplier for transient detection (default: 2.0)",
+      "help": "Spectral-flux multiplier for transient detection (default: 2.0). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -2212,7 +2232,7 @@
       "choices": [],
       "default": 2048,
       "flag": "--win-length",
-      "help": "Window length in samples (default: 2048)",
+      "help": "Window length in samples (default: 2048). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc.py"
@@ -2338,6 +2358,7 @@
     "--harmonic-pitch-semitones",
     "--harmonic-stretch",
     "--hop-size",
+    "--interp",
     "--intervals",
     "--intervals-cents",
     "--kaiser-beta",
@@ -2362,6 +2383,7 @@
     "--onset-credit-max",
     "--onset-credit-pull",
     "--onset-time-credit",
+    "--order",
     "--out",
     "--output",
     "--output-dir",

@@ -12,7 +12,7 @@ from pathlib import Path
 import numpy as np
 import soundfile as sf
 
-from pvx.core.common import add_console_args, build_status_bar, log_message
+from pvx.core.common import add_console_args, build_examples_epilog, build_status_bar, log_message
 
 
 def _read_audio(path: Path) -> tuple[np.ndarray, int]:
@@ -147,6 +147,18 @@ def _track_acf(
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="HPS/pyin-style pitch tracker that emits pvx control-map CSV to stdout.",
+        formatter_class=argparse.RawTextHelpFormatter,
+        epilog=build_examples_epilog(
+            [
+                "pvx pitch-track guide.wav --output guide_pitch.csv",
+                "pvx pitch-track guide.wav --backend pyin --ratio-reference hz --reference-hz 440 --output guide_to_a440.csv",
+                "pvx pitch-track guide.wav --output - | pvx voc target.wav --pitch-map-stdin --output followed.wav",
+            ],
+            notes=[
+                "Default output columns: start_sec,end_sec,stretch,pitch_ratio,confidence.",
+                "Use --confidence-floor to gate unreliable pitch estimates.",
+            ],
+        ),
     )
     parser.add_argument("input", type=Path, help="Input audio file path or '-' for stdin audio")
     parser.add_argument(

@@ -12,6 +12,7 @@ import numpy as np
 from pvx.core.common import (
     add_common_io_args,
     add_vocoder_args,
+    build_examples_epilog,
     build_status_bar,
     build_vocoder_config,
     default_output_path,
@@ -122,7 +123,21 @@ def overlap_add(chunks: list[np.ndarray], starts: list[int], total_len: int) -> 
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Monophonic retune toward a musical scale")
+    parser = argparse.ArgumentParser(
+        description="Monophonic retune toward a musical scale",
+        formatter_class=argparse.RawTextHelpFormatter,
+        epilog=build_examples_epilog(
+            [
+                "pvx retune vocal.wav --root C --scale major --strength 0.8 --output vocal_major.wav",
+                "pvx retune flute.wav --root D --scale-cents 0,112,204,316,498,702,884,1088 --output flute_microtonal.wav",
+                "pvx retune lead.wav --root A --scale minor --stdout | pvx unison - --voices 5 --detune-cents 10 --output lead_retune_unison.wav",
+            ],
+            notes=[
+                "Use --scale-cents for custom microtonal scales within one octave.",
+                "Increase --chunk-ms for steadier pitch decisions, reduce for faster note changes.",
+            ],
+        ),
+    )
     add_common_io_args(parser, default_suffix="_retune")
     add_vocoder_args(parser, default_n_fft=2048, default_win_length=2048, default_hop_size=512)
     parser.add_argument("--root", default="C", help="Scale root note (C,C#,D,...,B)")

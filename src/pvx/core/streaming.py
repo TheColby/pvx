@@ -233,6 +233,7 @@ def run_stateful_stream(
     base_stretch = voc_core.resolve_base_stretch(args, audio.shape[0], sr)
     if base_stretch <= 0.0:
         parser.error("--time-stretch/--target-duration resolved to non-positive value")
+    dynamic_refs: dict[str, voc_core.DynamicControlRef] = dict(getattr(args, "_dynamic_control_refs", {}) or {})
 
     config = _build_config(args)
     chunk_samples = max(1, int(round(float(chunk_seconds) * sr)))
@@ -249,11 +250,27 @@ def run_stateful_stream(
 
     total_samples = int(audio.shape[0])
     total_chunks = max(1, math.ceil(total_samples / chunk_samples))
+    dynamic_signals: dict[str, voc_core.DynamicControlSignal] = {}
+    if dynamic_refs:
+        total_seconds = float(total_samples) / float(sr)
+        for parameter, ref in dynamic_refs.items():
+            signal = voc_core.load_dynamic_control_signal(ref, total_seconds=total_seconds)
+            if signal.parameter != parameter:
+                signal = voc_core.DynamicControlSignal(
+                    parameter=parameter,
+                    interpolation=signal.interpolation,
+                    order=signal.order,
+                    times_sec=signal.times_sec,
+                    values=signal.values,
+                )
+            dynamic_signals[parameter] = signal
+
     voc_core.log_message(
         args,
         (
             f"[stream] mode=stateful, chunks={total_chunks}, chunk_seconds={float(chunk_seconds):.4f}, "
-            f"context_samples={context_samples}, stretch={base_stretch:.6f}, pitch_ratio={pitch.ratio:.6f}"
+            f"context_samples={context_samples}, stretch={base_stretch:.6f}, pitch_ratio={pitch.ratio:.6f}, "
+            f"controls={'dynamic' if dynamic_signals else 'static'}"
         ),
         min_level="normal",
     )
@@ -265,16 +282,45 @@ def run_stateful_stream(
         end = min(total_samples, start + chunk_samples)
         if end <= start:
             continue
+
+        chunk_args = args
+        chunk_config = config
+        chunk_stretch = base_stretch
+        chunk_pitch_ratio = pitch.ratio
+        if dynamic_signals:
+            mid_sec = 0.5 * ((start + end) / float(sr))
+            sample_t = np.asarray([mid_sec], dtype=np.float64)
+            overrides: dict[str, float] = {}
+            for parameter, signal in dynamic_signals.items():
+                value = float(voc_core._sample_dynamic_signal(signal, sample_t)[0])
+                if parameter == "time_stretch":
+                    chunk_stretch = value
+                elif parameter == "pitch_ratio":
+                    chunk_pitch_ratio = value
+                else:
+                    overrides[parameter] = value
+            chunk_stretch, chunk_pitch_ratio, clean_overrides = voc_core._finalize_dynamic_segment_values(
+                args=args,
+                stretch=chunk_stretch,
+                pitch_ratio=chunk_pitch_ratio,
+                overrides=overrides,
+            )
+            if clean_overrides:
+                chunk_args = voc_core.clone_args_namespace(args)
+                for key, value in clean_overrides.items():
+                    setattr(chunk_args, key, value)
+                chunk_config = voc_core.build_vocoder_config_from_args(chunk_args)
+
         core, stages = _chunk_core_extract(
             full_audio=audio,
             sr=sr,
             chunk_start=start,
             chunk_end=end,
             context_samples=context_samples,
-            stretch=base_stretch,
-            pitch_ratio=pitch.ratio,
-            args=args,
-            config=config,
+            stretch=chunk_stretch,
+            pitch_ratio=chunk_pitch_ratio,
+            args=chunk_args,
+            config=chunk_config,
         )
         stage_count = max(stage_count, stages)
         chunk_outputs.append(core)
@@ -286,7 +332,10 @@ def run_stateful_stream(
             )
 
     out_audio = _concat_exact(chunk_outputs, channels=audio.shape[1])
-    expected_len = max(1, int(round(total_samples * base_stretch)))
+    if dynamic_signals:
+        expected_len = max(1, int(sum(chunk.shape[0] for chunk in chunk_outputs)))
+    else:
+        expected_len = max(1, int(round(total_samples * base_stretch)))
     out_audio = voc_core.force_length_multi(out_audio, expected_len)
 
     out_sr = sr
@@ -348,6 +397,16 @@ def run_stateful_stream(
                 "transient_mode": str(args.transient_mode),
                 "stereo_mode": str(args.stereo_mode),
                 "coherence_strength": float(args.coherence_strength),
+                "dynamic_controls": [
+                    {
+                        "parameter": ref.parameter,
+                        "path": str(ref.path),
+                        "value_kind": str(ref.value_kind),
+                        "interp": str(ref.interpolation),
+                        "order": int(ref.order),
+                    }
+                    for ref in dynamic_refs.values()
+                ],
             },
         )
         if sidecar is not None:

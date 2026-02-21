@@ -25,6 +25,24 @@ No-`PATH` fallback:
 python3 pvx.py voc input.wav --stretch 1.2 --output output.wav
 ```
 
+## 0.1 First 3 Commands to Run
+
+```bash
+# 1) Stretch without pitch change
+pvx voc input.wav --stretch 1.25 --output input_stretch.wav
+
+# 2) Pitch change without duration change
+pvx voc input.wav --stretch 1.0 --pitch -3 --output input_pitch.wav
+
+# 3) Same pitch shift, but with formant protection
+pvx voc input.wav --stretch 1.0 --pitch -3 --pitch-mode formant-preserving --output input_pitch_formant.wav
+```
+
+What to listen for:
+- `input_stretch.wav`: longer timing, same note center
+- `input_pitch.wav`: lower note center, possible timbral darkening
+- `input_pitch_formant.wav`: lower note center with more stable vowel/timbre identity
+
 ## 1. What Problem pvx Solves
 
 Audio workflows often need one or more of the following, with controllable artifacts:
@@ -74,6 +92,81 @@ In `pvx voc`, duration and pitch can be controlled independently:
 pvx voc input.wav --stretch 1.25 --pitch 0 --output stretched.wav
 pvx voc input.wav --stretch 1.0 --pitch 3 --output pitched.wav
 ```
+
+## 3.1 Time-Varying Parameter Control (CSV/JSON)
+
+You can pass a control file directly to many core phase-vocoder numeric flags.
+
+Examples:
+
+```bash
+pvx voc input.wav --stretch controls/stretch.csv --interp linear --output out.wav
+pvx voc input.wav --pitch-shift-ratio controls/pitch.json --interp polynomial --order 3 --output out.wav
+pvx voc input.wav --n-fft controls/nfft.csv --hop-size controls/hop.csv --output out.wav
+```
+
+Common flags that accept scalar values or control files (`.csv` / `.json`):
+- time/pitch trajectory: `--stretch`, `--time-stretch`, `--pitch-shift-ratio`, `--pitch-shift-semitones`, `--pitch-shift-cents`
+- frame/spectral resolution: `--n-fft`, `--win-length`, `--hop-size`, `--kaiser-beta`
+- phase/transient/stereo shaping: `--ambient-phase-mix`, `--transient-threshold`, `--transient-sensitivity`, `--transient-protect-ms`, `--transient-crossfade-ms`, `--coherence-strength`
+- multistage/Fourier-sync tuning: `--extreme-stretch-threshold`, `--max-stage-stretch`, `--fourier-sync-min-fft`, `--fourier-sync-max-fft`, `--fourier-sync-smooth`
+- onset/formant shaping: `--onset-credit-pull`, `--onset-credit-max`, `--formant-lifter`, `--formant-strength`, `--formant-max-gain-db`
+
+Control interpolation options:
+- `--interp none` (stairstep / no interpolation)
+- `--interp linear` (default)
+- `--interp nearest`
+- `--interp cubic`
+- `--interp polynomial --order 3`
+
+Point-style CSV:
+
+```csv
+time_sec,value
+0.0,1.0
+0.5,1.2
+1.0,1.8
+```
+
+Segment-style CSV:
+
+```csv
+start_sec,end_sec,value
+0.0,0.4,1.0
+0.4,0.8,1.2
+0.8,1.2,1.6
+```
+
+JSON points:
+
+```json
+{
+  "interpolation": "linear",
+  "points": [
+    {"time_sec": 0.0, "value": 1.0},
+    {"time_sec": 0.5, "value": 1.2},
+    {"time_sec": 1.0, "value": 1.8}
+  ]
+}
+```
+
+JSON schema quick reference:
+
+| Key | Required | Type | Meaning |
+| --- | --- | --- | --- |
+| `interpolation` / `interp` | no | string | Interpolation override (`none`, `linear`, `nearest`, `cubic`, `polynomial`) |
+| `order` | no | integer | Polynomial order for `polynomial` interpolation |
+| `points` | yes (point mode) | array | Time/value points |
+| `points[].time_sec` | yes | number | Timestamp in seconds |
+| `points[].value` | yes | number/string | Parameter value |
+| `segments` | yes (segment mode) | array | Piecewise constant control regions |
+| `segments[].start_sec`, `segments[].end_sec` | yes | number | Segment boundaries in seconds |
+| `segments[].value` | yes | number/string | Segment value |
+| `parameters` | no | object | Multi-parameter container keyed by parameter name |
+
+Notes:
+- per-parameter dynamic controls cannot be combined with legacy `--pitch-map` / `--pitch-map-stdin` in the same command
+- dynamic `--time-stretch` cannot be combined with `--target-duration`
 
 ## 4. Visual Mental Model of STFT
 
@@ -252,8 +345,33 @@ All audio-output tools now share deterministic output policy flags:
 
 ## 12. Next Steps
 
-- Run practical recipes and advanced use cases (65+): `docs/EXAMPLES.md`
+- Run practical recipes and advanced use cases (72+): `docs/EXAMPLES.md`
 - Learn architecture and DSP diagrams (26+): `docs/DIAGRAMS.md`
 - Study equation-level behavior (31 sections): `docs/MATHEMATICAL_FOUNDATIONS.md`
 - Use Python API directly: `docs/API_OVERVIEW.md`
 - Use benchmark runner: `benchmarks/run_bench.py`
+
+## 13. Extra Beginner Recipes (Quick Wins)
+
+```bash
+# Speech slowdown
+pvx voc speech.wav --preset vocal_studio --stretch 1.30 --output speech_slow.wav
+
+# Drum-safe stretch
+pvx voc drums.wav --preset drums_safe --stretch 1.20 --output drums_safe.wav
+
+# Stereo coherence lock
+pvx voc mix.wav --stretch 1.2 --stereo-mode mid_side_lock --coherence-strength 0.9 --output mix_lock.wav
+
+# Freeze a transient into a pad
+pvx freeze hit.wav --freeze-time 0.22 --duration 12 --output hit_pad.wav
+
+# Morph two sources
+pvx morph a.wav b.wav --alpha 0.45 --output a_b_morph.wav
+
+# Major-scale retune
+pvx retune vocal.wav --root C --scale major --strength 0.8 --output vocal_c_major.wav
+
+# Denoise then dereverb
+pvx denoise noisy.wav --reduction-db 8 --stdout | pvx deverb - --strength 0.3 --output noisy_clean.wav
+```

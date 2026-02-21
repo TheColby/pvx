@@ -1622,6 +1622,10 @@ th, td {
   vertical-align: top;
   text-align: left;
   font-size: 0.95rem;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: auto;
 }
 th {
   background: #edf3f7;
@@ -1660,8 +1664,46 @@ pre.mermaid {
   padding: 8px;
   overflow-x: auto;
 }
+.table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+}
+.table-scroll > table {
+  margin-bottom: 12px;
+}
+table.papers-table {
+  table-layout: fixed;
+  min-width: 980px;
+}
+table.papers-table col.col-year { width: 8%; }
+table.papers-table col.col-authors { width: 19%; }
+table.papers-table col.col-title { width: 41%; }
+table.papers-table col.col-venue { width: 20%; }
+table.papers-table col.col-linktype { width: 8%; }
+table.papers-table col.col-link { width: 4%; }
+table.papers-table td.paper-year,
+table.papers-table td.paper-linktype,
+table.papers-table td.paper-link,
+table.papers-table th.papers-col-year,
+table.papers-table th.papers-col-linktype,
+table.papers-table th.papers-col-link {
+  white-space: nowrap;
+}
+table.papers-table td.paper-link,
+table.papers-table th.papers-col-link {
+  text-align: center;
+}
+table.papers-table td.paper-linktype code {
+  white-space: nowrap;
+}
+table.papers-table td.paper-link a {
+  display: inline-block;
+  white-space: nowrap;
+}
 @media (max-width: 900px) {
-  table { display: block; overflow-x: auto; white-space: nowrap; }
+  .table-scroll { overflow-x: auto; }
+  table.papers-table { min-width: 900px; }
 }
 """.strip() + "\n"
     (DOCS_HTML_DIR / "style.css").write_text(css, encoding="utf-8")
@@ -1899,20 +1941,37 @@ def render_papers_page() -> None:
             link_type = classify_reference_url(p["url"])
             rows.append(
                 "<tr>"
-                f"<td>{escape(p['year'])}</td>"
-                f"<td>{escape(p['authors'])}</td>"
-                f"<td>{escape(p['title'])}</td>"
-                f"<td>{escape(p['venue'])}</td>"
-                f"<td><code>{escape(link_type)}</code></td>"
-                f"<td><a href=\"{escape(p['url'])}\" target=\"_blank\" rel=\"noopener\">Link</a></td>"
+                f"<td class=\"paper-year\">{escape(p['year'])}</td>"
+                f"<td class=\"paper-authors\">{escape(p['authors'])}</td>"
+                f"<td class=\"paper-title\">{escape(p['title'])}</td>"
+                f"<td class=\"paper-venue\">{escape(p['venue'])}</td>"
+                f"<td class=\"paper-linktype\"><code>{escape(link_type)}</code></td>"
+                f"<td class=\"paper-link\"><a href=\"{escape(p['url'])}\" target=\"_blank\" rel=\"noopener\">Open</a></td>"
                 "</tr>"
             )
         sections.append(
             f"<h2 id=\"{escape(anchor)}\">{escape(category)}</h2>"
-            "<table>"
-            "<thead><tr><th>Year</th><th>Authors</th><th>Title</th><th>Venue</th><th>Link type</th><th>Link</th></tr></thead>"
+            "<div class=\"table-scroll\">"
+            "<table class=\"papers-table\">"
+            "<colgroup>"
+            "<col class=\"col-year\" />"
+            "<col class=\"col-authors\" />"
+            "<col class=\"col-title\" />"
+            "<col class=\"col-venue\" />"
+            "<col class=\"col-linktype\" />"
+            "<col class=\"col-link\" />"
+            "</colgroup>"
+            "<thead><tr>"
+            "<th class=\"papers-col-year\">Year</th>"
+            "<th>Authors</th>"
+            "<th>Title</th>"
+            "<th>Venue</th>"
+            "<th class=\"papers-col-linktype\">Link type</th>"
+            "<th class=\"papers-col-link\">Link</th>"
+            "</tr></thead>"
             f"<tbody>{''.join(rows)}</tbody>"
             "</table>"
+            "</div>"
         )
 
     breadcrumbs = (

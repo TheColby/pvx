@@ -2,20 +2,58 @@
 
 `pvx` is a Python toolkit for high-quality time and pitch processing using a phase-vocoder/short-time Fourier transform (STFT) core.
 
+It is designed for users who need musically usable results under both normal and extreme processing conditions, including long time stretching, formant-aware pitch movement, transient-sensitive material, and stereo/multichannel coherence preservation.
+
 Primary project goal and differentiator:
 - audio quality first (phase coherence, transient integrity, formant stability, stereo coherence)
 - speed second (throughput/runtime tuning only after quality targets are met)
 
-It includes a unified command-line interface (CLI) (`pvx`) with focused subcommands (`voc`, `freeze`, `harmonize`, `retune`, `morph`, etc.), shared mastering controls, comma-separated values (CSV)-driven automation paths, microtonal support, and optional graphics processing unit (GPU) acceleration.
+At a glance, `pvx` provides:
+- a unified command-line interface (CLI) (`pvx`) plus backward-compatible script entry points (`pvxvoc.py`, `pvxfreeze.py`, and others)
+- focused tools (`voc`, `freeze`, `harmonize`, `retune`, `morph`, and more) with shared argument conventions
+- deterministic central processing unit (CPU) paths for reproducible runs, plus optional graphics processing unit (GPU)/Compute Unified Device Architecture (CUDA) acceleration where available
+- native Apple Silicon support in the CPU path
+- comma-separated values (CSV)-driven automation workflows for segment-wise and trajectory-driven processing
+- microtonal support (ratio, cents, and scale-constrained retune workflows)
+- shared mastering/output controls (target loudness units relative to full scale (LUFS), limiting, clipping, dithering, and output policy options)
+- comprehensive generated documentation (Markdown, HyperText Markup Language (HTML), and Portable Document Format (PDF))
 
-## Start Here: What pvx Solves
+## Start Here (No Prior DSP Knowledge Needed)
 
-If you are new to digital signal processing (DSP)/audio engineering, think of `pvx` as a tool that lets you:
-- make audio longer or shorter without changing musical key
-- change key/pitch without changing playback speed
-- preserve clarity while doing both (especially for vocals and stereo material)
+If this is your first phase-vocoder workflow, think of `pvx` as:
+- a way to make audio longer/shorter without changing musical note center
+- a way to change pitch without changing duration
+- a way to do both while protecting attacks, timbre, and stereo image
 
-`pvx` is built around the same class of methods used in modern time-stretch and pitch-shift workflows, but exposes them with practical CLI controls.
+You do not need to understand the math first. Start with copy-paste commands, listen, then adjust one parameter at a time.
+
+### 60-Second First Render
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install -e .
+pvx voc input.wav --stretch 1.20 --output output.wav
+```
+
+If `pvx` is not found after install:
+
+```bash
+printf 'export PATH="%s/.venv/bin:$PATH"\n' "$(pwd)" >> ~/.zshrc
+source ~/.zshrc
+pvx --help
+```
+
+No `PATH` fallback:
+
+```bash
+python3 pvx.py voc input.wav --stretch 1.20 --output output.wav
+```
+
+What you should hear:
+- same pitch
+- about 20% longer duration
+- minor artifact risk on sharp percussive attacks
 
 ### Stretch vs Pitch Shift (Plain Language)
 
@@ -25,10 +63,121 @@ If you are new to digital signal processing (DSP)/audio engineering, think of `p
 | Pitch shift (`--pitch`, `--cents`, `--ratio`) | Pitch/key | Duration/tempo |
 | Combined stretch + pitch | Both | Clarity, transients, stereo image (as much as possible) |
 
-Example:
-- `--stretch 2.0` means a 5-second sound becomes 10 seconds.
-- `--pitch 12` means one octave up.
-- `--pitch -12` means one octave down.
+Concrete examples:
+- `--stretch 2.0`: a 5-second file becomes about 10 seconds.
+- `--pitch 12`: one octave up.
+- `--pitch -12`: one octave down.
+- `--ratio 3/2`: perfect fifth up (just ratio).
+
+### Beginner Command Pack (Copy/Paste)
+
+```bash
+# Slower speech review
+pvx voc speech.wav --preset vocal_studio --stretch 1.30 --output speech_slow.wav
+
+# Faster speech review
+pvx voc speech.wav --preset vocal_studio --stretch 0.85 --output speech_fast.wav
+
+# Pitch up without changing speed
+pvx voc vocal.wav --stretch 1.0 --pitch 3 --output vocal_up3.wav
+
+# Pitch down with formant protection
+pvx voc vocal.wav --stretch 1.0 --pitch -4 --pitch-mode formant-preserving --output vocal_down4_formant.wav
+
+# Drum-safe stretch
+pvx voc drums.wav --preset drums_safe --stretch 1.25 --output drums_safe.wav
+
+# Stereo coherence lock
+pvx voc mix.wav --stretch 1.2 --stereo-mode mid_side_lock --coherence-strength 0.9 --output mix_lock.wav
+
+# Freeze one moment into a pad
+pvx freeze hit.wav --freeze-time 0.25 --duration 12 --output hit_freeze.wav
+
+# Morph two sounds
+pvx morph a.wav b.wav --alpha 0.4 --output morph.wav
+
+# Retune to a major scale
+pvx retune vocal.wav --root C --scale major --strength 0.85 --output vocal_retuned.wav
+
+# Denoise then dereverb in one pipe
+pvx denoise noisy.wav --reduction-db 8 --stdout | pvx deverb - --strength 0.3 --output cleaned.wav
+```
+
+More runnable recipes (72): `docs/EXAMPLES.md`
+
+### Time-Varying Control Signals (CSV/JSON)
+
+When you want parameters to change over time, pass a comma-separated values (CSV) or JavaScript Object Notation (JSON) file directly to the flag:
+
+```bash
+pvx voc input.wav --stretch controls/stretch.csv --interp linear --output output.wav
+pvx voc input.wav --pitch-shift-ratio controls/pitch.json --interp polynomial --order 3 --output output.wav
+pvx voc input.wav --n-fft controls/nfft.csv --hop-size controls/hop.csv --output output.wav
+```
+
+Interpolation choices:
+- `--interp none` (stairstep / sample-and-hold)
+- `--interp linear` (default)
+- `--interp nearest`
+- `--interp cubic`
+- `--interp polynomial --order 3`
+
+Point-style CSV:
+
+```csv
+time_sec,value
+0.0,1.0
+1.0,1.5
+2.0,2.0
+```
+
+Segment-style CSV:
+
+```csv
+start_sec,end_sec,value
+0.0,0.5,1.0
+0.5,1.0,1.25
+1.0,2.0,1.6
+```
+
+Point-style JSON:
+
+```json
+{
+  "interpolation": "linear",
+  "order": 3,
+  "points": [
+    {"time_sec": 0.0, "value": 1.0},
+    {"time_sec": 1.0, "value": 1.5},
+    {"time_sec": 2.0, "value": 2.0}
+  ]
+}
+```
+
+Multi-parameter JSON:
+
+```json
+{
+  "parameters": {
+    "time_stretch": {
+      "points": [
+        {"time_sec": 0.0, "value": 1.0},
+        {"time_sec": 3.0, "value": 2.0}
+      ]
+    },
+    "n_fft": {
+      "points": [
+        {"time_sec": 0.0, "value": 1024},
+        {"time_sec": 3.0, "value": 4096}
+      ]
+    }
+  }
+}
+```
+
+Important compatibility notes:
+- per-parameter dynamic controls (`--stretch some.csv`) cannot be combined with legacy `--pitch-map` / `--pitch-map-stdin` in the same run
+- dynamic `--time-stretch` cannot be combined with `--target-duration`
 
 ## What Is a Phase Vocoder? (No Math Version)
 
@@ -259,7 +408,7 @@ Start
 | Harmonic layering | `pvx harmonize` | `pvx harmonize lead.wav --intervals 0,4,7 --gains 1,0.8,0.7 --output-dir out` |
 | Cross-source morphing | `pvx morph` | `pvx morph a.wav b.wav --alpha 0.5 --output morph.wav` |
 
-More complete examples and use-case playbooks (65+ runnable recipes): `docs/EXAMPLES.md`
+More complete examples and use-case playbooks (72+ runnable recipes): `docs/EXAMPLES.md`
 
 ## Supported File Types
 
@@ -323,6 +472,8 @@ Additional helper workflows:
   - `--gpu` / `--cpu` -> device shortcut
 - Common output consistency:
   - shared tools now accept explicit single-file output via `--output` / `--out` in addition to `--output-dir` + `--suffix`
+- Script-local examples:
+  - every major tool now prints copy-paste examples in `--help` (not only in the README)
 
 Plan/debug aids:
 - `--auto-profile`
@@ -494,15 +645,39 @@ Most for drums, consonants, plosives, and percussive attacks. Less critical for 
 - extremely low-latency live paths may prefer simpler time-domain methods
 - if your target is artifact-heavy texture, stochastic engines may be preferable to strict phase coherence
 
+## Lessons from Paul Koonce's PVC Package
+
+Two useful historical references:
+- Paul Koonce PVC page: [https://www.cs.princeton.edu/courses/archive/spr99/cs325/koonce.html](https://www.cs.princeton.edu/courses/archive/spr99/cs325/koonce.html)
+- Linux Audio PVC catalog entry: [https://wiki.linuxaudio.org/apps/all/pvc](https://wiki.linuxaudio.org/apps/all/pvc)
+
+What translates well into modern `pvx`:
+
+| PVC idea | Why it still matters | How `pvx` uses or extends it |
+| --- | --- | --- |
+| Tool-per-task command design (`plainpv`, `twarp`, `harmonizer`, etc.) | Keeps workflows composable and scriptable | `pvx` subcommands (`voc`, `freeze`, `harmonize`, `conform`, `retune`, `morph`, ...) plus `pvx chain` |
+| Command help as a first-class UX surface | Beginners discover flags faster from terminal help than docs | `pvx --help`, grouped flag sections, `--example`, `--guided`, and script-level example blocks |
+| Dynamic parameter control from external data files | Real workflows need time-varying control, not static knobs | Per-parameter CSV/JSON control-rate signals with interpolation (`none`, `linear`, `nearest`, `cubic`, `polynomial`) |
+| Shell-script driven reproducibility | Repeatable runs matter for research and production | Copy-paste recipes, `pvx examples`, benchmark scripts, JSON manifests, and deterministic CPU mode |
+| Explicit defaults shown in help | Makes behavior predictable and debuggable | Shared defaults + output policy + ASCII metric tables for every non-silent run |
+| Analysis/synthesis experimentation mindset | Quality work needs inspectable internals and comparisons | Transform selection (`fft`, `dft`, `czt`, `dct`, `dst`, `hartley`) and benchmark gates vs baselines |
+
+Practical next steps inspired by PVC tradition:
+- keep every new tool runnable from one command without hidden state
+- keep dynamic-control file formats simple and text-editable
+- prefer transparent defaults and explicit artifact tradeoffs over black-box presets
+- keep docs and `--help` synchronized so terminal users are not forced into source code
+
 ## Progressive Documentation Map
 
 - Onboarding: `docs/GETTING_STARTED.md`
-- Example cookbook (65+ runnable commands): `docs/EXAMPLES.md`
+- Example cookbook (72+ runnable commands): `docs/EXAMPLES.md`
 - Diagram atlas (26+ architecture/DSP diagrams): `docs/DIAGRAMS.md`
 - Mathematical foundations (31 sections of equations + derivations): `docs/MATHEMATICAL_FOUNDATIONS.md`
 - API usage from Python: `docs/API_OVERVIEW.md`
 - File types and formats: `docs/FILE_TYPES.md`
 - Quality troubleshooting guide: `docs/QUALITY_GUIDE.md`
+- PVC lineage notes and carry-forward design ideas: `docs/PVC_LESSONS.md`
 - Rubber Band comparison notes: `docs/RUBBERBAND_COMPARISON.md`
 - Benchmark guide: `docs/BENCHMARKS.md`
 - Window reference: `docs/WINDOW_REFERENCE.md`

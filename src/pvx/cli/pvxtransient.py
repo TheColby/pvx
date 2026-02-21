@@ -11,6 +11,7 @@ import numpy as np
 from pvx.core.common import (
     add_common_io_args,
     add_vocoder_args,
+    build_examples_epilog,
     build_status_bar,
     build_vocoder_config,
     cents_to_ratio,
@@ -31,7 +32,21 @@ from pvx.core.common import (
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Transient-preserving phase-vocoder processor")
+    parser = argparse.ArgumentParser(
+        description="Transient-preserving phase-vocoder processor",
+        formatter_class=argparse.RawTextHelpFormatter,
+        epilog=build_examples_epilog(
+            [
+                "pvx transient drums.wav --time-stretch 1.25 --transient-threshold 1.5 --output drums_safe.wav",
+                "pvx transient speech.wav --time-stretch 0.9 --pitch-shift-cents 35 --output speech_fast_bright.wav",
+                "pvx transient input.wav --pitch-shift-ratio 2^(1/12) --stdout | pvx denoise - --reduction-db 5 --output input_transient_clean.wav",
+            ],
+            notes=[
+                "Use lower --transient-threshold for stronger onset sensitivity.",
+                "--pitch-shift-ratio accepts decimals, fractions, and expressions.",
+            ],
+        ),
+    )
     add_common_io_args(parser, default_suffix="_trans")
     add_vocoder_args(parser, default_n_fft=2048, default_win_length=2048, default_hop_size=256)
     parser.add_argument("--time-stretch", type=float, default=1.0)
