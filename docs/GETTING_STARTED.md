@@ -1,6 +1,6 @@
 # Getting Started with pvx
 
-This guide is for first-time users who want to understand what `pvx` does, why it exists, and how to get useful results without treating digital signal processing (DSP) as magic.
+This guide is for first-time users who want to understand what `pvx` does, why it exists, and how to get useful results without treating digital signal processing (DSP) as magic. It is practical first, mystical later.
 
 ## 0. Quick Setup (Install + PATH)
 
@@ -25,6 +25,8 @@ No-`PATH` fallback:
 python3 pvx.py voc input.wav --stretch 1.2 --output output.wav
 ```
 
+If you are already muttering at your shell, that is normal.
+
 ## 0.1 First 3 Commands to Run
 
 ```bash
@@ -42,6 +44,7 @@ What to listen for:
 - `input_stretch.wav`: longer timing, same note center
 - `input_pitch.wav`: lower note center, possible timbral darkening
 - `input_pitch_formant.wav`: lower note center with more stable vowel/timbre identity
+- if all three sound identical, double-check that you did not typo the output path at 2 a.m.
 
 ## 1. What Problem pvx Solves
 
@@ -57,6 +60,7 @@ Audio workflows often need one or more of the following, with controllable artif
 Design priority:
 - quality first: preserve musical intent and minimize artifacts
 - speed second: optimize runtime after quality targets are achieved
+- translation: we would rather be right than merely fast
 
 ## 2. Basic DSP Terms (Plain Language)
 
@@ -194,6 +198,7 @@ Synthesis
 Key tradeoff:
 - larger `N` (FFT) -> better frequency resolution, worse time localization
 - smaller `N` -> better time localization, rougher low-frequency precision
+- yes, this is the classic engineering compromise you were hoping to avoid
 
 ## 5. Example Audio Scenarios
 
@@ -375,3 +380,5 @@ pvx retune vocal.wav --root C --scale major --strength 0.8 --output vocal_c_majo
 # Denoise then dereverb
 pvx denoise noisy.wav --reduction-db 8 --stdout | pvx deverb - --strength 0.3 --output noisy_clean.wav
 ```
+
+Run them in order, listen after each step, and resist changing ten parameters at once unless chaos is the objective.

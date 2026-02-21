@@ -1,6 +1,7 @@
 # pvx Example Cookbook
 
 All commands are designed to be copy-paste runnable from the repository root.
+If one fails, the shell will usually inform you with all the warmth of a tax letter.
 
 ## Quick Setup (Install + PATH)
 
@@ -34,6 +35,7 @@ Assumptions:
 - input files exist in your working directory
 - output format defaults to input extension unless overridden
 - tools using `--output-dir` and `--suffix` write inferred filenames
+- you are not accidentally overwriting your favourite take unless you mean to
 
 ## Starter Path (Run These First)
 
@@ -53,6 +55,7 @@ Expected audible progression:
 - `step3`: pitch change with improved vocal timbre stability
 - `step4`: better attack retention on percussive material
 - `step5`: more stable stereo image during stretch
+- if all five sound identical, something is broken and tea alone will not save it
 
 ## Use-Case Index (By Theme)
 

@@ -25,7 +25,7 @@ If this is your first phase-vocoder workflow, think of `pvx` as:
 - a way to change pitch without changing duration
 - a way to do both while protecting attacks, timbre, and stereo image
 
-You do not need to understand the math first. Start with copy-paste commands, listen, then adjust one parameter at a time.
+You do not need to understand the math first. Start with copy-paste commands, listen, then adjust one parameter at a time. No ceremonial DSP robes required.
 
 ### 60-Second First Render
 
@@ -44,6 +44,8 @@ source ~/.zshrc
 pvx --help
 ```
 
+If that does not work, it is usually a `PATH` issue, which is both common and mildly annoying.
+
 No `PATH` fallback:
 
 ```bash
@@ -54,6 +56,7 @@ What you should hear:
 - same pitch
 - about 20% longer duration
 - minor artifact risk on sharp percussive attacks
+- a small sense of relief that it worked first go
 
 ### Stretch vs Pitch Shift (Plain Language)
 
@@ -104,6 +107,8 @@ pvx denoise noisy.wav --reduction-db 8 --stdout | pvx deverb - --strength 0.3 --
 ```
 
 More runnable recipes (72): `docs/EXAMPLES.md`
+
+If you run these and everything sounds exactly the same, either the command failed quietly or your source was already suspiciously perfect.
 
 ### Time-Varying Control Signals (CSV/JSON)
 
@@ -187,6 +192,8 @@ For each slice:
 1. It measures "how much of each frequency is present" and "where its phase is".
 2. It modifies timing and/or pitch in that spectral representation.
 3. It rebuilds audio from overlapping slices.
+
+In short, you are taking audio apart, tidying it up, and putting it back together without pretending time is optional.
 
 Why "phase" matters:
 - If magnitudes are changed without consistent phase evolution, output can sound smeared, chorus-like, metallic, or unstable.
