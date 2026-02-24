@@ -13,9 +13,9 @@ import math
 
 import numpy as np
 
-from pvxcommon import cents_to_ratio, parse_pitch_ratio_value, read_segment_csv
-from pvxretune import nearest_scale_freq
-from pvxvoc import choose_pitch_ratio
+from pvx.core.common import cents_to_ratio, parse_pitch_ratio_value, read_segment_csv
+from pvx.cli.pvxretune import nearest_scale_freq
+from pvx.core.voc import choose_pitch_ratio
 
 
 def write_text(path: Path, text: str) -> None:

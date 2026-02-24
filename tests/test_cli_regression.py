@@ -24,9 +24,9 @@ import soundfile as sf
 
 
 ROOT = Path(__file__).resolve().parents[1]
-CLI = ROOT / "pvxvoc.py"
+CLI = ROOT / "scripts" / "compat" / "pvxvoc.py"
 UNIFIED_CLI = ROOT / "pvx.py"
-HPS_CLI = ROOT / "HPS-pitch-track.py"
+HPS_CLI = ROOT / "scripts" / "compat" / "HPS-pitch-track.py"
 
 
 def write_stereo_tone(path: Path, sr: int = 24000, duration: float = 0.5) -> tuple[np.ndarray, int]:
@@ -1549,7 +1549,7 @@ class TestCLIRegression(unittest.TestCase):
             self.assertNotIn("Audio Metrics", combined)
 
     def test_regression_metrics_snapshot(self) -> None:
-        from pvxvoc import VocoderConfig, phase_vocoder_time_stretch, resample_1d
+        from pvx.core.voc import VocoderConfig, phase_vocoder_time_stretch, resample_1d
 
         sr = 24000
         n = int(sr * 0.7)

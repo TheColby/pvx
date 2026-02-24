@@ -19,7 +19,7 @@ if str(SRC) not in sys.path:
 
 from pvx.core.transients import detect_transient_regions, smooth_binary_mask
 from pvx.metrics.coherence import interchannel_coherence_drift
-from pvxvoc import VocoderConfig, configure_runtime, process_audio_block
+from pvx.core.voc import VocoderConfig, configure_runtime, process_audio_block
 
 
 def _build_args(**overrides: object) -> argparse.Namespace:

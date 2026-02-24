@@ -11,7 +11,7 @@ import unittest
 
 import numpy as np
 
-from pvxvoc import (
+from pvx.core.voc import (
     QUALITY_PROFILE_CHOICES,
     TRANSFORM_CHOICES,
     WINDOW_CHOICES,

@@ -1,0 +1,16 @@
+[console_scripts]
+hps-pitch-track = pvx.cli.hps_pitch_track:main
+pvx = pvx.cli.pvx:main
+pvxconform = pvx.cli.pvxconform:main
+pvxdenoise = pvx.cli.pvxdenoise:main
+pvxdeverb = pvx.cli.pvxdeverb:main
+pvxformant = pvx.cli.pvxformant:main
+pvxfreeze = pvx.cli.pvxfreeze:main
+pvxharmonize = pvx.cli.pvxharmonize:main
+pvxlayer = pvx.cli.pvxlayer:main
+pvxmorph = pvx.cli.pvxmorph:main
+pvxretune = pvx.cli.pvxretune:main
+pvxtransient = pvx.cli.pvxtransient:main
+pvxunison = pvx.cli.pvxunison:main
+pvxvoc = pvx.core.voc:main
+pvxwarp = pvx.cli.pvxwarp:main
