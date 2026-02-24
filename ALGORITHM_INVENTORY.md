@@ -2,7 +2,7 @@
 
 
 
-Total algorithms: 123
+Total algorithms: 111
 
 ## Time-Scale and Pitch Core
 - `time_scale_and_pitch_core/wsola_waveform_similarity_overlap_add.py`: WSOLA (Waveform Similarity Overlap-Add)

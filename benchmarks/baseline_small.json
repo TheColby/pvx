@@ -1,6 +1,6 @@
 {
   "corpus": {
-    "data_dir": "/Users/cleider/dev/pvx/benchmarks/data",
+    "data_dir": "benchmarks/data",
     "entries": [
       {
         "channels": 2,
@@ -20,14 +20,14 @@
       }
     ],
     "manifest_issues": [],
-    "manifest_path": "/Users/cleider/dev/pvx/benchmarks/data/manifest.json",
+    "manifest_path": "benchmarks/data/manifest.json",
     "manifest_valid": true
   },
   "description": "Stage 2 baseline for quick benchmark gate (pvx only).",
   "environment": {
     "deterministic_cpu": true,
-    "platform": "macOS-15.1.1-arm64-arm-64bit-Mach-O",
-    "python": "3.14.3"
+    "platform": "linux",
+    "python": "3.11"
   },
   "generated_utc": "2026-02-19T15:49:18Z",
   "methods": [
@@ -43,9 +43,9 @@
         "estoi_proxy_used": 1.0,
         "f0_rmse_cents": 0.06565332295654616,
         "hnr_drift_db": 0.03329579283187112,
-        "ild_drift_db": NaN,
+        "ild_drift_db": null,
         "integrated_lufs_delta_lu": -0.03223402714639434,
-        "itd_drift_ms": NaN,
+        "itd_drift_ms": null,
         "log_spectral_distance": 9.30206237873105,
         "lra_delta_lu": 0.0,
         "modulation_spectrum_distance": 0.4640871342292583,
@@ -58,10 +58,10 @@
         "perceptual_proxy_fraction": 1.0,
         "pesq_mos_lqo": 3.54729922958134,
         "pesq_proxy_used": 1.0,
-        "phase_deviation_high_rad": NaN,
-        "phase_deviation_low_rad": NaN,
-        "phase_deviation_mean_rad": NaN,
-        "phase_deviation_mid_rad": NaN,
+        "phase_deviation_high_rad": null,
+        "phase_deviation_low_rad": null,
+        "phase_deviation_mean_rad": null,
+        "phase_deviation_mid_rad": null,
         "phasiness_index": 0.9222235528952675,
         "polqa_mos_lqo": 3.911199119521531,
         "polqa_proxy_used": 1.0,
@@ -97,10 +97,10 @@
           "estoi_proxy_used": 1.0,
           "f0_rmse_cents": 0.06565332295654616,
           "hnr_drift_db": 0.03329579283187112,
-          "ild_drift_db": NaN,
-          "input": "/Users/cleider/dev/pvx/benchmarks/data/speech_like.wav",
+          "ild_drift_db": null,
+          "input": "speech_like.wav",
           "integrated_lufs_delta_lu": -0.03223402714639434,
-          "itd_drift_ms": NaN,
+          "itd_drift_ms": null,
           "kind": "stretch",
           "log_spectral_distance": 9.30206237873105,
           "lra_delta_lu": 0.0,
@@ -115,10 +115,10 @@
           "perceptual_proxy_fraction": 1.0,
           "pesq_mos_lqo": 3.54729922958134,
           "pesq_proxy_used": 1.0,
-          "phase_deviation_high_rad": NaN,
-          "phase_deviation_low_rad": NaN,
-          "phase_deviation_mean_rad": NaN,
-          "phase_deviation_mid_rad": NaN,
+          "phase_deviation_high_rad": null,
+          "phase_deviation_low_rad": null,
+          "phase_deviation_mean_rad": null,
+          "phase_deviation_mid_rad": null,
           "phasiness_index": 0.9222235528952675,
           "polqa_mos_lqo": 3.911199119521531,
           "polqa_proxy_used": 1.0,
@@ -144,7 +144,7 @@
         }
       ],
       "signatures": {
-        "speech_like:stretch_x1p8_cycle": "102ee74569e02fd081f5fc33d1c8df39f7ecd6195d5c43cd2a5b76e56740d0b3"
+        "speech_like.wav::stretch_x1p8_cycle": "102ee74569e02fd081f5fc33d1c8df39f7ecd6195d5c43cd2a5b76e56740d0b3"
       },
       "status": "active"
     }

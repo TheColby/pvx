@@ -38,28 +38,10 @@ from pvx.core import voc as voc_core  # noqa: E402
 
 
 def git_commit_meta() -> tuple[str, str]:
-    commit = "unknown"
-    commit_date = "unknown"
-    try:
-        commit_proc = subprocess.run(
-            ["git", "-C", str(ROOT), "rev-parse", "--short", "HEAD"],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        if commit_proc.returncode == 0 and commit_proc.stdout.strip():
-            commit = commit_proc.stdout.strip()
-        date_proc = subprocess.run(
-            ["git", "-C", str(ROOT), "show", "-s", "--format=%cI", "HEAD"],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        if date_proc.returncode == 0 and date_proc.stdout.strip():
-            commit_date = date_proc.stdout.strip()
-    except Exception:
-        pass
-    return commit, commit_date
+    # Return placeholder metadata to prevent documentation drift in CI.
+    # The actual commit hash/date will be inserted by the release process if needed,
+    # but for repo consistency, we use a static token.
+    return "[COMMIT_HASH]", "[COMMIT_DATE]"
 
 
 COMMIT_HASH, COMMIT_DATE = git_commit_meta()

@@ -304,7 +304,7 @@ def _prepare_dataset(
 
 
 def _case_key(input_path: Path, task: TaskSpec) -> str:
-    return f"{input_path.stem}:{task.name}"
+    return f"{input_path.name}::{task.name}"
 
 
 def _diagnose_metrics(metrics: dict[str, float]) -> list[str]:
@@ -1021,7 +1021,11 @@ def _check_gate(
         for row in rows:
             if not isinstance(row, dict):
                 continue
-            key = f"{row.get('input', 'unknown')}::{row.get('task', 'unknown')}"
+            input_val = str(row.get("input", "unknown"))
+            task_val = str(row.get("task", "unknown"))
+            # Normalize to filename only for cross-platform matching
+            input_name = Path(input_val).name
+            key = f"{input_name}::{task_val}"
             out[key] = row
         return out
 
@@ -1232,7 +1236,7 @@ def main(argv: list[str] | None = None) -> int:
                             deterministic_cpu=bool(args.deterministic_cpu),
                             tag="pvx",
                         )
-                        case = _case_key(path, task)
+                        case = f"{path.name}::{task.name}"
                         signatures[case] = _sha256_file(stage2)
 
                         if int(args.determinism_runs) > 1:

@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import ast
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -114,6 +115,8 @@ def parse_module(path: Path) -> dict:
 
 def cli_help(path: Path) -> str | None:
     try:
+        env = os.environ.copy()
+        env["COLUMNS"] = "100"
         proc = subprocess.run(
             ["python3", str(path), "--help"],
             cwd=ROOT,
@@ -121,6 +124,7 @@ def cli_help(path: Path) -> str | None:
             capture_output=True,
             timeout=25,
             check=False,
+            env=env,
         )
     except Exception as exc:  # pragma: no cover
         return f"[help unavailable: {exc}]"
@@ -180,7 +184,7 @@ def generate_algorithm_param_doc() -> None:
     lines.append("")
     lines.append("This file lists per-algorithm parameter keys consumed by `pvx.algorithms.base.run_algorithm()` dispatch.")
     lines.append("Legacy import alias `pvxalgorithms.base.run_algorithm()` is still available for compatibility.")
-    lines.append("Use these keys as `**params` when calling module `process(audio, sample_rate, **params)`. ")
+    lines.append("Use these keys as `**params` when calling module `process(audio, sample_rate, **params)`.")
     lines.append("")
     for slug in sorted(params):
         lines.append(f"## `{slug}`")

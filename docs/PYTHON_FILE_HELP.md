@@ -231,23 +231,18 @@ Total Python files documented: **210**
 ### CLI Help Snapshot
 
 ```text
-usage: HPS-pitch-track.py [-h] [--output OUTPUT] [--backend {auto,pyin,acf}]
-                          [--fmin FMIN] [--fmax FMAX]
-                          [--frame-length FRAME_LENGTH] [--hop-size HOP_SIZE]
-                          [--ratio-reference {median,mean,first,hz}]
-                          [--reference-hz REFERENCE_HZ]
+usage: HPS-pitch-track.py [-h] [--output OUTPUT] [--backend {auto,pyin,acf}] [--fmin FMIN]
+                          [--fmax FMAX] [--frame-length FRAME_LENGTH] [--hop-size HOP_SIZE]
+                          [--ratio-reference {median,mean,first,hz}] [--reference-hz REFERENCE_HZ]
                           [--ratio-min RATIO_MIN] [--ratio-max RATIO_MAX]
-                          [--smooth-frames SMOOTH_FRAMES]
-                          [--confidence-floor CONFIDENCE_FLOOR]
+                          [--smooth-frames SMOOTH_FRAMES] [--confidence-floor CONFIDENCE_FLOOR]
                           [--emit {pitch_map,stretch_map,pitch_to_stretch}]
                           [--stretch-from {pitch_ratio,inv_pitch_ratio,f0_hz}]
-                          [--stretch-scale STRETCH_SCALE]
-                          [--stretch-min STRETCH_MIN]
+                          [--stretch-scale STRETCH_SCALE] [--stretch-min STRETCH_MIN]
                           [--stretch-max STRETCH_MAX] [--stretch STRETCH]
-                          [--feature-set {none,basic,advanced,all}]
-                          [--mfcc-count MFCC_COUNT]
-                          [--verbosity {silent,quiet,normal,verbose,debug}]
-                          [-v] [--quiet] [--silent]
+                          [--feature-set {none,basic,advanced,all}] [--mfcc-count MFCC_COUNT]
+                          [--verbosity {silent,quiet,normal,verbose,debug}] [-v] [--quiet]
+                          [--silent]
                           input
 
 HPS/pyin-style pitch tracker that emits pvx control-map CSV to stdout.
@@ -491,11 +486,9 @@ src-layout migration.
 
 ```text
 usage: pvxconform.py [-h] [-o OUTPUT_DIR] [--output OUTPUT] [--suffix SUFFIX]
-                     [--output-format OUTPUT_FORMAT] [--stdout] [--overwrite]
-                     [--dry-run]
-                     [--verbosity {silent,quiet,normal,verbose,debug}] [-v]
-                     [--quiet] [--silent] [--normalize {none,peak,rms}]
-                     [--peak-dbfs PEAK_DBFS] [--rms-dbfs RMS_DBFS]
+                     [--output-format OUTPUT_FORMAT] [--stdout] [--overwrite] [--dry-run]
+                     [--verbosity {silent,quiet,normal,verbose,debug}] [-v] [--quiet] [--silent]
+                     [--normalize {none,peak,rms}] [--peak-dbfs PEAK_DBFS] [--rms-dbfs RMS_DBFS]
                      [--target-lufs TARGET_LUFS]
                      [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
                      [--compressor-ratio COMPRESSOR_RATIO]
@@ -503,8 +496,7 @@ usage: pvxconform.py [-h] [-o OUTPUT_DIR] [--output OUTPUT] [--suffix SUFFIX]
                      [--compressor-release-ms COMPRESSOR_RELEASE_MS]
                      [--compressor-makeup-db COMPRESSOR_MAKEUP_DB]
                      [--expander-threshold-db EXPANDER_THRESHOLD_DB]
-                     [--expander-ratio EXPANDER_RATIO]
-                     [--expander-attack-ms EXPANDER_ATTACK_MS]
+                     [--expander-ratio EXPANDER_RATIO] [--expander-attack-ms EXPANDER_ATTACK_MS]
                      [--expander-release-ms EXPANDER_RELEASE_MS]
                      [--compander-threshold-db COMPANDER_THRESHOLD_DB]
                      [--compander-compress-ratio COMPANDER_COMPRESS_RATIO]
@@ -512,28 +504,21 @@ usage: pvxconform.py [-h] [-o OUTPUT_DIR] [--output OUTPUT] [--suffix SUFFIX]
                      [--compander-attack-ms COMPANDER_ATTACK_MS]
                      [--compander-release-ms COMPANDER_RELEASE_MS]
                      [--compander-makeup-db COMPANDER_MAKEUP_DB]
-                     [--limiter-threshold LIMITER_THRESHOLD]
-                     [--soft-clip-level SOFT_CLIP_LEVEL]
-                     [--soft-clip-type {tanh,arctan,cubic}]
-                     [--soft-clip-drive SOFT_CLIP_DRIVE]
-                     [--hard-clip-level HARD_CLIP_LEVEL] [--clip]
-                     [--subtype SUBTYPE] [--bit-depth {inherit,16,24,32f}]
-                     [--dither {none,tpdf}] [--dither-seed DITHER_SEED]
-                     [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                     [--limiter-threshold LIMITER_THRESHOLD] [--soft-clip-level SOFT_CLIP_LEVEL]
+                     [--soft-clip-type {tanh,arctan,cubic}] [--soft-clip-drive SOFT_CLIP_DRIVE]
+                     [--hard-clip-level HARD_CLIP_LEVEL] [--clip] [--subtype SUBTYPE]
+                     [--bit-depth {inherit,16,24,32f}] [--dither {none,tpdf}]
+                     [--dither-seed DITHER_SEED] [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
                      [--metadata-policy {none,sidecar,copy}] [--n-fft N_FFT]
                      [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
                      [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
-                     [--kaiser-beta KAISER_BETA]
-                     [--transform {fft,dft,czt,dct,dst,hartley}]
+                     [--kaiser-beta KAISER_BETA] [--transform {fft,dft,czt,dct,dst,hartley}]
                      [--phase-engine {propagate,hybrid,random}]
                      [--ambient-phase-mix AMBIENT_PHASE_MIX]
-                     [--phase-random-seed PHASE_RANDOM_SEED]
-                     [--onset-time-credit]
-                     [--onset-credit-pull ONSET_CREDIT_PULL]
-                     [--onset-credit-max ONSET_CREDIT_MAX]
-                     [--no-onset-realign] [--no-center]
-                     [--device {auto,cpu,cuda}] [--cuda-device CUDA_DEVICE]
-                     --map MAP [--crossfade-ms CROSSFADE_MS]
+                     [--phase-random-seed PHASE_RANDOM_SEED] [--onset-time-credit]
+                     [--onset-credit-pull ONSET_CREDIT_PULL] [--onset-credit-max ONSET_CREDIT_MAX]
+                     [--no-onset-realign] [--no-center] [--device {auto,cpu,cuda}]
+                     [--cuda-device CUDA_DEVICE] --map MAP [--crossfade-ms CROSSFADE_MS]
                      [--resample-mode {auto,fft,linear}]
                      inputs [inputs ...]
 
@@ -564,7 +549,11 @@ options:
   --peak-dbfs PEAK_DBFS
                         Target peak dBFS when --normalize peak
   --rms-dbfs RMS_DBFS   Target RMS dBFS when --normalize rms
-  --target-lufs
+  --target-lufs TARGET_LUFS
+                        Integrated loudness target in LUFS
+  --compressor-threshold-db COMPRESSOR_THRESHOLD_DB
+                        Enable compressor above threshold dBFS
+  --compressor-ratio CO
 ... [truncated]
 ```
 
@@ -590,11 +579,9 @@ src-layout migration.
 
 ```text
 usage: pvxdenoise.py [-h] [-o OUTPUT_DIR] [--output OUTPUT] [--suffix SUFFIX]
-                     [--output-format OUTPUT_FORMAT] [--stdout] [--overwrite]
-                     [--dry-run]
-                     [--verbosity {silent,quiet,normal,verbose,debug}] [-v]
-                     [--quiet] [--silent] [--normalize {none,peak,rms}]
-                     [--peak-dbfs PEAK_DBFS] [--rms-dbfs RMS_DBFS]
+                     [--output-format OUTPUT_FORMAT] [--stdout] [--overwrite] [--dry-run]
+                     [--verbosity {silent,quiet,normal,verbose,debug}] [-v] [--quiet] [--silent]
+                     [--normalize {none,peak,rms}] [--peak-dbfs PEAK_DBFS] [--rms-dbfs RMS_DBFS]
                      [--target-lufs TARGET_LUFS]
                      [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
                      [--compressor-ratio COMPRESSOR_RATIO]
@@ -602,8 +589,7 @@ usage: pvxdenoise.py [-h] [-o OUTPUT_DIR] [--output OUTPUT] [--suffix SUFFIX]
                      [--compressor-release-ms COMPRESSOR_RELEASE_MS]
                      [--compressor-makeup-db COMPRESSOR_MAKEUP_DB]
                      [--expander-threshold-db EXPANDER_THRESHOLD_DB]
-                     [--expander-ratio EXPANDER_RATIO]
-                     [--expander-attack-ms EXPANDER_ATTACK_MS]
+                     [--expander-ratio EXPANDER_RATIO] [--expander-attack-ms EXPANDER_ATTACK_MS]
                      [--expander-release-ms EXPANDER_RELEASE_MS]
                      [--compander-threshold-db COMPANDER_THRESHOLD_DB]
                      [--compander-compress-ratio COMPANDER_COMPRESS_RATIO]
@@ -611,29 +597,22 @@ usage: pvxdenoise.py [-h] [-o OUTPUT_DIR] [--output OUTPUT] [--suffix SUFFIX]
                      [--compander-attack-ms COMPANDER_ATTACK_MS]
                      [--compander-release-ms COMPANDER_RELEASE_MS]
                      [--compander-makeup-db COMPANDER_MAKEUP_DB]
-                     [--limiter-threshold LIMITER_THRESHOLD]
-                     [--soft-clip-level SOFT_CLIP_LEVEL]
-                     [--soft-clip-type {tanh,arctan,cubic}]
-                     [--soft-clip-drive SOFT_CLIP_DRIVE]
-                     [--hard-clip-level HARD_CLIP_LEVEL] [--clip]
-                     [--subtype SUBTYPE] [--bit-depth {inherit,16,24,32f}]
-                     [--dither {none,tpdf}] [--dither-seed DITHER_SEED]
-                     [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                     [--limiter-threshold LIMITER_THRESHOLD] [--soft-clip-level SOFT_CLIP_LEVEL]
+                     [--soft-clip-type {tanh,arctan,cubic}] [--soft-clip-drive SOFT_CLIP_DRIVE]
+                     [--hard-clip-level HARD_CLIP_LEVEL] [--clip] [--subtype SUBTYPE]
+                     [--bit-depth {inherit,16,24,32f}] [--dither {none,tpdf}]
+                     [--dither-seed DITHER_SEED] [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
                      [--metadata-policy {none,sidecar,copy}] [--n-fft N_FFT]
                      [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
                      [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
-                     [--kaiser-beta KAISER_BETA]
-                     [--transform {fft,dft,czt,dct,dst,hartley}]
+                     [--kaiser-beta KAISER_BETA] [--transform {fft,dft,czt,dct,dst,hartley}]
                      [--phase-engine {propagate,hybrid,random}]
                      [--ambient-phase-mix AMBIENT_PHASE_MIX]
-                     [--phase-random-seed PHASE_RANDOM_SEED]
-                     [--onset-time-credit]
-                     [--onset-credit-pull ONSET_CREDIT_PULL]
-                     [--onset-credit-max ONSET_CREDIT_MAX]
-                     [--no-onset-realign] [--no-center]
-                     [--device {auto,cpu,cuda}] [--cuda-device CUDA_DEVICE]
-                     [--noise-seconds NOISE_SECONDS] [--noise-file NOISE_FILE]
-                     [--reduction-db REDUCTION_DB] [--floor FLOOR]
+                     [--phase-random-seed PHASE_RANDOM_SEED] [--onset-time-credit]
+                     [--onset-credit-pull ONSET_CREDIT_PULL] [--onset-credit-max ONSET_CREDIT_MAX]
+                     [--no-onset-realign] [--no-center] [--device {auto,cpu,cuda}]
+                     [--cuda-device CUDA_DEVICE] [--noise-seconds NOISE_SECONDS]
+                     [--noise-file NOISE_FILE] [--reduction-db REDUCTION_DB] [--floor FLOOR]
                      [--smooth SMOOTH]
                      inputs [inputs ...]
 
@@ -666,7 +645,12 @@ options:
   --rms-dbfs RMS_DBFS   Target RMS dBFS when --normalize rms
   --target-lufs TARGET_LUFS
                         Integrated loudness target in LUFS
-  --compressor-threshold-db COMPRESSOR_THRESHOL
+  --compressor-threshold-db COMPRESSOR_THRESHOLD_DB
+                        Enable compressor above threshold dBFS
+  --compressor-ratio COMPRESSOR_RATIO
+                        Compressor ratio (>=1)
+  --compressor-attack-ms COMPRESSOR_ATTACK_MS
+
 ... [truncated]
 ```
 
@@ -692,11 +676,9 @@ src-layout migration.
 
 ```text
 usage: pvxdeverb.py [-h] [-o OUTPUT_DIR] [--output OUTPUT] [--suffix SUFFIX]
-                    [--output-format OUTPUT_FORMAT] [--stdout] [--overwrite]
-                    [--dry-run]
-                    [--verbosity {silent,quiet,normal,verbose,debug}] [-v]
-                    [--quiet] [--silent] [--normalize {none,peak,rms}]
-                    [--peak-dbfs PEAK_DBFS] [--rms-dbfs RMS_DBFS]
+                    [--output-format OUTPUT_FORMAT] [--stdout] [--overwrite] [--dry-run]
+                    [--verbosity {silent,quiet,normal,verbose,debug}] [-v] [--quiet] [--silent]
+                    [--normalize {none,peak,rms}] [--peak-dbfs PEAK_DBFS] [--rms-dbfs RMS_DBFS]
                     [--target-lufs TARGET_LUFS]
                     [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
                     [--compressor-ratio COMPRESSOR_RATIO]
@@ -704,8 +686,7 @@ usage: pvxdeverb.py [-h] [-o OUTPUT_DIR] [--output OUTPUT] [--suffix SUFFIX]
                     [--compressor-release-ms COMPRESSOR_RELEASE_MS]
                     [--compressor-makeup-db COMPRESSOR_MAKEUP_DB]
                     [--expander-threshold-db EXPANDER_THRESHOLD_DB]
-                    [--expander-ratio EXPANDER_RATIO]
-                    [--expander-attack-ms EXPANDER_ATTACK_MS]
+                    [--expander-ratio EXPANDER_RATIO] [--expander-attack-ms EXPANDER_ATTACK_MS]
                     [--expander-release-ms EXPANDER_RELEASE_MS]
                     [--compander-threshold-db COMPANDER_THRESHOLD_DB]
                     [--compander-compress-ratio COMPANDER_COMPRESS_RATIO]
@@ -713,28 +694,22 @@ usage: pvxdeverb.py [-h] [-o OUTPUT_DIR] [--output OUTPUT] [--suffix SUFFIX]
                     [--compander-attack-ms COMPANDER_ATTACK_MS]
                     [--compander-release-ms COMPANDER_RELEASE_MS]
                     [--compander-makeup-db COMPANDER_MAKEUP_DB]
-                    [--limiter-threshold LIMITER_THRESHOLD]
-                    [--soft-clip-level SOFT_CLIP_LEVEL]
-                    [--soft-clip-type {tanh,arctan,cubic}]
-                    [--soft-clip-drive SOFT_CLIP_DRIVE]
-                    [--hard-clip-level HARD_CLIP_LEVEL] [--clip]
-                    [--subtype SUBTYPE] [--bit-depth {inherit,16,24,32f}]
-                    [--dither {none,tpdf}] [--dither-seed DITHER_SEED]
-                    [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                    [--limiter-threshold LIMITER_THRESHOLD] [--soft-clip-level SOFT_CLIP_LEVEL]
+                    [--soft-clip-type {tanh,arctan,cubic}] [--soft-clip-drive SOFT_CLIP_DRIVE]
+                    [--hard-clip-level HARD_CLIP_LEVEL] [--clip] [--subtype SUBTYPE]
+                    [--bit-depth {inherit,16,24,32f}] [--dither {none,tpdf}]
+                    [--dither-seed DITHER_SEED] [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
                     [--metadata-policy {none,sidecar,copy}] [--n-fft N_FFT]
                     [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
                     [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
-                    [--kaiser-beta KAISER_BETA]
-                    [--transform {fft,dft,czt,dct,dst,hartley}]
+                    [--kaiser-beta KAISER_BETA] [--transform {fft,dft,czt,dct,dst,hartley}]
                     [--phase-engine {propagate,hybrid,random}]
                     [--ambient-phase-mix AMBIENT_PHASE_MIX]
-                    [--phase-random-seed PHASE_RANDOM_SEED]
-                    [--onset-time-credit]
-                    [--onset-credit-pull ONSET_CREDIT_PULL]
-                    [--onset-credit-max ONSET_CREDIT_MAX] [--no-onset-realign]
-                    [--no-center] [--device {auto,cpu,cuda}]
-                    [--cuda-device CUDA_DEVICE] [--strength STRENGTH]
-                    [--decay DECAY] [--floor FLOOR]
+                    [--phase-random-seed PHASE_RANDOM_SEED] [--onset-time-credit]
+                    [--onset-credit-pull ONSET_CREDIT_PULL] [--onset-credit-max ONSET_CREDIT_MAX]
+                    [--no-onset-realign] [--no-center] [--device {auto,cpu,cuda}]
+                    [--cuda-device CUDA_DEVICE] [--strength STRENGTH] [--decay DECAY]
+                    [--floor FLOOR]
                     inputs [inputs ...]
 
 Reduce spectral tails / reverberant smear
@@ -769,7 +744,11 @@ options:
   --compressor-threshold-db COMPRESSOR_THRESHOLD_DB
                         Enable compressor above threshold dBFS
   --compressor-ratio COMPRESSOR_RATIO
-                        Compressor rat
+                        Compressor ratio (>=1)
+  --compressor-attack-ms COMPRESSOR_ATTACK_MS
+                        Compressor attack time in ms
+  --compressor-release-ms COMPRESSOR_RELEASE_MS
+
 ... [truncated]
 ```
 
@@ -795,11 +774,9 @@ src-layout migration.
 
 ```text
 usage: pvxformant.py [-h] [-o OUTPUT_DIR] [--output OUTPUT] [--suffix SUFFIX]
-                     [--output-format OUTPUT_FORMAT] [--stdout] [--overwrite]
-                     [--dry-run]
-                     [--verbosity {silent,quiet,normal,verbose,debug}] [-v]
-                     [--quiet] [--silent] [--normalize {none,peak,rms}]
-                     [--peak-dbfs PEAK_DBFS] [--rms-dbfs RMS_DBFS]
+                     [--output-format OUTPUT_FORMAT] [--stdout] [--overwrite] [--dry-run]
+                     [--verbosity {silent,quiet,normal,verbose,debug}] [-v] [--quiet] [--silent]
+                     [--normalize {none,peak,rms}] [--peak-dbfs PEAK_DBFS] [--rms-dbfs RMS_DBFS]
                      [--target-lufs TARGET_LUFS]
                      [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
                      [--compressor-ratio COMPRESSOR_RATIO]
@@ -807,8 +784,7 @@ usage: pvxformant.py [-h] [-o OUTPUT_DIR] [--output OUTPUT] [--suffix SUFFIX]
                      [--compressor-release-ms COMPRESSOR_RELEASE_MS]
                      [--compressor-makeup-db COMPRESSOR_MAKEUP_DB]
                      [--expander-threshold-db EXPANDER_THRESHOLD_DB]
-                     [--expander-ratio EXPANDER_RATIO]
-                     [--expander-attack-ms EXPANDER_ATTACK_MS]
+                     [--expander-ratio EXPANDER_RATIO] [--expander-attack-ms EXPANDER_ATTACK_MS]
                      [--expander-release-ms EXPANDER_RELEASE_MS]
                      [--compander-threshold-db COMPANDER_THRESHOLD_DB]
                      [--compander-compress-ratio COMPANDER_COMPRESS_RATIO]
@@ -816,33 +792,24 @@ usage: pvxformant.py [-h] [-o OUTPUT_DIR] [--output OUTPUT] [--suffix SUFFIX]
                      [--compander-attack-ms COMPANDER_ATTACK_MS]
                      [--compander-release-ms COMPANDER_RELEASE_MS]
                      [--compander-makeup-db COMPANDER_MAKEUP_DB]
-                     [--limiter-threshold LIMITER_THRESHOLD]
-                     [--soft-clip-level SOFT_CLIP_LEVEL]
-                     [--soft-clip-type {tanh,arctan,cubic}]
-                     [--soft-clip-drive SOFT_CLIP_DRIVE]
-                     [--hard-clip-level HARD_CLIP_LEVEL] [--clip]
-                     [--subtype SUBTYPE] [--bit-depth {inherit,16,24,32f}]
-                     [--dither {none,tpdf}] [--dither-seed DITHER_SEED]
-                     [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                     [--limiter-threshold LIMITER_THRESHOLD] [--soft-clip-level SOFT_CLIP_LEVEL]
+                     [--soft-clip-type {tanh,arctan,cubic}] [--soft-clip-drive SOFT_CLIP_DRIVE]
+                     [--hard-clip-level HARD_CLIP_LEVEL] [--clip] [--subtype SUBTYPE]
+                     [--bit-depth {inherit,16,24,32f}] [--dither {none,tpdf}]
+                     [--dither-seed DITHER_SEED] [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
                      [--metadata-policy {none,sidecar,copy}] [--n-fft N_FFT]
                      [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
                      [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
-                     [--kaiser-beta KAISER_BETA]
-                     [--transform {fft,dft,czt,dct,dst,hartley}]
+                     [--kaiser-beta KAISER_BETA] [--transform {fft,dft,czt,dct,dst,hartley}]
                      [--phase-engine {propagate,hybrid,random}]
                      [--ambient-phase-mix AMBIENT_PHASE_MIX]
-                     [--phase-random-seed PHASE_RANDOM_SEED]
-                     [--onset-time-credit]
-                     [--onset-credit-pull ONSET_CREDIT_PULL]
-                     [--onset-credit-max ONSET_CREDIT_MAX]
-                     [--no-onset-realign] [--no-center]
-                     [--device {auto,cpu,cuda}] [--cuda-device CUDA_DEVICE]
-                     [--pitch-shift-semitones PITCH_SHIFT_SEMITONES]
+                     [--phase-random-seed PHASE_RANDOM_SEED] [--onset-time-credit]
+                     [--onset-credit-pull ONSET_CREDIT_PULL] [--onset-credit-max ONSET_CREDIT_MAX]
+                     [--no-onset-realign] [--no-center] [--device {auto,cpu,cuda}]
+                     [--cuda-device CUDA_DEVICE] [--pitch-shift-semitones PITCH_SHIFT_SEMITONES]
                      [--pitch-shift-cents PITCH_SHIFT_CENTS]
-                     [--formant-shift-ratio FORMANT_SHIFT_RATIO]
-                     [--mode {shift,preserve}]
-                     [--formant-lifter FORMANT_LIFTER]
-                     [--formant-max-gain-db FORMANT_MAX_GAIN_DB]
+                     [--formant-shift-ratio FORMANT_SHIFT_RATIO] [--mode {shift,preserve}]
+                     [--formant-lifter FORMANT_LIFTER] [--formant-max-gain-db FORMANT_MAX_GAIN_DB]
                      [--resample-mode {auto,fft,linear}]
                      inputs [inputs ...]
 
@@ -871,7 +838,12 @@ options:
   --normalize {none,peak,rms}
                         Output normalization mode
   --peak-dbfs PEAK_DBFS
-                     
+                        Target peak dBFS when --normalize peak
+  --rms-dbfs RMS_DBFS   Target RMS dBFS when --normalize rms
+  --target-lufs TARGET_LUFS
+                        Integrated loudness target in LUFS
+  --compressor-threshold-db COMPRESSOR_THRESHOLD_DB
+
 ... [truncated]
 ```
 
@@ -897,11 +869,9 @@ src-layout migration.
 
 ```text
 usage: pvxfreeze.py [-h] [-o OUTPUT_DIR] [--output OUTPUT] [--suffix SUFFIX]
-                    [--output-format OUTPUT_FORMAT] [--stdout] [--overwrite]
-                    [--dry-run]
-                    [--verbosity {silent,quiet,normal,verbose,debug}] [-v]
-                    [--quiet] [--silent] [--normalize {none,peak,rms}]
-                    [--peak-dbfs PEAK_DBFS] [--rms-dbfs RMS_DBFS]
+                    [--output-format OUTPUT_FORMAT] [--stdout] [--overwrite] [--dry-run]
+                    [--verbosity {silent,quiet,normal,verbose,debug}] [-v] [--quiet] [--silent]
+                    [--normalize {none,peak,rms}] [--peak-dbfs PEAK_DBFS] [--rms-dbfs RMS_DBFS]
                     [--target-lufs TARGET_LUFS]
                     [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
                     [--compressor-ratio COMPRESSOR_RATIO]
@@ -909,8 +879,7 @@ usage: pvxfreeze.py [-h] [-o OUTPUT_DIR] [--output OUTPUT] [--suffix SUFFIX]
                     [--compressor-release-ms COMPRESSOR_RELEASE_MS]
                     [--compressor-makeup-db COMPRESSOR_MAKEUP_DB]
                     [--expander-threshold-db EXPANDER_THRESHOLD_DB]
-                    [--expander-ratio EXPANDER_RATIO]
-                    [--expander-attack-ms EXPANDER_ATTACK_MS]
+                    [--expander-ratio EXPANDER_RATIO] [--expander-attack-ms EXPANDER_ATTACK_MS]
                     [--expander-release-ms EXPANDER_RELEASE_MS]
                     [--compander-threshold-db COMPANDER_THRESHOLD_DB]
                     [--compander-compress-ratio COMPANDER_COMPRESS_RATIO]
@@ -918,28 +887,22 @@ usage: pvxfreeze.py [-h] [-o OUTPUT_DIR] [--output OUTPUT] [--suffix SUFFIX]
                     [--compander-attack-ms COMPANDER_ATTACK_MS]
                     [--compander-release-ms COMPANDER_RELEASE_MS]
                     [--compander-makeup-db COMPANDER_MAKEUP_DB]
-                    [--limiter-threshold LIMITER_THRESHOLD]
-                    [--soft-clip-level SOFT_CLIP_LEVEL]
-                    [--soft-clip-type {tanh,arctan,cubic}]
-                    [--soft-clip-drive SOFT_CLIP_DRIVE]
-                    [--hard-clip-level HARD_CLIP_LEVEL] [--clip]
-                    [--subtype SUBTYPE] [--bit-depth {inherit,16,24,32f}]
-                    [--dither {none,tpdf}] [--dither-seed DITHER_SEED]
-                    [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                    [--limiter-threshold LIMITER_THRESHOLD] [--soft-clip-level SOFT_CLIP_LEVEL]
+                    [--soft-clip-type {tanh,arctan,cubic}] [--soft-clip-drive SOFT_CLIP_DRIVE]
+                    [--hard-clip-level HARD_CLIP_LEVEL] [--clip] [--subtype SUBTYPE]
+                    [--bit-depth {inherit,16,24,32f}] [--dither {none,tpdf}]
+                    [--dither-seed DITHER_SEED] [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
                     [--metadata-policy {none,sidecar,copy}] [--n-fft N_FFT]
                     [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
                     [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
-                    [--kaiser-beta KAISER_BETA]
-                    [--transform {fft,dft,czt,dct,dst,hartley}]
+                    [--kaiser-beta KAISER_BETA] [--transform {fft,dft,czt,dct,dst,hartley}]
                     [--phase-engine {propagate,hybrid,random}]
                     [--ambient-phase-mix AMBIENT_PHASE_MIX]
-                    [--phase-random-seed PHASE_RANDOM_SEED]
-                    [--onset-time-credit]
-                    [--onset-credit-pull ONSET_CREDIT_PULL]
-                    [--onset-credit-max ONSET_CREDIT_MAX] [--no-onset-realign]
-                    [--no-center] [--device {auto,cpu,cuda}]
-                    [--cuda-device CUDA_DEVICE] [--freeze-time FREEZE_TIME]
-                    [--duration DURATION] [--random-phase]
+                    [--phase-random-seed PHASE_RANDOM_SEED] [--onset-time-credit]
+                    [--onset-credit-pull ONSET_CREDIT_PULL] [--onset-credit-max ONSET_CREDIT_MAX]
+                    [--no-onset-realign] [--no-center] [--device {auto,cpu,cuda}]
+                    [--cuda-device CUDA_DEVICE] [--freeze-time FREEZE_TIME] [--duration DURATION]
+                    [--random-phase]
                     inputs [inputs ...]
 
 Freeze a spectral slice into a sustained output
@@ -974,7 +937,11 @@ options:
   --compressor-threshold-db COMPRESSOR_THRESHOLD_DB
                         Enable compressor above threshold dBFS
   --compressor-ratio COMPRESSOR_RATIO
-                   
+                        Compressor ratio (>=1)
+  --compressor-attack-ms COMPRESSOR_ATTACK_MS
+                        Compressor attack time in ms
+  --compressor-release-ms COMPRESSOR_RELEASE_MS
+
 ... [truncated]
 ```
 
@@ -999,12 +966,10 @@ src-layout migration.
 ### CLI Help Snapshot
 
 ```text
-usage: pvxharmonize.py [-h] [-o OUTPUT_DIR] [--output OUTPUT]
-                       [--suffix SUFFIX] [--output-format OUTPUT_FORMAT]
-                       [--stdout] [--overwrite] [--dry-run]
-                       [--verbosity {silent,quiet,normal,verbose,debug}] [-v]
-                       [--quiet] [--silent] [--normalize {none,peak,rms}]
-                       [--peak-dbfs PEAK_DBFS] [--rms-dbfs RMS_DBFS]
+usage: pvxharmonize.py [-h] [-o OUTPUT_DIR] [--output OUTPUT] [--suffix SUFFIX]
+                       [--output-format OUTPUT_FORMAT] [--stdout] [--overwrite] [--dry-run]
+                       [--verbosity {silent,quiet,normal,verbose,debug}] [-v] [--quiet] [--silent]
+                       [--normalize {none,peak,rms}] [--peak-dbfs PEAK_DBFS] [--rms-dbfs RMS_DBFS]
                        [--target-lufs TARGET_LUFS]
                        [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
                        [--compressor-ratio COMPRESSOR_RATIO]
@@ -1012,8 +977,7 @@ usage: pvxharmonize.py [-h] [-o OUTPUT_DIR] [--output OUTPUT]
                        [--compressor-release-ms COMPRESSOR_RELEASE_MS]
                        [--compressor-makeup-db COMPRESSOR_MAKEUP_DB]
                        [--expander-threshold-db EXPANDER_THRESHOLD_DB]
-                       [--expander-ratio EXPANDER_RATIO]
-                       [--expander-attack-ms EXPANDER_ATTACK_MS]
+                       [--expander-ratio EXPANDER_RATIO] [--expander-attack-ms EXPANDER_ATTACK_MS]
                        [--expander-release-ms EXPANDER_RELEASE_MS]
                        [--compander-threshold-db COMPANDER_THRESHOLD_DB]
                        [--compander-compress-ratio COMPANDER_COMPRESS_RATIO]
@@ -1021,31 +985,23 @@ usage: pvxharmonize.py [-h] [-o OUTPUT_DIR] [--output OUTPUT]
                        [--compander-attack-ms COMPANDER_ATTACK_MS]
                        [--compander-release-ms COMPANDER_RELEASE_MS]
                        [--compander-makeup-db COMPANDER_MAKEUP_DB]
-                       [--limiter-threshold LIMITER_THRESHOLD]
-                       [--soft-clip-level SOFT_CLIP_LEVEL]
-                       [--soft-clip-type {tanh,arctan,cubic}]
-                       [--soft-clip-drive SOFT_CLIP_DRIVE]
-                       [--hard-clip-level HARD_CLIP_LEVEL] [--clip]
-                       [--subtype SUBTYPE] [--bit-depth {inherit,16,24,32f}]
-                       [--dither {none,tpdf}] [--dither-seed DITHER_SEED]
-                       [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                       [--limiter-threshold LIMITER_THRESHOLD] [--soft-clip-level SOFT_CLIP_LEVEL]
+                       [--soft-clip-type {tanh,arctan,cubic}] [--soft-clip-drive SOFT_CLIP_DRIVE]
+                       [--hard-clip-level HARD_CLIP_LEVEL] [--clip] [--subtype SUBTYPE]
+                       [--bit-depth {inherit,16,24,32f}] [--dither {none,tpdf}]
+                       [--dither-seed DITHER_SEED] [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
                        [--metadata-policy {none,sidecar,copy}] [--n-fft N_FFT]
                        [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
                        [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
-                       [--kaiser-beta KAISER_BETA]
-                       [--transform {fft,dft,czt,dct,dst,hartley}]
+                       [--kaiser-beta KAISER_BETA] [--transform {fft,dft,czt,dct,dst,hartley}]
                        [--phase-engine {propagate,hybrid,random}]
                        [--ambient-phase-mix AMBIENT_PHASE_MIX]
-                       [--phase-random-seed PHASE_RANDOM_SEED]
-                       [--onset-time-credit]
+                       [--phase-random-seed PHASE_RANDOM_SEED] [--onset-time-credit]
                        [--onset-credit-pull ONSET_CREDIT_PULL]
-                       [--onset-credit-max ONSET_CREDIT_MAX]
-                       [--no-onset-realign] [--no-center]
+                       [--onset-credit-max ONSET_CREDIT_MAX] [--no-onset-realign] [--no-center]
                        [--device {auto,cpu,cuda}] [--cuda-device CUDA_DEVICE]
-                       [--intervals INTERVALS]
-                       [--intervals-cents INTERVALS_CENTS] [--gains GAINS]
-                       [--pans PANS] [--force-stereo]
-                       [--resample-mode {auto,fft,linear}]
+                       [--intervals INTERVALS] [--intervals-cents INTERVALS_CENTS] [--gains GAINS]
+                       [--pans PANS] [--force-stereo] [--resample-mode {auto,fft,linear}]
                        inputs [inputs ...]
 
 Generate harmonized voices from an input
@@ -1074,7 +1030,13 @@ options:
                         Output normalization mode
   --peak-dbfs PEAK_DBFS
                         Target peak dBFS when --normalize peak
-  --rms-dbfs RMS_DBFS   Target RMS dBFS when --no
+  --rms-dbfs RMS_DBFS   Target RMS dBFS when --normalize rms
+  --target-lufs TARGET_LUFS
+                        Integrated loudness target in LUFS
+  --compressor-threshold-db COMPRESSOR_THRESHOLD_DB
+                        Enable compressor above threshold dBFS
+  --compressor-ratio COMPRESSOR_RATIO
+
 ... [truncated]
 ```
 
@@ -1100,20 +1062,16 @@ src-layout migration.
 
 ```text
 usage: pvxlayer.py [-h] [-o OUTPUT_DIR] [--output OUTPUT] [--suffix SUFFIX]
-                   [--output-format OUTPUT_FORMAT] [--stdout] [--overwrite]
-                   [--dry-run]
-                   [--verbosity {silent,quiet,normal,verbose,debug}] [-v]
-                   [--quiet] [--silent] [--normalize {none,peak,rms}]
-                   [--peak-dbfs PEAK_DBFS] [--rms-dbfs RMS_DBFS]
-                   [--target-lufs TARGET_LUFS]
-                   [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
+                   [--output-format OUTPUT_FORMAT] [--stdout] [--overwrite] [--dry-run]
+                   [--verbosity {silent,quiet,normal,verbose,debug}] [-v] [--quiet] [--silent]
+                   [--normalize {none,peak,rms}] [--peak-dbfs PEAK_DBFS] [--rms-dbfs RMS_DBFS]
+                   [--target-lufs TARGET_LUFS] [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
                    [--compressor-ratio COMPRESSOR_RATIO]
                    [--compressor-attack-ms COMPRESSOR_ATTACK_MS]
                    [--compressor-release-ms COMPRESSOR_RELEASE_MS]
                    [--compressor-makeup-db COMPRESSOR_MAKEUP_DB]
                    [--expander-threshold-db EXPANDER_THRESHOLD_DB]
-                   [--expander-ratio EXPANDER_RATIO]
-                   [--expander-attack-ms EXPANDER_ATTACK_MS]
+                   [--expander-ratio EXPANDER_RATIO] [--expander-attack-ms EXPANDER_ATTACK_MS]
                    [--expander-release-ms EXPANDER_RELEASE_MS]
                    [--compander-threshold-db COMPANDER_THRESHOLD_DB]
                    [--compander-compress-ratio COMPANDER_COMPRESS_RATIO]
@@ -1121,37 +1079,28 @@ usage: pvxlayer.py [-h] [-o OUTPUT_DIR] [--output OUTPUT] [--suffix SUFFIX]
                    [--compander-attack-ms COMPANDER_ATTACK_MS]
                    [--compander-release-ms COMPANDER_RELEASE_MS]
                    [--compander-makeup-db COMPANDER_MAKEUP_DB]
-                   [--limiter-threshold LIMITER_THRESHOLD]
-                   [--soft-clip-level SOFT_CLIP_LEVEL]
-                   [--soft-clip-type {tanh,arctan,cubic}]
-                   [--soft-clip-drive SOFT_CLIP_DRIVE]
-                   [--hard-clip-level HARD_CLIP_LEVEL] [--clip]
-                   [--subtype SUBTYPE] [--bit-depth {inherit,16,24,32f}]
-                   [--dither {none,tpdf}] [--dither-seed DITHER_SEED]
-                   [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                   [--limiter-threshold LIMITER_THRESHOLD] [--soft-clip-level SOFT_CLIP_LEVEL]
+                   [--soft-clip-type {tanh,arctan,cubic}] [--soft-clip-drive SOFT_CLIP_DRIVE]
+                   [--hard-clip-level HARD_CLIP_LEVEL] [--clip] [--subtype SUBTYPE]
+                   [--bit-depth {inherit,16,24,32f}] [--dither {none,tpdf}]
+                   [--dither-seed DITHER_SEED] [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
                    [--metadata-policy {none,sidecar,copy}] [--n-fft N_FFT]
                    [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
                    [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
-                   [--kaiser-beta KAISER_BETA]
-                   [--transform {fft,dft,czt,dct,dst,hartley}]
+                   [--kaiser-beta KAISER_BETA] [--transform {fft,dft,czt,dct,dst,hartley}]
                    [--phase-engine {propagate,hybrid,random}]
-                   [--ambient-phase-mix AMBIENT_PHASE_MIX]
-                   [--phase-random-seed PHASE_RANDOM_SEED]
-                   [--onset-time-credit]
-                   [--onset-credit-pull ONSET_CREDIT_PULL]
-                   [--onset-credit-max ONSET_CREDIT_MAX] [--no-onset-realign]
-                   [--no-center] [--device {auto,cpu,cuda}]
-                   [--cuda-device CUDA_DEVICE]
+                   [--ambient-phase-mix AMBIENT_PHASE_MIX] [--phase-random-seed PHASE_RANDOM_SEED]
+                   [--onset-time-credit] [--onset-credit-pull ONSET_CREDIT_PULL]
+                   [--onset-credit-max ONSET_CREDIT_MAX] [--no-onset-realign] [--no-center]
+                   [--device {auto,cpu,cuda}] [--cuda-device CUDA_DEVICE]
                    [--harmonic-stretch HARMONIC_STRETCH]
                    [--harmonic-pitch-semitones HARMONIC_PITCH_SEMITONES]
                    [--harmonic-pitch-cents HARMONIC_PITCH_CENTS]
                    [--percussive-stretch PERCUSSIVE_STRETCH]
                    [--percussive-pitch-semitones PERCUSSIVE_PITCH_SEMITONES]
                    [--percussive-pitch-cents PERCUSSIVE_PITCH_CENTS]
-                   [--harmonic-gain HARMONIC_GAIN]
-                   [--percussive-gain PERCUSSIVE_GAIN]
-                   [--harmonic-kernel HARMONIC_KERNEL]
-                   [--percussive-kernel PERCUSSIVE_KERNEL]
+                   [--harmonic-gain HARMONIC_GAIN] [--percussive-gain PERCUSSIVE_GAIN]
+                   [--harmonic-kernel HARMONIC_KERNEL] [--percussive-kernel PERCUSSIVE_KERNEL]
                    [--resample-mode {auto,fft,linear}]
                    inputs [inputs ...]
 
@@ -1175,7 +1124,13 @@ options:
   --verbosity {silent,quiet,normal,verbose,debug}
                         Console verbosity level
   -v, --verbose         Increase verbosity (repeat for extra detail)
-  --quiet               Reduce output
+  --quiet               Reduce output and hide status bars
+  --silent              Suppress all console output
+  --normalize {none,peak,rms}
+                        Output normalization mode
+  --peak-dbfs PEAK_DBFS
+                        Target peak dBFS when --normalize peak
+  --rm
 ... [truncated]
 ```
 
@@ -1200,23 +1155,19 @@ src-layout migration.
 ### CLI Help Snapshot
 
 ```text
-usage: pvxmorph.py [-h] [-o OUTPUT] [--stdout] [--output-format OUTPUT_FORMAT]
-                   [--alpha ALPHA]
+usage: pvxmorph.py [-h] [-o OUTPUT] [--stdout] [--output-format OUTPUT_FORMAT] [--alpha ALPHA]
                    [--blend-mode {linear,geometric,magnitude_b_phase_a,magnitude_a_phase_b,carrier_a_envelope_b,carrier_b_envelope_a,carrier_a_mask_b,carrier_b_mask_a,product,max_mag,min_mag}]
-                   [--phase-mix PHASE_MIX]
-                   [--interp {none,linear,nearest,cubic,polynomial}]
+                   [--phase-mix PHASE_MIX] [--interp {none,linear,nearest,cubic,polynomial}]
                    [--order ORDER] [--mask-exponent MASK_EXPONENT]
                    [--envelope-lifter ENVELOPE_LIFTER] [--normalize-energy]
-                   [--normalize {none,peak,rms}] [--peak-dbfs PEAK_DBFS]
-                   [--rms-dbfs RMS_DBFS] [--target-lufs TARGET_LUFS]
-                   [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
+                   [--normalize {none,peak,rms}] [--peak-dbfs PEAK_DBFS] [--rms-dbfs RMS_DBFS]
+                   [--target-lufs TARGET_LUFS] [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
                    [--compressor-ratio COMPRESSOR_RATIO]
                    [--compressor-attack-ms COMPRESSOR_ATTACK_MS]
                    [--compressor-release-ms COMPRESSOR_RELEASE_MS]
                    [--compressor-makeup-db COMPRESSOR_MAKEUP_DB]
                    [--expander-threshold-db EXPANDER_THRESHOLD_DB]
-                   [--expander-ratio EXPANDER_RATIO]
-                   [--expander-attack-ms EXPANDER_ATTACK_MS]
+                   [--expander-ratio EXPANDER_RATIO] [--expander-attack-ms EXPANDER_ATTACK_MS]
                    [--expander-release-ms EXPANDER_RELEASE_MS]
                    [--compander-threshold-db COMPANDER_THRESHOLD_DB]
                    [--compander-compress-ratio COMPANDER_COMPRESS_RATIO]
@@ -1224,29 +1175,21 @@ usage: pvxmorph.py [-h] [-o OUTPUT] [--stdout] [--output-format OUTPUT_FORMAT]
                    [--compander-attack-ms COMPANDER_ATTACK_MS]
                    [--compander-release-ms COMPANDER_RELEASE_MS]
                    [--compander-makeup-db COMPANDER_MAKEUP_DB]
-                   [--limiter-threshold LIMITER_THRESHOLD]
-                   [--soft-clip-level SOFT_CLIP_LEVEL]
-                   [--soft-clip-type {tanh,arctan,cubic}]
-                   [--soft-clip-drive SOFT_CLIP_DRIVE]
-                   [--hard-clip-level HARD_CLIP_LEVEL] [--clip]
-                   [--subtype SUBTYPE] [--bit-depth {inherit,16,24,32f}]
-                   [--dither {none,tpdf}] [--dither-seed DITHER_SEED]
-                   [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                   [--limiter-threshold LIMITER_THRESHOLD] [--soft-clip-level SOFT_CLIP_LEVEL]
+                   [--soft-clip-type {tanh,arctan,cubic}] [--soft-clip-drive SOFT_CLIP_DRIVE]
+                   [--hard-clip-level HARD_CLIP_LEVEL] [--clip] [--subtype SUBTYPE]
+                   [--bit-depth {inherit,16,24,32f}] [--dither {none,tpdf}]
+                   [--dither-seed DITHER_SEED] [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
                    [--metadata-policy {none,sidecar,copy}] [--overwrite]
-                   [--verbosity {silent,quiet,normal,verbose,debug}] [-v]
-                   [--quiet] [--silent] [--n-fft N_FFT]
-                   [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
+                   [--verbosity {silent,quiet,normal,verbose,debug}] [-v] [--quiet] [--silent]
+                   [--n-fft N_FFT] [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
                    [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
-                   [--kaiser-beta KAISER_BETA]
-                   [--transform {fft,dft,czt,dct,dst,hartley}]
+                   [--kaiser-beta KAISER_BETA] [--transform {fft,dft,czt,dct,dst,hartley}]
                    [--phase-engine {propagate,hybrid,random}]
-                   [--ambient-phase-mix AMBIENT_PHASE_MIX]
-                   [--phase-random-seed PHASE_RANDOM_SEED]
-                   [--onset-time-credit]
-                   [--onset-credit-pull ONSET_CREDIT_PULL]
-                   [--onset-credit-max ONSET_CREDIT_MAX] [--no-onset-realign]
-                   [--no-center] [--device {auto,cpu,cuda}]
-                   [--cuda-device CUDA_DEVICE]
+                   [--ambient-phase-mix AMBIENT_PHASE_MIX] [--phase-random-seed PHASE_RANDOM_SEED]
+                   [--onset-time-credit] [--onset-credit-pull ONSET_CREDIT_PULL]
+                   [--onset-credit-max ONSET_CREDIT_MAX] [--no-onset-realign] [--no-center]
+                   [--device {auto,cpu,cuda}] [--cuda-device CUDA_DEVICE]
                    input_a input_b
 
 Morph two audio files in the STFT domain
@@ -1266,7 +1209,9 @@ options:
                         Cross-synthesis blend style. linear/geometric are symmetric blends; carrier_* modes transfer envelope/mask from modulator to carrier.
   --phase-mix PHASE_MIX
                         Phase blend in [0,1]. If omitted, mode-specific defaults apply (A-phase for *_phase_a/carrier_a_*, B-phase for *_phase_b/carrier_b_*, alpha for symmetric modes). Accepts scalar or control file (.csv/.json).
-  --interp {none,linear,nearest,cubic,poly
+  --interp {none,linear,nearest,cubic,polynomial}
+                        Interpolation mode for --alpha/--phase-mix control files (default: linear).
+  --order ORDER         Polynomial order for --interp polynomial (default: 3). Accepts any integer >= 1; effective fit d
 ... [truncated]
 ```
 
@@ -1292,11 +1237,9 @@ src-layout migration.
 
 ```text
 usage: pvxretune.py [-h] [-o OUTPUT_DIR] [--output OUTPUT] [--suffix SUFFIX]
-                    [--output-format OUTPUT_FORMAT] [--stdout] [--overwrite]
-                    [--dry-run]
-                    [--verbosity {silent,quiet,normal,verbose,debug}] [-v]
-                    [--quiet] [--silent] [--normalize {none,peak,rms}]
-                    [--peak-dbfs PEAK_DBFS] [--rms-dbfs RMS_DBFS]
+                    [--output-format OUTPUT_FORMAT] [--stdout] [--overwrite] [--dry-run]
+                    [--verbosity {silent,quiet,normal,verbose,debug}] [-v] [--quiet] [--silent]
+                    [--normalize {none,peak,rms}] [--peak-dbfs PEAK_DBFS] [--rms-dbfs RMS_DBFS]
                     [--target-lufs TARGET_LUFS]
                     [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
                     [--compressor-ratio COMPRESSOR_RATIO]
@@ -1304,8 +1247,7 @@ usage: pvxretune.py [-h] [-o OUTPUT_DIR] [--output OUTPUT] [--suffix SUFFIX]
                     [--compressor-release-ms COMPRESSOR_RELEASE_MS]
                     [--compressor-makeup-db COMPRESSOR_MAKEUP_DB]
                     [--expander-threshold-db EXPANDER_THRESHOLD_DB]
-                    [--expander-ratio EXPANDER_RATIO]
-                    [--expander-attack-ms EXPANDER_ATTACK_MS]
+                    [--expander-ratio EXPANDER_RATIO] [--expander-attack-ms EXPANDER_ATTACK_MS]
                     [--expander-release-ms EXPANDER_RELEASE_MS]
                     [--compander-threshold-db COMPANDER_THRESHOLD_DB]
                     [--compander-compress-ratio COMPANDER_COMPRESS_RATIO]
@@ -1313,32 +1255,24 @@ usage: pvxretune.py [-h] [-o OUTPUT_DIR] [--output OUTPUT] [--suffix SUFFIX]
                     [--compander-attack-ms COMPANDER_ATTACK_MS]
                     [--compander-release-ms COMPANDER_RELEASE_MS]
                     [--compander-makeup-db COMPANDER_MAKEUP_DB]
-                    [--limiter-threshold LIMITER_THRESHOLD]
-                    [--soft-clip-level SOFT_CLIP_LEVEL]
-                    [--soft-clip-type {tanh,arctan,cubic}]
-                    [--soft-clip-drive SOFT_CLIP_DRIVE]
-                    [--hard-clip-level HARD_CLIP_LEVEL] [--clip]
-                    [--subtype SUBTYPE] [--bit-depth {inherit,16,24,32f}]
-                    [--dither {none,tpdf}] [--dither-seed DITHER_SEED]
-                    [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                    [--limiter-threshold LIMITER_THRESHOLD] [--soft-clip-level SOFT_CLIP_LEVEL]
+                    [--soft-clip-type {tanh,arctan,cubic}] [--soft-clip-drive SOFT_CLIP_DRIVE]
+                    [--hard-clip-level HARD_CLIP_LEVEL] [--clip] [--subtype SUBTYPE]
+                    [--bit-depth {inherit,16,24,32f}] [--dither {none,tpdf}]
+                    [--dither-seed DITHER_SEED] [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
                     [--metadata-policy {none,sidecar,copy}] [--n-fft N_FFT]
                     [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
                     [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
-                    [--kaiser-beta KAISER_BETA]
-                    [--transform {fft,dft,czt,dct,dst,hartley}]
+                    [--kaiser-beta KAISER_BETA] [--transform {fft,dft,czt,dct,dst,hartley}]
                     [--phase-engine {propagate,hybrid,random}]
                     [--ambient-phase-mix AMBIENT_PHASE_MIX]
-                    [--phase-random-seed PHASE_RANDOM_SEED]
-                    [--onset-time-credit]
-                    [--onset-credit-pull ONSET_CREDIT_PULL]
-                    [--onset-credit-max ONSET_CREDIT_MAX] [--no-onset-realign]
-                    [--no-center] [--device {auto,cpu,cuda}]
+                    [--phase-random-seed PHASE_RANDOM_SEED] [--onset-time-credit]
+                    [--onset-credit-pull ONSET_CREDIT_PULL] [--onset-credit-max ONSET_CREDIT_MAX]
+                    [--no-onset-realign] [--no-center] [--device {auto,cpu,cuda}]
                     [--cuda-device CUDA_DEVICE] [--root ROOT]
-                    [--scale {chromatic,major,minor,pentatonic}]
-                    [--scale-cents SCALE_CENTS] [--strength STRENGTH]
-                    [--chunk-ms CHUNK_MS] [--overlap-ms OVERLAP_MS]
-                    [--f0-min F0_MIN] [--f0-max F0_MAX]
-                    [--resample-mode {auto,fft,linear}]
+                    [--scale {chromatic,major,minor,pentatonic}] [--scale-cents SCALE_CENTS]
+                    [--strength STRENGTH] [--chunk-ms CHUNK_MS] [--overlap-ms OVERLAP_MS]
+                    [--f0-min F0_MIN] [--f0-max F0_MAX] [--resample-mode {auto,fft,linear}]
                     inputs [inputs ...]
 
 Monophonic retune toward a musical scale
@@ -1368,7 +1302,12 @@ options:
   --peak-dbfs PEAK_DBFS
                         Target peak dBFS when --normalize peak
   --rms-dbfs RMS_DBFS   Target RMS dBFS when --normalize rms
-  --target-lufs TARGET_L
+  --target-lufs TARGET_LUFS
+                        Integrated loudness target in LUFS
+  --compressor-threshold-db COMPRESSOR_THRESHOLD_DB
+                        Enable compressor above threshold dBFS
+  --compressor-ratio COMPRESSOR_RATIO
+
 ... [truncated]
 ```
 
@@ -1393,12 +1332,10 @@ src-layout migration.
 ### CLI Help Snapshot
 
 ```text
-usage: pvxtransient.py [-h] [-o OUTPUT_DIR] [--output OUTPUT]
-                       [--suffix SUFFIX] [--output-format OUTPUT_FORMAT]
-                       [--stdout] [--overwrite] [--dry-run]
-                       [--verbosity {silent,quiet,normal,verbose,debug}] [-v]
-                       [--quiet] [--silent] [--normalize {none,peak,rms}]
-                       [--peak-dbfs PEAK_DBFS] [--rms-dbfs RMS_DBFS]
+usage: pvxtransient.py [-h] [-o OUTPUT_DIR] [--output OUTPUT] [--suffix SUFFIX]
+                       [--output-format OUTPUT_FORMAT] [--stdout] [--overwrite] [--dry-run]
+                       [--verbosity {silent,quiet,normal,verbose,debug}] [-v] [--quiet] [--silent]
+                       [--normalize {none,peak,rms}] [--peak-dbfs PEAK_DBFS] [--rms-dbfs RMS_DBFS]
                        [--target-lufs TARGET_LUFS]
                        [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
                        [--compressor-ratio COMPRESSOR_RATIO]
@@ -1406,8 +1343,7 @@ usage: pvxtransient.py [-h] [-o OUTPUT_DIR] [--output OUTPUT]
                        [--compressor-release-ms COMPRESSOR_RELEASE_MS]
                        [--compressor-makeup-db COMPRESSOR_MAKEUP_DB]
                        [--expander-threshold-db EXPANDER_THRESHOLD_DB]
-                       [--expander-ratio EXPANDER_RATIO]
-                       [--expander-attack-ms EXPANDER_ATTACK_MS]
+                       [--expander-ratio EXPANDER_RATIO] [--expander-attack-ms EXPANDER_ATTACK_MS]
                        [--expander-release-ms EXPANDER_RELEASE_MS]
                        [--compander-threshold-db COMPANDER_THRESHOLD_DB]
                        [--compander-compress-ratio COMPANDER_COMPRESS_RATIO]
@@ -1415,29 +1351,22 @@ usage: pvxtransient.py [-h] [-o OUTPUT_DIR] [--output OUTPUT]
                        [--compander-attack-ms COMPANDER_ATTACK_MS]
                        [--compander-release-ms COMPANDER_RELEASE_MS]
                        [--compander-makeup-db COMPANDER_MAKEUP_DB]
-                       [--limiter-threshold LIMITER_THRESHOLD]
-                       [--soft-clip-level SOFT_CLIP_LEVEL]
-                       [--soft-clip-type {tanh,arctan,cubic}]
-                       [--soft-clip-drive SOFT_CLIP_DRIVE]
-                       [--hard-clip-level HARD_CLIP_LEVEL] [--clip]
-                       [--subtype SUBTYPE] [--bit-depth {inherit,16,24,32f}]
-                       [--dither {none,tpdf}] [--dither-seed DITHER_SEED]
-                       [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                       [--limiter-threshold LIMITER_THRESHOLD] [--soft-clip-level SOFT_CLIP_LEVEL]
+                       [--soft-clip-type {tanh,arctan,cubic}] [--soft-clip-drive SOFT_CLIP_DRIVE]
+                       [--hard-clip-level HARD_CLIP_LEVEL] [--clip] [--subtype SUBTYPE]
+                       [--bit-depth {inherit,16,24,32f}] [--dither {none,tpdf}]
+                       [--dither-seed DITHER_SEED] [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
                        [--metadata-policy {none,sidecar,copy}] [--n-fft N_FFT]
                        [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
                        [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
-                       [--kaiser-beta KAISER_BETA]
-                       [--transform {fft,dft,czt,dct,dst,hartley}]
+                       [--kaiser-beta KAISER_BETA] [--transform {fft,dft,czt,dct,dst,hartley}]
                        [--phase-engine {propagate,hybrid,random}]
                        [--ambient-phase-mix AMBIENT_PHASE_MIX]
-                       [--phase-random-seed PHASE_RANDOM_SEED]
-                       [--onset-time-credit]
+                       [--phase-random-seed PHASE_RANDOM_SEED] [--onset-time-credit]
                        [--onset-credit-pull ONSET_CREDIT_PULL]
-                       [--onset-credit-max ONSET_CREDIT_MAX]
-                       [--no-onset-realign] [--no-center]
+                       [--onset-credit-max ONSET_CREDIT_MAX] [--no-onset-realign] [--no-center]
                        [--device {auto,cpu,cuda}] [--cuda-device CUDA_DEVICE]
-                       [--time-stretch TIME_STRETCH]
-                       [--target-duration TARGET_DURATION]
+                       [--time-stretch TIME_STRETCH] [--target-duration TARGET_DURATION]
                        [--pitch-shift-semitones PITCH_SHIFT_SEMITONES]
                        [--pitch-shift-cents PITCH_SHIFT_CENTS]
                        [--pitch-shift-ratio PITCH_SHIFT_RATIO]
@@ -1467,7 +1396,12 @@ options:
   -v, --verbose         Increase verbosity (repeat for extra detail)
   --quiet               Reduce output and hide status bars
   --silent              Suppress all console output
-  --normali
+  --normalize {none,peak,rms}
+                        Output normalization mode
+  --peak-dbfs PEAK_DBFS
+                        Target peak dBFS when --normalize peak
+  --rms-dbfs RMS_DBFS   Target RMS dBFS when --normalize rms
+  --target-lu
 ... [truncated]
 ```
 
@@ -1493,11 +1427,9 @@ src-layout migration.
 
 ```text
 usage: pvxunison.py [-h] [-o OUTPUT_DIR] [--output OUTPUT] [--suffix SUFFIX]
-                    [--output-format OUTPUT_FORMAT] [--stdout] [--overwrite]
-                    [--dry-run]
-                    [--verbosity {silent,quiet,normal,verbose,debug}] [-v]
-                    [--quiet] [--silent] [--normalize {none,peak,rms}]
-                    [--peak-dbfs PEAK_DBFS] [--rms-dbfs RMS_DBFS]
+                    [--output-format OUTPUT_FORMAT] [--stdout] [--overwrite] [--dry-run]
+                    [--verbosity {silent,quiet,normal,verbose,debug}] [-v] [--quiet] [--silent]
+                    [--normalize {none,peak,rms}] [--peak-dbfs PEAK_DBFS] [--rms-dbfs RMS_DBFS]
                     [--target-lufs TARGET_LUFS]
                     [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
                     [--compressor-ratio COMPRESSOR_RATIO]
@@ -1505,8 +1437,7 @@ usage: pvxunison.py [-h] [-o OUTPUT_DIR] [--output OUTPUT] [--suffix SUFFIX]
                     [--compressor-release-ms COMPRESSOR_RELEASE_MS]
                     [--compressor-makeup-db COMPRESSOR_MAKEUP_DB]
                     [--expander-threshold-db EXPANDER_THRESHOLD_DB]
-                    [--expander-ratio EXPANDER_RATIO]
-                    [--expander-attack-ms EXPANDER_ATTACK_MS]
+                    [--expander-ratio EXPANDER_RATIO] [--expander-attack-ms EXPANDER_ATTACK_MS]
                     [--expander-release-ms EXPANDER_RELEASE_MS]
                     [--compander-threshold-db COMPANDER_THRESHOLD_DB]
                     [--compander-compress-ratio COMPANDER_COMPRESS_RATIO]
@@ -1514,29 +1445,22 @@ usage: pvxunison.py [-h] [-o OUTPUT_DIR] [--output OUTPUT] [--suffix SUFFIX]
                     [--compander-attack-ms COMPANDER_ATTACK_MS]
                     [--compander-release-ms COMPANDER_RELEASE_MS]
                     [--compander-makeup-db COMPANDER_MAKEUP_DB]
-                    [--limiter-threshold LIMITER_THRESHOLD]
-                    [--soft-clip-level SOFT_CLIP_LEVEL]
-                    [--soft-clip-type {tanh,arctan,cubic}]
-                    [--soft-clip-drive SOFT_CLIP_DRIVE]
-                    [--hard-clip-level HARD_CLIP_LEVEL] [--clip]
-                    [--subtype SUBTYPE] [--bit-depth {inherit,16,24,32f}]
-                    [--dither {none,tpdf}] [--dither-seed DITHER_SEED]
-                    [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                    [--limiter-threshold LIMITER_THRESHOLD] [--soft-clip-level SOFT_CLIP_LEVEL]
+                    [--soft-clip-type {tanh,arctan,cubic}] [--soft-clip-drive SOFT_CLIP_DRIVE]
+                    [--hard-clip-level HARD_CLIP_LEVEL] [--clip] [--subtype SUBTYPE]
+                    [--bit-depth {inherit,16,24,32f}] [--dither {none,tpdf}]
+                    [--dither-seed DITHER_SEED] [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
                     [--metadata-policy {none,sidecar,copy}] [--n-fft N_FFT]
                     [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
                     [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
-                    [--kaiser-beta KAISER_BETA]
-                    [--transform {fft,dft,czt,dct,dst,hartley}]
+                    [--kaiser-beta KAISER_BETA] [--transform {fft,dft,czt,dct,dst,hartley}]
                     [--phase-engine {propagate,hybrid,random}]
                     [--ambient-phase-mix AMBIENT_PHASE_MIX]
-                    [--phase-random-seed PHASE_RANDOM_SEED]
-                    [--onset-time-credit]
-                    [--onset-credit-pull ONSET_CREDIT_PULL]
-                    [--onset-credit-max ONSET_CREDIT_MAX] [--no-onset-realign]
-                    [--no-center] [--device {auto,cpu,cuda}]
-                    [--cuda-device CUDA_DEVICE] [--voices VOICES]
-                    [--detune-cents DETUNE_CENTS] [--width WIDTH]
-                    [--dry-mix DRY_MIX] [--resample-mode {auto,fft,linear}]
+                    [--phase-random-seed PHASE_RANDOM_SEED] [--onset-time-credit]
+                    [--onset-credit-pull ONSET_CREDIT_PULL] [--onset-credit-max ONSET_CREDIT_MAX]
+                    [--no-onset-realign] [--no-center] [--device {auto,cpu,cuda}]
+                    [--cuda-device CUDA_DEVICE] [--voices VOICES] [--detune-cents DETUNE_CENTS]
+                    [--width WIDTH] [--dry-mix DRY_MIX] [--resample-mode {auto,fft,linear}]
                     inputs [inputs ...]
 
 Stereo unison thickener
@@ -1570,7 +1494,11 @@ options:
                         Integrated loudness target in LUFS
   --compressor-threshold-db COMPRESSOR_THRESHOLD_DB
                         Enable compressor above threshold dBFS
-  --comp
+  --compressor-ratio COMPRESSOR_RATIO
+                        Compressor ratio (>=1)
+  --compressor-attack-ms COMPRESSOR_ATTACK_MS
+                        Compressor attack time in ms
+  --compressor-release-m
 ... [truncated]
 ```
 
@@ -1595,11 +1523,9 @@ src-layout migration.
 ### CLI Help Snapshot
 
 ```text
-usage: pvxvoc.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
-                 [--output-format OUTPUT_FORMAT] [--out OUTPUT] [--overwrite]
-                 [--dry-run] [--stdout]
-                 [--verbosity {silent,quiet,normal,verbose,debug}] [-v]
-                 [--quiet] [--silent]
+usage: pvxvoc.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX] [--output-format OUTPUT_FORMAT]
+                 [--out OUTPUT] [--overwrite] [--dry-run] [--stdout]
+                 [--verbosity {silent,quiet,normal,verbose,debug}] [-v] [--quiet] [--silent]
                  [--preset {none,default,vocal,ambient,extreme,vocal_studio,drums_safe,extreme_ambient,stereo_coherent}]
                  [--example {all,basic,vocal,ambient,extreme,drums_safe,stereo_coherent,hybrid,benchmark,gpu,pipeline,csv}]
                  [--guided] [--stretch STRETCH] [--gpu] [--cpu]
@@ -1609,62 +1535,51 @@ usage: pvxvoc.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
                  [--auto-transform] [--n-fft N_FFT] [--win-length WIN_LENGTH]
                  [--hop-size HOP_SIZE]
                  [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
-                 [--kaiser-beta KAISER_BETA]
-                 [--transform {fft,dft,czt,dct,dst,hartley}] [--no-center]
-                 [--phase-locking {off,identity}]
+                 [--kaiser-beta KAISER_BETA] [--transform {fft,dft,czt,dct,dst,hartley}]
+                 [--no-center] [--phase-locking {off,identity}]
                  [--phase-engine {propagate,hybrid,random}]
-                 [--ambient-phase-mix AMBIENT_PHASE_MIX]
-                 [--phase-random-seed PHASE_RANDOM_SEED]
-                 [--transient-preserve]
-                 [--transient-threshold TRANSIENT_THRESHOLD] [--fourier-sync]
-                 [--fourier-sync-min-fft FOURIER_SYNC_MIN_FFT]
+                 [--ambient-phase-mix AMBIENT_PHASE_MIX] [--phase-random-seed PHASE_RANDOM_SEED]
+                 [--transient-preserve] [--transient-threshold TRANSIENT_THRESHOLD]
+                 [--fourier-sync] [--fourier-sync-min-fft FOURIER_SYNC_MIN_FFT]
                  [--fourier-sync-max-fft FOURIER_SYNC_MAX_FFT]
-                 [--fourier-sync-smooth FOURIER_SYNC_SMOOTH]
-                 [--multires-fusion] [--multires-ffts MULTIRES_FFTS]
-                 [--multires-weights MULTIRES_WEIGHTS]
+                 [--fourier-sync-smooth FOURIER_SYNC_SMOOTH] [--multires-fusion]
+                 [--multires-ffts MULTIRES_FFTS] [--multires-weights MULTIRES_WEIGHTS]
                  [--device {auto,cpu,cuda}] [--cuda-device CUDA_DEVICE]
-                 [--time-stretch TIME_STRETCH]
-                 [--target-duration TARGET_DURATION]
-                 [--stretch-mode {auto,standard,multistage}]
-                 [--extreme-time-stretch]
+                 [--time-stretch TIME_STRETCH] [--target-duration TARGET_DURATION]
+                 [--stretch-mode {auto,standard,multistage}] [--extreme-time-stretch]
                  [--extreme-stretch-threshold EXTREME_STRETCH_THRESHOLD]
                  [--max-stage-stretch MAX_STAGE_STRETCH] [--onset-time-credit]
-                 [--onset-credit-pull ONSET_CREDIT_PULL]
-                 [--onset-credit-max ONSET_CREDIT_MAX] [--no-onset-realign]
-                 [--ambient-preset]
-                 [--auto-segment-seconds AUTO_SEGMENT_SECONDS]
-                 [--checkpoint-dir CHECKPOINT_DIR]
+                 [--onset-credit-pull ONSET_CREDIT_PULL] [--onset-credit-max ONSET_CREDIT_MAX]
+                 [--no-onset-realign] [--ambient-preset]
+                 [--auto-segment-seconds AUTO_SEGMENT_SECONDS] [--checkpoint-dir CHECKPOINT_DIR]
                  [--checkpoint-id CHECKPOINT_ID] [--resume]
-                 [--interp {none,linear,nearest,cubic,polynomial}]
-                 [--order ORDER] [--transient-mode {off,reset,hybrid,wsola}]
+                 [--interp {none,linear,nearest,cubic,polynomial}] [--order ORDER]
+                 [--transient-mode {off,reset,hybrid,wsola}]
                  [--transient-sensitivity TRANSIENT_SENSITIVITY]
                  [--transient-protect-ms TRANSIENT_PROTECT_MS]
                  [--transient-crossfade-ms TRANSIENT_CROSSFADE_MS]
                  [--stereo-mode {independent,mid_side_lock,ref_channel_lock}]
-                 [--ref-channel REF_CHANNEL]
-                 [--coherence-strength COHERENCE_STRENGTH]
+                 [--ref-channel REF_CHANNEL] [--coherence-strength COHERENCE_STRENGTH]
                  [--pitch-shift-semitones PITCH_SHIFT_SEMITONES |
-                 --pitch-shift-cents PITCH_SHIFT_CENTS |
-                 --pitch-shift-ratio PITCH_SHIFT_RATIO |
-                 --target-f0 TARGET_F0] [--analysis-channel {first,mix}]
-                 [--f0-min F0_MIN] [--f0-max F0_MAX]
-                 [--pitch-mode {standard,formant-preserving}]
-                 [--formant-lifter FORMANT_LIFTER]
-                 [--formant-strength FORMANT_STRENGTH]
-                 [--formant-max-gain-db FORMANT_MAX_GAIN_DB]
-                 [--pitch-map PITCH_MAP] [--pitch-map-stdin] [--control-stdin]
-                 [--route EXPR] [--pitch-follow-stdin]
-                 [--pitch-conf-min PITCH_CONF_MIN]
-                 [--pitch-lowconf-mode {hold,unity,interp}]
+                 --pitch-shift-cents PITCH_SHIFT_CENTS | --pitch-shift-ratio PITCH_SHIFT_RATIO |
+                 --target-f0 TARGET_F0] [--analysis-channel {first,mix}] [--f0-min F0_MIN]
+                 [--f0-max F0_MAX] [--pitch-mode {standard,formant-preserving}]
+                 [--formant-lifter FORMANT_LIFTER] [--formant-strength FORMANT_STRENGTH]
+                 [--formant-max-gain-db FORMANT_MAX_GAIN_DB] [--pitch-map PITCH_MAP]
+                 [--pitch-map-stdin] [--control-stdin] [--route EXPR] [--pitch-follow-stdin]
+                 [--pitch-conf-min PITCH_CONF_MIN] [--pitch-lowconf-mode {hold,unity,interp}]
                  [--pitch-map-smooth-ms PITCH_MAP_SMOOTH_MS]
                  [--pitch-map-crossfade-ms PITCH_MAP_CROSSFADE_MS]
-                 [--target-sample-rate TARGET_SAMPLE_RATE]
-                 [--resample-mode {auto,fft,linear}]
-                 [--normalize {none,peak,rms}] [--peak-dbfs PEAK_DBFS]
-                 [--rms-dbfs RMS_DBFS] [--target-lufs TARGET_LUFS]
-                 [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
+                 [--target-sample-rate TARGET_SAMPLE_RATE] [--resample-mode {auto,fft,linear}]
+                 [--normalize {none,peak,rms}] [--peak-dbfs PEAK_DBFS] [--rms-dbfs RMS_DBFS]
+                 [--target-lufs TARGET_LUFS] [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
                  [--compressor-ratio COMPRESSOR_RATIO]
-                 [--compressor-attack-ms COMPRES
+                 [--compressor-attack-ms COMPRESSOR_ATTACK_MS]
+                 [--compressor-release-ms COMPRESSOR_RELEASE_MS]
+                 [--compressor-makeup-db COMPRESSOR_MAKEUP_DB]
+                 [--expander-threshold-db EXPANDER_THRESHOLD_DB] [--expander-ratio EXPANDER_RATIO]
+                 [--expander-attack-ms EXPANDER_ATTACK_MS]
+
 ... [truncated]
 ```
 
@@ -1690,20 +1605,16 @@ src-layout migration.
 
 ```text
 usage: pvxwarp.py [-h] [-o OUTPUT_DIR] [--output OUTPUT] [--suffix SUFFIX]
-                  [--output-format OUTPUT_FORMAT] [--stdout] [--overwrite]
-                  [--dry-run]
-                  [--verbosity {silent,quiet,normal,verbose,debug}] [-v]
-                  [--quiet] [--silent] [--normalize {none,peak,rms}]
-                  [--peak-dbfs PEAK_DBFS] [--rms-dbfs RMS_DBFS]
-                  [--target-lufs TARGET_LUFS]
-                  [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
+                  [--output-format OUTPUT_FORMAT] [--stdout] [--overwrite] [--dry-run]
+                  [--verbosity {silent,quiet,normal,verbose,debug}] [-v] [--quiet] [--silent]
+                  [--normalize {none,peak,rms}] [--peak-dbfs PEAK_DBFS] [--rms-dbfs RMS_DBFS]
+                  [--target-lufs TARGET_LUFS] [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
                   [--compressor-ratio COMPRESSOR_RATIO]
                   [--compressor-attack-ms COMPRESSOR_ATTACK_MS]
                   [--compressor-release-ms COMPRESSOR_RELEASE_MS]
                   [--compressor-makeup-db COMPRESSOR_MAKEUP_DB]
                   [--expander-threshold-db EXPANDER_THRESHOLD_DB]
-                  [--expander-ratio EXPANDER_RATIO]
-                  [--expander-attack-ms EXPANDER_ATTACK_MS]
+                  [--expander-ratio EXPANDER_RATIO] [--expander-attack-ms EXPANDER_ATTACK_MS]
                   [--expander-release-ms EXPANDER_RELEASE_MS]
                   [--compander-threshold-db COMPANDER_THRESHOLD_DB]
                   [--compander-compress-ratio COMPANDER_COMPRESS_RATIO]
@@ -1711,29 +1622,21 @@ usage: pvxwarp.py [-h] [-o OUTPUT_DIR] [--output OUTPUT] [--suffix SUFFIX]
                   [--compander-attack-ms COMPANDER_ATTACK_MS]
                   [--compander-release-ms COMPANDER_RELEASE_MS]
                   [--compander-makeup-db COMPANDER_MAKEUP_DB]
-                  [--limiter-threshold LIMITER_THRESHOLD]
-                  [--soft-clip-level SOFT_CLIP_LEVEL]
-                  [--soft-clip-type {tanh,arctan,cubic}]
-                  [--soft-clip-drive SOFT_CLIP_DRIVE]
-                  [--hard-clip-level HARD_CLIP_LEVEL] [--clip]
-                  [--subtype SUBTYPE] [--bit-depth {inherit,16,24,32f}]
-                  [--dither {none,tpdf}] [--dither-seed DITHER_SEED]
-                  [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                  [--limiter-threshold LIMITER_THRESHOLD] [--soft-clip-level SOFT_CLIP_LEVEL]
+                  [--soft-clip-type {tanh,arctan,cubic}] [--soft-clip-drive SOFT_CLIP_DRIVE]
+                  [--hard-clip-level HARD_CLIP_LEVEL] [--clip] [--subtype SUBTYPE]
+                  [--bit-depth {inherit,16,24,32f}] [--dither {none,tpdf}]
+                  [--dither-seed DITHER_SEED] [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
                   [--metadata-policy {none,sidecar,copy}] [--n-fft N_FFT]
                   [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
                   [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
-                  [--kaiser-beta KAISER_BETA]
-                  [--transform {fft,dft,czt,dct,dst,hartley}]
+                  [--kaiser-beta KAISER_BETA] [--transform {fft,dft,czt,dct,dst,hartley}]
                   [--phase-engine {propagate,hybrid,random}]
-                  [--ambient-phase-mix AMBIENT_PHASE_MIX]
-                  [--phase-random-seed PHASE_RANDOM_SEED]
-                  [--onset-time-credit]
-                  [--onset-credit-pull ONSET_CREDIT_PULL]
-                  [--onset-credit-max ONSET_CREDIT_MAX] [--no-onset-realign]
-                  [--no-center] [--device {auto,cpu,cuda}]
-                  [--cuda-device CUDA_DEVICE] --map MAP
-                  [--crossfade-ms CROSSFADE_MS]
-                  [--resample-mode {auto,fft,linear}]
+                  [--ambient-phase-mix AMBIENT_PHASE_MIX] [--phase-random-seed PHASE_RANDOM_SEED]
+                  [--onset-time-credit] [--onset-credit-pull ONSET_CREDIT_PULL]
+                  [--onset-credit-max ONSET_CREDIT_MAX] [--no-onset-realign] [--no-center]
+                  [--device {auto,cpu,cuda}] [--cuda-device CUDA_DEVICE] --map MAP
+                  [--crossfade-ms CROSSFADE_MS] [--resample-mode {auto,fft,linear}]
                   inputs [inputs ...]
 
 Apply variable time-stretch map from CSV
@@ -1769,7 +1672,12 @@ options:
                         Enable compressor above threshold dBFS
   --compressor-ratio COMPRESSOR_RATIO
                         Compressor ratio (>=1)
-  --compressor-attack-ms COMPRESSOR_ATTACK_M
+  --compressor-attack-ms COMPRESSOR_ATTACK_MS
+                        Compressor attack time in ms
+  --compressor-release-ms COMPRESSOR_RELEASE_MS
+                        Compressor release time in ms
+  --compressor-makeup-db COMPRESSOR_MAKEUP_DB
+
 ... [truncated]
 ```
 
