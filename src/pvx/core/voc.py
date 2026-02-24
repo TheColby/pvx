@@ -1582,12 +1582,12 @@ def _forward_transform_numpy(frame: np.ndarray, n_fft: int, transform: Transform
         return np.fft.rfft(frame, n=n_fft).astype(np.complex128, copy=False)
     if transform == "dft":
         full = np.fft.fft(frame, n=n_fft).astype(np.complex128, copy=False)
-        return full[: n_fft // 2 + 1]
+        return full[..., : n_fft // 2 + 1]
     if transform == "czt":
         ensure_transform_backend_available(transform)
         assert scipy_czt is not None
         full = scipy_czt(frame, m=n_fft)
-        return np.asarray(full[: n_fft // 2 + 1], dtype=np.complex128)
+        return np.asarray(full[..., : n_fft // 2 + 1], dtype=np.complex128)
     if transform == "dct":
         ensure_transform_backend_available(transform)
         assert scipy_fft is not None
@@ -1646,7 +1646,7 @@ def _forward_transform(frame, n_fft: int, transform: TransformMode, *, xp=np):
         return xp.fft.rfft(frame, n=n_fft).astype(xp.complex128, copy=False)
     if transform == "dft":
         full = xp.fft.fft(frame, n=n_fft).astype(xp.complex128, copy=False)
-        return full[: n_fft // 2 + 1]
+        return full[..., : n_fft // 2 + 1]
     if transform == "hartley":
         full = xp.fft.fft(frame, n=n_fft).astype(xp.complex128, copy=False)
         return (full.real - full.imag).astype(xp.complex128, copy=False)
@@ -2102,10 +2102,20 @@ def stft(signal: np.ndarray, config: VocoderConfig):
     n_bins = transform_bin_count(config.n_fft, transform)
     spectrum = xp.empty((n_bins, frame_count), dtype=xp.complex128)
 
-    for frame_idx in range(frame_count):
-        start = frame_idx * config.hop_size
-        frame = work_signal[start : start + config.n_fft]
-        spectrum[:, frame_idx] = _forward_transform(frame * window, config.n_fft, transform, xp=xp)
+    if not work_signal.flags.c_contiguous:
+        work_signal = xp.ascontiguousarray(work_signal)
+
+    shape = (frame_count, config.n_fft)
+    strides = (config.hop_size * work_signal.itemsize, work_signal.itemsize)
+    all_frames = xp.lib.stride_tricks.as_strided(work_signal, shape=shape, strides=strides)
+
+    batch_size = 2048
+    for i in range(0, frame_count, batch_size):
+        end = min(i + batch_size, frame_count)
+        frames_batch = all_frames[i:end]
+        windowed_batch = frames_batch * window
+        spectrum_batch = _forward_transform(windowed_batch, config.n_fft, transform, xp=xp)
+        spectrum[:, i:end] = spectrum_batch.T
 
     if bridge_to_cuda:
         return _to_numpy(spectrum)

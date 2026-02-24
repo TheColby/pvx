@@ -304,7 +304,7 @@ def _prepare_dataset(
 
 
 def _case_key(input_path: Path, task: TaskSpec) -> str:
-    return f"{input_path.stem}:{task.name}"
+    return f"{input_path.name}::{task.name}"
 
 
 def _diagnose_metrics(metrics: dict[str, float]) -> list[str]:
@@ -1021,7 +1021,10 @@ def _check_gate(
         for row in rows:
             if not isinstance(row, dict):
                 continue
-            key = f"{row.get('input', 'unknown')}::{row.get('task', 'unknown')}"
+            # Normalize key by using filename only, to be path-agnostic.
+            input_path = str(row.get("input", "unknown"))
+            filename = Path(input_path).name
+            key = f"{filename}::{row.get('task', 'unknown')}"
             out[key] = row
         return out
 
@@ -1089,8 +1092,27 @@ def _check_gate(
         cur_sig = current_methods["pvx"].get("signatures", {})
         base_sig = baseline_methods["pvx"].get("signatures", {})
         if isinstance(cur_sig, dict) and isinstance(base_sig, dict) and base_sig:
+            # Build a normalized map of current signatures: {stem: hash}
+            # Current keys are like "filename.wav::task".
+            # Baseline keys are like "stem:task".
+            # We match on stem and task.
+            cur_norm: dict[str, str] = {}
+            for k, h in cur_sig.items():
+                if "::" in k:
+                    # new format: filename.wav::task
+                    fname, task = k.split("::", 1)
+                    stem = Path(fname).stem
+                    cur_norm[f"{stem}:{task}"] = str(h)
+                else:
+                    # fallback or old format
+                    cur_norm[k] = str(h)
+
             for case_key, old_hash in base_sig.items():
+                # Try exact match first, then normalized stem match
                 now_hash = cur_sig.get(case_key)
+                if now_hash is None:
+                    now_hash = cur_norm.get(case_key)
+
                 if now_hash is None:
                     failures.append(f"Missing signature for case: {case_key}")
                     continue
