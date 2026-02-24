@@ -1,14 +1,14 @@
 {
-  "commit": "e37ec44",
-  "commit_date": "2026-02-23T14:07:50-05:00",
+  "commit": "ef577fc",
+  "commit_date": "2026-02-23T14:24:44-05:00",
   "windows": {
     "bartlett": {
       "coherent_gain": 0.49975574010747437,
       "enbw_bins": 1.333985011404366,
       "freq_plot": "assets/windows/bartlett_freq.svg",
       "main_lobe_width_bins": 4.0,
-      "peak_sidelobe_db": -26.52305050568325,
-      "scalloping_loss_db": -1.8223741123602746,
+      "peak_sidelobe_db": -26.5230505057,
+      "scalloping_loss_db": -1.8223741124,
       "time_plot": "assets/windows/bartlett_time.svg"
     },
     "bartlett_hann": {
@@ -16,8 +16,8 @@
       "enbw_bins": 1.4565591721070474,
       "freq_plot": "assets/windows/bartlett_hann_freq.svg",
       "main_lobe_width_bins": 4.0,
-      "peak_sidelobe_db": -35.87387465054768,
-      "scalloping_loss_db": -1.516581061589691,
+      "peak_sidelobe_db": -35.8738746505,
+      "scalloping_loss_db": -1.5165810616,
       "time_plot": "assets/windows/bartlett_hann_time.svg"
     },
     "blackman": {
@@ -25,8 +25,8 @@
       "enbw_bins": 1.7276009247535524,
       "freq_plot": "assets/windows/blackman_freq.svg",
       "main_lobe_width_bins": 6.0,
-      "peak_sidelobe_db": -58.10898138055617,
-      "scalloping_loss_db": -1.0977974140068283,
+      "peak_sidelobe_db": -58.1089813806,
+      "scalloping_loss_db": -1.097797414,
       "time_plot": "assets/windows/blackman_time.svg"
     },
     "blackman_nuttall": {
@@ -34,8 +34,8 @@
       "enbw_bins": 1.977072726610072,
       "freq_plot": "assets/windows/blackman_nuttall_freq.svg",
       "main_lobe_width_bins": 8.0,
-      "peak_sidelobe_db": -98.17408022503152,
-      "scalloping_loss_db": -0.8497270614130249,
+      "peak_sidelobe_db": -98.174080225,
+      "scalloping_loss_db": -0.8497270614,
       "time_plot": "assets/windows/blackman_nuttall_time.svg"
     },
     "blackmanharris": {
@@ -43,8 +43,8 @@
       "enbw_bins": 2.005331776611369,
       "freq_plot": "assets/windows/blackmanharris_freq.svg",
       "main_lobe_width_bins": 8.0,
-      "peak_sidelobe_db": -92.01146325183416,
-      "scalloping_loss_db": -0.8247636951915918,
+      "peak_sidelobe_db": -92.0114632518,
+      "scalloping_loss_db": -0.8247636952,
       "time_plot": "assets/windows/blackmanharris_time.svg"
     },
     "bohman": {
@@ -52,8 +52,8 @@
       "enbw_bins": 1.786613245187631,
       "freq_plot": "assets/windows/bohman_freq.svg",
       "main_lobe_width_bins": 6.0,
-      "peak_sidelobe_db": -45.99749692392297,
-      "scalloping_loss_db": -1.0220435849631,
+      "peak_sidelobe_db": -45.9974969239,
+      "scalloping_loss_db": -1.022043585,
       "time_plot": "assets/windows/bohman_time.svg"
     },
     "boxcar": {
@@ -61,8 +61,8 @@
       "enbw_bins": 1.0,
       "freq_plot": "assets/windows/boxcar_freq.svg",
       "main_lobe_width_bins": 2.0,
-      "peak_sidelobe_db": -13.263668695103451,
-      "scalloping_loss_db": -3.9223966889888127,
+      "peak_sidelobe_db": -13.2636686951,
+      "scalloping_loss_db": -3.922396689,
       "time_plot": "assets/windows/boxcar_time.svg"
     },
     "cauchy_0p5": {
@@ -70,8 +70,8 @@
       "enbw_bins": 1.2297747070915015,
       "freq_plot": "assets/windows/cauchy_0p5_freq.svg",
       "main_lobe_width_bins": 3.5625,
-      "peak_sidelobe_db": -22.733288310846547,
-      "scalloping_loss_db": -2.2093098398375917,
+      "peak_sidelobe_db": -22.7332883108,
+      "scalloping_loss_db": -2.2093098398,
       "time_plot": "assets/windows/cauchy_0p5_time.svg"
     },
     "cauchy_1p0": {
@@ -79,8 +79,8 @@
       "enbw_bins": 1.0419634204427615,
       "freq_plot": "assets/windows/cauchy_1p0_freq.svg",
       "main_lobe_width_bins": 2.375,
-      "peak_sidelobe_db": -19.033701694359017,
-      "scalloping_loss_db": -3.1078833147031326,
+      "peak_sidelobe_db": -19.0337016944,
+      "scalloping_loss_db": -3.1078833147,
       "time_plot": "assets/windows/cauchy_1p0_time.svg"
     },
     "cauchy_2p0": {
@@ -88,8 +88,8 @@
       "enbw_bins": 1.0043933844051622,
       "freq_plot": "assets/windows/cauchy_2p0_freq.svg",
       "main_lobe_width_bins": 2.09375,
-      "peak_sidelobe_db": -14.689272204386283,
-      "scalloping_loss_db": -3.6484438956818783,
+      "peak_sidelobe_db": -14.6892722044,
+      "scalloping_loss_db": -3.6484438957,
       "time_plot": "assets/windows/cauchy_2p0_time.svg"
     },
     "cosine": {
@@ -97,8 +97,8 @@
       "enbw_bins": 1.2343037218095276,
       "freq_plot": "assets/windows/cosine_freq.svg",
       "main_lobe_width_bins": 3.0,
-      "peak_sidelobe_db": -22.99872410943861,
-      "scalloping_loss_db": -2.096080683635391,
+      "peak_sidelobe_db": -22.9987241094,
+      "scalloping_loss_db": -2.0960806836,
       "time_plot": "assets/windows/cosine_time.svg"
     },
     "cosine_power_2": {
@@ -106,8 +106,8 @@
       "enbw_bins": 1.5007327796775771,
       "freq_plot": "assets/windows/cosine_power_2_freq.svg",
       "main_lobe_width_bins": 4.0,
-      "peak_sidelobe_db": -31.467978838716036,
-      "scalloping_loss_db": -1.422209458323812,
+      "peak_sidelobe_db": -31.4679788387,
+      "scalloping_loss_db": -1.4222094583,
       "time_plot": "assets/windows/cosine_power_2_time.svg"
     },
     "cosine_power_3": {
@@ -115,8 +115,8 @@
       "enbw_bins": 1.7357389274018933,
       "freq_plot": "assets/windows/cosine_power_3_freq.svg",
       "main_lobe_width_bins": 5.0,
-      "peak_sidelobe_db": -39.295367631181264,
-      "scalloping_loss_db": -1.0740919036417598,
+      "peak_sidelobe_db": -39.2953676312,
+      "scalloping_loss_db": -1.0740919036,
       "time_plot": "assets/windows/cosine_power_3_time.svg"
     },
     "cosine_power_4": {
@@ -124,17 +124,17 @@
       "enbw_bins": 1.9453943440264887,
       "freq_plot": "assets/windows/cosine_power_4_freq.svg",
       "main_lobe_width_bins": 6.0,
-      "peak_sidelobe_db": -46.74106114053224,
-      "scalloping_loss_db": -0.8622003174696777,
+      "peak_sidelobe_db": -46.7410611405,
+      "scalloping_loss_db": -0.8622003175,
       "time_plot": "assets/windows/cosine_power_4_time.svg"
     },
     "exact_blackman": {
       "coherent_gain": 0.4263857761950505,
-      "enbw_bins": 1.694499785712348,
+      "enbw_bins": 1.6944997857123478,
       "freq_plot": "assets/windows/exact_blackman_freq.svg",
       "main_lobe_width_bins": 6.0,
-      "peak_sidelobe_db": -68.23550937147787,
-      "scalloping_loss_db": -1.148983517661354,
+      "peak_sidelobe_db": -68.2355093715,
+      "scalloping_loss_db": -1.1489835177,
       "time_plot": "assets/windows/exact_blackman_time.svg"
     },
     "exponential_0p25": {
@@ -142,8 +142,8 @@
       "enbw_bins": 2.0754918225642807,
       "freq_plot": "assets/windows/exponential_0p25_freq.svg",
       "main_lobe_width_bins": 15.5625,
-      "peak_sidelobe_db": -31.88456139792955,
-      "scalloping_loss_db": -1.0222387988461543,
+      "peak_sidelobe_db": -31.8845613979,
+      "scalloping_loss_db": -1.0222387988,
       "time_plot": "assets/windows/exponential_0p25_time.svg"
     },
     "exponential_0p5": {
@@ -151,8 +151,8 @@
       "enbw_bins": 1.3133226469512387,
       "freq_plot": "assets/windows/exponential_0p5_freq.svg",
       "main_lobe_width_bins": 3.625,
-      "peak_sidelobe_db": -19.190329592101683,
-      "scalloping_loss_db": -2.0322689389732824,
+      "peak_sidelobe_db": -19.1903295921,
+      "scalloping_loss_db": -2.032268939,
       "time_plot": "assets/windows/exponential_0p5_time.svg"
     },
     "exponential_1p0": {
@@ -160,8 +160,8 @@
       "enbw_bins": 1.0820554385645362,
       "freq_plot": "assets/windows/exponential_1p0_freq.svg",
       "main_lobe_width_bins": 2.59375,
-      "peak_sidelobe_db": -20.141244120876507,
-      "scalloping_loss_db": -2.8542289145036093,
+      "peak_sidelobe_db": -20.1412441209,
+      "scalloping_loss_db": -2.8542289145,
       "time_plot": "assets/windows/exponential_1p0_time.svg"
     },
     "flattop": {
@@ -169,8 +169,8 @@
       "enbw_bins": 3.772116810940352,
       "freq_plot": "assets/windows/flattop_freq.svg",
       "main_lobe_width_bins": 10.0,
-      "peak_sidelobe_db": -68.31098938252927,
-      "scalloping_loss_db": -0.015966202277024964,
+      "peak_sidelobe_db": -68.3109893825,
+      "scalloping_loss_db": -0.0159662023,
       "time_plot": "assets/windows/flattop_time.svg"
     },
     "gaussian_0p25": {
@@ -178,8 +178,8 @@
       "enbw_bins": 2.2581444790837097,
       "freq_plot": "assets/windows/gaussian_0p25_freq.svg",
       "main_lobe_width_bins": 11.40625,
-      "peak_sidelobe_db": -87.67669244326227,
-      "scalloping_loss_db": -0.6684853158349374,
+      "peak_sidelobe_db": -87.6766924433,
+      "scalloping_loss_db": -0.6684853158,
       "time_plot": "assets/windows/gaussian_0p25_time.svg"
     },
     "gaussian_0p35": {
@@ -187,8 +187,8 @@
       "enbw_bins": 1.6264875322900647,
       "freq_plot": "assets/windows/gaussian_0p35_freq.svg",
       "main_lobe_width_bins": 6.71875,
-      "peak_sidelobe_db": -52.076756033414,
-      "scalloping_loss_db": -1.267574644867221,
+      "peak_sidelobe_db": -52.0767560334,
+      "scalloping_loss_db": -1.2675746449,
       "time_plot": "assets/windows/gaussian_0p35_time.svg"
     },
     "gaussian_0p45": {
@@ -196,8 +196,8 @@
       "enbw_bins": 1.320556163999374,
       "freq_plot": "assets/windows/gaussian_0p45_freq.svg",
       "main_lobe_width_bins": 4.125,
-      "peak_sidelobe_db": -35.366114424155896,
-      "scalloping_loss_db": -1.8688278726249257,
+      "peak_sidelobe_db": -35.3661144242,
+      "scalloping_loss_db": -1.8688278726,
       "time_plot": "assets/windows/gaussian_0p45_time.svg"
     },
     "gaussian_0p55": {
@@ -205,8 +205,8 @@
       "enbw_bins": 1.171860618488244,
       "freq_plot": "assets/windows/gaussian_0p55_freq.svg",
       "main_lobe_width_bins": 3.0,
-      "peak_sidelobe_db": -28.90563437055715,
-      "scalloping_loss_db": -2.3504158866934803,
+      "peak_sidelobe_db": -28.9056343706,
+      "scalloping_loss_db": -2.3504158867,
       "time_plot": "assets/windows/gaussian_0p55_time.svg"
     },
     "gaussian_0p65": {
@@ -214,8 +214,8 @@
       "enbw_bins": 1.0976572462260823,
       "freq_plot": "assets/windows/gaussian_0p65_freq.svg",
       "main_lobe_width_bins": 2.625,
-      "peak_sidelobe_db": -22.575494381518308,
-      "scalloping_loss_db": -2.7048667199077245,
+      "peak_sidelobe_db": -22.5754943815,
+      "scalloping_loss_db": -2.7048667199,
       "time_plot": "assets/windows/gaussian_0p65_time.svg"
     },
     "general_gaussian_1p5_0p35": {
@@ -223,8 +223,8 @@
       "enbw_bins": 2.016584447953424,
       "freq_plot": "assets/windows/general_gaussian_1p5_0p35_freq.svg",
       "main_lobe_width_bins": 5.15625,
-      "peak_sidelobe_db": -24.895135521702866,
-      "scalloping_loss_db": -0.7839642246948874,
+      "peak_sidelobe_db": -24.8951355217,
+      "scalloping_loss_db": -0.7839642247,
       "time_plot": "assets/windows/general_gaussian_1p5_0p35_time.svg"
     },
     "general_gaussian_2p0_0p35": {
@@ -232,8 +232,8 @@
       "enbw_bins": 2.23001602409409,
       "freq_plot": "assets/windows/general_gaussian_2p0_0p35_freq.svg",
       "main_lobe_width_bins": 5.28125,
-      "peak_sidelobe_db": -19.717246347626038,
-      "scalloping_loss_db": -0.6330936564888099,
+      "peak_sidelobe_db": -19.7172463476,
+      "scalloping_loss_db": -0.6330936565,
       "time_plot": "assets/windows/general_gaussian_2p0_0p35_time.svg"
     },
     "general_gaussian_3p0_0p35": {
@@ -241,8 +241,8 @@
       "enbw_bins": 2.445592681223933,
       "freq_plot": "assets/windows/general_gaussian_3p0_0p35_freq.svg",
       "main_lobe_width_bins": 5.46875,
-      "peak_sidelobe_db": -16.298905221266295,
-      "scalloping_loss_db": -0.5315467676427315,
+      "peak_sidelobe_db": -16.2989052213,
+      "scalloping_loss_db": -0.5315467676,
       "time_plot": "assets/windows/general_gaussian_3p0_0p35_time.svg"
     },
     "general_gaussian_4p0_0p35": {
@@ -250,8 +250,8 @@
       "enbw_bins": 2.5524327244556115,
       "freq_plot": "assets/windows/general_gaussian_4p0_0p35_freq.svg",
       "main_lobe_width_bins": 5.5625,
-      "peak_sidelobe_db": -15.05987282073412,
-      "scalloping_loss_db": -0.49575824843011035,
+      "peak_sidelobe_db": -15.0598728207,
+      "scalloping_loss_db": -0.4957582484,
       "time_plot": "assets/windows/general_gaussian_4p0_0p35_time.svg"
     },
     "general_hamming_0p50": {
@@ -259,8 +259,8 @@
       "enbw_bins": 1.500732779677577,
       "freq_plot": "assets/windows/general_hamming_0p50_freq.svg",
       "main_lobe_width_bins": 4.0,
-      "peak_sidelobe_db": -31.467978838716043,
-      "scalloping_loss_db": -1.4222094583238132,
+      "peak_sidelobe_db": -31.4679788387,
+      "scalloping_loss_db": -1.4222094583,
       "time_plot": "assets/windows/general_hamming_0p50_time.svg"
     },
     "general_hamming_0p60": {
@@ -268,17 +268,17 @@
       "enbw_bins": 1.2224754404100244,
       "freq_plot": "assets/windows/general_hamming_0p60_freq.svg",
       "main_lobe_width_bins": 3.46875,
-      "peak_sidelobe_db": -31.600216976642002,
-      "scalloping_loss_db": -2.178623144364466,
+      "peak_sidelobe_db": -31.6002169766,
+      "scalloping_loss_db": -2.1786231444,
       "time_plot": "assets/windows/general_hamming_0p60_time.svg"
     },
     "general_hamming_0p70": {
-      "coherent_gain": 0.699853515625,
-      "enbw_bins": 1.0919200000151872,
+      "coherent_gain": 0.6998535156249999,
+      "enbw_bins": 1.0919200000151876,
       "freq_plot": "assets/windows/general_hamming_0p70_freq.svg",
       "main_lobe_width_bins": 2.65625,
-      "peak_sidelobe_db": -24.077735762492097,
-      "scalloping_loss_db": -2.7621546524212097,
+      "peak_sidelobe_db": -24.0777357625,
+      "scalloping_loss_db": -2.7621546524,
       "time_plot": "assets/windows/general_hamming_0p70_time.svg"
     },
     "general_hamming_0p80": {
@@ -286,8 +286,8 @@
       "enbw_bins": 1.0312728784019778,
       "freq_plot": "assets/windows/general_hamming_0p80_freq.svg",
       "main_lobe_width_bins": 2.3125,
-      "peak_sidelobe_db": -18.648532607305405,
-      "scalloping_loss_db": -3.2269647868172697,
+      "peak_sidelobe_db": -18.6485326073,
+      "scalloping_loss_db": -3.2269647868,
       "time_plot": "assets/windows/general_hamming_0p80_time.svg"
     },
     "hamming": {
@@ -295,8 +295,8 @@
       "enbw_bins": 1.3633049424214971,
       "freq_plot": "assets/windows/hamming_freq.svg",
       "main_lobe_width_bins": 4.0,
-      "peak_sidelobe_db": -42.675266558188895,
-      "scalloping_loss_db": -1.750319835606843,
+      "peak_sidelobe_db": -42.6752665582,
+      "scalloping_loss_db": -1.7503198356,
       "time_plot": "assets/windows/hamming_time.svg"
     },
     "hann": {
@@ -304,8 +304,8 @@
       "enbw_bins": 1.500732779677577,
       "freq_plot": "assets/windows/hann_freq.svg",
       "main_lobe_width_bins": 4.0,
-      "peak_sidelobe_db": -31.467978838716043,
-      "scalloping_loss_db": -1.4222094583238132,
+      "peak_sidelobe_db": -31.4679788387,
+      "scalloping_loss_db": -1.4222094583,
       "time_plot": "assets/windows/hann_time.svg"
     },
     "hann_poisson_0p5": {
@@ -313,8 +313,8 @@
       "enbw_bins": 1.6099437440460096,
       "freq_plot": "assets/windows/hann_poisson_0p5_freq.svg",
       "main_lobe_width_bins": 5.1875,
-      "peak_sidelobe_db": -35.24528116682677,
-      "scalloping_loss_db": -1.257990199341576,
+      "peak_sidelobe_db": -35.2452811668,
+      "scalloping_loss_db": -1.2579901993,
       "time_plot": "assets/windows/hann_poisson_0p5_time.svg"
     },
     "hann_poisson_1p0": {
@@ -322,8 +322,8 @@
       "enbw_bins": 1.734176336802444,
       "freq_plot": "assets/windows/hann_poisson_1p0_freq.svg",
       "main_lobe_width_bins": 103.75,
-      "peak_sidelobe_db": -80.01682473327783,
-      "scalloping_loss_db": -1.1122485973849325,
+      "peak_sidelobe_db": -80.0168247333,
+      "scalloping_loss_db": -1.1122485974,
       "time_plot": "assets/windows/hann_poisson_1p0_time.svg"
     },
     "hann_poisson_2p0": {
@@ -331,8 +331,8 @@
       "enbw_bins": 2.023173745688607,
       "freq_plot": "assets/windows/hann_poisson_2p0_freq.svg",
       "main_lobe_width_bins": 164.71875,
-      "peak_sidelobe_db": -80.00525342271145,
-      "scalloping_loss_db": -0.8704124947747565,
+      "peak_sidelobe_db": -80.0052534227,
+      "scalloping_loss_db": -0.8704124948,
       "time_plot": "assets/windows/hann_poisson_2p0_time.svg"
     },
     "kaiser": {
@@ -340,8 +340,8 @@
       "enbw_bins": 2.1621814111884685,
       "freq_plot": "assets/windows/kaiser_freq.svg",
       "main_lobe_width_bins": 9.125,
-      "peak_sidelobe_db": -105.92126546140351,
-      "scalloping_loss_db": -0.7121202236668935,
+      "peak_sidelobe_db": -105.9212654614,
+      "scalloping_loss_db": -0.7121202237,
       "time_plot": "assets/windows/kaiser_time.svg"
     },
     "lanczos": {
@@ -349,8 +349,8 @@
       "enbw_bins": 1.2996676527855546,
       "freq_plot": "assets/windows/lanczos_freq.svg",
       "main_lobe_width_bins": 3.28125,
-      "peak_sidelobe_db": -26.405086423151683,
-      "scalloping_loss_db": -1.889422064842141,
+      "peak_sidelobe_db": -26.4050864232,
+      "scalloping_loss_db": -1.8894220648,
       "time_plot": "assets/windows/lanczos_time.svg"
     },
     "nuttall": {
@@ -358,8 +358,8 @@
       "enbw_bins": 2.022219990404396,
       "freq_plot": "assets/windows/nuttall_freq.svg",
       "main_lobe_width_bins": 8.0,
-      "peak_sidelobe_db": -93.32536985458772,
-      "scalloping_loss_db": -0.8109596433107378,
+      "peak_sidelobe_db": -93.3253698546,
+      "scalloping_loss_db": -0.8109596433,
       "time_plot": "assets/windows/nuttall_time.svg"
     },
     "parzen": {
@@ -367,8 +367,8 @@
       "enbw_bins": 1.91839703476211,
       "freq_plot": "assets/windows/parzen_freq.svg",
       "main_lobe_width_bins": 8.0,
-      "peak_sidelobe_db": -53.04612870856118,
-      "scalloping_loss_db": -0.896737077024435,
+      "peak_sidelobe_db": -53.0461287086,
+      "scalloping_loss_db": -0.896737077,
       "time_plot": "assets/windows/parzen_time.svg"
     },
     "rect": {
@@ -376,8 +376,8 @@
       "enbw_bins": 1.0,
       "freq_plot": "assets/windows/rect_freq.svg",
       "main_lobe_width_bins": 2.0,
-      "peak_sidelobe_db": -13.263668695103451,
-      "scalloping_loss_db": -3.9223966889888127,
+      "peak_sidelobe_db": -13.2636686951,
+      "scalloping_loss_db": -3.922396689,
       "time_plot": "assets/windows/rect_time.svg"
     },
     "sine": {
@@ -385,8 +385,8 @@
       "enbw_bins": 1.2343037218095276,
       "freq_plot": "assets/windows/sine_freq.svg",
       "main_lobe_width_bins": 3.0,
-      "peak_sidelobe_db": -22.99872410943861,
-      "scalloping_loss_db": -2.096080683635391,
+      "peak_sidelobe_db": -22.9987241094,
+      "scalloping_loss_db": -2.0960806836,
       "time_plot": "assets/windows/sine_time.svg"
     },
     "triangular": {
@@ -394,8 +394,8 @@
       "enbw_bins": 1.3326829268292681,
       "freq_plot": "assets/windows/triangular_freq.svg",
       "main_lobe_width_bins": 4.0,
-      "peak_sidelobe_db": -26.522904515311325,
-      "scalloping_loss_db": -1.8260147528966013,
+      "peak_sidelobe_db": -26.5229045153,
+      "scalloping_loss_db": -1.8260147529,
       "time_plot": "assets/windows/triangular_time.svg"
     },
     "tukey": {
@@ -403,8 +403,8 @@
       "enbw_bins": 1.2228193019168687,
       "freq_plot": "assets/windows/tukey_freq.svg",
       "main_lobe_width_bins": 2.65625,
-      "peak_sidelobe_db": -15.122561473487872,
-      "scalloping_loss_db": -2.236139252889578,
+      "peak_sidelobe_db": -15.1225614735,
+      "scalloping_loss_db": -2.2361392529,
       "time_plot": "assets/windows/tukey_time.svg"
     },
     "tukey_0p1": {
@@ -412,8 +412,8 @@
       "enbw_bins": 1.039288628662179,
       "freq_plot": "assets/windows/tukey_0p1_freq.svg",
       "main_lobe_width_bins": 2.09375,
-      "peak_sidelobe_db": -13.308662811805176,
-      "scalloping_loss_db": -3.5050151270757537,
+      "peak_sidelobe_db": -13.3086628118,
+      "scalloping_loss_db": -3.5050151271,
       "time_plot": "assets/windows/tukey_0p1_time.svg"
     },
     "tukey_0p25": {
@@ -421,8 +421,8 @@
       "enbw_bins": 1.1025791850222448,
       "freq_plot": "assets/windows/tukey_0p25_freq.svg",
       "main_lobe_width_bins": 2.28125,
-      "peak_sidelobe_db": -13.601473749275694,
-      "scalloping_loss_db": -2.9597008873794106,
+      "peak_sidelobe_db": -13.6014737493,
+      "scalloping_loss_db": -2.9597008874,
       "time_plot": "assets/windows/tukey_0p25_time.svg"
     },
     "tukey_0p75": {
@@ -430,8 +430,8 @@
       "enbw_bins": 1.3606643868769703,
       "freq_plot": "assets/windows/tukey_0p75_freq.svg",
       "main_lobe_width_bins": 3.1875,
-      "peak_sidelobe_db": -19.395133258062856,
-      "scalloping_loss_db": -1.7280571163604153,
+      "peak_sidelobe_db": -19.3951332581,
+      "scalloping_loss_db": -1.7280571164,
       "time_plot": "assets/windows/tukey_0p75_time.svg"
     },
     "tukey_0p9": {
@@ -439,8 +439,8 @@
       "enbw_bins": 1.4469875286719251,
       "freq_plot": "assets/windows/tukey_0p9_freq.svg",
       "main_lobe_width_bins": 3.625,
-      "peak_sidelobe_db": -24.972495351980683,
-      "scalloping_loss_db": -1.5209266005787785,
+      "peak_sidelobe_db": -24.972495352,
+      "scalloping_loss_db": -1.5209266006,
       "time_plot": "assets/windows/tukey_0p9_time.svg"
     },
     "welch": {
@@ -448,8 +448,8 @@
       "enbw_bins": 1.2005867967857975,
       "freq_plot": "assets/windows/welch_freq.svg",
       "main_lobe_width_bins": 2.875,
-      "peak_sidelobe_db": -21.295083204428174,
-      "scalloping_loss_db": -2.222507263600462,
+      "peak_sidelobe_db": -21.2950832044,
+      "scalloping_loss_db": -2.2225072636,
       "time_plot": "assets/windows/welch_time.svg"
     }
   }

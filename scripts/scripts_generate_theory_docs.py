@@ -385,9 +385,9 @@ def compute_window_metrics(window: np.ndarray) -> dict[str, float]:
     return {
         "coherent_gain": coherent_gain,
         "enbw_bins": enbw_bins,
-        "scalloping_loss_db": scalloping_loss_db,
+        "scalloping_loss_db": float(f"{scalloping_loss_db:.10f}"),
         "main_lobe_width_bins": main_lobe_width_bins,
-        "peak_sidelobe_db": peak_sidelobe_db,
+        "peak_sidelobe_db": float(f"{peak_sidelobe_db:.10f}"),
     }
 
 
