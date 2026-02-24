@@ -23,21 +23,21 @@ PY_FILES = sorted(
 )
 
 CLI_HELP_CANDIDATES = {
-    ROOT / "main.py",
-    ROOT / "pvxvoc.py",
-    ROOT / "pvxfreeze.py",
-    ROOT / "pvxharmonize.py",
-    ROOT / "pvxconform.py",
-    ROOT / "pvxmorph.py",
-    ROOT / "pvxwarp.py",
-    ROOT / "pvxformant.py",
-    ROOT / "pvxtransient.py",
-    ROOT / "pvxunison.py",
-    ROOT / "pvxdenoise.py",
-    ROOT / "pvxdeverb.py",
-    ROOT / "pvxretune.py",
-    ROOT / "pvxlayer.py",
-    ROOT / "HPS-pitch-track.py",
+    ROOT / "legacy_wrappers" / "main.py",
+    ROOT / "legacy_wrappers" / "pvxvoc.py",
+    ROOT / "legacy_wrappers" / "pvxfreeze.py",
+    ROOT / "legacy_wrappers" / "pvxharmonize.py",
+    ROOT / "legacy_wrappers" / "pvxconform.py",
+    ROOT / "legacy_wrappers" / "pvxmorph.py",
+    ROOT / "legacy_wrappers" / "pvxwarp.py",
+    ROOT / "legacy_wrappers" / "pvxformant.py",
+    ROOT / "legacy_wrappers" / "pvxtransient.py",
+    ROOT / "legacy_wrappers" / "pvxunison.py",
+    ROOT / "legacy_wrappers" / "pvxdenoise.py",
+    ROOT / "legacy_wrappers" / "pvxdeverb.py",
+    ROOT / "legacy_wrappers" / "pvxretune.py",
+    ROOT / "legacy_wrappers" / "pvxlayer.py",
+    ROOT / "legacy_wrappers" / "HPS-pitch-track.py",
 }
 
 

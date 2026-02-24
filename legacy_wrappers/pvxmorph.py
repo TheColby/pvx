@@ -3,7 +3,7 @@
 
 """Compatibility wrapper.
 
-This root module forwards imports/execution to `pvx.cli.pvxlayer` after the
+This root module forwards imports/execution to `pvx.cli.pvxmorph` after the
 src-layout migration.
 """
 
@@ -12,10 +12,10 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from pvx.cli.pvxlayer import *  # noqa: F401,F403
-from pvx.cli.pvxlayer import main as _main
+from pvx.cli.pvxmorph import *  # noqa: F401,F403
+from pvx.cli.pvxmorph import main as _main
 
 
 if __name__ == "__main__":

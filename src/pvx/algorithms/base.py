@@ -219,10 +219,18 @@ def hpss_split(audio: np.ndarray, n_fft: int = 2048, hop: int = 512) -> tuple[np
         harm_channels: list[np.ndarray] = []
         perc_channels: list[np.ndarray] = []
         for ch in range(audio.shape[1]):
-            st = librosa.stft(audio[:, ch], n_fft=n_fft, hop_length=hop)
+            ch_data = audio[:, ch]
+            padded = False
+            if ch_data.size < n_fft:
+                ch_data = np.pad(ch_data, (0, n_fft - ch_data.size), mode="constant")
+                padded = True
+            st = librosa.stft(ch_data, n_fft=n_fft, hop_length=hop)
             h, p = librosa.decompose.hpss(st)
-            harm = librosa.istft(h, hop_length=hop, length=audio.shape[0])
-            perc = librosa.istft(p, hop_length=hop, length=audio.shape[0])
+            harm = librosa.istft(h, hop_length=hop, length=ch_data.shape[0])
+            perc = librosa.istft(p, hop_length=hop, length=ch_data.shape[0])
+            if padded:
+                harm = harm[: audio.shape[0]]
+                perc = perc[: audio.shape[0]]
             harm_channels.append(harm.astype(np.float64, copy=False))
             perc_channels.append(perc.astype(np.float64, copy=False))
         return np.stack(harm_channels, axis=1), np.stack(perc_channels, axis=1)
@@ -248,7 +256,15 @@ def time_stretch(audio: np.ndarray, stretch: float, sample_rate: int) -> np.ndar
         rate = 1.0 / stretch
         out_channels: list[np.ndarray] = []
         for ch in range(audio.shape[1]):
-            y = librosa.effects.time_stretch(audio[:, ch], rate=rate)
+            ch_data = audio[:, ch]
+            original_len = ch_data.size
+            if original_len < 2048:
+                ch_data = np.pad(ch_data, (0, 2048 - original_len), mode="constant")
+            y = librosa.effects.time_stretch(ch_data, rate=rate)
+            if original_len < 2048:
+                expected_len = int(round(original_len * stretch))
+                if y.size > expected_len:
+                    y = y[:expected_len]
             out_channels.append(y.astype(np.float64, copy=False))
         n = max(v.size for v in out_channels)
         out = np.zeros((n, audio.shape[1]), dtype=np.float64)
@@ -266,7 +282,11 @@ def pitch_shift(audio: np.ndarray, sample_rate: int, semitones: float) -> np.nda
     if librosa is not None:
         out_channels: list[np.ndarray] = []
         for ch in range(audio.shape[1]):
-            y = librosa.effects.pitch_shift(audio[:, ch], sr=sample_rate, n_steps=semitones)
+            ch_data = audio[:, ch]
+            # Pad short signals to avoid librosa warnings with default n_fft=2048
+            if ch_data.size < 2048:
+                ch_data = np.pad(ch_data, (0, 2048 - ch_data.size), mode="constant")
+            y = librosa.effects.pitch_shift(ch_data, sr=sample_rate, n_steps=semitones)
             out_channels.append(y.astype(np.float64, copy=False))
         n = max(v.size for v in out_channels)
         out = np.zeros((n, audio.shape[1]), dtype=np.float64)

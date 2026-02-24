@@ -13,6 +13,11 @@ import math
 
 import numpy as np
 
+import sys
+from pathlib import Path
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "legacy_wrappers"))
+
 from pvxcommon import cents_to_ratio, parse_pitch_ratio_value, read_segment_csv
 from pvxretune import nearest_scale_freq
 from pvxvoc import choose_pitch_ratio

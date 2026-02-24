@@ -517,7 +517,7 @@ def _run_pvx_cycle(
 
     base_cmd = [
         py_executable,
-        str(ROOT / "pvxvoc.py"),
+        str(ROOT / "legacy_wrappers" / "pvxvoc.py"),
         str(input_path),
         "--device",
         "cpu",
@@ -536,7 +536,7 @@ def _run_pvx_cycle(
         ]
         inverse = [
             py_executable,
-            str(ROOT / "pvxvoc.py"),
+            str(ROOT / "legacy_wrappers" / "pvxvoc.py"),
             str(stage1),
             "--device",
             "cpu",
@@ -562,7 +562,7 @@ def _run_pvx_cycle(
         ]
         inverse = [
             py_executable,
-            str(ROOT / "pvxvoc.py"),
+            str(ROOT / "legacy_wrappers" / "pvxvoc.py"),
             str(stage1),
             "--device",
             "cpu",
