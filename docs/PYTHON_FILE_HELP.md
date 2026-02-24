@@ -4,7 +4,7 @@
 
 Comprehensive reference for every Python file in this repository.
 
-Total Python files documented: **210**
+Total Python files documented: **211**
 
 ## Contents
 
@@ -217,6 +217,7 @@ Total Python files documented: **210**
 - [`tests/test_dsp.py`](#teststestdsppy)
 - [`tests/test_microtonal.py`](#teststestmicrotonalpy)
 - [`tests/test_output_policy.py`](#teststestoutputpolicypy)
+- [`tests/test_streaming_limits.py`](#teststeststreaminglimitspy)
 - [`tests/test_transient_and_stereo.py`](#teststesttransientandstereopy)
 
 ## `HPS-pitch-track.py`
@@ -544,9 +545,9 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  -o, --output-dir OUTPUT_DIR
+  -o OUTPUT_DIR, --output-dir OUTPUT_DIR
                         Output directory
-  --output, --out OUTPUT
+  --output OUTPUT, --out OUTPUT
                         Explicit output file path (single-input mode only). Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _conform)
   --output-format OUTPUT_FORMAT
@@ -563,8 +564,7 @@ options:
                         Output normalization mode
   --peak-dbfs PEAK_DBFS
                         Target peak dBFS when --normalize peak
-  --rms-dbfs RMS_DBFS   Target RMS dBFS when --normalize rms
-  --target-lufs
+  --rms-dbfs RMS_DBFS   Target RMS dBFS when --normalize r
 ... [truncated]
 ```
 
@@ -644,9 +644,9 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  -o, --output-dir OUTPUT_DIR
+  -o OUTPUT_DIR, --output-dir OUTPUT_DIR
                         Output directory
-  --output, --out OUTPUT
+  --output OUTPUT, --out OUTPUT
                         Explicit output file path (single-input mode only). Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _denoise)
   --output-format OUTPUT_FORMAT
@@ -666,7 +666,7 @@ options:
   --rms-dbfs RMS_DBFS   Target RMS dBFS when --normalize rms
   --target-lufs TARGET_LUFS
                         Integrated loudness target in LUFS
-  --compressor-threshold-db COMPRESSOR_THRESHOL
+  --compressor-threshold-db C
 ... [truncated]
 ```
 
@@ -744,9 +744,9 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  -o, --output-dir OUTPUT_DIR
+  -o OUTPUT_DIR, --output-dir OUTPUT_DIR
                         Output directory
-  --output, --out OUTPUT
+  --output OUTPUT, --out OUTPUT
                         Explicit output file path (single-input mode only). Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _deverb)
   --output-format OUTPUT_FORMAT
@@ -769,7 +769,7 @@ options:
   --compressor-threshold-db COMPRESSOR_THRESHOLD_DB
                         Enable compressor above threshold dBFS
   --compressor-ratio COMPRESSOR_RATIO
-                        Compressor rat
+
 ... [truncated]
 ```
 
@@ -853,9 +853,9 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  -o, --output-dir OUTPUT_DIR
+  -o OUTPUT_DIR, --output-dir OUTPUT_DIR
                         Output directory
-  --output, --out OUTPUT
+  --output OUTPUT, --out OUTPUT
                         Explicit output file path (single-input mode only). Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _formant)
   --output-format OUTPUT_FORMAT
@@ -871,7 +871,7 @@ options:
   --normalize {none,peak,rms}
                         Output normalization mode
   --peak-dbfs PEAK_DBFS
-                     
+
 ... [truncated]
 ```
 
@@ -949,9 +949,9 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  -o, --output-dir OUTPUT_DIR
+  -o OUTPUT_DIR, --output-dir OUTPUT_DIR
                         Output directory
-  --output, --out OUTPUT
+  --output OUTPUT, --out OUTPUT
                         Explicit output file path (single-input mode only). Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _freeze)
   --output-format OUTPUT_FORMAT
@@ -974,7 +974,7 @@ options:
   --compressor-threshold-db COMPRESSOR_THRESHOLD_DB
                         Enable compressor above threshold dBFS
   --compressor-ratio COMPRESSOR_RATIO
-                   
+
 ... [truncated]
 ```
 
@@ -1055,9 +1055,9 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  -o, --output-dir OUTPUT_DIR
+  -o OUTPUT_DIR, --output-dir OUTPUT_DIR
                         Output directory
-  --output, --out OUTPUT
+  --output OUTPUT, --out OUTPUT
                         Explicit output file path (single-input mode only). Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _harm)
   --output-format OUTPUT_FORMAT
@@ -1074,7 +1074,7 @@ options:
                         Output normalization mode
   --peak-dbfs PEAK_DBFS
                         Target peak dBFS when --normalize peak
-  --rms-dbfs RMS_DBFS   Target RMS dBFS when --no
+  --rms-dbfs RMS_DBFS   Target
 ... [truncated]
 ```
 
@@ -1162,9 +1162,9 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  -o, --output-dir OUTPUT_DIR
+  -o OUTPUT_DIR, --output-dir OUTPUT_DIR
                         Output directory
-  --output, --out OUTPUT
+  --output OUTPUT, --out OUTPUT
                         Explicit output file path (single-input mode only). Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _layer)
   --output-format OUTPUT_FORMAT
@@ -1175,7 +1175,7 @@ options:
   --verbosity {silent,quiet,normal,verbose,debug}
                         Console verbosity level
   -v, --verbose         Increase verbosity (repeat for extra detail)
-  --quiet               Reduce output
+  --quiet
 ... [truncated]
 ```
 
@@ -1257,7 +1257,8 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  -o, --output OUTPUT   Output file path
+  -o OUTPUT, --output OUTPUT
+                        Output file path
   --stdout              Write processed audio to stdout stream (for piping); equivalent to -o -
   --output-format OUTPUT_FORMAT
                         Output extension/format; for --stdout defaults to wav
@@ -1266,7 +1267,7 @@ options:
                         Cross-synthesis blend style. linear/geometric are symmetric blends; carrier_* modes transfer envelope/mask from modulator to carrier.
   --phase-mix PHASE_MIX
                         Phase blend in [0,1]. If omitted, mode-specific defaults apply (A-phase for *_phase_a/carrier_a_*, B-phase for *_phase_b/carrier_b_*, alpha for symmetric modes). Accepts scalar or control file (.csv/.json).
-  --interp {none,linear,nearest,cubic,poly
+  --interp {n
 ... [truncated]
 ```
 
@@ -1348,9 +1349,9 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  -o, --output-dir OUTPUT_DIR
+  -o OUTPUT_DIR, --output-dir OUTPUT_DIR
                         Output directory
-  --output, --out OUTPUT
+  --output OUTPUT, --out OUTPUT
                         Explicit output file path (single-input mode only). Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _retune)
   --output-format OUTPUT_FORMAT
@@ -1368,7 +1369,7 @@ options:
   --peak-dbfs PEAK_DBFS
                         Target peak dBFS when --normalize peak
   --rms-dbfs RMS_DBFS   Target RMS dBFS when --normalize rms
-  --target-lufs TARGET_L
+  --ta
 ... [truncated]
 ```
 
@@ -1452,9 +1453,9 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  -o, --output-dir OUTPUT_DIR
+  -o OUTPUT_DIR, --output-dir OUTPUT_DIR
                         Output directory
-  --output, --out OUTPUT
+  --output OUTPUT, --out OUTPUT
                         Explicit output file path (single-input mode only). Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _trans)
   --output-format OUTPUT_FORMAT
@@ -1466,8 +1467,7 @@ options:
                         Console verbosity level
   -v, --verbose         Increase verbosity (repeat for extra detail)
   --quiet               Reduce output and hide status bars
-  --silent              Suppress all console output
-  --normali
+  --silent              Suppress all console
 ... [truncated]
 ```
 
@@ -1546,9 +1546,9 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  -o, --output-dir OUTPUT_DIR
+  -o OUTPUT_DIR, --output-dir OUTPUT_DIR
                         Output directory
-  --output, --out OUTPUT
+  --output OUTPUT, --out OUTPUT
                         Explicit output file path (single-input mode only). Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _unison)
   --output-format OUTPUT_FORMAT
@@ -1569,8 +1569,7 @@ options:
   --target-lufs TARGET_LUFS
                         Integrated loudness target in LUFS
   --compressor-threshold-db COMPRESSOR_THRESHOLD_DB
-                        Enable compressor above threshold dBFS
-  --comp
+                        Enable compressor above thres
 ... [truncated]
 ```
 
@@ -1643,11 +1642,9 @@ usage: pvxvoc.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
                  [--stereo-mode {independent,mid_side_lock,ref_channel_lock}]
                  [--ref-channel REF_CHANNEL]
                  [--coherence-strength COHERENCE_STRENGTH]
-                 [--pitch-shift-semitones PITCH_SHIFT_SEMITONES |
-                 --pitch-shift-cents PITCH_SHIFT_CENTS |
-                 --pitch-shift-ratio PITCH_SHIFT_RATIO |
-                 --target-f0 TARGET_F0] [--analysis-channel {first,mix}]
-                 [--f0-min F0_MIN] [--f0-max F0_MAX]
+                 [--pitch-shift-semitones PITCH_SHIFT_SEMITONES | --pitch-shift-cents PITCH_SHIFT_CENTS | --pitch-shift-ratio PITCH_SHIFT_RATIO | --target-f0 TARGET_F0]
+                 [--analysis-channel {first,mix}] [--f0-min F0_MIN]
+                 [--f0-max F0_MAX]
                  [--pitch-mode {standard,formant-preserving}]
                  [--formant-lifter FORMANT_LIFTER]
                  [--formant-strength FORMANT_STRENGTH]
@@ -1664,7 +1661,8 @@ usage: pvxvoc.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
                  [--rms-dbfs RMS_DBFS] [--target-lufs TARGET_LUFS]
                  [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
                  [--compressor-ratio COMPRESSOR_RATIO]
-                 [--compressor-attack-ms COMPRES
+                 [--compressor-attack-ms COMPRESSOR_ATTACK_MS]
+                 [-
 ... [truncated]
 ```
 
@@ -1743,9 +1741,9 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  -o, --output-dir OUTPUT_DIR
+  -o OUTPUT_DIR, --output-dir OUTPUT_DIR
                         Output directory
-  --output, --out OUTPUT
+  --output OUTPUT, --out OUTPUT
                         Explicit output file path (single-input mode only). Alias: --out
   --suffix SUFFIX       Output filename suffix (default: _warp)
   --output-format OUTPUT_FORMAT
@@ -1769,7 +1767,7 @@ options:
                         Enable compressor above threshold dBFS
   --compressor-ratio COMPRESSOR_RATIO
                         Compressor ratio (>=1)
-  --compressor-attack-ms COMPRESSOR_ATTACK_M
+  --compressor-attack-ms C
 ... [truncated]
 ```
 
@@ -6181,6 +6179,15 @@ microtonal pitch controls produce expected conversion outputs.
 ```text
 Unit tests for shared output policy helpers.
 ```
+
+## `tests/test_streaming_limits.py`
+
+**Purpose:** No module docstring present.
+
+**Classes:** `TestStreamingSecurity`
+**Functions:** None
+
+**Help commands:** `python3 tests/test_streaming_limits.py`
 
 ## `tests/test_transient_and_stereo.py`
 

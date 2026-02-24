@@ -31,28 +31,7 @@ from pvx.core import voc as voc_core  # noqa: E402
 
 
 def git_commit_meta() -> tuple[str, str]:
-    commit = "unknown"
-    commit_date = "unknown"
-    try:
-        commit_proc = subprocess.run(
-            ["git", "-C", str(ROOT), "rev-parse", "--short", "HEAD"],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        if commit_proc.returncode == 0 and commit_proc.stdout.strip():
-            commit = commit_proc.stdout.strip()
-        date_proc = subprocess.run(
-            ["git", "-C", str(ROOT), "show", "-s", "--format=%cI", "HEAD"],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        if date_proc.returncode == 0 and date_proc.stdout.strip():
-            commit_date = date_proc.stdout.strip()
-    except Exception:
-        pass
-    return commit, commit_date
+    return "HEAD", "DATE_PLACEHOLDER"
 
 
 COMMIT_HASH, COMMIT_DATE = git_commit_meta()
@@ -383,11 +362,11 @@ def compute_window_metrics(window: np.ndarray) -> dict[str, float]:
     peak_sidelobe_db = 20.0 * math.log10(max(float(np.max(side)), eps))
 
     return {
-        "coherent_gain": coherent_gain,
-        "enbw_bins": enbw_bins,
-        "scalloping_loss_db": scalloping_loss_db,
-        "main_lobe_width_bins": main_lobe_width_bins,
-        "peak_sidelobe_db": peak_sidelobe_db,
+        "coherent_gain": round(coherent_gain, 10),
+        "enbw_bins": round(enbw_bins, 10),
+        "scalloping_loss_db": round(scalloping_loss_db, 10),
+        "main_lobe_width_bins": round(main_lobe_width_bins, 10),
+        "peak_sidelobe_db": round(peak_sidelobe_db, 10),
     }
 
 
@@ -726,8 +705,6 @@ def generate_function_assets() -> dict[str, object]:
     )
 
     payload: dict[str, object] = {
-        "commit": COMMIT_HASH,
-        "commit_date": COMMIT_DATE,
         "plots": entries,
     }
     (DOCS_DIR / "function_gallery.json").write_text(
@@ -951,8 +928,6 @@ def generate_interpolation_assets() -> dict[str, object]:
         )
 
     payload: dict[str, object] = {
-        "commit": COMMIT_HASH,
-        "commit_date": COMMIT_DATE,
         "control_points": [
             {"time_sec": float(tx), "value": float(vx)}
             for tx, vx in zip(x_control, y_control)
@@ -1011,8 +986,6 @@ def generate_window_assets_and_metrics(entries: list[dict[str, str]]) -> dict[st
         }
 
     metrics_payload = {
-        "commit": COMMIT_HASH,
-        "commit_date": COMMIT_DATE,
         "windows": metrics_by_name,
     }
     (DOCS_DIR / "window_metrics.json").write_text(

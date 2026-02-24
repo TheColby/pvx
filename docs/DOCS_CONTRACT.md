@@ -2,7 +2,7 @@
 
 # pvx Documentation Contribution Contract
 
-_Generated from commit `e37ec44` (commit date: 2026-02-23T14:07:50-05:00)._
+_Generated from commit `HEAD` (commit date: DATE_PLACEHOLDER)._
 
 Any code change that affects behavior, parameters, algorithms, windows, outputs, or references must update generated documentation in the same PR.
 

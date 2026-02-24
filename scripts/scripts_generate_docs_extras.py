@@ -37,28 +37,7 @@ import scripts_generate_html_docs as html_docs  # noqa: E402
 
 
 def git_commit_meta() -> tuple[str, str]:
-    commit = "unknown"
-    commit_date = "unknown"
-    try:
-        commit_proc = subprocess.run(
-            ["git", "-C", str(ROOT), "rev-parse", "--short", "HEAD"],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        if commit_proc.returncode == 0 and commit_proc.stdout.strip():
-            commit = commit_proc.stdout.strip()
-        date_proc = subprocess.run(
-            ["git", "-C", str(ROOT), "show", "-s", "--format=%cI", "HEAD"],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        if date_proc.returncode == 0 and date_proc.stdout.strip():
-            commit_date = date_proc.stdout.strip()
-    except Exception:
-        pass
-    return commit, commit_date
+    return "HEAD", "DATE_PLACEHOLDER"
 
 
 COMMIT_HASH, COMMIT_DATE = git_commit_meta()
@@ -244,8 +223,6 @@ def generate_cli_flags_reference() -> None:
     write_json(
         DOCS_DIR / "cli_flags_reference.json",
         {
-            "commit": COMMIT_HASH,
-            "commit_date": COMMIT_DATE,
             "entries": rows,
             "unique_flags": unique_flags,
         },
@@ -446,8 +423,6 @@ def generate_algorithm_limitations() -> None:
     write_json(
         DOCS_DIR / "algorithm_limitations.json",
         {
-            "commit": COMMIT_HASH,
-            "commit_date": COMMIT_DATE,
             "groups": grouped,
             "group_limits": GROUP_LIMITS,
         },
@@ -663,8 +638,6 @@ def generate_cookbook() -> None:
     write_json(
         DOCS_DIR / "pipeline_cookbook.json",
         {
-            "commit": COMMIT_HASH,
-            "commit_date": COMMIT_DATE,
             "recipes": recipes,
         },
     )
@@ -874,8 +847,6 @@ def generate_benchmarks(run_benchmarks: bool) -> None:
             }
 
         payload = {
-            "commit": COMMIT_HASH,
-            "commit_date": COMMIT_DATE,
             "generated_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "benchmark_spec": {
                 "sample_rate": sample_rate,
@@ -1112,8 +1083,6 @@ def generate_citation_docs() -> None:
     write_json(
         DOCS_DIR / "citation_quality.json",
         {
-            "commit": COMMIT_HASH,
-            "commit_date": COMMIT_DATE,
             "counts": counts,
             "unresolved_scholar": unresolved_scholar,
         },

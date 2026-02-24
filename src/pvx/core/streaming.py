@@ -23,13 +23,44 @@ from pvx.core.output_policy import prepare_output_audio, write_metadata_sidecar
 from pvx.core import voc as voc_core
 
 
+MAX_AUDIO_BYTES = 1024 * 1024 * 1024  # 1GB limit for decoded audio
+MAX_INPUT_BYTES = 256 * 1024 * 1024  # 256MB limit for stdin input
+
+
 def _read_audio(path: Path) -> tuple[np.ndarray, int]:
     if str(path) == "-":
-        payload = sys.stdin.buffer.read()
+        input_data = io.BytesIO()
+        bytes_read = 0
+        while True:
+            chunk = sys.stdin.buffer.read(4096)
+            if not chunk:
+                break
+            input_data.write(chunk)
+            bytes_read += len(chunk)
+            if bytes_read > MAX_INPUT_BYTES:
+                raise ValueError(
+                    f"Input audio from stdin exceeds size limit ({MAX_INPUT_BYTES} bytes)"
+                )
+        input_data.seek(0)
+        payload = input_data.getvalue()
+
         if not payload:
             raise ValueError("No audio bytes received on stdin")
+
+        info = sf.info(io.BytesIO(payload))
+        expected_bytes = info.frames * info.channels * 8
+        if expected_bytes > MAX_AUDIO_BYTES:
+            raise ValueError(
+                f"Decoded audio exceeds memory limit ({MAX_AUDIO_BYTES} bytes)"
+            )
         audio, sr = sf.read(io.BytesIO(payload), always_2d=True)
     else:
+        info = sf.info(str(path))
+        expected_bytes = info.frames * info.channels * 8
+        if expected_bytes > MAX_AUDIO_BYTES:
+            raise ValueError(
+                f"Decoded audio exceeds memory limit ({MAX_AUDIO_BYTES} bytes)"
+            )
         audio, sr = sf.read(str(path), always_2d=True)
     return np.asarray(audio, dtype=np.float64), int(sr)
 
@@ -68,7 +99,9 @@ def _resolve_voc_args_for_stream(
     args = parser.parse_args(voc_argv)
     args._cli_flags = cli_flags
 
-    if ("--transient-mode" not in cli_flags) and bool(getattr(args, "transient_preserve", False)):
+    if ("--transient-mode" not in cli_flags) and bool(
+        getattr(args, "transient_preserve", False)
+    ):
         args.transient_mode = "reset"
 
     voc_core.validate_args(args, parser)
@@ -78,13 +111,17 @@ def _resolve_voc_args_for_stream(
     if len(input_paths) != 1:
         parser.error("Stateful stream mode requires exactly one resolved input")
     if bool(args.pitch_map is not None) or bool(args.pitch_map_stdin):
-        parser.error("Stateful stream mode does not support --pitch-map / --pitch-map-stdin")
+        parser.error(
+            "Stateful stream mode does not support --pitch-map / --pitch-map-stdin"
+        )
     if bool(args.resume) or bool(args.checkpoint_dir is not None):
         parser.error("Stateful stream mode does not support checkpoint/resume flags")
     if bool(args.explain_plan):
         parser.error("Stateful stream mode does not support --explain-plan")
     if bool(args.auto_segment_seconds > 0.0):
-        parser.error("Stateful stream mode manages chunking directly; remove --auto-segment-seconds")
+        parser.error(
+            "Stateful stream mode manages chunking directly; remove --auto-segment-seconds"
+        )
 
     preset_changes = voc_core.apply_named_preset(
         args,
@@ -99,14 +136,18 @@ def _resolve_voc_args_for_stream(
     if preview_audio.shape[0] == 0:
         parser.error("Input has no audio samples")
     if args.auto_profile:
-        stretch_estimate = voc_core.resolve_base_stretch(args, preview_audio.shape[0], preview_sr)
+        stretch_estimate = voc_core.resolve_base_stretch(
+            args, preview_audio.shape[0], preview_sr
+        )
         auto_features = voc_core.estimate_content_features(
             preview_audio,
             preview_sr,
             channel_mode=str(args.analysis_channel),
             lookahead_seconds=float(args.auto_profile_lookahead_seconds),
         )
-        active_profile = voc_core.suggest_quality_profile(stretch_ratio=stretch_estimate, features=auto_features)
+        active_profile = voc_core.suggest_quality_profile(
+            stretch_ratio=stretch_estimate, features=auto_features
+        )
 
     args._active_quality_profile = active_profile
     profile_changes = voc_core.apply_quality_profile_overrides(
@@ -151,7 +192,9 @@ def _resolve_voc_args_for_stream(
             info += f", overrides={','.join(sorted(set(profile_changes)))}"
         voc_core.log_message(args, info, min_level="verbose")
         if auto_features is not None:
-            voc_core.log_message(args, f"[info] auto-profile features={auto_features}", min_level="debug")
+            voc_core.log_message(
+                args, f"[info] auto-profile features={auto_features}", min_level="debug"
+            )
 
     if str(output_token) == "-":
         args.stdout = True
@@ -235,7 +278,9 @@ def run_stateful_stream(
     base_stretch = voc_core.resolve_base_stretch(args, audio.shape[0], sr)
     if base_stretch <= 0.0:
         parser.error("--time-stretch/--target-duration resolved to non-positive value")
-    dynamic_refs: dict[str, voc_core.DynamicControlRef] = dict(getattr(args, "_dynamic_control_refs", {}) or {})
+    dynamic_refs: dict[str, voc_core.DynamicControlRef] = dict(
+        getattr(args, "_dynamic_control_refs", {}) or {}
+    )
 
     config = _build_config(args)
     chunk_samples = max(1, int(round(float(chunk_seconds) * sr)))
@@ -256,7 +301,9 @@ def run_stateful_stream(
     if dynamic_refs:
         total_seconds = float(total_samples) / float(sr)
         for parameter, ref in dynamic_refs.items():
-            signal = voc_core.load_dynamic_control_signal(ref, total_seconds=total_seconds)
+            signal = voc_core.load_dynamic_control_signal(
+                ref, total_seconds=total_seconds
+            )
             if signal.parameter != parameter:
                 signal = voc_core.DynamicControlSignal(
                     parameter=parameter,
@@ -301,11 +348,13 @@ def run_stateful_stream(
                     chunk_pitch_ratio = value
                 else:
                     overrides[parameter] = value
-            chunk_stretch, chunk_pitch_ratio, clean_overrides = voc_core._finalize_dynamic_segment_values(
-                args=args,
-                stretch=chunk_stretch,
-                pitch_ratio=chunk_pitch_ratio,
-                overrides=overrides,
+            chunk_stretch, chunk_pitch_ratio, clean_overrides = (
+                voc_core._finalize_dynamic_segment_values(
+                    args=args,
+                    stretch=chunk_stretch,
+                    pitch_ratio=chunk_pitch_ratio,
+                    overrides=overrides,
+                )
             )
             if clean_overrides:
                 chunk_args = voc_core.clone_args_namespace(args)
@@ -354,9 +403,18 @@ def run_stateful_stream(
         explicit_subtype=getattr(args, "subtype", None),
     )
 
-    output_path = Path("-") if bool(getattr(args, "stdout", False)) else Path(args.output)
-    if (not args.stdout) and output_path.exists() and not args.overwrite and not args.dry_run:
-        raise FileExistsError(f"Output exists: {output_path}. Use --overwrite to replace it.")
+    output_path = (
+        Path("-") if bool(getattr(args, "stdout", False)) else Path(args.output)
+    )
+    if (
+        (not args.stdout)
+        and output_path.exists()
+        and not args.overwrite
+        and not args.dry_run
+    ):
+        raise FileExistsError(
+            f"Output exists: {output_path}. Use --overwrite to replace it."
+        )
 
     metrics_table = render_audio_metrics_table(
         [
@@ -378,7 +436,9 @@ def run_stateful_stream(
     voc_core.log_message(args, f"{metrics_table}\n{compare_table}", min_level="quiet")
 
     if not args.dry_run:
-        voc_core._write_audio_output(output_path, out_audio, out_sr, args, subtype=resolved_subtype)
+        voc_core._write_audio_output(
+            output_path, out_audio, out_sr, args, subtype=resolved_subtype
+        )
         sidecar = write_metadata_sidecar(
             output_path=output_path,
             input_path=(None if str(input_path) == "-" else input_path),
@@ -392,7 +452,9 @@ def run_stateful_stream(
                 "context_samples": int(context_samples),
                 "chunks": int(total_chunks),
                 "stages": int(stage_count),
-                "quality_profile": str(getattr(args, "_active_quality_profile", "neutral")),
+                "quality_profile": str(
+                    getattr(args, "_active_quality_profile", "neutral")
+                ),
                 "transform": str(config.transform),
                 "window": str(config.window),
                 "phase_engine": str(config.phase_engine),
@@ -412,13 +474,15 @@ def run_stateful_stream(
             },
         )
         if sidecar is not None:
-            voc_core.log_message(args, f"[info] metadata sidecar -> {sidecar}", min_level="verbose")
+            voc_core.log_message(
+                args, f"[info] metadata sidecar -> {sidecar}", min_level="verbose"
+            )
 
     voc_core.log_message(
         args,
         (
             f"[stream] done -> {output_path} | chunks={total_chunks}, stages={stage_count}, "
-            f"dur={audio.shape[0]/sr:.3f}s->{out_audio.shape[0]/out_sr:.3f}s"
+            f"dur={audio.shape[0] / sr:.3f}s->{out_audio.shape[0] / out_sr:.3f}s"
         ),
         min_level="normal",
     )
