@@ -4442,7 +4442,7 @@ def write_manifest(
                 payload_entries.extend(list(existing.get("entries", [])))
             elif isinstance(existing, list):
                 payload_entries.extend(existing)
-        except Exception:
+        except (json.JSONDecodeError, OSError):
             payload_entries = []
     payload_entries.extend(entries)
 

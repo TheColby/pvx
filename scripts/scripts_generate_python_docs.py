@@ -113,6 +113,9 @@ def parse_module(path: Path) -> dict:
 
 
 def cli_help(path: Path) -> str | None:
+    # Set COLUMNS to a fixed value to encourage consistent argparse help formatting.
+    env = dict(subprocess.os.environ)
+    env["COLUMNS"] = "100"
     try:
         proc = subprocess.run(
             ["python3", str(path), "--help"],
@@ -121,11 +124,14 @@ def cli_help(path: Path) -> str | None:
             capture_output=True,
             timeout=25,
             check=False,
+            env=env,
         )
+        if proc.returncode != 0:
+            return f"[CLI help snapshot unavailable: exit code {proc.returncode}]"
+        out = proc.stdout or ""
     except Exception as exc:  # pragma: no cover
-        return f"[help unavailable: {exc}]"
+        return f"[CLI help snapshot unavailable: {exc}]"
 
-    out = (proc.stdout or "") + ("\n" + proc.stderr if proc.stderr else "")
     out = out.strip()
     if not out:
         return None
@@ -180,7 +186,7 @@ def generate_algorithm_param_doc() -> None:
     lines.append("")
     lines.append("This file lists per-algorithm parameter keys consumed by `pvx.algorithms.base.run_algorithm()` dispatch.")
     lines.append("Legacy import alias `pvxalgorithms.base.run_algorithm()` is still available for compatibility.")
-    lines.append("Use these keys as `**params` when calling module `process(audio, sample_rate, **params)`. ")
+    lines.append("Use these keys as `**params` when calling module `process(audio, sample_rate, **params)`.")
     lines.append("")
     for slug in sorted(params):
         lines.append(f"## `{slug}`")
