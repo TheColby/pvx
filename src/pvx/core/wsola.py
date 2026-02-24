@@ -7,6 +7,7 @@ from __future__ import annotations
 import math
 
 import numpy as np
+from numpy.lib.stride_tricks import as_strided
 
 
 def _safe_window(length: int) -> np.ndarray:
@@ -30,7 +31,7 @@ def wsola_time_stretch(
     - no random tie-breaking
     """
 
-    x = np.asarray(signal, dtype=np.float64).reshape(-1)
+    x = np.ascontiguousarray(np.asarray(signal, dtype=np.float64).reshape(-1))
     if x.size == 0:
         return x.copy()
     ratio = float(stretch)
@@ -90,15 +91,34 @@ def wsola_time_stretch(
         best_score = -math.inf
         if out_norm.size >= 4 and np.any(np.abs(out_norm) > 1e-10):
             ref_norm = np.linalg.norm(out_norm) + 1e-12
-            for cand in range(lo, hi + 1, search_step):
-                seg = x[cand : cand + overlap]
-                if seg.size != overlap:
-                    continue
-                denom = (np.linalg.norm(seg) + 1e-12) * ref_norm
-                score = float(np.dot(seg, out_norm) / denom)
-                if score > best_score:
-                    best_score = score
-                    best_pos = cand
+
+            # Determine number of candidates in range [lo, hi]
+            # range(lo, hi + 1, search_step)
+            n_candidates = (hi - lo) // search_step + 1
+
+            if n_candidates > 0:
+                # Ensure we don't read past the end of x with a full overlap
+                last_start = lo + (n_candidates - 1) * search_step
+                if last_start + overlap > x.size:
+                    # Calculate max k such that: lo + (k-1)*step + overlap <= x.size
+                    max_k = (x.size - overlap - lo) // search_step + 1
+                    n_candidates = min(n_candidates, max_k)
+
+            if n_candidates > 0:
+                strides = (search_step * x.itemsize, x.itemsize)
+                candidates = as_strided(
+                    x[lo:], shape=(n_candidates, overlap), strides=strides
+                )
+
+                # Compute normalized cross-correlation
+                cand_norms = np.linalg.norm(candidates, axis=1) + 1e-12
+                dots = np.dot(candidates, out_norm)
+                scores = dots / (cand_norms * ref_norm)
+
+                best_idx = np.argmax(scores)
+                if scores[best_idx] > best_score:
+                    best_score = float(scores[best_idx])
+                    best_pos = lo + best_idx * search_step
 
         frame = x[best_pos : best_pos + frame_len]
         if frame.size < frame_len:

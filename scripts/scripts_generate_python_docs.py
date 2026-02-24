@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import ast
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -114,9 +115,12 @@ def parse_module(path: Path) -> dict:
 
 def cli_help(path: Path) -> str | None:
     try:
+        env = os.environ.copy()
+        env["COLUMNS"] = "100"
         proc = subprocess.run(
             ["python3", str(path), "--help"],
             cwd=ROOT,
+            env=env,
             text=True,
             capture_output=True,
             timeout=25,
