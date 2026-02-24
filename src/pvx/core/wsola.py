@@ -5,13 +5,19 @@
 from __future__ import annotations
 
 import math
+from typing import Any
 
 import numpy as np
 
+from pvx.core.device import _array_module, _is_cupy_array, _to_numpy, _to_runtime_array, runtime_config
 
-def _safe_window(length: int) -> np.ndarray:
+
+def _safe_window(length: int, xp: Any = np) -> Any:
     n = max(2, int(length))
-    return np.hanning(n).astype(np.float64)
+    if hasattr(xp, "hanning"):
+        return xp.hanning(n).astype(xp.float64)
+    # Fallback for older CuPy or other backends
+    return xp.asarray(np.hanning(n)).astype(xp.float64)
 
 
 def wsola_time_stretch(
@@ -30,14 +36,21 @@ def wsola_time_stretch(
     - no random tie-breaking
     """
 
-    x = np.asarray(signal, dtype=np.float64).reshape(-1)
+    bridge_to_cuda = runtime_config().active_device == "cuda" and not _is_cupy_array(signal)
+    work_signal = _to_runtime_array(signal) if bridge_to_cuda else signal
+    xp = _array_module(work_signal)
+
+    x = xp.asarray(work_signal, dtype=xp.float64).reshape(-1)
     if x.size == 0:
-        return x.copy()
+        out = x.copy()
+        return _to_numpy(out) if bridge_to_cuda else out
+
     ratio = float(stretch)
     if ratio <= 0.0:
         raise ValueError("stretch must be > 0")
     if abs(ratio - 1.0) <= 1e-12:
-        return x.copy()
+        out = x.copy()
+        return _to_numpy(out) if bridge_to_cuda else out
 
     frame_len = max(64, int(round(max(8.0, frame_ms) * sample_rate / 1000.0)))
     analysis_hop = max(1, int(round(max(1.0, analysis_hop_ms) * sample_rate / 1000.0)))
@@ -48,17 +61,18 @@ def wsola_time_stretch(
         frame_len = int(x.size)
     if frame_len < 8:
         target = max(1, int(round(x.size * ratio)))
-        return np.interp(
-            np.linspace(0.0, 1.0, target, endpoint=True),
-            np.linspace(0.0, 1.0, x.size, endpoint=True),
+        out = xp.interp(
+            xp.linspace(0.0, 1.0, target, endpoint=True),
+            xp.linspace(0.0, 1.0, x.size, endpoint=True),
             x,
-        ).astype(np.float64)
+        ).astype(xp.float64)
+        return _to_numpy(out) if bridge_to_cuda else out
 
-    window = _safe_window(frame_len)
+    window = _safe_window(frame_len, xp=xp)
     target_len = max(1, int(round(x.size * ratio)))
     max_out = target_len + frame_len + 2 * max(analysis_hop, synthesis_hop)
-    y = np.zeros(max_out, dtype=np.float64)
-    weight = np.zeros(max_out, dtype=np.float64)
+    y = xp.zeros(max_out, dtype=xp.float64)
+    weight = xp.zeros(max_out, dtype=xp.float64)
 
     # Seed first frame.
     y[:frame_len] += x[:frame_len] * window
@@ -82,27 +96,33 @@ def wsola_time_stretch(
 
         out_overlap = y[out_pos : out_pos + overlap]
         out_w = weight[out_pos : out_pos + overlap]
-        out_norm = out_overlap.copy()
+        out_norm_arr = out_overlap.copy()
         nz = out_w > 1e-9
-        out_norm[nz] = out_overlap[nz] / out_w[nz]
+        out_norm_arr[nz] = out_overlap[nz] / out_w[nz]
 
-        best_pos = int(np.clip(expected_in, 0, max(0, x.size - frame_len)))
+        best_pos = int(xp.clip(expected_in, 0, max(0, x.size - frame_len)))
         best_score = -math.inf
-        if out_norm.size >= 4 and np.any(np.abs(out_norm) > 1e-10):
-            ref_norm = np.linalg.norm(out_norm) + 1e-12
-            for cand in range(lo, hi + 1, search_step):
-                seg = x[cand : cand + overlap]
-                if seg.size != overlap:
-                    continue
-                denom = (np.linalg.norm(seg) + 1e-12) * ref_norm
-                score = float(np.dot(seg, out_norm) / denom)
-                if score > best_score:
-                    best_score = score
-                    best_pos = cand
+
+        if out_norm_arr.size >= 4 and xp.any(xp.abs(out_norm_arr) > 1e-10):
+            ref_norm = xp.linalg.norm(out_norm_arr) + 1e-12
+            cands = xp.arange(lo, hi + 1, search_step)
+            cands = cands[cands + overlap <= x.size]
+            if cands.size > 0:
+                shape = (cands.size, overlap)
+                strides = (x.strides[0] * search_step, x.strides[0])
+                segments = xp.lib.stride_tricks.as_strided(x[lo:], shape=shape, strides=strides)
+
+                dots = segments @ out_norm_arr
+                seg_norms = xp.linalg.norm(segments, axis=1)
+                scores = dots / ((seg_norms + 1e-12) * ref_norm)
+
+                best_idx = int(xp.argmax(scores))
+                best_score = float(scores[best_idx])
+                best_pos = int(cands[best_idx])
 
         frame = x[best_pos : best_pos + frame_len]
         if frame.size < frame_len:
-            frame = np.pad(frame, (0, frame_len - frame.size), mode="constant")
+            frame = xp.pad(frame, (0, frame_len - frame.size), mode="constant")
         y[out_pos : out_pos + frame_len] += frame * window
         weight[out_pos : out_pos + frame_len] += window * window
 
@@ -111,8 +131,10 @@ def wsola_time_stretch(
 
     nz = weight > 1e-9
     y[nz] /= weight[nz]
-    if np.any(~nz):
+    if xp.any(~nz):
         y[~nz] = 0.0
     if y.size < target_len:
-        y = np.pad(y, (0, target_len - y.size), mode="constant")
-    return y[:target_len].astype(np.float64, copy=False)
+        y = xp.pad(y, (0, target_len - y.size), mode="constant")
+
+    out = y[:target_len].astype(xp.float64, copy=False)
+    return _to_numpy(out) if bridge_to_cuda else out

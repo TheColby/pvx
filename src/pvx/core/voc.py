@@ -78,6 +78,18 @@ from pvx.core.control_bus import (
     apply_control_routes_csv,
     parse_control_routes,
 )
+from pvx.core.device import (
+    DeviceMode,
+    RuntimeConfig,
+    _array_module,
+    _has_cupy,
+    _is_cupy_array,
+    _to_numpy,
+    _to_runtime_array,
+    configure_runtime,
+    configure_runtime_from_args,
+    runtime_config,
+)
 from pvx.core.stereo import lr_to_ms, ms_to_lr, validate_ref_channel
 from pvx.core.transients import detect_transient_regions, map_mask_to_output, smooth_binary_mask
 from pvx.core.wsola import wsola_time_stretch
@@ -140,7 +152,6 @@ TransformMode = Literal["fft", "dft", "czt", "dct", "dst", "hartley"]
 ResampleMode = Literal["auto", "fft", "linear"]
 PhaseLockMode = Literal["off", "identity"]
 PhaseEngineMode = Literal["propagate", "hybrid", "random"]
-DeviceMode = Literal["auto", "cpu", "cuda"]
 LowConfidenceMode = Literal["hold", "unity", "interp"]
 TransientMode = Literal["off", "reset", "hybrid", "wsola"]
 StereoMode = Literal["independent", "mid_side_lock", "ref_channel_lock"]
@@ -285,20 +296,6 @@ class AudioBlockResult:
     stage_count: int = 1
 
 
-@dataclass(frozen=True)
-class RuntimeConfig:
-    requested_device: DeviceMode
-    active_device: Literal["cpu", "cuda"]
-    cuda_device: int
-    fallback_reason: str | None = None
-
-
-_RUNTIME_CONFIG = RuntimeConfig(
-    requested_device="auto",
-    active_device="cpu",
-    cuda_device=0,
-    fallback_reason=None,
-)
 
 
 _QUALITY_PROFILE_OVERRIDES: dict[str, dict[str, Any]] = {
@@ -1447,32 +1444,6 @@ def resolve_transform_auto(
     return requested_transform
 
 
-def _has_cupy() -> bool:
-    return cp is not None
-
-
-def _is_cupy_array(value: Any) -> bool:
-    return _has_cupy() and isinstance(value, cp.ndarray)
-
-
-def _array_module(value: Any):
-    if _is_cupy_array(value):
-        return cp
-    return np
-
-
-def _to_numpy(value: Any):
-    if _is_cupy_array(value):
-        return cp.asnumpy(value)
-    return value
-
-
-def _to_runtime_array(value: Any):
-    if _RUNTIME_CONFIG.active_device != "cuda":
-        return value
-    if _is_cupy_array(value):
-        return value
-    return cp.asarray(value)
 
 
 def _as_float(value: Any) -> float:
@@ -1695,91 +1666,6 @@ def add_runtime_args(parser: argparse.ArgumentParser) -> None:
     )
 
 
-def runtime_config() -> RuntimeConfig:
-    return _RUNTIME_CONFIG
-
-
-def configure_runtime(
-    device: DeviceMode = "auto",
-    cuda_device: int = 0,
-    *,
-    verbose: bool = False,
-) -> RuntimeConfig:
-    global _RUNTIME_CONFIG
-
-    if cuda_device < 0:
-        raise ValueError("--cuda-device must be >= 0")
-
-    requested = device.lower()
-    if requested not in {"auto", "cpu", "cuda"}:
-        raise ValueError(f"Unsupported device mode: {device}")
-
-    if requested == "cpu":
-        _RUNTIME_CONFIG = RuntimeConfig(
-            requested_device="cpu",
-            active_device="cpu",
-            cuda_device=cuda_device,
-            fallback_reason=None,
-        )
-        return _RUNTIME_CONFIG
-
-    if not _has_cupy():
-        reason = "CuPy is not installed"
-        if requested == "cuda":
-            raise RuntimeError("CUDA mode requires CuPy. Install a matching `cupy-cudaXXx` package.")
-        _RUNTIME_CONFIG = RuntimeConfig(
-            requested_device="auto",
-            active_device="cpu",
-            cuda_device=cuda_device,
-            fallback_reason=reason,
-        )
-        if verbose:
-            print(f"[info] {reason}; using CPU backend", file=sys.stderr)
-        return _RUNTIME_CONFIG
-
-    try:
-        cp.cuda.Device(cuda_device).use()
-        _ = cp.cuda.runtime.getDevice()
-    except Exception as exc:
-        reason = f"CUDA device init failed: {exc}"
-        if requested == "cuda":
-            raise RuntimeError(reason) from exc
-        _RUNTIME_CONFIG = RuntimeConfig(
-            requested_device="auto",
-            active_device="cpu",
-            cuda_device=cuda_device,
-            fallback_reason=reason,
-        )
-        if verbose:
-            print(f"[info] {reason}; using CPU backend", file=sys.stderr)
-        return _RUNTIME_CONFIG
-
-    requested_device: DeviceMode = "auto" if requested == "auto" else "cuda"
-    _RUNTIME_CONFIG = RuntimeConfig(
-        requested_device=requested_device,
-        active_device="cuda",
-        cuda_device=cuda_device,
-        fallback_reason=None,
-    )
-    if verbose:
-        print(f"[info] Using CUDA backend on device {cuda_device}", file=sys.stderr)
-    return _RUNTIME_CONFIG
-
-
-def configure_runtime_from_args(
-    args: argparse.Namespace,
-    parser: argparse.ArgumentParser | None = None,
-) -> RuntimeConfig:
-    try:
-        return configure_runtime(
-            device=getattr(args, "device", "auto"),
-            cuda_device=getattr(args, "cuda_device", 0),
-            verbose=console_level(args) >= _VERBOSITY_TO_LEVEL["verbose"],
-        )
-    except Exception as exc:
-        if parser is not None:
-            parser.error(str(exc))
-        raise
 
 
 def ensure_runtime_dependencies() -> None:
@@ -2086,7 +1972,7 @@ def pad_for_framing(signal, n_fft: int, hop: int, center: bool):
 
 
 def stft(signal: np.ndarray, config: VocoderConfig):
-    bridge_to_cuda = _RUNTIME_CONFIG.active_device == "cuda" and not _is_cupy_array(signal)
+    bridge_to_cuda = runtime_config().active_device == "cuda" and not _is_cupy_array(signal)
     work_signal = _to_runtime_array(signal) if bridge_to_cuda else signal
     xp = _array_module(work_signal)
     transform = normalize_transform_name(config.transform)
@@ -2117,7 +2003,7 @@ def istft(
     config: VocoderConfig,
     expected_length: int | None = None,
 ):
-    bridge_to_cuda = _RUNTIME_CONFIG.active_device == "cuda" and not _is_cupy_array(spectrum)
+    bridge_to_cuda = runtime_config().active_device == "cuda" and not _is_cupy_array(spectrum)
     work_spectrum = _to_runtime_array(spectrum) if bridge_to_cuda else spectrum
     xp = _array_module(work_spectrum)
     transform = normalize_transform_name(config.transform)
@@ -2475,7 +2361,7 @@ def phase_vocoder_time_stretch(
     if signal.size == 0:
         return signal
 
-    bridge_to_cuda = _RUNTIME_CONFIG.active_device == "cuda" and not _is_cupy_array(signal)
+    bridge_to_cuda = runtime_config().active_device == "cuda" and not _is_cupy_array(signal)
     work_signal = _to_runtime_array(signal) if bridge_to_cuda else signal
     xp = _array_module(work_signal)
     transform = normalize_transform_name(config.transform)
@@ -2570,7 +2456,7 @@ def phase_vocoder_time_stretch_fourier_sync(
     if signal.size == 0:
         return signal
 
-    bridge_to_cuda = _RUNTIME_CONFIG.active_device == "cuda" and not _is_cupy_array(signal)
+    bridge_to_cuda = runtime_config().active_device == "cuda" and not _is_cupy_array(signal)
     work_signal = _to_runtime_array(signal) if bridge_to_cuda else signal
     xp = _array_module(work_signal)
     transform = normalize_transform_name(config.transform)
@@ -3013,7 +2899,7 @@ def resample_1d(signal, output_samples: int, mode: ResampleMode):
     if output_samples == signal.size:
         return signal.copy()
 
-    bridge_to_cuda = _RUNTIME_CONFIG.active_device == "cuda" and not _is_cupy_array(signal)
+    bridge_to_cuda = runtime_config().active_device == "cuda" and not _is_cupy_array(signal)
     work_signal = _to_runtime_array(signal) if bridge_to_cuda else signal
     xp = _array_module(work_signal)
 
@@ -3398,7 +3284,7 @@ def apply_formant_preservation(
     if reference.size == 0 or shifted.size == 0 or strength <= 0.0:
         return shifted
 
-    bridge_to_cuda = _RUNTIME_CONFIG.active_device == "cuda" and (
+    bridge_to_cuda = runtime_config().active_device == "cuda" and (
         (not _is_cupy_array(reference)) or (not _is_cupy_array(shifted))
     )
     ref_work = _to_runtime_array(reference) if bridge_to_cuda else reference
@@ -5891,7 +5777,11 @@ def main(argv: list[str] | None = None) -> int:
             args._active_quality_profile = "ambient"
 
     validate_args(args, parser)
-    configure_runtime_from_args(args, parser)
+    configure_runtime_from_args(
+        args,
+        parser,
+        verbose=console_level(args) >= _VERBOSITY_TO_LEVEL["verbose"],
+    )
 
     if console_level(args) >= _VERBOSITY_TO_LEVEL["verbose"]:
         info = (

@@ -19,7 +19,7 @@
     - quick benchmark run with report output.
 
 - Expanded `pvx morph` into multi-mode cross-synthesis:
-  - new blend modes in `/Users/cleider/dev/pvx/src/pvx/cli/pvxmorph.py`:
+  - new blend modes in `src/pvx/cli/pvxmorph.py`:
     - `linear`, `geometric`
     - `magnitude_b_phase_a`, `magnitude_a_phase_b`
     - `carrier_a_envelope_b`, `carrier_b_envelope_a`
@@ -31,16 +31,16 @@
     - `--mask-exponent`
     - `--envelope-lifter`
     - `--normalize-energy`
-  - added CLI regression coverage in `/Users/cleider/dev/pvx/tests/test_cli_regression.py` for envelope/mask cross-synthesis modes.
+  - added CLI regression coverage in `tests/test_cli_regression.py` for envelope/mask cross-synthesis modes.
   - refreshed user docs examples in:
-    - `/Users/cleider/dev/pvx/README.md`
-    - `/Users/cleider/dev/pvx/docs/GETTING_STARTED.md`
-    - `/Users/cleider/dev/pvx/docs/EXAMPLES.md`
-    - `/Users/cleider/dev/pvx/docs/PIPELINE_COOKBOOK.md`
+    - `README.md`
+    - `docs/GETTING_STARTED.md`
+    - `docs/EXAMPLES.md`
+    - `docs/PIPELINE_COOKBOOK.md`
 
 - Expanded feature-tracking/control-bus sidechain capabilities:
   - added frame-level feature extraction module:
-    - `/Users/cleider/dev/pvx/src/pvx/core/feature_tracking.py`
+    - `src/pvx/core/feature_tracking.py`
   - `pvx pitch-track` now emits broad feature vectors (configurable via `--feature-set` and `--mfcc-count`), including:
     - pitch/voicing, loudness/dynamics, spectral features, formants, rhythm, stereo cues, noise/artifact proxies
     - MFCC columns (`mfcc_01..mfcc_N`)
@@ -52,7 +52,7 @@
 
 - Continued follow/control-bus UX phase with richer built-in examples:
   - expanded unified CLI examples in:
-    - `/Users/cleider/dev/pvx/src/pvx/cli/pvx.py`
+    - `src/pvx/cli/pvx.py`
     - new `pvx examples` entries:
       - `follow-feature`
       - `follow-formant`
@@ -62,17 +62,17 @@
     - `pvx follow --example all`
     - `pvx follow --example mfcc_flux|formant_onset|noise_aware|pitch`
   - added follow example regression coverage in:
-    - `/Users/cleider/dev/pvx/tests/test_cli_regression.py`
+    - `tests/test_cli_regression.py`
   - updated docs to surface feature-follow examples and `pvx follow --example` workflows:
-    - `/Users/cleider/dev/pvx/README.md`
-    - `/Users/cleider/dev/pvx/docs/GETTING_STARTED.md`
-    - `/Users/cleider/dev/pvx/docs/EXAMPLES.md`
-    - `/Users/cleider/dev/pvx/docs/FEATURE_SIDECHAIN_EXAMPLES.md`
+    - `README.md`
+    - `docs/GETTING_STARTED.md`
+    - `docs/EXAMPLES.md`
+    - `docs/FEATURE_SIDECHAIN_EXAMPLES.md`
 
 - Completed remaining follow/control-bus rollout phases (Phase 3-6):
   - Phase 3 (one-command orchestrator):
     - added unified helper command `pvx follow` in:
-      - `/Users/cleider/dev/pvx/src/pvx/cli/pvx.py`
+      - `src/pvx/cli/pvx.py`
     - `pvx follow` now runs pitch tracking + control-map handoff + vocoder apply in one command.
     - supports:
       - tracker controls (`--backend`, `--fmin`, `--fmax`, `--frame-length`, `--hop-size`, `--emit`, `--stretch-*`)
@@ -80,27 +80,27 @@
       - optional control routes (`--route ...`) and passthrough of additional `pvx voc` flags
   - Phase 4 (regression coverage):
     - added dedicated control-bus unit tests:
-      - `/Users/cleider/dev/pvx/tests/test_control_bus.py`
+      - `tests/test_control_bus.py`
     - expanded CLI regression suite:
-      - `/Users/cleider/dev/pvx/tests/test_cli_regression.py`
+      - `tests/test_cli_regression.py`
       - added `pvx follow` success path, help target, and invalid passthrough rejection tests
   - Phase 5 (docs + UX migration guidance):
     - added migration guide:
-      - `/Users/cleider/dev/pvx/docs/FOLLOW_MIGRATION.md`
+      - `docs/FOLLOW_MIGRATION.md`
     - updated user docs to promote `pvx follow` as the shortest sidechain workflow:
-      - `/Users/cleider/dev/pvx/README.md`
-      - `/Users/cleider/dev/pvx/docs/GETTING_STARTED.md`
-      - `/Users/cleider/dev/pvx/docs/EXAMPLES.md`
-      - `/Users/cleider/dev/pvx/docs/PIPELINE_COOKBOOK.md`
+      - `README.md`
+      - `docs/GETTING_STARTED.md`
+      - `docs/EXAMPLES.md`
+      - `docs/PIPELINE_COOKBOOK.md`
   - Phase 6 (rollout artifacts):
     - updated reviewer checklist and validation flow:
-      - `/Users/cleider/dev/pvx/docs/HOW_TO_REVIEW.md`
+      - `docs/HOW_TO_REVIEW.md`
 
 ## 2026-02-19
 
 - Stage 3 (pipeline ergonomics + output policy hardening) implemented:
   - added shared output-policy core module:
-    - `/Users/cleider/dev/pvx/src/pvx/core/output_policy.py`
+    - `src/pvx/core/output_policy.py`
   - added deterministic output policy flags across audio-output tools:
     - `--bit-depth {inherit,16,24,32f}`
     - `--dither {none,tpdf}` and `--dither-seed`
@@ -108,8 +108,8 @@
     - `--metadata-policy {none,sidecar,copy}`
     - retained explicit override `--subtype`
   - integrated output-policy processing into:
-    - shared writer path `/Users/cleider/dev/pvx/src/pvx/core/common.py`
-    - `pvx voc` write path `/Users/cleider/dev/pvx/src/pvx/core/voc.py`
+    - shared writer path `src/pvx/core/common.py`
+    - `pvx voc` write path `src/pvx/core/voc.py`
   - added metadata sidecar emission (`*.metadata.json`) for reproducible output metadata.
   - added helper workflows in unified CLI:
     - `pvx chain` (managed multi-stage serial tool chains)
@@ -117,16 +117,16 @@
     - legacy segmented behavior remains available via `pvx stream --mode wrapper`
   - updated non-`voc` tool writers to propagate source input metadata when sidecars are enabled.
   - added/updated tests:
-    - `/Users/cleider/dev/pvx/tests/test_output_policy.py`
-    - `/Users/cleider/dev/pvx/tests/test_cli_regression.py`
+    - `tests/test_output_policy.py`
+    - `tests/test_cli_regression.py`
   - updated docs:
-    - `/Users/cleider/dev/pvx/README.md`
-    - `/Users/cleider/dev/pvx/docs/GETTING_STARTED.md`
-    - `/Users/cleider/dev/pvx/docs/EXAMPLES.md`
-    - `/Users/cleider/dev/pvx/docs/QUALITY_GUIDE.md`
+    - `README.md`
+    - `docs/GETTING_STARTED.md`
+    - `docs/EXAMPLES.md`
+    - `docs/QUALITY_GUIDE.md`
 
 - Stage 2 (quality validation + determinism) implemented:
-  - expanded benchmark reproducibility controls in `/Users/cleider/dev/pvx/benchmarks/run_bench.py`:
+  - expanded benchmark reproducibility controls in `benchmarks/run_bench.py`:
     - corpus manifest support (`--dataset-manifest`, `--refresh-manifest`, `--strict-corpus`)
     - deterministic CPU mode controls (`--deterministic-cpu`, `--no-deterministic-cpu`)
     - repeated determinism checks (`--determinism-runs`)
@@ -134,36 +134,36 @@
     - row-level regression gating (`--gate-row-level`)
   - added multi-metric directional gate rules beyond the original 4-metric gate.
   - added automatic quality diagnostics in benchmark JSON/Markdown reports with remediation hints.
-  - added corpus hash manifest `/Users/cleider/dev/pvx/benchmarks/data/manifest.json`.
+  - added corpus hash manifest `benchmarks/data/manifest.json`.
   - updated quick baseline to include row metrics and deterministic signatures:
-    - `/Users/cleider/dev/pvx/benchmarks/baseline_small.json`
+    - `benchmarks/baseline_small.json`
   - updated CI benchmark gate workflow:
-    - `/Users/cleider/dev/pvx/.github/workflows/bench-regression.yml`
+    - `.github/workflows/bench-regression.yml`
   - added benchmark Stage 2 unit coverage in:
-    - `/Users/cleider/dev/pvx/tests/test_benchmark_runner.py`
+    - `tests/test_benchmark_runner.py`
   - refreshed benchmark docs:
-    - `/Users/cleider/dev/pvx/docs/BENCHMARKS.md`
+    - `docs/BENCHMARKS.md`
 
 - Added unified `pvx` CLI entrypoint:
-  - new module `/Users/cleider/dev/pvx/src/pvx/cli/pvx.py`
-  - new root compatibility wrapper `/Users/cleider/dev/pvx/pvx.py`
-  - new package script in `/Users/cleider/dev/pvx/pyproject.toml`: `pvx = "pvx.cli.pvx:main"`
+  - new module `src/pvx/cli/pvx.py`
+  - new root compatibility wrapper `pvx.py`
+  - new package script in `pyproject.toml`: `pvx = "pvx.cli.pvx:main"`
 - Unified command dispatch now supports:
   - subcommands for all existing tools (`voc`, `freeze`, `harmonize`, `conform`, `morph`, `warp`, `formant`, `transient`, `unison`, `denoise`, `deverb`, `retune`, `layer`, `pitch-track`)
   - helper commands: `list`, `help`, `examples`, `guided`
   - default shorthand: `pvx <input.wav> ...` automatically routes to `pvx voc ...`
 - Replaced legacy `main` navigator with a compatibility bridge to unified `pvx` CLI:
-  - `/Users/cleider/dev/pvx/src/pvx/cli/main.py`
+  - `src/pvx/cli/main.py`
 - Standardized explicit single-file output support across common CLI tools:
-  - added `--output` / `--out` in shared I/O args (`/Users/cleider/dev/pvx/src/pvx/core/common.py`)
+  - added `--output` / `--out` in shared I/O args (`src/pvx/core/common.py`)
   - added validation for `--output` with multi-input/`--output-dir`/`--stdout` combinations
 - Updated `pvxvoc` built-in examples/help text to show unified `pvx voc ...` commands.
 - Updated beginner-facing docs for Stage 1 UX:
-  - `/Users/cleider/dev/pvx/README.md`
-  - `/Users/cleider/dev/pvx/docs/GETTING_STARTED.md`
-  - `/Users/cleider/dev/pvx/docs/EXAMPLES.md`
+  - `README.md`
+  - `docs/GETTING_STARTED.md`
+  - `docs/EXAMPLES.md`
 - Added CLI regression tests for unified command surface and explicit output path behavior:
-  - `/Users/cleider/dev/pvx/tests/test_cli_regression.py`
+  - `tests/test_cli_regression.py`
 
 ## 2026-02-18
 
@@ -172,44 +172,44 @@
   - `--transient-sensitivity`
   - `--transient-protect-ms`
   - `--transient-crossfade-ms`
-- Added deterministic WSOLA core implementation in `/Users/cleider/dev/pvx/src/pvx/core/wsola.py`.
-- Added transient detection/segmentation module in `/Users/cleider/dev/pvx/src/pvx/core/transients.py`.
+- Added deterministic WSOLA core implementation in `src/pvx/core/wsola.py`.
+- Added transient detection/segmentation module in `src/pvx/core/transients.py`.
 - Added stereo/multichannel coherence controls:
   - `--stereo-mode independent|mid_side_lock|ref_channel_lock`
   - `--ref-channel`
   - `--coherence-strength`
 - Added channel-coherence utilities and objective coherence metrics:
-  - `/Users/cleider/dev/pvx/src/pvx/core/stereo.py`
-  - `/Users/cleider/dev/pvx/src/pvx/metrics/coherence.py`
-- Added intent preset registry in `/Users/cleider/dev/pvx/src/pvx/core/presets.py` with new presets:
+  - `src/pvx/core/stereo.py`
+  - `src/pvx/metrics/coherence.py`
+- Added intent preset registry in `src/pvx/core/presets.py` with new presets:
   - `default`, `vocal_studio`, `drums_safe`, `extreme_ambient`, `stereo_coherent`
   - legacy presets remain supported (`none`, `vocal`, `ambient`, `extreme`)
 - Added benchmark suite:
-  - `/Users/cleider/dev/pvx/benchmarks/run_bench.py`
-  - `/Users/cleider/dev/pvx/benchmarks/metrics.py`
-  - baseline gate file `/Users/cleider/dev/pvx/benchmarks/baseline_small.json`
+  - `benchmarks/run_bench.py`
+  - `benchmarks/metrics.py`
+  - baseline gate file `benchmarks/baseline_small.json`
 - Added CI benchmark regression workflow:
-  - `/Users/cleider/dev/pvx/.github/workflows/bench-regression.yml`
+  - `.github/workflows/bench-regression.yml`
 - Added/updated tests for transient/stereo behavior and new CLI paths.
 - Refined CLI help taxonomy with explicit sections:
   - `I/O`, `Performance`, `Quality/Phase`, `Time/Pitch`, `Transients`, `Stereo`, `Output/Mastering`, `Debug`
   - consolidated duplicate `Time/Pitch` blocks into a single grouped section
-- Added benchmark metric unit tests in `/Users/cleider/dev/pvx/tests/test_benchmark_metrics.py`.
-- Tuned benchmark runner defaults in `/Users/cleider/dev/pvx/benchmarks/run_bench.py`:
+- Added benchmark metric unit tests in `tests/test_benchmark_metrics.py`.
+- Tuned benchmark runner defaults in `benchmarks/run_bench.py`:
   - new `--pvx-bench-profile {tuned,legacy}` switch
   - default `tuned` deterministic profile for stronger cycle-consistency quality metrics
-- Expanded benchmark metrics in `/Users/cleider/dev/pvx/benchmarks/metrics.py` and reporting:
+- Expanded benchmark metrics in `benchmarks/metrics.py` and reporting:
   - SNR, SI-SDR, spectral convergence, envelope correlation
   - RMS/crest deltas, bandwidth(95%) delta, ZCR delta, DC delta, clipping-ratio delta
-- Updated benchmark gate baseline in `/Users/cleider/dev/pvx/benchmarks/baseline_small.json` to match tuned profile output.
-- Added shared audio metrics table module `/Users/cleider/dev/pvx/src/pvx/core/audio_metrics.py`.
+- Updated benchmark gate baseline in `benchmarks/baseline_small.json` to match tuned profile output.
+- Added shared audio metrics table module `src/pvx/core/audio_metrics.py`.
 - Added non-silent ASCII input/output metrics table printing across pvx CLIs and `pvxvoc`.
 - Expanded documentation:
-  - `/Users/cleider/dev/pvx/docs/DEV_NOTES.md`
-  - `/Users/cleider/dev/pvx/docs/QUALITY_GUIDE.md`
-  - `/Users/cleider/dev/pvx/docs/RUBBERBAND_COMPARISON.md`
-  - `/Users/cleider/dev/pvx/docs/BENCHMARKS.md`
-  - refreshed `/Users/cleider/dev/pvx/README.md`, `/Users/cleider/dev/pvx/docs/GETTING_STARTED.md`, `/Users/cleider/dev/pvx/docs/EXAMPLES.md`
+  - `docs/DEV_NOTES.md`
+  - `docs/QUALITY_GUIDE.md`
+  - `docs/RUBBERBAND_COMPARISON.md`
+  - `docs/BENCHMARKS.md`
+  - refreshed `README.md`, `docs/GETTING_STARTED.md`, `docs/EXAMPLES.md`
 
 ## Attribution
 

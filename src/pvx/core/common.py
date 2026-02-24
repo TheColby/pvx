@@ -30,6 +30,7 @@ from pvx.core.output_policy import (
     validate_output_policy_args,
     write_metadata_sidecar,
 )
+from pvx.core.device import configure_runtime_from_args
 from pvx.core.voc import (
     PHASE_ENGINE_CHOICES,
     TRANSFORM_CHOICES,
@@ -38,7 +39,6 @@ from pvx.core.voc import (
     add_mastering_args,
     add_runtime_args,
     apply_mastering_chain,
-    configure_runtime_from_args,
     compute_output_path,
     ensure_runtime_dependencies,
     expand_inputs,
@@ -698,4 +698,8 @@ def ensure_runtime(
 ) -> None:
     ensure_runtime_dependencies()
     if args is not None:
-        configure_runtime_from_args(args, parser)
+        configure_runtime_from_args(
+            args,
+            parser,
+            verbose=console_level(args) >= _VERBOSITY_TO_LEVEL["verbose"],
+        )

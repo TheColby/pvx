@@ -2,7 +2,7 @@
 
 # pvx Benchmarks
 
-_Generated from commit `e37ec44` (commit date: 2026-02-23T14:07:50-05:00)._
+_Generated from commit `ef577fc` (commit date: 2026-02-23T14:24:44-05:00)._
 
 Reproducible benchmark summary for core short-time Fourier transform/inverse short-time Fourier transform (STFT/ISTFT) path across central processing unit/Compute Unified Device Architecture/Apple-Silicon-native contexts.
 
@@ -38,17 +38,17 @@ python3 scripts/scripts_generate_docs_extras.py --run-benchmarks
 
 ## Host
 
-- Platform: `macOS-15.1.1-arm64-arm-64bit-Mach-O`
-- Machine: `arm64`
-- Python: `3.14.3`
+- Platform: `Linux-6.8.0-x86_64-with-glibc2.39`
+- Machine: `x86_64`
+- Python: `3.12.12`
 
 ## Results
 
 | Backend | Status | Elapsed (ms) | Peak host memory (MB) | SNR vs input (dB) | Spectral distance vs input (dB) | SNR vs CPU (dB) | Spectral distance vs CPU (dB) | Notes |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| cpu | ok | 20.356 | 12.02 | 160.5928 | 0.0 | n/a | n/a |  |
+| cpu | ok | 96.261 | 12.02 | 160.5928 | 0.0 | n/a | n/a |  |
 | cuda | unavailable | n/a | n/a | n/a | n/a | n/a | n/a | CUDA mode requires CuPy. Install a matching `cupy-cudaXXx` package. |
-| apple_silicon_native_cpu | ok | 20.276 | 12.02 | 160.5928 | 0.0 | 160.5928 | 0.0 |  |
+| apple_silicon_native_cpu | unavailable | n/a | n/a | n/a | n/a | n/a | n/a | Host platform is not Apple Silicon (Darwin arm64). |
 
 Raw machine-readable benchmark output: `docs/benchmarks/latest.json`.
 

@@ -5,8 +5,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
+
+try:
+    from scipy import fft as scipy_fft
+except Exception:  # pragma: no cover - optional dependency
+    scipy_fft = None
+
+from pvx.core.device import _array_module, _is_cupy_array, _to_numpy, _to_runtime_array, runtime_config
 
 
 @dataclass(frozen=True)
@@ -27,43 +35,50 @@ class TransientRegion:
     is_transient: bool
 
 
-def _principal(x: np.ndarray) -> np.ndarray:
-    return (x + np.pi) % (2.0 * np.pi) - np.pi
+def _principal(x: Any, xp: Any = np) -> Any:
+    return (x + xp.pi) % (2.0 * xp.pi) - xp.pi
 
 
-def _normalize_robust(values: np.ndarray) -> np.ndarray:
+def _normalize_robust(values: Any) -> Any:
+    xp = _array_module(values)
     if values.size == 0:
-        return values.astype(np.float64)
-    x = np.asarray(values, dtype=np.float64)
-    lo = float(np.percentile(x, 10.0))
-    hi = float(np.percentile(x, 90.0))
+        return values.astype(xp.float64)
+    x = xp.asarray(values, dtype=xp.float64)
+    if hasattr(xp, "percentile"):
+        lo = float(xp.percentile(x, 10.0))
+        hi = float(xp.percentile(x, 90.0))
+    else:
+        # Fallback if percentile is missing (e.g. some CuPy versions)
+        lo = float(xp.min(x))
+        hi = float(xp.max(x))
+
     if not np.isfinite(lo) or not np.isfinite(hi) or hi <= lo + 1e-12:
-        hi = float(np.max(x))
-        lo = float(np.min(x))
+        hi = float(xp.max(x))
+        lo = float(xp.min(x))
     span = max(1e-12, hi - lo)
-    return np.clip((x - lo) / span, 0.0, 1.0)
+    return xp.clip((x - lo) / span, 0.0, 1.0)
 
 
-def _frame_signal(signal: np.ndarray, n_fft: int, hop_size: int, *, center: bool = True) -> np.ndarray:
-    x = np.asarray(signal, dtype=np.float64).reshape(-1)
+def _frame_signal(signal: np.ndarray, n_fft: int, hop_size: int, *, center: bool = True) -> Any:
+    xp = _array_module(signal)
+    x = xp.asarray(signal, dtype=xp.float64).reshape(-1)
     if x.size == 0:
-        return np.zeros((n_fft, 0), dtype=np.float64)
+        return xp.zeros((n_fft, 0), dtype=xp.float64)
 
     if center:
         pad = n_fft // 2
-        x = np.pad(x, (pad, pad), mode="constant")
+        x = xp.pad(x, (pad, pad), mode="constant")
     if x.size < n_fft:
-        x = np.pad(x, (0, n_fft - x.size), mode="constant")
+        x = xp.pad(x, (0, n_fft - x.size), mode="constant")
     rem = (x.size - n_fft) % hop_size
     if rem:
-        x = np.pad(x, (0, hop_size - rem), mode="constant")
+        x = xp.pad(x, (0, hop_size - rem), mode="constant")
 
     frame_count = 1 + (x.size - n_fft) // hop_size
-    out = np.empty((n_fft, frame_count), dtype=np.float64)
-    for idx in range(frame_count):
-        start = idx * hop_size
-        out[:, idx] = x[start : start + n_fft]
-    return out
+    shape = (frame_count, n_fft)
+    strides = (x.strides[0] * hop_size, x.strides[0])
+    frames = xp.lib.stride_tricks.as_strided(x, shape=shape, strides=strides)
+    return frames.T.copy()
 
 
 def compute_transient_features(
@@ -74,7 +89,11 @@ def compute_transient_features(
     hop_size: int,
     center: bool = True,
 ) -> TransientFeatures:
-    frames = _frame_signal(signal, n_fft, hop_size, center=center)
+    bridge_to_cuda = runtime_config().active_device == "cuda" and not _is_cupy_array(signal)
+    work_signal = _to_runtime_array(signal) if bridge_to_cuda else signal
+    xp = _array_module(work_signal)
+
+    frames = _frame_signal(work_signal, n_fft, hop_size, center=center)
     frame_count = frames.shape[1]
     if frame_count == 0:
         z = np.zeros(0, dtype=np.float64)
@@ -88,44 +107,54 @@ def compute_transient_features(
             n_fft=n_fft,
         )
 
-    window = np.hanning(n_fft).astype(np.float64)
-    spec = np.fft.rfft(frames * window[:, None], axis=0)
-    mag = np.abs(spec).astype(np.float64)
+    if hasattr(xp, "hanning"):
+        window = xp.hanning(n_fft).astype(xp.float64)
+    else:
+        window = xp.asarray(np.hanning(n_fft)).astype(xp.float64)
+
+    if xp is np and scipy_fft is not None:
+        spec = scipy_fft.rfft(frames * window[:, None], axis=0)
+    else:
+        spec = xp.fft.rfft(frames * window[:, None], axis=0)
+
+    mag = xp.abs(spec).astype(xp.float64)
     bins = mag.shape[0]
 
     # Spectral flux (positive differences only).
-    flux = np.zeros(frame_count, dtype=np.float64)
+    flux = xp.zeros(frame_count, dtype=xp.float64)
     if frame_count > 1:
-        delta = np.maximum(0.0, mag[:, 1:] - mag[:, :-1])
-        flux[1:] = np.sqrt(np.sum(delta * delta, axis=0))
+        delta = xp.maximum(0.0, mag[:, 1:] - mag[:, :-1])
+        flux[1:] = xp.sqrt(xp.sum(delta * delta, axis=0))
 
     # High-frequency content.
-    freq_idx = np.arange(bins, dtype=np.float64) + 1.0
-    hfc = np.sum(mag * freq_idx[:, None], axis=0)
+    freq_idx = xp.arange(bins, dtype=xp.float64) + 1.0
+    hfc = xp.sum(mag * freq_idx[:, None], axis=0)
 
     # Broadbandness = blend of spectral flatness and HF energy ratio.
-    flatness = np.exp(np.mean(np.log(mag + 1e-12), axis=0)) / (np.mean(mag + 1e-12, axis=0))
+    flatness = xp.exp(xp.mean(xp.log(mag + 1e-12), axis=0)) / (xp.mean(mag + 1e-12, axis=0))
     hf_start = int(round(0.35 * (bins - 1)))
-    hf_energy = np.sum(mag[hf_start:, :], axis=0)
-    total_energy = np.sum(mag, axis=0) + 1e-12
+    hf_energy = xp.sum(mag[hf_start:, :], axis=0)
+    total_energy = xp.sum(mag, axis=0) + 1e-12
     hf_ratio = hf_energy / total_energy
     broadbandness = 0.6 * flatness + 0.4 * hf_ratio
 
     flux_n = _normalize_robust(flux)
     hfc_n = _normalize_robust(hfc)
     broad_n = _normalize_robust(broadbandness)
-    score = np.clip(0.5 * flux_n + 0.3 * hfc_n + 0.2 * broad_n, 0.0, 1.0)
+    score = xp.clip(0.5 * flux_n + 0.3 * hfc_n + 0.2 * broad_n, 0.0, 1.0)
 
-    frame_times_s = (np.arange(frame_count, dtype=np.float64) * hop_size) / float(max(1, sample_rate))
-    return TransientFeatures(
-        flux=flux,
-        hfc=hfc,
-        broadbandness=broadbandness,
-        score=score,
-        frame_times_s=frame_times_s,
+    frame_times_s = (xp.arange(frame_count, dtype=xp.float64) * hop_size) / float(max(1, sample_rate))
+
+    res = TransientFeatures(
+        flux=_to_numpy(flux),
+        hfc=_to_numpy(hfc),
+        broadbandness=_to_numpy(broadbandness),
+        score=_to_numpy(score),
+        frame_times_s=_to_numpy(frame_times_s),
         hop_size=hop_size,
         n_fft=n_fft,
     )
+    return res
 
 
 def pick_onset_frames(
@@ -134,28 +163,37 @@ def pick_onset_frames(
     sensitivity: float,
     min_separation_frames: int,
 ) -> np.ndarray:
-    score = np.asarray(features.score, dtype=np.float64)
+    xp = _array_module(features.score)
+    score = xp.asarray(features.score, dtype=xp.float64)
     if score.size == 0:
         return np.zeros(0, dtype=np.int64)
     if score.size <= 2:
-        return np.array([int(np.argmax(score))], dtype=np.int64) if score.size else np.zeros(0, dtype=np.int64)
+        return np.array([int(xp.argmax(score))], dtype=np.int64) if score.size else np.zeros(0, dtype=np.int64)
 
     s = float(np.clip(sensitivity, 0.0, 1.0))
-    threshold = float(np.quantile(score, 0.92 - 0.50 * s))
+    if hasattr(xp, "quantile"):
+        threshold = float(xp.quantile(score, 0.92 - 0.50 * s))
+    else:
+        # Fallback for old CuPy
+        score_np = _to_numpy(score)
+        threshold = float(np.quantile(score_np, 0.92 - 0.50 * s))
+
     threshold = float(np.clip(threshold, 0.08, 0.95))
 
-    local_max = np.zeros(score.size, dtype=bool)
+    local_max = xp.zeros(score.size, dtype=bool)
     local_max[1:-1] = (score[1:-1] >= score[:-2]) & (score[1:-1] > score[2:])
-    candidates = np.flatnonzero(local_max & (score >= threshold))
+    candidates = xp.flatnonzero(local_max & (score >= threshold))
     if candidates.size == 0:
         return np.zeros(0, dtype=np.int64)
 
     sep = max(1, int(min_separation_frames))
     picked: list[int] = []
-    for idx in candidates:
+    candidates_np = _to_numpy(candidates)
+    score_np = _to_numpy(score)
+    for idx in candidates_np:
         if not picked or idx - picked[-1] >= sep:
             picked.append(int(idx))
-        elif score[idx] > score[picked[-1]]:
+        elif score_np[idx] > score_np[picked[-1]]:
             picked[-1] = int(idx)
     return np.asarray(picked, dtype=np.int64)
 
@@ -217,9 +255,12 @@ def build_transient_mask(
     if gap > 0:
         true_idx = np.flatnonzero(mask)
         if true_idx.size:
-            for idx in range(1, true_idx.size):
-                if (true_idx[idx] - true_idx[idx - 1]) <= gap:
-                    mask[true_idx[idx - 1] : true_idx[idx] + 1] = True
+            # Vectorized gap filling
+            diffs = np.diff(true_idx)
+            fill_starts = true_idx[:-1][diffs <= gap]
+            fill_ends = true_idx[1:][diffs <= gap]
+            for s, e in zip(fill_starts, fill_ends):
+                mask[s : e + 1] = True
 
     return _enforce_min_region_samples(mask, int(max(1, min_region_samples)))
 

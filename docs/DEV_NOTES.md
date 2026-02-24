@@ -14,12 +14,12 @@ This note documents the current processing path and exact insertion points for:
 ## 1. Current `pvxvoc` Call Flow
 
 Primary entrypoint:
-- `/Users/cleider/dev/pvx/pvxvoc.py`
+- `pvxvoc.py`
   - compatibility wrapper that forwards to `pvx.core.voc:main`
 
 Core runtime flow:
-1. `build_parser()` in `/Users/cleider/dev/pvx/src/pvx/core/voc.py:4015`
-2. `main()` in `/Users/cleider/dev/pvx/src/pvx/core/voc.py:4545`
+1. `build_parser()` in `src/pvx/core/voc.py:4015`
+2. `main()` in `src/pvx/core/voc.py:4545`
 3. Input expansion/validation in `expand_inputs()` and validation block (`:4515`, `:4574`)
 4. Runtime selection in `configure_runtime_from_args()` (`:4651`)
 5. `VocoderConfig` creation (`:4664`)
@@ -39,7 +39,7 @@ Core runtime flow:
 ## 2. Existing STFT/PV and Transient/Phase Logic
 
 Core STFT utilities:
-- `stft()` / `istft()` in `/Users/cleider/dev/pvx/src/pvx/core/voc.py:1564` and `:1591`
+- `stft()` / `istft()` in `src/pvx/core/voc.py:1564` and `:1591`
 - window generation in `make_window()` (`:1491`)
 
 Time-stretch engines:
@@ -77,7 +77,7 @@ Mastering:
 
 Audio I/O:
 - `pvxvoc`: `_read_audio_input()` / `_write_audio_output()` (`:3453`, `:3464`)
-- shared helpers for other CLIs in `/Users/cleider/dev/pvx/src/pvx/core/common.py`
+- shared helpers for other CLIs in `src/pvx/core/common.py`
   - `read_audio()` (`:354`)
   - `write_output()` (`:369`)
 
@@ -137,9 +137,9 @@ Current state:
 
 Planned additions:
 - new top-level directory:
-  - `/Users/cleider/dev/pvx/benchmarks/run_bench.py`
-  - `/Users/cleider/dev/pvx/benchmarks/metrics.py`
-  - `/Users/cleider/dev/pvx/benchmarks/baseline_small.json`
+  - `benchmarks/run_bench.py`
+  - `benchmarks/metrics.py`
+  - `benchmarks/baseline_small.json`
 - tool adapters:
   - pvx CLI path
   - Rubber Band CLI (optional/skip when unavailable)
@@ -160,7 +160,7 @@ Planned refactor:
 
 ## 5. Non-`pvxvoc` CLIs that reuse core DSP
 
-Most command-specific CLIs in `/Users/cleider/dev/pvx/src/pvx/cli/` depend on:
+Most command-specific CLIs in `src/pvx/cli/` depend on:
 - `build_vocoder_config()` in `core/common.py:281`
 - `time_pitch_shift_channel()` / `time_pitch_shift_audio()` in `core/common.py:441` / `:464`
 
@@ -181,11 +181,11 @@ Planned deterministic requirement:
 Implemented after this Phase 0 note:
 
 - Shared output policy module added:
-  - `/Users/cleider/dev/pvx/src/pvx/core/output_policy.py`
+  - `src/pvx/core/output_policy.py`
   - covers bit-depth policy, TPDF dithering, true-peak guard, and metadata sidecars
 - Integrated into both write paths:
-  - shared CLI writer: `/Users/cleider/dev/pvx/src/pvx/core/common.py`
-  - `pvxvoc` writer: `/Users/cleider/dev/pvx/src/pvx/core/voc.py`
+  - shared CLI writer: `src/pvx/core/common.py`
+  - `pvxvoc` writer: `src/pvx/core/voc.py`
 - Unified CLI helper commands added:
   - `pvx chain` for managed serial multi-stage chains
   - `pvx stream` for chunked wrapper over `pvx voc`
