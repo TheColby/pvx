@@ -304,6 +304,7 @@ def _prepare_dataset(
 
 
 def _case_key(input_path: Path, task: TaskSpec) -> str:
+    # Use stem for backward compatibility with baseline signature keys.
     return f"{input_path.stem}:{task.name}"
 
 
@@ -1021,7 +1022,10 @@ def _check_gate(
         for row in rows:
             if not isinstance(row, dict):
                 continue
-            key = f"{row.get('input', 'unknown')}::{row.get('task', 'unknown')}"
+            # Use filename instead of full path for robust matching across environments.
+            input_path = str(row.get("input", "unknown"))
+            filename = Path(input_path).name
+            key = f"{filename}::{row.get('task', 'unknown')}"
             out[key] = row
         return out
 

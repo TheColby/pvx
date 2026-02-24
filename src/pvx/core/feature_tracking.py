@@ -166,15 +166,21 @@ def _estimate_inharmonicity(
     if not partials:
         return 0.0
 
-    peaks = []
     m = np.asarray(mag, dtype=np.float64)
-    for i in range(1, m.size - 1):
-        if m[i] > m[i - 1] and m[i] >= m[i + 1]:
-            peaks.append((freqs[i], m[i]))
-    if not peaks:
+    freqs = np.asarray(freqs, dtype=np.float64)
+    if m.size < 3:
         return 0.0
-    pf = np.asarray([p[0] for p in peaks], dtype=np.float64)
-    pm = np.asarray([p[1] for p in peaks], dtype=np.float64)
+
+    # Vectorized peak picking
+    # Find local maxima: m[i] > m[i-1] AND m[i] >= m[i+1]
+    is_peak = (m[1:-1] > m[:-2]) & (m[1:-1] >= m[2:])
+    indices = np.where(is_peak)[0] + 1
+
+    if indices.size == 0:
+        return 0.0
+
+    pf = np.asarray(freqs[indices], dtype=np.float64)
+    pm = np.asarray(m[indices], dtype=np.float64)
 
     deviations = []
     weights = []
