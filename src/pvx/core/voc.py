@@ -59,6 +59,11 @@ try:
 except Exception:  # pragma: no cover - optional dependency
     cupyx_resample = None
 
+try:
+    from scipy import signal as scipy_signal
+except Exception:  # pragma: no cover - optional dependency
+    scipy_signal = None
+
 from pvx.core.presets import PRESET_CHOICES, PRESET_OVERRIDES
 from pvx.core.audio_metrics import (
     render_audio_comparison_table,
@@ -2012,8 +2017,72 @@ def _kaiser_window(length: int, beta: float, *, xp=np):
     return _i0(arg, xp=xp) / denom
 
 
+def _try_scipy_window(kind: str, length: int, kaiser_beta: float = 14.0):
+    if scipy_signal is None:
+        return None
+
+    try:
+        if kind in _COSINE_SERIES_WINDOWS:
+            # Only support exact scipy matches for now
+            if kind in {"hann", "hamming", "blackman", "blackmanharris", "nuttall", "flattop"}:
+                return scipy_signal.get_window(kind, length, fftbins=False)
+            return None
+
+        args = None
+        if kind == "sine":
+            args = "cosine"
+        elif kind == "bartlett":
+            args = "bartlett"
+        elif kind == "boxcar":
+            args = "boxcar"
+        elif kind == "triangular":
+            args = "triang"
+        elif kind == "bartlett_hann":
+            args = "barthann"
+        elif kind in _TUKEY_WINDOWS:
+            args = ("tukey", _TUKEY_WINDOWS[kind])
+        elif kind == "parzen":
+            args = "parzen"
+        elif kind == "lanczos":
+            args = "lanczos"
+        elif kind == "bohman":
+            args = "bohman"
+        elif kind == "cosine":
+            args = "cosine"
+        elif kind == "kaiser":
+            args = ("kaiser", kaiser_beta)
+        elif kind == "rect":
+            args = "boxcar"
+        elif kind in _GAUSSIAN_WINDOWS:
+            center = 0.5 * (length - 1)
+            sigma = max(1e-9, _GAUSSIAN_WINDOWS[kind] * center)
+            args = ("gaussian", sigma)
+        elif kind in _GENERAL_GAUSSIAN_WINDOWS:
+            power, sigma_ratio = _GENERAL_GAUSSIAN_WINDOWS[kind]
+            center = 0.5 * (length - 1)
+            sigma = max(1e-9, sigma_ratio * center)
+            args = ("general_gaussian", power, sigma)
+        elif kind in _EXPONENTIAL_WINDOWS:
+            center = 0.5 * (length - 1)
+            tau = max(1e-9, _EXPONENTIAL_WINDOWS[kind] * center)
+            # scipy exponential(M, center=None, tau=1.0)
+            args = ("exponential", None, tau)
+        elif kind in _GENERAL_HAMMING_WINDOWS:
+            args = ("general_hamming", _GENERAL_HAMMING_WINDOWS[kind])
+
+        if args is not None:
+            return scipy_signal.get_window(args, length, fftbins=False)
+    except Exception:  # pragma: no cover - defensive
+        pass
+
+    return None
+
+
 def make_window(kind: WindowType, n_fft: int, win_length: int, *, kaiser_beta: float = 14.0, xp=np):
-    if kind in _COSINE_SERIES_WINDOWS:
+    scipy_win = _try_scipy_window(kind, win_length, kaiser_beta=kaiser_beta)
+    if scipy_win is not None:
+        base = xp.asarray(scipy_win, dtype=xp.float64)
+    elif kind in _COSINE_SERIES_WINDOWS:
         base = _cosine_series_window(_COSINE_SERIES_WINDOWS[kind], win_length, xp=xp)
     elif kind == "sine":
         base = _sine_window(win_length, xp=xp)

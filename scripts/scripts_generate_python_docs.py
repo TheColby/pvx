@@ -193,7 +193,7 @@ def generate_algorithm_param_doc() -> None:
         lines.append("")
 
     lines.extend(attribution_section_lines())
-    (DOCS_DIR / "pvx_ALGORITHM_PARAMS.md").write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+    (DOCS_DIR / "PVX_ALGORITHM_PARAMS.md").write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
 
 
 def generate_python_help_doc() -> None:
