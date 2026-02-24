@@ -4289,13 +4289,36 @@ def _stream_format_name(output_format: str | None, output_path: Path | None = No
     )
 
 
+MAX_STDIN_BYTES = 512 * 1024 * 1024  # 512 MiB
+MAX_DECODED_SAMPLES = 250_000_000  # ~2 GB as float64
+
+
 def _read_audio_input(input_path: Path) -> tuple[np.ndarray, int]:
     if str(input_path) == "-":
-        payload = sys.stdin.buffer.read()
+        payload = sys.stdin.buffer.read(MAX_STDIN_BYTES + 1)
+        if len(payload) > MAX_STDIN_BYTES:
+            raise ValueError(f"Input on stdin exceeds safe size limit of {MAX_STDIN_BYTES} bytes")
         if not payload:
             raise ValueError("No audio bytes received on stdin")
-        audio, sr = sf.read(io.BytesIO(payload), always_2d=True)
+
+        try:
+            with sf.SoundFile(io.BytesIO(payload)) as f:
+                if f.frames * f.channels > MAX_DECODED_SAMPLES:
+                    raise ValueError(
+                        f"Decoded audio exceeds memory limit of {MAX_DECODED_SAMPLES} samples"
+                    )
+                audio = f.read(always_2d=True)
+                sr = f.samplerate
+        except Exception as exc:
+            if "exceeds memory limit" in str(exc):
+                raise
+            raise ValueError(f"Failed to read audio from stdin: {exc}") from exc
     else:
+        info = sf.info(str(input_path))
+        if info.frames * info.channels > MAX_DECODED_SAMPLES:
+            raise ValueError(
+                f"Input file {input_path} is too large to load into memory (limit: {MAX_DECODED_SAMPLES} samples)."
+            )
         audio, sr = sf.read(str(input_path), always_2d=True)
     return audio.astype(np.float64, copy=False), int(sr)
 

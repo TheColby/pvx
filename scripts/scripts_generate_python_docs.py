@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import ast
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -19,7 +20,11 @@ sys.path.insert(0, str(SRC_DIR))
 from pvx.core.attribution import ATTRIBUTION_DOC_PATH, COPYRIGHT_NOTICE
 
 PY_FILES = sorted(
-    p for p in ROOT.rglob("*.py") if ".venv" not in p.parts and "__pycache__" not in p.parts
+    p
+    for p in ROOT.rglob("*.py")
+    if ".venv" not in p.parts
+    and "__pycache__" not in p.parts
+    and p.name != "test_security_limits.py"
 )
 
 CLI_HELP_CANDIDATES = {
@@ -114,13 +119,16 @@ def parse_module(path: Path) -> dict:
 
 def cli_help(path: Path) -> str | None:
     try:
+        env = os.environ.copy()
+        env["PYTHONPATH"] = str(SRC_DIR)
         proc = subprocess.run(
-            ["python3", str(path), "--help"],
+            [sys.executable, str(path), "--help"],
             cwd=ROOT,
             text=True,
             capture_output=True,
             timeout=25,
             check=False,
+            env=env,
         )
     except Exception as exc:  # pragma: no cover
         return f"[help unavailable: {exc}]"
