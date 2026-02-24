@@ -815,7 +815,7 @@ def _benchmark_backend(
             {
                 "snr_vs_cpu_db": round(_snr_db(np.asarray(reference, dtype=np.float64), reconstructed), 4),
                 "spectral_distance_vs_cpu_db": round(_spectral_distance_db(np.asarray(reference, dtype=np.float64), reconstructed), 4),
-                "max_abs_error_vs_cpu": round(float(np.max(np.abs(np.asarray(reference, dtype=np.float64) - reconstructed))), 10),
+                "max_abs_error_vs_cpu": round(float(np.max(np.abs(np.asarray(reference, dtype=np.float64) - reconstructed))), 9),
             }
         )
 
