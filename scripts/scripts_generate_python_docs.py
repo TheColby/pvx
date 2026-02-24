@@ -23,21 +23,21 @@ PY_FILES = sorted(
 )
 
 CLI_HELP_CANDIDATES = {
-    ROOT / "main.py",
-    ROOT / "pvxvoc.py",
-    ROOT / "pvxfreeze.py",
-    ROOT / "pvxharmonize.py",
-    ROOT / "pvxconform.py",
-    ROOT / "pvxmorph.py",
-    ROOT / "pvxwarp.py",
-    ROOT / "pvxformant.py",
-    ROOT / "pvxtransient.py",
-    ROOT / "pvxunison.py",
-    ROOT / "pvxdenoise.py",
-    ROOT / "pvxdeverb.py",
-    ROOT / "pvxretune.py",
-    ROOT / "pvxlayer.py",
-    ROOT / "HPS-pitch-track.py",
+    ROOT / "legacy_wrappers" / "main.py",
+    ROOT / "legacy_wrappers" / "pvxvoc.py",
+    ROOT / "legacy_wrappers" / "pvxfreeze.py",
+    ROOT / "legacy_wrappers" / "pvxharmonize.py",
+    ROOT / "legacy_wrappers" / "pvxconform.py",
+    ROOT / "legacy_wrappers" / "pvxmorph.py",
+    ROOT / "legacy_wrappers" / "pvxwarp.py",
+    ROOT / "legacy_wrappers" / "pvxformant.py",
+    ROOT / "legacy_wrappers" / "pvxtransient.py",
+    ROOT / "legacy_wrappers" / "pvxunison.py",
+    ROOT / "legacy_wrappers" / "pvxdenoise.py",
+    ROOT / "legacy_wrappers" / "pvxdeverb.py",
+    ROOT / "legacy_wrappers" / "pvxretune.py",
+    ROOT / "legacy_wrappers" / "pvxlayer.py",
+    ROOT / "legacy_wrappers" / "HPS-pitch-track.py",
 }
 
 
@@ -180,7 +180,7 @@ def generate_algorithm_param_doc() -> None:
     lines.append("")
     lines.append("This file lists per-algorithm parameter keys consumed by `pvx.algorithms.base.run_algorithm()` dispatch.")
     lines.append("Legacy import alias `pvxalgorithms.base.run_algorithm()` is still available for compatibility.")
-    lines.append("Use these keys as `**params` when calling module `process(audio, sample_rate, **params)`. ")
+    lines.append("Use these keys as `**params` when calling module `process(audio, sample_rate, **params)`.")
     lines.append("")
     for slug in sorted(params):
         lines.append(f"## `{slug}`")
@@ -226,7 +226,7 @@ def generate_python_help_doc() -> None:
             lines.append(f"**Algorithm ID:** `{info['algorithm_id']}`")
             lines.append(f"**Theme:** `{info['theme']}`")
             lines.append("**Primary API:** `process(audio, sample_rate, **params) -> AlgorithmResult`")
-            lines.append("**Parameter docs:** see `/Users/cleider/dev/pvx/docs/pvx_ALGORITHM_PARAMS.md`.")
+            lines.append("**Parameter docs:** see [`docs/pvx_ALGORITHM_PARAMS.md`](../docs/pvx_ALGORITHM_PARAMS.md).")
             lines.append("")
 
         lines.append(f"**Classes:** {', '.join('`'+c+'`' for c in info['classes']) if info['classes'] else 'None'}")

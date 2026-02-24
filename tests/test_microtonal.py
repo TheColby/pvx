@@ -6,16 +6,21 @@ Ensures cents/ratio/semitone mapping behavior remains stable and that
 microtonal pitch controls produce expected conversion outputs.
 """
 
+import math
+import sys
 import tempfile
 import unittest
 from pathlib import Path
-import math
 
 import numpy as np
 
-from pvxcommon import cents_to_ratio, parse_pitch_ratio_value, read_segment_csv
-from pvxretune import nearest_scale_freq
-from pvxvoc import choose_pitch_ratio
+# Adjust path to include legacy_wrappers before importing them
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "legacy_wrappers"))
+
+from pvxcommon import cents_to_ratio, parse_pitch_ratio_value, read_segment_csv  # noqa: E402
+from pvxretune import nearest_scale_freq  # noqa: E402
+from pvxvoc import choose_pitch_ratio  # noqa: E402
 
 
 def write_text(path: Path, text: str) -> None:

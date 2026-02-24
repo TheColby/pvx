@@ -3097,6 +3097,7 @@ def normalize_audio(
     mode: str,
     peak_dbfs: float,
     rms_dbfs: float,
+    peak_linear: float | None = None,
 ):
     if mode == "none":
         return audio
@@ -3106,7 +3107,8 @@ def normalize_audio(
     if mode == "peak":
         peak = _as_float(xp.max(xp.abs(out))) if out.size else 0.0
         if peak > 0.0:
-            out *= db_to_amplitude(peak_dbfs) / peak
+            target = float(peak_linear) if peak_linear is not None else db_to_amplitude(peak_dbfs)
+            out *= target / peak
         return out
 
     if mode == "rms":
@@ -3253,6 +3255,12 @@ def _apply_soft_clip(audio: np.ndarray, level: float, clip_type: str, drive: flo
 def add_mastering_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--normalize", choices=["none", "peak", "rms"], default="none", help="Output normalization mode")
     parser.add_argument("--peak-dbfs", type=float, default=-1.0, help="Target peak dBFS when --normalize peak")
+    parser.add_argument(
+        "--peak-scale",
+        type=float,
+        default=None,
+        help="Target linear peak amplitude (0.0-1.0) when --normalize peak (overrides --peak-dbfs)",
+    )
     parser.add_argument("--rms-dbfs", type=float, default=-18.0, help="Target RMS dBFS when --normalize rms")
     parser.add_argument("--target-lufs", type=float, default=None, help="Integrated loudness target in LUFS")
     parser.add_argument("--compressor-threshold-db", type=float, default=None, help="Enable compressor above threshold dBFS")
@@ -3315,6 +3323,10 @@ def apply_mastering_chain(audio: np.ndarray, sample_rate: int, args: argparse.Na
         out = out[:, None]
     out = out.copy()
 
+    norm_mode = args.normalize
+    if args.peak_scale is not None and norm_mode == "none":
+        norm_mode = "peak"
+
     if args.expander_threshold_db is not None:
         out = _apply_expander(
             out,
@@ -3348,7 +3360,13 @@ def apply_mastering_chain(audio: np.ndarray, sample_rate: int, args: argparse.Na
             args.compander_makeup_db,
         )
 
-    out = normalize_audio(out, args.normalize, args.peak_dbfs, args.rms_dbfs)
+    out = normalize_audio(
+        out,
+        norm_mode,
+        args.peak_dbfs,
+        args.rms_dbfs,
+        peak_linear=args.peak_scale,
+    )
 
     if args.target_lufs is not None:
         current = _estimate_lufs_or_rms_db(out, sample_rate)
@@ -4415,7 +4433,7 @@ def resolve_checkpoint_context(
 
 
 def load_checkpoint_chunk(path: Path) -> np.ndarray:
-    values = np.asarray(np.load(path), dtype=np.float64)
+    values = np.asarray(np.load(path, allow_pickle=False), dtype=np.float64)
     if values.ndim == 1:
         values = values[:, None]
     if values.ndim != 2:
@@ -4692,6 +4710,17 @@ def process_file(
         title="Audio Compare Metrics",
     )
     log_message(args, f"{metrics_table}\n{compare_table}", min_level="quiet")
+
+    final_peak = float(np.max(np.abs(out_audio))) if out_audio.size else 0.0
+    if final_peak > 1.0 + 1e-6:
+        peak_db = 20.0 * math.log10(max(1e-12, final_peak))
+        log_message(
+            args,
+            f"[warning] Output clipped (peak: {final_peak:.2f} / +{peak_db:.1f} dB). "
+            "Use --limiter-threshold 0.99 or --normalize peak to fix.",
+            min_level="quiet",
+            error=True,
+        )
 
     if not args.dry_run:
         progress.set(0.96, "write")

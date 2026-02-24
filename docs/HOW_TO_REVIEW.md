@@ -51,9 +51,9 @@ Run:
 
 ```bash
 pvx follow test_guide.wav test_target.wav --emit pitch_to_stretch --pitch-conf-min 0.75 --output /tmp/pvx_follow_review.wav --backend acf --quiet
-pvx chain test.wav --pipeline "voc --time-stretch 1.02 | formant --mode preserve" --output /tmp/pvx_chain_review.wav
-pvx stream test.wav --output /tmp/pvx_stream_review.wav --chunk-seconds 0.10 --time-stretch 1.02
-pvx stream test.wav --mode wrapper --output /tmp/pvx_stream_wrapper_review.wav --chunk-seconds 0.10 --time-stretch 1.02
+pvx chain assets/test.wav --pipeline "voc --time-stretch 1.02 | formant --mode preserve" --output /tmp/pvx_chain_review.wav
+pvx stream assets/test.wav --output /tmp/pvx_stream_review.wav --chunk-seconds 0.10 --time-stretch 1.02
+pvx stream assets/test.wav --mode wrapper --output /tmp/pvx_stream_wrapper_review.wav --chunk-seconds 0.10 --time-stretch 1.02
 ```
 
 Check:
@@ -66,7 +66,7 @@ Check:
 Run:
 
 ```bash
-pvx voc test.wav --time-stretch 1.0 --bit-depth 16 --dither tpdf --dither-seed 7 --metadata-policy sidecar --output /tmp/pvx_policy_review.wav --overwrite
+pvx voc assets/test.wav --time-stretch 1.0 --bit-depth 16 --dither tpdf --dither-seed 7 --metadata-policy sidecar --output /tmp/pvx_policy_review.wav --overwrite
 ```
 
 Check:

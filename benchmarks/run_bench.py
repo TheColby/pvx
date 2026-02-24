@@ -517,7 +517,7 @@ def _run_pvx_cycle(
 
     base_cmd = [
         py_executable,
-        str(ROOT / "pvxvoc.py"),
+        str(ROOT / "legacy_wrappers" / "pvxvoc.py"),
         str(input_path),
         "--device",
         "cpu",
@@ -536,7 +536,7 @@ def _run_pvx_cycle(
         ]
         inverse = [
             py_executable,
-            str(ROOT / "pvxvoc.py"),
+            str(ROOT / "legacy_wrappers" / "pvxvoc.py"),
             str(stage1),
             "--device",
             "cpu",
@@ -562,7 +562,7 @@ def _run_pvx_cycle(
         ]
         inverse = [
             py_executable,
-            str(ROOT / "pvxvoc.py"),
+            str(ROOT / "legacy_wrappers" / "pvxvoc.py"),
             str(stage1),
             "--device",
             "cpu",
@@ -1021,7 +1021,10 @@ def _check_gate(
         for row in rows:
             if not isinstance(row, dict):
                 continue
-            key = f"{row.get('input', 'unknown')}::{row.get('task', 'unknown')}"
+            input_val = str(row.get("input", "unknown"))
+            # Use filename only for the key to be robust to absolute path differences between machines.
+            input_name = Path(input_val).name
+            key = f"{input_name}::{row.get('task', 'unknown')}"
             out[key] = row
         return out
 

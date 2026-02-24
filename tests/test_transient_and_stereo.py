@@ -19,6 +19,9 @@ if str(SRC) not in sys.path:
 
 from pvx.core.transients import detect_transient_regions, smooth_binary_mask
 from pvx.metrics.coherence import interchannel_coherence_drift
+
+# Legacy wrapper import
+sys.path.insert(0, str(ROOT / "legacy_wrappers"))
 from pvxvoc import VocoderConfig, configure_runtime, process_audio_block
 
 

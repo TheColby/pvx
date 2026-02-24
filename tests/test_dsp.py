@@ -11,6 +11,11 @@ import unittest
 
 import numpy as np
 
+from pathlib import Path
+import sys
+
+# Legacy wrapper import
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "legacy_wrappers"))
 from pvxvoc import (
     QUALITY_PROFILE_CHOICES,
     TRANSFORM_CHOICES,
