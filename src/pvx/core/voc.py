@@ -2429,18 +2429,19 @@ def apply_phase_engine(
 
 
 def find_spectral_peaks(magnitude: np.ndarray) -> np.ndarray:
-    mag = _to_numpy(magnitude)
+    xp = _array_module(magnitude)
+    mag = magnitude
     if mag.size < 3:
-        return np.array([int(np.argmax(mag))], dtype=np.int64)
+        return xp.atleast_1d(xp.argmax(mag)).astype(xp.int64)
 
     interior = (
         (mag[1:-1] > mag[:-2])
         & (mag[1:-1] >= mag[2:])
     )
-    peak_bins = np.where(interior)[0] + 1
+    peak_bins = xp.where(interior)[0] + 1
     if peak_bins.size == 0:
-        peak_bins = np.array([int(np.argmax(mag))], dtype=np.int64)
-    return peak_bins.astype(np.int64, copy=False)
+        return xp.atleast_1d(xp.argmax(mag)).astype(xp.int64)
+    return peak_bins.astype(xp.int64, copy=False)
 
 
 def apply_identity_phase_locking(

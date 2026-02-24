@@ -382,12 +382,13 @@ def compute_window_metrics(window: np.ndarray) -> dict[str, float]:
     side = spectrum[first_min + 1 :] if (first_min + 1) < spectrum.size else np.array([eps])
     peak_sidelobe_db = 20.0 * math.log10(max(float(np.max(side)), eps))
 
+    # Round floating-point metrics to ~12 places to avoid platform noise.
     return {
-        "coherent_gain": coherent_gain,
-        "enbw_bins": enbw_bins,
-        "scalloping_loss_db": scalloping_loss_db,
-        "main_lobe_width_bins": main_lobe_width_bins,
-        "peak_sidelobe_db": peak_sidelobe_db,
+        "coherent_gain": round(coherent_gain, 12),
+        "enbw_bins": round(enbw_bins, 12),
+        "scalloping_loss_db": round(scalloping_loss_db, 12),
+        "main_lobe_width_bins": round(main_lobe_width_bins, 12),
+        "peak_sidelobe_db": round(peak_sidelobe_db, 12),
     }
 
 
