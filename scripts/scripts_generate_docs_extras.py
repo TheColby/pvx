@@ -49,13 +49,14 @@ def git_commit_meta() -> tuple[str, str]:
         if commit_proc.returncode == 0 and commit_proc.stdout.strip():
             commit = commit_proc.stdout.strip()
         date_proc = subprocess.run(
-            ["git", "-C", str(ROOT), "show", "-s", "--format=%cI", "HEAD"],
+            ["git", "-C", str(ROOT), "show", "-s", "--format=%ct", "HEAD"],
             capture_output=True,
             text=True,
             check=False,
         )
         if date_proc.returncode == 0 and date_proc.stdout.strip():
-            commit_date = date_proc.stdout.strip()
+            ts = int(date_proc.stdout.strip())
+            commit_date = datetime.fromtimestamp(ts, tz=timezone.utc).isoformat().replace("+00:00", "Z")
     except Exception:
         pass
     return commit, commit_date
