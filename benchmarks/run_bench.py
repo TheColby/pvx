@@ -1288,7 +1288,7 @@ def main(argv: list[str] | None = None) -> int:
                 metrics = _compute_metrics(ref_cmp, recon_cmp, sample_rate=int(ref_sr))
                 row = {
                     "method": method_name,
-                    "input": str(path),
+                    "input": str(path.name),
                     "task": task.name,
                     "kind": task.kind,
                     "value": task.value,
