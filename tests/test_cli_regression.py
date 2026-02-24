@@ -17,6 +17,7 @@ import unittest
 import csv
 import io
 import json
+import os
 from pathlib import Path
 
 import numpy as np
@@ -25,7 +26,11 @@ import soundfile as sf
 
 ROOT = Path(__file__).resolve().parents[1]
 CLI = ROOT / "pvxvoc.py"
-UNIFIED_CLI = ROOT / "pvx.py"
+# UNIFIED_CLI is replaced by UNIFIED_CMD + ENV
+UNIFIED_CMD = [sys.executable, "-m", "pvx.cli.pvx"]
+ENV = os.environ.copy()
+ENV["PYTHONPATH"] = str(ROOT / "src")
+
 HPS_CLI = ROOT / "HPS-pitch-track.py"
 
 
@@ -69,8 +74,8 @@ def write_mono_complex(path: Path, sr: int = 24000, duration: float = 0.5) -> tu
 
 class TestCLIRegression(unittest.TestCase):
     def test_unified_cli_lists_tools(self) -> None:
-        cmd = [sys.executable, str(UNIFIED_CLI), "list"]
-        proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+        cmd = UNIFIED_CMD + ["list"]
+        proc = subprocess.run(cmd, cwd=ROOT, env=ENV, capture_output=True, text=True)
         self.assertEqual(proc.returncode, 0, msg=proc.stderr)
         self.assertIn("voc", proc.stdout)
         self.assertIn("freeze", proc.stdout)
@@ -84,9 +89,7 @@ class TestCLIRegression(unittest.TestCase):
             input_audio, sr = write_stereo_tone(in_path, duration=0.3)
             out_path = tmp_path / "unified_out.wav"
 
-            cmd = [
-                sys.executable,
-                str(UNIFIED_CLI),
+            cmd = UNIFIED_CMD + [
                 "voc",
                 str(in_path),
                 "--time-stretch",
@@ -96,7 +99,7 @@ class TestCLIRegression(unittest.TestCase):
                 "--overwrite",
                 "--quiet",
             ]
-            proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+            proc = subprocess.run(cmd, cwd=ROOT, env=ENV, capture_output=True, text=True)
             self.assertEqual(proc.returncode, 0, msg=proc.stderr)
             self.assertTrue(out_path.exists())
 
@@ -113,9 +116,7 @@ class TestCLIRegression(unittest.TestCase):
             input_audio, sr = write_stereo_tone(in_path, duration=0.3)
             out_path = tmp_path / "shortcut_out.wav"
 
-            cmd = [
-                sys.executable,
-                str(UNIFIED_CLI),
+            cmd = UNIFIED_CMD + [
                 str(in_path),
                 "--stretch",
                 "1.10",
@@ -124,7 +125,7 @@ class TestCLIRegression(unittest.TestCase):
                 "--overwrite",
                 "--quiet",
             ]
-            proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+            proc = subprocess.run(cmd, cwd=ROOT, env=ENV, capture_output=True, text=True)
             self.assertEqual(proc.returncode, 0, msg=proc.stderr)
             self.assertTrue(out_path.exists())
 
@@ -140,9 +141,7 @@ class TestCLIRegression(unittest.TestCase):
             write_stereo_tone(in_path, duration=0.22)
             out_path = tmp_path / "chain_out.wav"
 
-            cmd = [
-                sys.executable,
-                str(UNIFIED_CLI),
+            cmd = UNIFIED_CMD + [
                 "chain",
                 str(in_path),
                 "--pipeline",
@@ -150,7 +149,7 @@ class TestCLIRegression(unittest.TestCase):
                 "--output",
                 str(out_path),
             ]
-            proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+            proc = subprocess.run(cmd, cwd=ROOT, env=ENV, capture_output=True, text=True)
             self.assertEqual(proc.returncode, 0, msg=proc.stderr)
             self.assertTrue(out_path.exists())
             out_audio, out_sr = sf.read(out_path, always_2d=True)
@@ -165,9 +164,7 @@ class TestCLIRegression(unittest.TestCase):
             input_audio, sr = write_stereo_tone(in_path, duration=0.24)
             out_path = tmp_path / "stream_out.wav"
 
-            cmd = [
-                sys.executable,
-                str(UNIFIED_CLI),
+            cmd = UNIFIED_CMD + [
                 "stream",
                 str(in_path),
                 "--output",
@@ -178,7 +175,7 @@ class TestCLIRegression(unittest.TestCase):
                 "1.2",
                 "--quiet",
             ]
-            proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+            proc = subprocess.run(cmd, cwd=ROOT, env=ENV, capture_output=True, text=True)
             self.assertEqual(proc.returncode, 0, msg=proc.stderr)
             self.assertTrue(out_path.exists())
             output_audio, out_sr = sf.read(out_path, always_2d=True)
@@ -193,9 +190,7 @@ class TestCLIRegression(unittest.TestCase):
             input_audio, sr = write_stereo_tone(in_path, duration=0.24)
             out_path = tmp_path / "stream_wrapper_out.wav"
 
-            cmd = [
-                sys.executable,
-                str(UNIFIED_CLI),
+            cmd = UNIFIED_CMD + [
                 "stream",
                 str(in_path),
                 "--mode",
@@ -208,7 +203,7 @@ class TestCLIRegression(unittest.TestCase):
                 "1.2",
                 "--quiet",
             ]
-            proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+            proc = subprocess.run(cmd, cwd=ROOT, env=ENV, capture_output=True, text=True)
             self.assertEqual(proc.returncode, 0, msg=proc.stderr)
             self.assertTrue(out_path.exists())
             output_audio, out_sr = sf.read(out_path, always_2d=True)
@@ -225,9 +220,7 @@ class TestCLIRegression(unittest.TestCase):
             input_audio, sr = write_stereo_tone(target_path, duration=0.65)
             out_path = tmp_path / "follow_out.wav"
 
-            cmd = [
-                sys.executable,
-                str(UNIFIED_CLI),
+            cmd = UNIFIED_CMD + [
                 "follow",
                 str(guide_path),
                 str(target_path),
@@ -248,7 +241,7 @@ class TestCLIRegression(unittest.TestCase):
                 "--overwrite",
                 "--quiet",
             ]
-            proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+            proc = subprocess.run(cmd, cwd=ROOT, env=ENV, capture_output=True, text=True)
             self.assertEqual(proc.returncode, 0, msg=proc.stderr)
             self.assertTrue(out_path.exists())
 
@@ -266,9 +259,7 @@ class TestCLIRegression(unittest.TestCase):
             write_mono_tone(target_path, duration=0.2, freq_hz=330.0)
             out_path = tmp_path / "follow_err_out.wav"
 
-            cmd = [
-                sys.executable,
-                str(UNIFIED_CLI),
+            cmd = UNIFIED_CMD + [
                 "follow",
                 str(guide_path),
                 str(target_path),
@@ -276,26 +267,26 @@ class TestCLIRegression(unittest.TestCase):
                 str(out_path),
                 "--stdout",
             ]
-            proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+            proc = subprocess.run(cmd, cwd=ROOT, env=ENV, capture_output=True, text=True)
             self.assertNotEqual(proc.returncode, 0)
             self.assertIn("Do not pass", proc.stderr)
 
     def test_unified_cli_help_follow_target(self) -> None:
-        cmd = [sys.executable, str(UNIFIED_CLI), "help", "follow"]
-        proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+        cmd = UNIFIED_CMD + ["help", "follow"]
+        proc = subprocess.run(cmd, cwd=ROOT, env=ENV, capture_output=True, text=True)
         self.assertEqual(proc.returncode, 0, msg=proc.stderr)
         self.assertIn("pvx follow --help", proc.stdout)
 
     def test_unified_cli_follow_example_basic(self) -> None:
-        cmd = [sys.executable, str(UNIFIED_CLI), "follow", "--example"]
-        proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+        cmd = UNIFIED_CMD + ["follow", "--example"]
+        proc = subprocess.run(cmd, cwd=ROOT, env=ENV, capture_output=True, text=True)
         self.assertEqual(proc.returncode, 0, msg=proc.stderr)
         self.assertIn("[basic]", proc.stdout)
         self.assertIn("pvx follow guide.wav target.wav", proc.stdout)
 
     def test_unified_cli_follow_example_all(self) -> None:
-        cmd = [sys.executable, str(UNIFIED_CLI), "follow", "--example", "all"]
-        proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+        cmd = UNIFIED_CMD + ["follow", "--example", "all"]
+        proc = subprocess.run(cmd, cwd=ROOT, env=ENV, capture_output=True, text=True)
         self.assertEqual(proc.returncode, 0, msg=proc.stderr)
         self.assertIn("pvx follow example commands", proc.stdout)
         self.assertIn("[mfcc_flux]", proc.stdout)
@@ -308,9 +299,7 @@ class TestCLIRegression(unittest.TestCase):
             write_mono_tone(in_path, duration=0.22, freq_hz=330.0)
             out_path = tmp_path / "freeze_out.wav"
 
-            cmd = [
-                sys.executable,
-                str(UNIFIED_CLI),
+            cmd = UNIFIED_CMD + [
                 "freeze",
                 str(in_path),
                 "--duration",
@@ -320,7 +309,7 @@ class TestCLIRegression(unittest.TestCase):
                 "--overwrite",
                 "--quiet",
             ]
-            proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+            proc = subprocess.run(cmd, cwd=ROOT, env=ENV, capture_output=True, text=True)
             self.assertEqual(proc.returncode, 0, msg=proc.stderr)
             self.assertTrue(out_path.exists())
 
@@ -333,9 +322,7 @@ class TestCLIRegression(unittest.TestCase):
             write_mono_complex(b_path, duration=0.35)
             out_path = tmp_path / "morph_env.wav"
 
-            cmd = [
-                sys.executable,
-                str(UNIFIED_CLI),
+            cmd = UNIFIED_CMD + [
                 "morph",
                 str(a_path),
                 str(b_path),
@@ -351,7 +338,7 @@ class TestCLIRegression(unittest.TestCase):
                 "--overwrite",
                 "--quiet",
             ]
-            proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+            proc = subprocess.run(cmd, cwd=ROOT, env=ENV, capture_output=True, text=True)
             self.assertEqual(proc.returncode, 0, msg=proc.stderr)
             self.assertTrue(out_path.exists())
             output_audio, out_sr = sf.read(out_path, always_2d=True)
@@ -369,9 +356,7 @@ class TestCLIRegression(unittest.TestCase):
             out_linear = tmp_path / "morph_linear.wav"
             out_mask = tmp_path / "morph_mask.wav"
 
-            cmd_linear = [
-                sys.executable,
-                str(UNIFIED_CLI),
+            cmd_linear = UNIFIED_CMD + [
                 "morph",
                 str(a_path),
                 str(b_path),
@@ -384,9 +369,7 @@ class TestCLIRegression(unittest.TestCase):
                 "--overwrite",
                 "--quiet",
             ]
-            cmd_mask = [
-                sys.executable,
-                str(UNIFIED_CLI),
+            cmd_mask = UNIFIED_CMD + [
                 "morph",
                 str(a_path),
                 str(b_path),
@@ -401,8 +384,8 @@ class TestCLIRegression(unittest.TestCase):
                 "--overwrite",
                 "--quiet",
             ]
-            proc_linear = subprocess.run(cmd_linear, cwd=ROOT, capture_output=True, text=True)
-            proc_mask = subprocess.run(cmd_mask, cwd=ROOT, capture_output=True, text=True)
+            proc_linear = subprocess.run(cmd_linear, cwd=ROOT, env=ENV, capture_output=True, text=True)
+            proc_mask = subprocess.run(cmd_mask, cwd=ROOT, env=ENV, capture_output=True, text=True)
             self.assertEqual(proc_linear.returncode, 0, msg=proc_linear.stderr)
             self.assertEqual(proc_mask.returncode, 0, msg=proc_mask.stderr)
             self.assertTrue(out_linear.exists())
@@ -432,9 +415,7 @@ class TestCLIRegression(unittest.TestCase):
             )
             out_path = tmp_path / "morph_traj.wav"
 
-            cmd = [
-                sys.executable,
-                str(UNIFIED_CLI),
+            cmd = UNIFIED_CMD + [
                 "morph",
                 str(a_path),
                 str(b_path),
@@ -449,7 +430,7 @@ class TestCLIRegression(unittest.TestCase):
                 "--overwrite",
                 "--quiet",
             ]
-            proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+            proc = subprocess.run(cmd, cwd=ROOT, env=ENV, capture_output=True, text=True)
             self.assertEqual(proc.returncode, 0, msg=proc.stderr)
             self.assertTrue(out_path.exists())
 
@@ -927,9 +908,7 @@ class TestCLIRegression(unittest.TestCase):
                 encoding="utf-8",
             )
             out_path = tmp_path / "stream_dyn_out.wav"
-            cmd = [
-                sys.executable,
-                str(UNIFIED_CLI),
+            cmd = UNIFIED_CMD + [
                 "stream",
                 str(in_path),
                 "--output",
@@ -942,7 +921,7 @@ class TestCLIRegression(unittest.TestCase):
                 "linear",
                 "--quiet",
             ]
-            proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+            proc = subprocess.run(cmd, cwd=ROOT, env=ENV, capture_output=True, text=True)
             self.assertEqual(proc.returncode, 0, msg=proc.stderr)
             self.assertTrue(out_path.exists())
             output_audio, out_sr = sf.read(out_path, always_2d=True)
@@ -1321,8 +1300,8 @@ class TestCLIRegression(unittest.TestCase):
         self.assertIn("pvx voc input.wav", proc.stdout)
 
     def test_unified_stream_help_includes_mode(self) -> None:
-        cmd = [sys.executable, str(UNIFIED_CLI), "stream", "--help"]
-        proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+        cmd = UNIFIED_CMD + ["stream", "--help"]
+        proc = subprocess.run(cmd, cwd=ROOT, env=ENV, capture_output=True, text=True)
         self.assertEqual(proc.returncode, 0, msg=proc.stderr)
         self.assertIn("--mode {stateful,wrapper}", proc.stdout)
 

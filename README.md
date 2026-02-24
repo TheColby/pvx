@@ -76,16 +76,17 @@ Primary command:
 pvx voc input.wav --stretch 1.2 --output output.wav
 ```
 
-Fallback without `PATH` updates:
+Fallback without `PATH` updates (source checkout):
 
 ```bash
-python3 pvx.py voc input.wav --stretch 1.2 --output output.wav
+export PYTHONPATH=src
+python3 -m pvx.cli.pvx voc input.wav --stretch 1.2 --output output.wav
 ```
 
 Fallback with `uv`:
 
 ```bash
-uv run python3 pvx.py voc input.wav --stretch 1.2 --output output.wav
+uv run pvx voc input.wav --stretch 1.2 --output output.wav
 ```
 
 Legacy wrappers remain available for backward compatibility.
@@ -127,16 +128,17 @@ pvx --help
 
 If that does not work, it is usually a `PATH` issue, which is both common and mildly annoying.
 
-No `PATH` fallback:
+No `PATH` fallback (source checkout):
 
 ```bash
-python3 pvx.py voc input.wav --stretch 1.20 --output output.wav
+export PYTHONPATH=src
+python3 -m pvx.cli.pvx voc input.wav --stretch 1.20 --output output.wav
 ```
 
 `uv` fallback (no `PATH` changes):
 
 ```bash
-uv run python3 pvx.py voc input.wav --stretch 1.20 --output output.wav
+uv run pvx voc input.wav --stretch 1.20 --output output.wav
 ```
 
 What you should hear:
@@ -365,16 +367,17 @@ source ~/.zshrc
 pvx --help
 ```
 
-If you do not want to modify the path environment variable (`PATH`), run the same command through the repository wrapper:
+If you do not want to modify the path environment variable (`PATH`), run the CLI module directly (setting `PYTHONPATH` first):
 
 ```bash
-python3 pvx.py voc input.wav --stretch 1.20 --output output.wav
+export PYTHONPATH=src
+python3 -m pvx.cli.pvx voc input.wav --stretch 1.20 --output output.wav
 ```
 
 Equivalent with `uv`:
 
 ```bash
-uv run python3 pvx.py voc input.wav --stretch 1.20 --output output.wav
+uv run pvx voc input.wav --stretch 1.20 --output output.wav
 ```
 
 What this does:

@@ -38,28 +38,9 @@ from pvx.core import voc as voc_core  # noqa: E402
 
 
 def git_commit_meta() -> tuple[str, str]:
-    commit = "unknown"
-    commit_date = "unknown"
-    try:
-        commit_proc = subprocess.run(
-            ["git", "-C", str(ROOT), "rev-parse", "--short", "HEAD"],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        if commit_proc.returncode == 0 and commit_proc.stdout.strip():
-            commit = commit_proc.stdout.strip()
-        date_proc = subprocess.run(
-            ["git", "-C", str(ROOT), "show", "-s", "--format=%cI", "HEAD"],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        if date_proc.returncode == 0 and date_proc.stdout.strip():
-            commit_date = date_proc.stdout.strip()
-    except Exception:
-        pass
-    return commit, commit_date
+    # Return static placeholders to prevent documentation drift in CI/CD checks.
+    # The versioning is tracked by the git commit of the repository itself.
+    return "[COMMIT_HASH]", "[COMMIT_DATE]"
 
 
 COMMIT_HASH, COMMIT_DATE = git_commit_meta()
@@ -1799,8 +1780,8 @@ pvx --help</code></pre>
 source ~/.zshrc
 pvx --help</code></pre>
   <p>
-    No-PATH fallback:
-    <code>python3 pvx.py voc input.wav --stretch 1.2 --output output.wav</code>
+    No-PATH fallback (source checkout):
+    <code>PYTHONPATH=src python3 -m pvx.cli.pvx voc input.wav --stretch 1.2 --output output.wav</code>
   </p>
 </div>
 """

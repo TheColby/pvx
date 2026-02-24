@@ -1,6 +1,6 @@
 {
-  "commit": "e37ec44",
-  "commit_date": "2026-02-23T14:07:50-05:00",
+  "commit": "[COMMIT_HASH]",
+  "commit_date": "[COMMIT_DATE]",
   "entries": [
     {
       "action": "",
@@ -14,7 +14,7 @@
       "help": "Pitch backend (default: auto -> pyin if available, else acf)",
       "required": false,
       "source": "src/pvx/cli/hps_pitch_track.py",
-      "tool": "hps_pitch_track.py"
+      "tool": "hps_pitch_track"
     },
     {
       "action": "",
@@ -24,7 +24,7 @@
       "help": "Set confidence below this floor to 0.0 (default: 0.0).",
       "required": false,
       "source": "src/pvx/cli/hps_pitch_track.py",
-      "tool": "hps_pitch_track.py"
+      "tool": "hps_pitch_track"
     },
     {
       "action": "",
@@ -34,7 +34,7 @@
       "help": "Output mode: pitch_map (default), stretch_map, or pitch_to_stretch.",
       "required": false,
       "source": "src/pvx/cli/hps_pitch_track.py",
-      "tool": "hps_pitch_track.py"
+      "tool": "hps_pitch_track"
     },
     {
       "action": "",
@@ -49,7 +49,7 @@
       "help": "Feature tracking preset emitted as extra CSV columns. none/basic/advanced/all (default: all).",
       "required": false,
       "source": "src/pvx/cli/hps_pitch_track.py",
-      "tool": "hps_pitch_track.py"
+      "tool": "hps_pitch_track"
     },
     {
       "action": "",
@@ -59,7 +59,7 @@
       "help": "Maximum F0 in Hz (default: 1200)",
       "required": false,
       "source": "src/pvx/cli/hps_pitch_track.py",
-      "tool": "hps_pitch_track.py"
+      "tool": "hps_pitch_track"
     },
     {
       "action": "",
@@ -69,7 +69,7 @@
       "help": "Minimum F0 in Hz (default: 50)",
       "required": false,
       "source": "src/pvx/cli/hps_pitch_track.py",
-      "tool": "hps_pitch_track.py"
+      "tool": "hps_pitch_track"
     },
     {
       "action": "",
@@ -79,7 +79,7 @@
       "help": "Frame length in samples (default: 2048)",
       "required": false,
       "source": "src/pvx/cli/hps_pitch_track.py",
-      "tool": "hps_pitch_track.py"
+      "tool": "hps_pitch_track"
     },
     {
       "action": "",
@@ -89,7 +89,7 @@
       "help": "Hop size in samples (default: 256)",
       "required": false,
       "source": "src/pvx/cli/hps_pitch_track.py",
-      "tool": "hps_pitch_track.py"
+      "tool": "hps_pitch_track"
     },
     {
       "action": "",
@@ -99,7 +99,7 @@
       "help": "Number of MFCC columns (mfcc_01..mfcc_N) when feature-set is advanced/all (default: 13).",
       "required": false,
       "source": "src/pvx/cli/hps_pitch_track.py",
-      "tool": "hps_pitch_track.py"
+      "tool": "hps_pitch_track"
     },
     {
       "action": "",
@@ -109,7 +109,7 @@
       "help": "Output CSV path (default: '-' for stdout)",
       "required": false,
       "source": "src/pvx/cli/hps_pitch_track.py",
-      "tool": "hps_pitch_track.py"
+      "tool": "hps_pitch_track"
     },
     {
       "action": "",
@@ -119,7 +119,7 @@
       "help": "Upper clamp for emitted pitch_ratio (default: 4.0).",
       "required": false,
       "source": "src/pvx/cli/hps_pitch_track.py",
-      "tool": "hps_pitch_track.py"
+      "tool": "hps_pitch_track"
     },
     {
       "action": "",
@@ -129,7 +129,7 @@
       "help": "Lower clamp for emitted pitch_ratio (default: 0.25).",
       "required": false,
       "source": "src/pvx/cli/hps_pitch_track.py",
-      "tool": "hps_pitch_track.py"
+      "tool": "hps_pitch_track"
     },
     {
       "action": "",
@@ -144,7 +144,7 @@
       "help": "Reference for emitted pitch_ratio values (default: median voiced f0).",
       "required": false,
       "source": "src/pvx/cli/hps_pitch_track.py",
-      "tool": "hps_pitch_track.py"
+      "tool": "hps_pitch_track"
     },
     {
       "action": "",
@@ -154,7 +154,7 @@
       "help": "Reference frequency in Hz when --ratio-reference hz.",
       "required": false,
       "source": "src/pvx/cli/hps_pitch_track.py",
-      "tool": "hps_pitch_track.py"
+      "tool": "hps_pitch_track"
     },
     {
       "action": "",
@@ -164,7 +164,7 @@
       "help": "Smoothing window for pitch_ratio frames (default: 5).",
       "required": false,
       "source": "src/pvx/cli/hps_pitch_track.py",
-      "tool": "hps_pitch_track.py"
+      "tool": "hps_pitch_track"
     },
     {
       "action": "",
@@ -174,7 +174,7 @@
       "help": "Emit constant stretch column value for --emit pitch_map (default: 1.0).",
       "required": false,
       "source": "src/pvx/cli/hps_pitch_track.py",
-      "tool": "hps_pitch_track.py"
+      "tool": "hps_pitch_track"
     },
     {
       "action": "",
@@ -184,7 +184,7 @@
       "help": "Source signal used to derive stretch in stretch-oriented emit modes (default: pitch_ratio).",
       "required": false,
       "source": "src/pvx/cli/hps_pitch_track.py",
-      "tool": "hps_pitch_track.py"
+      "tool": "hps_pitch_track"
     },
     {
       "action": "",
@@ -194,7 +194,7 @@
       "help": "Upper clamp for emitted stretch in stretch-oriented modes (default: 4.0).",
       "required": false,
       "source": "src/pvx/cli/hps_pitch_track.py",
-      "tool": "hps_pitch_track.py"
+      "tool": "hps_pitch_track"
     },
     {
       "action": "",
@@ -204,7 +204,7 @@
       "help": "Lower clamp for emitted stretch in stretch-oriented modes (default: 0.25).",
       "required": false,
       "source": "src/pvx/cli/hps_pitch_track.py",
-      "tool": "hps_pitch_track.py"
+      "tool": "hps_pitch_track"
     },
     {
       "action": "",
@@ -214,7 +214,7 @@
       "help": "Scale factor for derived stretch tracks (default: 1.0).",
       "required": false,
       "source": "src/pvx/cli/hps_pitch_track.py",
-      "tool": "hps_pitch_track.py"
+      "tool": "hps_pitch_track"
     },
     {
       "action": "",
@@ -228,7 +228,7 @@
       "help": "Pitch tracker backend",
       "required": false,
       "source": "src/pvx/cli/pvx.py",
-      "tool": "pvx.py"
+      "tool": "pvx"
     },
     {
       "action": "",
@@ -238,7 +238,7 @@
       "help": "Chunk/segment duration for `--auto-segment-seconds` (default: 0.25)",
       "required": false,
       "source": "src/pvx/cli/pvx.py",
-      "tool": "pvx.py"
+      "tool": "pvx"
     },
     {
       "action": "",
@@ -248,7 +248,7 @@
       "help": "Minimum tracker confidence",
       "required": false,
       "source": "src/pvx/cli/pvx.py",
-      "tool": "pvx.py"
+      "tool": "pvx"
     },
     {
       "action": "",
@@ -258,7 +258,7 @@
       "help": "Optional stateful context window in milliseconds (default: auto from window/hop)",
       "required": false,
       "source": "src/pvx/cli/pvx.py",
-      "tool": "pvx.py"
+      "tool": "pvx"
     },
     {
       "action": "",
@@ -268,7 +268,7 @@
       "help": "Crossfade used for segment assembly in milliseconds (default: 0.0)",
       "required": false,
       "source": "src/pvx/cli/pvx.py",
-      "tool": "pvx.py"
+      "tool": "pvx"
     },
     {
       "action": "",
@@ -282,7 +282,7 @@
       "help": "Control map emit mode for the guide track (default: pitch_to_stretch)",
       "required": false,
       "source": "src/pvx/cli/pvx.py",
-      "tool": "pvx.py"
+      "tool": "pvx"
     },
     {
       "action": "",
@@ -292,7 +292,7 @@
       "help": "Print follow example command(s) and exit. Use `--example` for basic or `--example all` for the full set.",
       "required": false,
       "source": "src/pvx/cli/pvx.py",
-      "tool": "pvx.py"
+      "tool": "pvx"
     },
     {
       "action": "",
@@ -307,7 +307,7 @@
       "help": "Feature columns emitted by pitch tracker (default: all)",
       "required": false,
       "source": "src/pvx/cli/pvx.py",
-      "tool": "pvx.py"
+      "tool": "pvx"
     },
     {
       "action": "",
@@ -317,7 +317,7 @@
       "help": "Maximum tracked f0 in Hz",
       "required": false,
       "source": "src/pvx/cli/pvx.py",
-      "tool": "pvx.py"
+      "tool": "pvx"
     },
     {
       "action": "",
@@ -327,7 +327,7 @@
       "help": "Minimum tracked f0 in Hz",
       "required": false,
       "source": "src/pvx/cli/pvx.py",
-      "tool": "pvx.py"
+      "tool": "pvx"
     },
     {
       "action": "",
@@ -337,7 +337,7 @@
       "help": "Tracker frame length in samples",
       "required": false,
       "source": "src/pvx/cli/pvx.py",
-      "tool": "pvx.py"
+      "tool": "pvx"
     },
     {
       "action": "",
@@ -347,7 +347,7 @@
       "help": "Tracker hop size in samples",
       "required": false,
       "source": "src/pvx/cli/pvx.py",
-      "tool": "pvx.py"
+      "tool": "pvx"
     },
     {
       "action": "store_true",
@@ -357,7 +357,7 @@
       "help": "Keep intermediate stage files after successful completion",
       "required": false,
       "source": "src/pvx/cli/pvx.py",
-      "tool": "pvx.py"
+      "tool": "pvx"
     },
     {
       "action": "",
@@ -367,7 +367,7 @@
       "help": "MFCC column count emitted by pitch tracker (default: 13)",
       "required": false,
       "source": "src/pvx/cli/pvx.py",
-      "tool": "pvx.py"
+      "tool": "pvx"
     },
     {
       "action": "",
@@ -380,7 +380,7 @@
       "help": "Stream engine: stateful chunk processor (default) or wrapper compatibility mode",
       "required": false,
       "source": "src/pvx/cli/pvx.py",
-      "tool": "pvx.py"
+      "tool": "pvx"
     },
     {
       "action": "",
@@ -390,7 +390,7 @@
       "help": "Output audio path",
       "required": true,
       "source": "src/pvx/cli/pvx.py",
-      "tool": "pvx.py"
+      "tool": "pvx"
     },
     {
       "action": "",
@@ -400,7 +400,7 @@
       "help": "Output audio path",
       "required": true,
       "source": "src/pvx/cli/pvx.py",
-      "tool": "pvx.py"
+      "tool": "pvx"
     },
     {
       "action": "store_true",
@@ -410,7 +410,7 @@
       "help": "Overwrite existing output",
       "required": false,
       "source": "src/pvx/cli/pvx.py",
-      "tool": "pvx.py"
+      "tool": "pvx"
     },
     {
       "action": "",
@@ -420,7 +420,7 @@
       "help": "Pipeline string with stages separated by '|'. Example: \"voc --stretch 1.2 | formant --mode preserve\"",
       "required": true,
       "source": "src/pvx/cli/pvx.py",
-      "tool": "pvx.py"
+      "tool": "pvx"
     },
     {
       "action": "",
@@ -430,7 +430,7 @@
       "help": "Minimum accepted map confidence for pvx voc (default: 0.75)",
       "required": false,
       "source": "src/pvx/cli/pvx.py",
-      "tool": "pvx.py"
+      "tool": "pvx"
     },
     {
       "action": "",
@@ -444,7 +444,7 @@
       "help": "Low-confidence handling mode in pvx voc (default: hold)",
       "required": false,
       "source": "src/pvx/cli/pvx.py",
-      "tool": "pvx.py"
+      "tool": "pvx"
     },
     {
       "action": "",
@@ -454,7 +454,7 @@
       "help": "Map segment crossfade in pvx voc (milliseconds, default: 20)",
       "required": false,
       "source": "src/pvx/cli/pvx.py",
-      "tool": "pvx.py"
+      "tool": "pvx"
     },
     {
       "action": "",
@@ -464,7 +464,7 @@
       "help": "Additional map smoothing in pvx voc (milliseconds)",
       "required": false,
       "source": "src/pvx/cli/pvx.py",
-      "tool": "pvx.py"
+      "tool": "pvx"
     },
     {
       "action": "store_true",
@@ -474,7 +474,7 @@
       "help": "Reduce helper logs and hide progress bars",
       "required": false,
       "source": "src/pvx/cli/pvx.py",
-      "tool": "pvx.py"
+      "tool": "pvx"
     },
     {
       "action": "",
@@ -484,7 +484,7 @@
       "help": "Maximum pitch_ratio clamp",
       "required": false,
       "source": "src/pvx/cli/pvx.py",
-      "tool": "pvx.py"
+      "tool": "pvx"
     },
     {
       "action": "",
@@ -494,7 +494,7 @@
       "help": "Minimum pitch_ratio clamp",
       "required": false,
       "source": "src/pvx/cli/pvx.py",
-      "tool": "pvx.py"
+      "tool": "pvx"
     },
     {
       "action": "",
@@ -509,7 +509,7 @@
       "help": "Reference mode for pitch_ratio derivation in tracking",
       "required": false,
       "source": "src/pvx/cli/pvx.py",
-      "tool": "pvx.py"
+      "tool": "pvx"
     },
     {
       "action": "",
@@ -519,7 +519,7 @@
       "help": "Reference Hz when --ratio-reference hz",
       "required": false,
       "source": "src/pvx/cli/pvx.py",
-      "tool": "pvx.py"
+      "tool": "pvx"
     },
     {
       "action": "append",
@@ -529,7 +529,7 @@
       "help": "Optional pvx voc control route expression. Repeat to chain. Example: --route stretch=pitch_ratio --route pitch_ratio=const(1.0)",
       "required": false,
       "source": "src/pvx/cli/pvx.py",
-      "tool": "pvx.py"
+      "tool": "pvx"
     },
     {
       "action": "store_true",
@@ -539,7 +539,7 @@
       "help": "Suppress helper logs",
       "required": false,
       "source": "src/pvx/cli/pvx.py",
-      "tool": "pvx.py"
+      "tool": "pvx"
     },
     {
       "action": "",
@@ -549,7 +549,7 @@
       "help": "Smoothing window in frames",
       "required": false,
       "source": "src/pvx/cli/pvx.py",
-      "tool": "pvx.py"
+      "tool": "pvx"
     },
     {
       "action": "",
@@ -559,7 +559,7 @@
       "help": "Constant stretch value when --emit pitch_map",
       "required": false,
       "source": "src/pvx/cli/pvx.py",
-      "tool": "pvx.py"
+      "tool": "pvx"
     },
     {
       "action": "",
@@ -573,7 +573,7 @@
       "help": "Source for deriving stretch in stretch-oriented emit modes",
       "required": false,
       "source": "src/pvx/cli/pvx.py",
-      "tool": "pvx.py"
+      "tool": "pvx"
     },
     {
       "action": "",
@@ -583,7 +583,7 @@
       "help": "Upper clamp for derived stretch",
       "required": false,
       "source": "src/pvx/cli/pvx.py",
-      "tool": "pvx.py"
+      "tool": "pvx"
     },
     {
       "action": "",
@@ -593,7 +593,7 @@
       "help": "Lower clamp for derived stretch",
       "required": false,
       "source": "src/pvx/cli/pvx.py",
-      "tool": "pvx.py"
+      "tool": "pvx"
     },
     {
       "action": "",
@@ -603,7 +603,7 @@
       "help": "Scale factor for derived stretch track",
       "required": false,
       "source": "src/pvx/cli/pvx.py",
-      "tool": "pvx.py"
+      "tool": "pvx"
     },
     {
       "action": "",
@@ -613,7 +613,7 @@
       "help": "Optional directory for intermediate stage files",
       "required": false,
       "source": "src/pvx/cli/pvx.py",
-      "tool": "pvx.py"
+      "tool": "pvx"
     },
     {
       "action": "",
@@ -623,7 +623,7 @@
       "help": "Segment crossfade in milliseconds",
       "required": false,
       "source": "src/pvx/cli/pvxconform.py",
-      "tool": "pvxconform.py"
+      "tool": "pvxconform"
     },
     {
       "action": "",
@@ -633,7 +633,7 @@
       "help": "CSV map path",
       "required": true,
       "source": "src/pvx/cli/pvxconform.py",
-      "tool": "pvxconform.py"
+      "tool": "pvxconform"
     },
     {
       "action": "",
@@ -647,7 +647,7 @@
       "help": "",
       "required": false,
       "source": "src/pvx/cli/pvxconform.py",
-      "tool": "pvxconform.py"
+      "tool": "pvxconform"
     },
     {
       "action": "",
@@ -657,7 +657,7 @@
       "help": "Noise floor multiplier",
       "required": false,
       "source": "src/pvx/cli/pvxdenoise.py",
-      "tool": "pvxdenoise.py"
+      "tool": "pvxdenoise"
     },
     {
       "action": "",
@@ -667,7 +667,7 @@
       "help": "Optional external noise reference",
       "required": false,
       "source": "src/pvx/cli/pvxdenoise.py",
-      "tool": "pvxdenoise.py"
+      "tool": "pvxdenoise"
     },
     {
       "action": "",
@@ -677,7 +677,7 @@
       "help": "Noise profile duration from start",
       "required": false,
       "source": "src/pvx/cli/pvxdenoise.py",
-      "tool": "pvxdenoise.py"
+      "tool": "pvxdenoise"
     },
     {
       "action": "",
@@ -687,7 +687,7 @@
       "help": "Reduction strength in dB",
       "required": false,
       "source": "src/pvx/cli/pvxdenoise.py",
-      "tool": "pvxdenoise.py"
+      "tool": "pvxdenoise"
     },
     {
       "action": "",
@@ -697,7 +697,7 @@
       "help": "Temporal smoothing frames",
       "required": false,
       "source": "src/pvx/cli/pvxdenoise.py",
-      "tool": "pvxdenoise.py"
+      "tool": "pvxdenoise"
     },
     {
       "action": "",
@@ -707,7 +707,7 @@
       "help": "Tail memory decay 0..1",
       "required": false,
       "source": "src/pvx/cli/pvxdeverb.py",
-      "tool": "pvxdeverb.py"
+      "tool": "pvxdeverb"
     },
     {
       "action": "",
@@ -717,7 +717,7 @@
       "help": "Per-bin floor multiplier",
       "required": false,
       "source": "src/pvx/cli/pvxdeverb.py",
-      "tool": "pvxdeverb.py"
+      "tool": "pvxdeverb"
     },
     {
       "action": "",
@@ -727,7 +727,7 @@
       "help": "Tail suppression strength 0..1",
       "required": false,
       "source": "src/pvx/cli/pvxdeverb.py",
-      "tool": "pvxdeverb.py"
+      "tool": "pvxdeverb"
     },
     {
       "action": "",
@@ -737,7 +737,7 @@
       "help": "",
       "required": false,
       "source": "src/pvx/cli/pvxformant.py",
-      "tool": "pvxformant.py"
+      "tool": "pvxformant"
     },
     {
       "action": "",
@@ -747,7 +747,7 @@
       "help": "",
       "required": false,
       "source": "src/pvx/cli/pvxformant.py",
-      "tool": "pvxformant.py"
+      "tool": "pvxformant"
     },
     {
       "action": "",
@@ -757,7 +757,7 @@
       "help": "Formant ratio (>1 up, <1 down)",
       "required": false,
       "source": "src/pvx/cli/pvxformant.py",
-      "tool": "pvxformant.py"
+      "tool": "pvxformant"
     },
     {
       "action": "",
@@ -770,7 +770,7 @@
       "help": "",
       "required": false,
       "source": "src/pvx/cli/pvxformant.py",
-      "tool": "pvxformant.py"
+      "tool": "pvxformant"
     },
     {
       "action": "",
@@ -780,7 +780,7 @@
       "help": "Additional microtonal pitch shift in cents before formant stage",
       "required": false,
       "source": "src/pvx/cli/pvxformant.py",
-      "tool": "pvxformant.py"
+      "tool": "pvxformant"
     },
     {
       "action": "",
@@ -790,7 +790,7 @@
       "help": "Optional pitch shift before formant stage",
       "required": false,
       "source": "src/pvx/cli/pvxformant.py",
-      "tool": "pvxformant.py"
+      "tool": "pvxformant"
     },
     {
       "action": "",
@@ -804,7 +804,7 @@
       "help": "",
       "required": false,
       "source": "src/pvx/cli/pvxformant.py",
-      "tool": "pvxformant.py"
+      "tool": "pvxformant"
     },
     {
       "action": "",
@@ -814,7 +814,7 @@
       "help": "Output freeze duration in seconds",
       "required": false,
       "source": "src/pvx/cli/pvxfreeze.py",
-      "tool": "pvxfreeze.py"
+      "tool": "pvxfreeze"
     },
     {
       "action": "",
@@ -824,7 +824,7 @@
       "help": "Freeze anchor time in seconds",
       "required": false,
       "source": "src/pvx/cli/pvxfreeze.py",
-      "tool": "pvxfreeze.py"
+      "tool": "pvxfreeze"
     },
     {
       "action": "store_true",
@@ -834,7 +834,7 @@
       "help": "Add subtle phase randomization per frame",
       "required": false,
       "source": "src/pvx/cli/pvxfreeze.py",
-      "tool": "pvxfreeze.py"
+      "tool": "pvxfreeze"
     },
     {
       "action": "store_true",
@@ -844,7 +844,7 @@
       "help": "Mix result as stereo with panning",
       "required": false,
       "source": "src/pvx/cli/pvxharmonize.py",
-      "tool": "pvxharmonize.py"
+      "tool": "pvxharmonize"
     },
     {
       "action": "",
@@ -854,7 +854,7 @@
       "help": "Optional comma-separated linear gain per voice",
       "required": false,
       "source": "src/pvx/cli/pvxharmonize.py",
-      "tool": "pvxharmonize.py"
+      "tool": "pvxharmonize"
     },
     {
       "action": "",
@@ -864,7 +864,7 @@
       "help": "Comma-separated semitone intervals per voice (supports fractional values)",
       "required": false,
       "source": "src/pvx/cli/pvxharmonize.py",
-      "tool": "pvxharmonize.py"
+      "tool": "pvxharmonize"
     },
     {
       "action": "",
@@ -874,7 +874,7 @@
       "help": "Optional cents offsets per voice, added to --intervals (e.g. 0,14,-12)",
       "required": false,
       "source": "src/pvx/cli/pvxharmonize.py",
-      "tool": "pvxharmonize.py"
+      "tool": "pvxharmonize"
     },
     {
       "action": "",
@@ -884,7 +884,7 @@
       "help": "Optional comma-separated pan per voice [-1..1]",
       "required": false,
       "source": "src/pvx/cli/pvxharmonize.py",
-      "tool": "pvxharmonize.py"
+      "tool": "pvxharmonize"
     },
     {
       "action": "",
@@ -898,7 +898,7 @@
       "help": "",
       "required": false,
       "source": "src/pvx/cli/pvxharmonize.py",
-      "tool": "pvxharmonize.py"
+      "tool": "pvxharmonize"
     },
     {
       "action": "",
@@ -908,7 +908,7 @@
       "help": "",
       "required": false,
       "source": "src/pvx/cli/pvxlayer.py",
-      "tool": "pvxlayer.py"
+      "tool": "pvxlayer"
     },
     {
       "action": "",
@@ -918,7 +918,7 @@
       "help": "",
       "required": false,
       "source": "src/pvx/cli/pvxlayer.py",
-      "tool": "pvxlayer.py"
+      "tool": "pvxlayer"
     },
     {
       "action": "",
@@ -928,7 +928,7 @@
       "help": "",
       "required": false,
       "source": "src/pvx/cli/pvxlayer.py",
-      "tool": "pvxlayer.py"
+      "tool": "pvxlayer"
     },
     {
       "action": "",
@@ -938,7 +938,7 @@
       "help": "",
       "required": false,
       "source": "src/pvx/cli/pvxlayer.py",
-      "tool": "pvxlayer.py"
+      "tool": "pvxlayer"
     },
     {
       "action": "",
@@ -948,7 +948,7 @@
       "help": "",
       "required": false,
       "source": "src/pvx/cli/pvxlayer.py",
-      "tool": "pvxlayer.py"
+      "tool": "pvxlayer"
     },
     {
       "action": "",
@@ -958,7 +958,7 @@
       "help": "",
       "required": false,
       "source": "src/pvx/cli/pvxlayer.py",
-      "tool": "pvxlayer.py"
+      "tool": "pvxlayer"
     },
     {
       "action": "",
@@ -968,7 +968,7 @@
       "help": "",
       "required": false,
       "source": "src/pvx/cli/pvxlayer.py",
-      "tool": "pvxlayer.py"
+      "tool": "pvxlayer"
     },
     {
       "action": "",
@@ -978,7 +978,7 @@
       "help": "",
       "required": false,
       "source": "src/pvx/cli/pvxlayer.py",
-      "tool": "pvxlayer.py"
+      "tool": "pvxlayer"
     },
     {
       "action": "",
@@ -988,7 +988,7 @@
       "help": "",
       "required": false,
       "source": "src/pvx/cli/pvxlayer.py",
-      "tool": "pvxlayer.py"
+      "tool": "pvxlayer"
     },
     {
       "action": "",
@@ -998,7 +998,7 @@
       "help": "",
       "required": false,
       "source": "src/pvx/cli/pvxlayer.py",
-      "tool": "pvxlayer.py"
+      "tool": "pvxlayer"
     },
     {
       "action": "",
@@ -1012,7 +1012,7 @@
       "help": "",
       "required": false,
       "source": "src/pvx/cli/pvxlayer.py",
-      "tool": "pvxlayer.py"
+      "tool": "pvxlayer"
     },
     {
       "action": "",
@@ -1022,7 +1022,7 @@
       "help": "Morph amount 0..1 (0=A, 1=B). Accepts scalar or control file (.csv/.json) for time-varying A->B trajectory morphing.",
       "required": false,
       "source": "src/pvx/cli/pvxmorph.py",
-      "tool": "pvxmorph.py"
+      "tool": "pvxmorph"
     },
     {
       "action": "",
@@ -1032,7 +1032,7 @@
       "help": "Cross-synthesis blend style. linear/geometric are symmetric blends; carrier_* modes transfer envelope/mask from modulator to carrier.",
       "required": false,
       "source": "src/pvx/cli/pvxmorph.py",
-      "tool": "pvxmorph.py"
+      "tool": "pvxmorph"
     },
     {
       "action": "",
@@ -1042,7 +1042,7 @@
       "help": "Cepstral lifter cutoff for carrier_*_envelope_* modes (default: 32).",
       "required": false,
       "source": "src/pvx/cli/pvxmorph.py",
-      "tool": "pvxmorph.py"
+      "tool": "pvxmorph"
     },
     {
       "action": "",
@@ -1052,7 +1052,7 @@
       "help": "Interpolation mode for --alpha/--phase-mix control files (default: linear).",
       "required": false,
       "source": "src/pvx/cli/pvxmorph.py",
-      "tool": "pvxmorph.py"
+      "tool": "pvxmorph"
     },
     {
       "action": "",
@@ -1062,7 +1062,7 @@
       "help": "Exponent used by carrier_*_mask_* modes (default: 1.0).",
       "required": false,
       "source": "src/pvx/cli/pvxmorph.py",
-      "tool": "pvxmorph.py"
+      "tool": "pvxmorph"
     },
     {
       "action": "store_true",
@@ -1072,7 +1072,7 @@
       "help": "Normalize each output channel RMS toward alpha-blended input RMS.",
       "required": false,
       "source": "src/pvx/cli/pvxmorph.py",
-      "tool": "pvxmorph.py"
+      "tool": "pvxmorph"
     },
     {
       "action": "",
@@ -1082,7 +1082,7 @@
       "help": "Polynomial order for --interp polynomial (default: 3). Accepts any integer >= 1; effective fit degree is min(order, control_points-1).",
       "required": false,
       "source": "src/pvx/cli/pvxmorph.py",
-      "tool": "pvxmorph.py"
+      "tool": "pvxmorph"
     },
     {
       "action": "",
@@ -1092,7 +1092,7 @@
       "help": "Output file path",
       "required": false,
       "source": "src/pvx/cli/pvxmorph.py",
-      "tool": "pvxmorph.py"
+      "tool": "pvxmorph"
     },
     {
       "action": "",
@@ -1102,7 +1102,7 @@
       "help": "Output extension/format; for --stdout defaults to wav",
       "required": false,
       "source": "src/pvx/cli/pvxmorph.py",
-      "tool": "pvxmorph.py"
+      "tool": "pvxmorph"
     },
     {
       "action": "store_true",
@@ -1112,7 +1112,7 @@
       "help": "",
       "required": false,
       "source": "src/pvx/cli/pvxmorph.py",
-      "tool": "pvxmorph.py"
+      "tool": "pvxmorph"
     },
     {
       "action": "",
@@ -1122,7 +1122,7 @@
       "help": "Phase blend in [0,1]. If omitted, mode-specific defaults apply (A-phase for *_phase_a/carrier_a_*, B-phase for *_phase_b/carrier_b_*, alpha for symmetric modes). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/cli/pvxmorph.py",
-      "tool": "pvxmorph.py"
+      "tool": "pvxmorph"
     },
     {
       "action": "store_true",
@@ -1132,7 +1132,7 @@
       "help": "Write processed audio to stdout stream (for piping); equivalent to -o -",
       "required": false,
       "source": "src/pvx/cli/pvxmorph.py",
-      "tool": "pvxmorph.py"
+      "tool": "pvxmorph"
     },
     {
       "action": "",
@@ -1142,7 +1142,7 @@
       "help": "Analysis/process chunk duration in ms",
       "required": false,
       "source": "src/pvx/cli/pvxretune.py",
-      "tool": "pvxretune.py"
+      "tool": "pvxretune"
     },
     {
       "action": "",
@@ -1152,7 +1152,7 @@
       "help": "",
       "required": false,
       "source": "src/pvx/cli/pvxretune.py",
-      "tool": "pvxretune.py"
+      "tool": "pvxretune"
     },
     {
       "action": "",
@@ -1162,7 +1162,7 @@
       "help": "",
       "required": false,
       "source": "src/pvx/cli/pvxretune.py",
-      "tool": "pvxretune.py"
+      "tool": "pvxretune"
     },
     {
       "action": "",
@@ -1172,7 +1172,7 @@
       "help": "Chunk overlap in ms",
       "required": false,
       "source": "src/pvx/cli/pvxretune.py",
-      "tool": "pvxretune.py"
+      "tool": "pvxretune"
     },
     {
       "action": "",
@@ -1186,7 +1186,7 @@
       "help": "",
       "required": false,
       "source": "src/pvx/cli/pvxretune.py",
-      "tool": "pvxretune.py"
+      "tool": "pvxretune"
     },
     {
       "action": "",
@@ -1196,7 +1196,7 @@
       "help": "Scale root note (C,C#,D,...,B)",
       "required": false,
       "source": "src/pvx/cli/pvxretune.py",
-      "tool": "pvxretune.py"
+      "tool": "pvxretune"
     },
     {
       "action": "",
@@ -1206,7 +1206,7 @@
       "help": "Named scale for 12-TET quantization",
       "required": false,
       "source": "src/pvx/cli/pvxretune.py",
-      "tool": "pvxretune.py"
+      "tool": "pvxretune"
     },
     {
       "action": "",
@@ -1216,7 +1216,7 @@
       "help": "Optional comma-separated microtonal scale degrees in cents within one octave, relative to --root (example: 0,90,204,294,408,498,612,702,816,906,1020,1110)",
       "required": false,
       "source": "src/pvx/cli/pvxretune.py",
-      "tool": "pvxretune.py"
+      "tool": "pvxretune"
     },
     {
       "action": "",
@@ -1226,7 +1226,7 @@
       "help": "Correction strength 0..1",
       "required": false,
       "source": "src/pvx/cli/pvxretune.py",
-      "tool": "pvxretune.py"
+      "tool": "pvxretune"
     },
     {
       "action": "",
@@ -1236,7 +1236,7 @@
       "help": "Optional microtonal pitch shift in cents (added to --pitch-shift-semitones)",
       "required": false,
       "source": "src/pvx/cli/pvxtransient.py",
-      "tool": "pvxtransient.py"
+      "tool": "pvxtransient"
     },
     {
       "action": "",
@@ -1246,7 +1246,7 @@
       "help": "Pitch ratio override. Accepts decimals (1.5), integer ratios (3/2), and expressions (2^(1/12)).",
       "required": false,
       "source": "src/pvx/cli/pvxtransient.py",
-      "tool": "pvxtransient.py"
+      "tool": "pvxtransient"
     },
     {
       "action": "",
@@ -1256,7 +1256,7 @@
       "help": "",
       "required": false,
       "source": "src/pvx/cli/pvxtransient.py",
-      "tool": "pvxtransient.py"
+      "tool": "pvxtransient"
     },
     {
       "action": "",
@@ -1270,7 +1270,7 @@
       "help": "",
       "required": false,
       "source": "src/pvx/cli/pvxtransient.py",
-      "tool": "pvxtransient.py"
+      "tool": "pvxtransient"
     },
     {
       "action": "",
@@ -1280,7 +1280,7 @@
       "help": "Target duration in seconds",
       "required": false,
       "source": "src/pvx/cli/pvxtransient.py",
-      "tool": "pvxtransient.py"
+      "tool": "pvxtransient"
     },
     {
       "action": "",
@@ -1290,7 +1290,7 @@
       "help": "",
       "required": false,
       "source": "src/pvx/cli/pvxtransient.py",
-      "tool": "pvxtransient.py"
+      "tool": "pvxtransient"
     },
     {
       "action": "",
@@ -1300,7 +1300,7 @@
       "help": "",
       "required": false,
       "source": "src/pvx/cli/pvxtransient.py",
-      "tool": "pvxtransient.py"
+      "tool": "pvxtransient"
     },
     {
       "action": "",
@@ -1310,7 +1310,7 @@
       "help": "Total detune span in cents",
       "required": false,
       "source": "src/pvx/cli/pvxunison.py",
-      "tool": "pvxunison.py"
+      "tool": "pvxunison"
     },
     {
       "action": "",
@@ -1320,7 +1320,7 @@
       "help": "Dry signal mix amount",
       "required": false,
       "source": "src/pvx/cli/pvxunison.py",
-      "tool": "pvxunison.py"
+      "tool": "pvxunison"
     },
     {
       "action": "",
@@ -1334,7 +1334,7 @@
       "help": "",
       "required": false,
       "source": "src/pvx/cli/pvxunison.py",
-      "tool": "pvxunison.py"
+      "tool": "pvxunison"
     },
     {
       "action": "",
@@ -1344,7 +1344,7 @@
       "help": "Number of unison voices",
       "required": false,
       "source": "src/pvx/cli/pvxunison.py",
-      "tool": "pvxunison.py"
+      "tool": "pvxunison"
     },
     {
       "action": "",
@@ -1354,7 +1354,7 @@
       "help": "Stereo width multiplier 0..2",
       "required": false,
       "source": "src/pvx/cli/pvxunison.py",
-      "tool": "pvxunison.py"
+      "tool": "pvxunison"
     },
     {
       "action": "",
@@ -1364,7 +1364,7 @@
       "help": "Random-phase blend when --phase-engine hybrid (0.0=propagated only, 1.0=random only; default: 0.5). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "store_true",
@@ -1374,7 +1374,7 @@
       "help": "Convenience preset for ambient extreme stretch (random phase engine, onset-time-credit, transient preserve, conservative staging).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1387,7 +1387,7 @@
       "help": "Channel strategy for F0 estimation with --target-f0 (default: mix)",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "store_true",
@@ -1397,7 +1397,7 @@
       "help": "Analyze input and choose a profile automatically (speech/music/percussion/ambient/extreme).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1407,7 +1407,7 @@
       "help": "Seconds of audio used when estimating --auto-profile (default: 6.0).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1417,7 +1417,7 @@
       "help": "Optional segment size in seconds for long jobs. When >0, processing runs per segment with crossfade assembly.",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "store_true",
@@ -1427,7 +1427,7 @@
       "help": "Allow automatic transform selection when --transform is not explicitly set.",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1437,7 +1437,7 @@
       "help": "Output bit-depth policy (default: inherit). Ignored when --subtype is set.",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1447,7 +1447,7 @@
       "help": "Pitch shift in cents (+1200 is one octave up). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1457,7 +1457,7 @@
       "help": "Directory used to cache per-segment checkpoint chunks for resume workflows.",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1467,7 +1467,7 @@
       "help": "Optional checkpoint run identifier (default: hash of input/settings).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "store_true",
@@ -1477,7 +1477,7 @@
       "help": "Legacy alias: hard clip at +/-1.0 when set",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1487,7 +1487,7 @@
       "help": "Coherence lock strength in [0,1] (0=off, 1=full lock). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1497,7 +1497,7 @@
       "help": "Compander attack time in ms",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1507,7 +1507,7 @@
       "help": "Compander compression ratio (>=1)",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1517,7 +1517,7 @@
       "help": "Compander expansion ratio (>=1)",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1527,7 +1527,7 @@
       "help": "Compander makeup gain in dB",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1537,7 +1537,7 @@
       "help": "Compander release time in ms",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1547,7 +1547,7 @@
       "help": "Enable compander threshold in dBFS",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1557,7 +1557,7 @@
       "help": "Compressor attack time in ms",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1567,7 +1567,7 @@
       "help": "Compressor makeup gain in dB",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1577,7 +1577,7 @@
       "help": "Compressor ratio (>=1)",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1587,7 +1587,7 @@
       "help": "Compressor release time in ms",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1597,7 +1597,7 @@
       "help": "Enable compressor above threshold dBFS",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "store_true",
@@ -1607,7 +1607,7 @@
       "help": "Alias for --pitch-map-stdin (canonical control-bus CSV stdin path).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "store_true",
@@ -1617,7 +1617,7 @@
       "help": "Alias for --device cpu.",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1627,7 +1627,7 @@
       "help": "CUDA device index used when --device is auto/cuda (default: 0)",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1641,7 +1641,7 @@
       "help": "Compute device: auto (prefer CUDA), cpu, or cuda",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1651,7 +1651,7 @@
       "help": "Dither policy before quantized writes (default: none)",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1661,7 +1661,7 @@
       "help": "Deterministic RNG seed for dithering (default: random seed)",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "store_true",
@@ -1671,7 +1671,7 @@
       "help": "Resolve settings without writing files",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1681,7 +1681,7 @@
       "help": "Print copy-paste example command(s) and exit.",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1691,7 +1691,7 @@
       "help": "Expander attack time in ms",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1701,7 +1701,7 @@
       "help": "Expander ratio (>=1)",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1711,7 +1711,7 @@
       "help": "Expander release time in ms",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1721,7 +1721,7 @@
       "help": "Enable downward expander below threshold dBFS",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "store_true",
@@ -1731,7 +1731,7 @@
       "help": "Print resolved processing plan JSON and exit without rendering audio.",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1741,7 +1741,7 @@
       "help": "Auto-mode threshold for multistage activation (default: 2.0). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "store_true",
@@ -1751,7 +1751,7 @@
       "help": "Force multistage strategy even when ratio is moderate.",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1761,7 +1761,7 @@
       "help": "Maximum F0 search bound in Hz (default: 1000)",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1771,7 +1771,7 @@
       "help": "Minimum F0 search bound in Hz (default: 50)",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1781,7 +1781,7 @@
       "help": "Cepstral lifter cutoff for formant envelope extraction (default: 32). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1791,7 +1791,7 @@
       "help": "Max per-bin formant correction gain in dB (default: 12). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1801,7 +1801,7 @@
       "help": "Formant correction blend 0..1 when pitch mode is formant-preserving (default: 1.0). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "store_true",
@@ -1811,7 +1811,7 @@
       "help": "Enable fundamental frame locking. Uses generic short-time Fourier transforms with per-frame FFT sizes locked to detected F0.",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1821,7 +1821,7 @@
       "help": "Maximum frame FFT size for --fourier-sync (default: 8192). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1831,7 +1831,7 @@
       "help": "Minimum frame FFT size for --fourier-sync (default: 256). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1841,7 +1841,7 @@
       "help": "Smoothing span (frames) for prescanned F0 track in --fourier-sync (default: 5). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "store_true",
@@ -1851,7 +1851,7 @@
       "help": "Alias for --device cuda.",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "store_true",
@@ -1861,7 +1861,7 @@
       "help": "Interactive guided mode for first-time users.",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1871,7 +1871,7 @@
       "help": "Hard clip level in linear full-scale",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1881,7 +1881,7 @@
       "help": "Hop size in samples (default: 512). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1891,7 +1891,7 @@
       "help": "Interpolation mode for time-varying control signals loaded from CSV/JSON (default: linear).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1901,7 +1901,7 @@
       "help": "Kaiser window beta parameter used when --window kaiser (default: 14.0). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1911,7 +1911,7 @@
       "help": "Peak limiter threshold in linear full-scale",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "store_true",
@@ -1921,7 +1921,7 @@
       "help": "Append entries to an existing --manifest-json file instead of replacing it.",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1931,7 +1931,7 @@
       "help": "Write processing manifest JSON with per-file settings and outcomes.",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1941,7 +1941,7 @@
       "help": "Maximum per-stage ratio used in multistage mode (default: 1.8). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1951,7 +1951,7 @@
       "help": "Output metadata policy: none, sidecar, or copy (sidecar implementation)",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1961,7 +1961,7 @@
       "help": "Comma-separated FFT sizes for --multires-fusion (default: 1024,2048,4096)",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "store_true",
@@ -1971,7 +1971,7 @@
       "help": "Blend multiple FFT resolutions for each channel before pitch resampling.",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1981,7 +1981,7 @@
       "help": "Comma-separated fusion weights for --multires-fusion (defaults to equal weights).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -1991,7 +1991,7 @@
       "help": "FFT size (default: 2048). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "store_true",
@@ -2001,7 +2001,7 @@
       "help": "Disable center padding in STFT/ISTFT",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "store_true",
@@ -2011,7 +2011,7 @@
       "help": "Disable fractional read-position realignment on onsets when --onset-time-credit is enabled.",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "store_true",
@@ -2021,7 +2021,7 @@
       "help": "",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2035,7 +2035,7 @@
       "help": "Output normalization mode",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2045,7 +2045,7 @@
       "help": "Maximum accumulated onset time credit in analysis-frame units (default: 8.0). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2055,7 +2055,7 @@
       "help": "Fraction of per-frame read advance removable while onset credit exists (0.0..1.0, default: 0.5). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "store_true",
@@ -2065,7 +2065,7 @@
       "help": "Enable onset-triggered time-credit scheduling to reduce transient smear during extreme stretching.",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2075,7 +2075,7 @@
       "help": "Polynomial order for --interp polynomial (default: 3). Accepts any integer >= 1; effective fit degree is min(order, control_points-1).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2085,7 +2085,7 @@
       "help": "Explicit output file path (single-input mode only). Alias: --out",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2095,7 +2095,7 @@
       "help": "Explicit output file path (single-input mode only). Alias: --out",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2105,7 +2105,7 @@
       "help": "Directory for output files (default: same directory as each input)",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2115,7 +2115,7 @@
       "help": "Output format/extension (e.g. wav, flac, aiff). Default: keep input extension.",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "store_true",
@@ -2125,7 +2125,7 @@
       "help": "Overwrite existing outputs",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2135,7 +2135,7 @@
       "help": "Target peak dBFS when --normalize peak",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2145,7 +2145,7 @@
       "help": "Phase synthesis engine: propagate (classic phase vocoder), hybrid (propagated + stochastic blend), random (ambient stochastic phase).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2158,7 +2158,7 @@
       "help": "Inter-bin phase locking mode for transient fidelity (default: identity)",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2168,7 +2168,7 @@
       "help": "Optional deterministic seed for random/hybrid phase generation.",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2178,7 +2178,7 @@
       "help": "Pitch shift in semitones (+12 is one octave up). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2188,7 +2188,7 @@
       "help": "Minimum accepted map confidence (default: 0 disables gating).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "store_true",
@@ -2198,7 +2198,7 @@
       "help": "Shortcut for --pitch-map-stdin (sidechain pitch-follow workflows).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2212,7 +2212,7 @@
       "help": "Low-confidence map handling mode (default: hold).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2222,7 +2222,7 @@
       "help": "CSV control map for time-varying stretch/pitch. Columns: start_sec,end_sec plus optional stretch,pitch_ratio/pitch_cents/pitch_semitones,confidence. Use '-' to read from stdin.",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2232,7 +2232,7 @@
       "help": "Crossfade between processed map segments in milliseconds (default: 8.0).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2242,7 +2242,7 @@
       "help": "Moving-average smoothing over map pitch ratios in milliseconds.",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "store_true",
@@ -2252,7 +2252,7 @@
       "help": "Read control-map CSV from stdin.",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2265,7 +2265,7 @@
       "help": "Pitch mode: standard shift or formant-preserving correction (default: standard)",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2275,7 +2275,7 @@
       "help": "Pitch shift in cents (+1200 is one octave up). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2285,7 +2285,7 @@
       "help": "Pitch ratio (>1 up, <1 down). Accepts decimals (1.5), integer ratios (3/2), expressions (2^(1/12)), or a control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2295,7 +2295,7 @@
       "help": "Pitch shift in semitones (+12 is one octave up). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2305,7 +2305,7 @@
       "help": "High-level intent preset. Legacy: none/vocal/ambient/extreme. New: default/vocal_studio/drums_safe/extreme_ambient/stereo_coherent.",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2315,7 +2315,7 @@
       "help": "Named tuning profile for vocoder defaults (default: neutral)",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "store_true",
@@ -2325,7 +2325,7 @@
       "help": "Reduce output and hide status bars",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2335,7 +2335,7 @@
       "help": "Pitch ratio (>1 up, <1 down). Accepts decimals (1.5), integer ratios (3/2), expressions (2^(1/12)), or a control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2345,7 +2345,7 @@
       "help": "Reference channel index used by --stereo-mode ref_channel_lock (default: 0).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2359,7 +2359,7 @@
       "help": "Resampling engine (auto=fft if scipy available, else linear)",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "store_true",
@@ -2369,7 +2369,7 @@
       "help": "Reuse existing checkpoint chunks from --checkpoint-dir when available.",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2379,7 +2379,7 @@
       "help": "Target RMS dBFS when --normalize rms",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "append",
@@ -2389,7 +2389,7 @@
       "help": "Control-bus routing expression for map rows. Repeat flag to chain routes. Syntax: target=source, target=const(v), target=inv(source), target=pow(source,exp), target=mul(source,factor), target=add(source,offset), target=affine(source,scale,bias), target=clip(source,lo,hi). Targets: stretch,pitch_ratio. Sources: any numeric column present in the control-map CSV.",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2399,7 +2399,7 @@
       "help": "Pitch shift in semitones (+12 is one octave up). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "store_true",
@@ -2409,7 +2409,7 @@
       "help": "Suppress all console output",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2419,7 +2419,7 @@
       "help": "Soft clip drive amount (>0)",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2429,7 +2429,7 @@
       "help": "Soft clip output ceiling in linear full-scale",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2443,7 +2443,7 @@
       "help": "Soft clip transfer type",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "store_true",
@@ -2453,7 +2453,7 @@
       "help": "Write processed audio to stdout stream (for piping); requires exactly one input",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2467,7 +2467,7 @@
       "help": "Channel coherence strategy: independent (legacy), mid_side_lock (M/S-coupled), ref_channel_lock (phase-lock to reference channel).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2477,7 +2477,7 @@
       "help": "Alias for --time-stretch. Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2491,7 +2491,7 @@
       "help": "Stretch strategy: standard (single pass), multistage (chained moderate passes), or auto (multistage only for extreme ratios; default: auto).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2501,7 +2501,7 @@
       "help": "Explicit libsndfile output subtype override (e.g., PCM_16, PCM_24, FLOAT)",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2511,7 +2511,7 @@
       "help": "Suffix appended to output filename stem (default: _pv)",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2521,7 +2521,7 @@
       "help": "Absolute target duration in seconds (overrides --time-stretch)",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2531,7 +2531,7 @@
       "help": "Target fundamental frequency in Hz. Auto-estimates source F0 per file.",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2541,7 +2541,7 @@
       "help": "Integrated loudness target in LUFS",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2551,7 +2551,7 @@
       "help": "Pitch shift in semitones (+12 is one octave up). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2561,7 +2561,7 @@
       "help": "Output sample rate in Hz (default: keep input rate)",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2571,7 +2571,7 @@
       "help": "Final duration multiplier (1.0=unchanged, 2.0=2x longer). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2581,7 +2581,7 @@
       "help": "Final duration multiplier (1.0=unchanged, 2.0=2x longer). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2591,7 +2591,7 @@
       "help": "Per-frame transform backend for STFT/ISTFT paths (default: fft; options: fft, dft, czt, dct, dst, hartley)",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2601,7 +2601,7 @@
       "help": "Crossfade duration for transient/steady stitching (default: 10 ms). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2616,7 +2616,7 @@
       "help": "Transient handling mode: off (none), reset (phase reset), hybrid (PV steady + WSOLA transients), or wsola (time-domain transient-safe path).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "store_true",
@@ -2626,7 +2626,7 @@
       "help": "Enable transient phase resets based on spectral flux",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2636,7 +2636,7 @@
       "help": "Transient protection width in milliseconds (default: 30). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2646,7 +2646,7 @@
       "help": "Transient detector sensitivity in [0,1] (higher catches more onsets). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2656,7 +2656,7 @@
       "help": "Spectral-flux multiplier for transient detection (default: 2.0). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2666,7 +2666,7 @@
       "help": "Apply output gain trim to enforce max true-peak in dBTP",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "count",
@@ -2676,7 +2676,7 @@
       "help": "Increase verbosity (repeat for extra detail)",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2686,7 +2686,7 @@
       "help": "Console verbosity level",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2696,7 +2696,7 @@
       "help": "Window length in samples (default: 2048). Accepts scalar or control file (.csv/.json).",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2706,7 +2706,7 @@
       "help": "Window type (default: hann)",
       "required": false,
       "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc.py"
+      "tool": "pvxvoc"
     },
     {
       "action": "",
@@ -2716,7 +2716,7 @@
       "help": "",
       "required": false,
       "source": "src/pvx/cli/pvxwarp.py",
-      "tool": "pvxwarp.py"
+      "tool": "pvxwarp"
     },
     {
       "action": "",
@@ -2726,7 +2726,7 @@
       "help": "CSV map with start_sec,end_sec,stretch",
       "required": true,
       "source": "src/pvx/cli/pvxwarp.py",
-      "tool": "pvxwarp.py"
+      "tool": "pvxwarp"
     },
     {
       "action": "",
@@ -2740,7 +2740,7 @@
       "help": "",
       "required": false,
       "source": "src/pvx/cli/pvxwarp.py",
-      "tool": "pvxwarp.py"
+      "tool": "pvxwarp"
     }
   ],
   "unique_flags": [
