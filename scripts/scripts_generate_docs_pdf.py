@@ -74,12 +74,18 @@ def add_console_args(parser: argparse.ArgumentParser) -> None:
         default=0,
         help="Increase verbosity (repeat for extra detail)",
     )
-    parser.add_argument("--quiet", action="store_true", help="Reduce output and hide status bars")
-    parser.add_argument("--silent", action="store_true", help="Suppress all console output")
+    parser.add_argument(
+        "--quiet", action="store_true", help="Reduce output and hide status bars"
+    )
+    parser.add_argument(
+        "--silent", action="store_true", help="Suppress all console output"
+    )
 
 
 def console_level(args: argparse.Namespace) -> int:
-    base_level = _VERBOSITY_TO_LEVEL.get(str(getattr(args, "verbosity", "normal")), _VERBOSITY_TO_LEVEL["normal"])
+    base_level = _VERBOSITY_TO_LEVEL.get(
+        str(getattr(args, "verbosity", "normal")), _VERBOSITY_TO_LEVEL["normal"]
+    )
     verbose_count = int(getattr(args, "verbose", 0) or 0)
     level = min(_VERBOSITY_TO_LEVEL["debug"], base_level + verbose_count)
     if bool(getattr(args, "quiet", False)):
@@ -97,7 +103,13 @@ def is_silent(args: argparse.Namespace) -> bool:
     return console_level(args) == _VERBOSITY_TO_LEVEL["silent"]
 
 
-def log(args: argparse.Namespace, message: str, *, min_level: str = "normal", error: bool = False) -> None:
+def log(
+    args: argparse.Namespace,
+    message: str,
+    *,
+    min_level: str = "normal",
+    error: bool = False,
+) -> None:
     if console_level(args) < _VERBOSITY_TO_LEVEL[min_level]:
         return
     print(message, file=sys.stderr if error else sys.stdout)
@@ -143,10 +155,14 @@ def collect_html_pages(docs_html_dir: Path, include_groups: bool) -> list[Path]:
 
 
 def extract_title(html_text: str, fallback: str) -> str:
-    title_match = re.search(r"<title[^>]*>(.*?)</title>", html_text, flags=re.IGNORECASE | re.DOTALL)
+    title_match = re.search(
+        r"<title[^>]*>(.*?)</title>", html_text, flags=re.IGNORECASE | re.DOTALL
+    )
     if title_match:
         return re.sub(r"\s+", " ", title_match.group(1)).strip() or fallback
-    h1_match = re.search(r"<h1[^>]*>(.*?)</h1>", html_text, flags=re.IGNORECASE | re.DOTALL)
+    h1_match = re.search(
+        r"<h1[^>]*>(.*?)</h1>", html_text, flags=re.IGNORECASE | re.DOTALL
+    )
     if h1_match:
         value = re.sub(r"<[^>]+>", "", h1_match.group(1))
         return re.sub(r"\s+", " ", value).strip() or fallback
@@ -154,10 +170,14 @@ def extract_title(html_text: str, fallback: str) -> str:
 
 
 def extract_main_html(html_text: str) -> str:
-    main_match = re.search(r"<main\b[^>]*>(.*?)</main>", html_text, flags=re.IGNORECASE | re.DOTALL)
+    main_match = re.search(
+        r"<main\b[^>]*>(.*?)</main>", html_text, flags=re.IGNORECASE | re.DOTALL
+    )
     if main_match:
         return main_match.group(1)
-    body_match = re.search(r"<body\b[^>]*>(.*?)</body>", html_text, flags=re.IGNORECASE | re.DOTALL)
+    body_match = re.search(
+        r"<body\b[^>]*>(.*?)</body>", html_text, flags=re.IGNORECASE | re.DOTALL
+    )
     if body_match:
         return body_match.group(1)
     return html_text
@@ -177,7 +197,9 @@ def _rewrite_internal_links(
     docs_html_dir: Path,
     page_anchor_map: dict[str, str],
 ) -> str:
-    pattern = re.compile(r'(<a\b[^>]*?\bhref=)(["\'])([^"\']*)(\2)', flags=re.IGNORECASE)
+    pattern = re.compile(
+        r'(<a\b[^>]*?\bhref=)(["\'])([^"\']*)(\2)', flags=re.IGNORECASE
+    )
     docs_html_dir = docs_html_dir.resolve()
     source_dir = source_page.parent.resolve()
 
@@ -189,7 +211,9 @@ def _rewrite_internal_links(
         if not href:
             return match.group(0)
         href_l = href.lower()
-        if href_l.startswith(("#", "http://", "https://", "mailto:", "tel:", "javascript:", "data:")):
+        if href_l.startswith(
+            ("#", "http://", "https://", "mailto:", "tel:", "javascript:", "data:")
+        ):
             return match.group(0)
 
         parsed = urlsplit(href)
@@ -218,7 +242,11 @@ def _rewrite_internal_links(
 
 
 def _extract_reference_count(main_html: str) -> int | None:
-    total_match = re.search(r"Total references:\s*<strong>\s*(\d+)\s*</strong>", main_html, flags=re.IGNORECASE)
+    total_match = re.search(
+        r"Total references:\s*<strong>\s*(\d+)\s*</strong>",
+        main_html,
+        flags=re.IGNORECASE,
+    )
     if total_match:
         return int(total_match.group(1))
     row_matches = re.findall(r">Link</a></td>", main_html, flags=re.IGNORECASE)
@@ -232,7 +260,7 @@ def _annotate_display_equations(html_text: str) -> str:
     # PDF readers always see variable meanings next to the math.
     display_eq_re = re.compile(r"(\$\$.*?\$\$|\\\[.*?\\\])", flags=re.DOTALL)
     where_line = (
-        "<br /><span class=\"equation-where\">where "
+        '<br /><span class="equation-where">where '
         "<code>x</code> represents the signal (and <code>x[n]</code> represents sample index <code>n</code>), "
         "<code>t</code> represents frame index, "
         "<code>k</code> represents frequency-bin index, "
@@ -262,7 +290,7 @@ def build_combined_html(
         page_anchor_map[rel] = f"doc-page-{idx + 1:03d}"
 
     toc_rows = "".join(
-        f"<li><strong>{idx + 1:02d}.</strong> <a href=\"#{page_anchor_map[page.path.relative_to(docs_html_dir).as_posix()]}\">{escape(page.title)}</a> <span class=\"src\">({escape(str(page.path.relative_to(docs_html_dir)))})</span></li>"
+        f'<li><strong>{idx + 1:02d}.</strong> <a href="#{page_anchor_map[page.path.relative_to(docs_html_dir).as_posix()]}">{escape(page.title)}</a> <span class="src">({escape(str(page.path.relative_to(docs_html_dir)))})</span></li>'
         for idx, page in enumerate(pages)
     )
 
@@ -274,13 +302,13 @@ def build_combined_html(
     )
 
     cover = (
-        "<section class=\"doc-cover\">"
+        '<section class="doc-cover">'
         "<h1>pvx Complete HTML Documentation</h1>"
         f"<p>Total HTML pages included: <strong>{len(pages)}</strong></p>"
         f"{reference_line}"
-        f"<p class=\"small\">Generated: {generated_utc}.</p>"
-        "<p class=\"small\">Generated by <code>scripts/scripts_generate_docs_pdf.py</code>.</p>"
-        f"<p class=\"small\">{escape(COPYRIGHT_NOTICE)} See <code>{escape(ATTRIBUTION_DOC_PATH)}</code>.</p>"
+        f'<p class="small">Generated: {generated_utc}.</p>'
+        '<p class="small">Generated by <code>scripts/scripts_generate_docs_pdf.py</code>.</p>'
+        f'<p class="small">{escape(COPYRIGHT_NOTICE)} See <code>{escape(ATTRIBUTION_DOC_PATH)}</code>.</p>'
         "<h2>Contents</h2>"
         f"<ol>{toc_rows}</ol>"
         "</section>"
@@ -304,13 +332,13 @@ def build_combined_html(
         )
         page_html = _annotate_display_equations(page_html)
         sections.append(
-            f"<section class=\"doc-section\" id=\"{page_anchor}\">"
-            f"<header class=\"doc-header\"><h1>{escape(section_title)}</h1><p class=\"src\">Source: {escape(str(page.path.relative_to(docs_html_dir)))}</p></header>"
-            f"<div class=\"doc-main\">{page_html}</div>"
+            f'<section class="doc-section" id="{page_anchor}">'
+            f'<header class="doc-header"><h1>{escape(section_title)}</h1><p class="src">Source: {escape(str(page.path.relative_to(docs_html_dir)))}</p></header>'
+            f'<div class="doc-main">{page_html}</div>'
             "</section>"
         )
         if idx != len(pages) - 1:
-            sections.append("<div class=\"pdf-page-break\"></div>")
+            sections.append('<div class="pdf-page-break"></div>')
 
     return f"""<!doctype html>
 <html lang=\"en\">
@@ -453,7 +481,7 @@ def build_combined_html(
   </script>
 </head>
 <body>
-  {''.join(sections)}
+  {"".join(sections)}
 </body>
 </html>
 """
@@ -495,7 +523,9 @@ def run_cmd(cmd: list[str], *, cwd: Path | None = None) -> tuple[int, str, str]:
     return proc.returncode, proc.stdout, proc.stderr
 
 
-def render_pdf_with_chromium(html_path: Path, output_pdf: Path, executable: str) -> None:
+def render_pdf_with_chromium(
+    html_path: Path, output_pdf: Path, executable: str
+) -> None:
     uri = html_path.resolve().as_uri()
     output_pdf.parent.mkdir(parents=True, exist_ok=True)
 
@@ -524,7 +554,9 @@ def render_pdf_with_chromium(html_path: Path, output_pdf: Path, executable: str)
     raise RuntimeError(f"Chromium PDF export failed. stderr: {last_err.strip()}")
 
 
-def render_pdf_with_wkhtmltopdf(html_path: Path, output_pdf: Path, executable: str) -> None:
+def render_pdf_with_wkhtmltopdf(
+    html_path: Path, output_pdf: Path, executable: str
+) -> None:
     output_pdf.parent.mkdir(parents=True, exist_ok=True)
     cmd = [
         executable,
@@ -545,7 +577,9 @@ def render_pdf_with_weasyprint(html_path: Path, output_pdf: Path) -> None:
         raise RuntimeError(f"WeasyPrint unavailable: {exc}") from exc
 
     output_pdf.parent.mkdir(parents=True, exist_ok=True)
-    HTML(filename=str(html_path), base_url=str(html_path.parent)).write_pdf(str(output_pdf))
+    HTML(filename=str(html_path), base_url=str(html_path.parent)).write_pdf(
+        str(output_pdf)
+    )
     if not output_pdf.exists() or output_pdf.stat().st_size == 0:
         raise RuntimeError("WeasyPrint produced no output PDF.")
 
@@ -569,7 +603,12 @@ def render_pdf_with_playwright(html_path: Path, output_pdf: Path) -> None:
                 path=str(output_pdf),
                 format="A4",
                 print_background=True,
-                margin={"top": "12mm", "right": "12mm", "bottom": "12mm", "left": "12mm"},
+                margin={
+                    "top": "12mm",
+                    "right": "12mm",
+                    "bottom": "12mm",
+                    "left": "12mm",
+                },
             )
         finally:
             browser.close()
@@ -586,11 +625,15 @@ def build_engine_registry() -> dict[str, EngineFunc]:
 
     chrome_exec = discover_chromium_executable()
     if chrome_exec:
-        engines["chromium"] = lambda html_path, out_pdf: render_pdf_with_chromium(html_path, out_pdf, chrome_exec)
+        engines["chromium"] = lambda html_path, out_pdf: render_pdf_with_chromium(
+            html_path, out_pdf, chrome_exec
+        )
 
     wk_exec = shutil.which("wkhtmltopdf")
     if wk_exec:
-        engines["wkhtmltopdf"] = lambda html_path, out_pdf: render_pdf_with_wkhtmltopdf(html_path, out_pdf, wk_exec)
+        engines["wkhtmltopdf"] = lambda html_path, out_pdf: render_pdf_with_wkhtmltopdf(
+            html_path, out_pdf, wk_exec
+        )
 
     engines["weasyprint"] = render_pdf_with_weasyprint
     engines["playwright"] = render_pdf_with_playwright
@@ -601,14 +644,18 @@ def auto_engine_order() -> list[str]:
     return ["chromium", "wkhtmltopdf", "weasyprint", "playwright"]
 
 
-def render_pdf(html_path: Path, output_pdf: Path, engine: str, args: argparse.Namespace) -> str:
+def render_pdf(
+    html_path: Path, output_pdf: Path, engine: str, args: argparse.Namespace
+) -> str:
     registry = build_engine_registry()
 
     if engine != "auto":
         renderer = registry.get(engine)
         if renderer is None:
             available = ", ".join(sorted(registry)) or "none"
-            raise RuntimeError(f"Requested engine '{engine}' unavailable. Detected engines: {available}")
+            raise RuntimeError(
+                f"Requested engine '{engine}' unavailable. Detected engines: {available}"
+            )
         renderer(html_path, output_pdf)
         return engine
 
@@ -623,7 +670,12 @@ def render_pdf(html_path: Path, output_pdf: Path, engine: str, args: argparse.Na
             return candidate
         except Exception as exc:  # pragma: no cover - depends on host tools
             last_exc = exc
-            log(args, f"[warn] engine {candidate} failed: {exc}", min_level="verbose", error=True)
+            log(
+                args,
+                f"[warn] engine {candidate} failed: {exc}",
+                min_level="verbose",
+                error=True,
+            )
             continue
 
     available = ", ".join(sorted(registry)) or "none"
@@ -638,7 +690,9 @@ def render_pdf(html_path: Path, output_pdf: Path, engine: str, args: argparse.Na
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Generate a single PDF from all HTML docs")
+    parser = argparse.ArgumentParser(
+        description="Generate a single PDF from all HTML docs"
+    )
     parser.add_argument(
         "--docs-html-dir",
         type=Path,
@@ -701,11 +755,21 @@ def main(argv: list[str] | None = None) -> int:
         pages.append(parse_source_page(path))
         progress.set(idx / float(total), f"{path.name}")
 
-    papers_page = next((page for page in pages if page.path.name == "papers.html"), None)
-    reference_count = _extract_reference_count(papers_page.main_html) if papers_page is not None else None
+    papers_page = next(
+        (page for page in pages if page.path.name == "papers.html"), None
+    )
+    reference_count = (
+        _extract_reference_count(papers_page.main_html)
+        if papers_page is not None
+        else None
+    )
     min_references = max(1, int(getattr(args, "min_references", 100)))
     if reference_count is None:
-        log(args, "[error] Could not determine references count from papers.html", error=True)
+        log(
+            args,
+            "[error] Could not determine references count from papers.html",
+            error=True,
+        )
         return 2
     if reference_count < min_references:
         log(
@@ -735,7 +799,9 @@ def main(argv: list[str] | None = None) -> int:
 
             progress_render = ProgressBar("render pdf", enabled=not is_quiet(args))
             progress_render.set(0.2, args.engine)
-            used_engine = render_pdf(combined_path, output_pdf, engine=args.engine, args=args)
+            used_engine = render_pdf(
+                combined_path, output_pdf, engine=args.engine, args=args
+            )
             progress_render.set(1.0, used_engine)
 
             if keep_combined_html:

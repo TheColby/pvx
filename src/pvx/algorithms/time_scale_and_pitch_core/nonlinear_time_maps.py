@@ -28,9 +28,9 @@ if __package__ is None or __package__ == "":
 
 from pvx.algorithms.base import AlgorithmResult, run_algorithm
 
-ALGORITHM_ID = 'time_scale_and_pitch_core.nonlinear_time_maps'
-ALGORITHM_NAME = 'Nonlinear time maps (curves, anchors, spline timing)'
-THEME = 'Time-Scale and Pitch Core'
+ALGORITHM_ID = "time_scale_and_pitch_core.nonlinear_time_maps"
+ALGORITHM_NAME = "Nonlinear time maps (curves, anchors, spline timing)"
+THEME = "Time-Scale and Pitch Core"
 
 
 def process(audio: np.ndarray, sample_rate: int, **params: Any) -> AlgorithmResult:

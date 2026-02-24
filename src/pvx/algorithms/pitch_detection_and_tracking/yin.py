@@ -28,9 +28,9 @@ if __package__ is None or __package__ == "":
 
 from pvx.algorithms.base import AlgorithmResult, run_algorithm
 
-ALGORITHM_ID = 'pitch_detection_and_tracking.yin'
-ALGORITHM_NAME = 'YIN'
-THEME = 'Pitch Detection and Tracking'
+ALGORITHM_ID = "pitch_detection_and_tracking.yin"
+ALGORITHM_NAME = "YIN"
+THEME = "Pitch Detection and Tracking"
 
 
 def process(audio: np.ndarray, sample_rate: int, **params: Any) -> AlgorithmResult:

@@ -50,7 +50,9 @@ def _metrics(path: Path) -> dict[str, float]:
     }
 
 
-def _compare(current: dict[str, float], baseline: dict[str, float], tolerances: dict[str, float]) -> list[str]:
+def _compare(
+    current: dict[str, float], baseline: dict[str, float], tolerances: dict[str, float]
+) -> list[str]:
     failures: list[str] = []
     for key, tol in tolerances.items():
         if key not in baseline:
@@ -58,23 +60,53 @@ def _compare(current: dict[str, float], baseline: dict[str, float], tolerances: 
         a = float(current.get(key, 0.0))
         b = float(baseline[key])
         if abs(a - b) > float(tol):
-            failures.append(f"{key}: current={a:.6f} baseline={b:.6f} tol={float(tol):.6f}")
+            failures.append(
+                f"{key}: current={a:.6f} baseline={b:.6f} tol={float(tol):.6f}"
+            )
     return failures
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="pvx quality regression checker.")
     parser.add_argument("--input", type=Path, required=True, help="Input audio file")
-    parser.add_argument("--output", type=Path, required=True, help="Rendered output path")
-    parser.add_argument("--tool", default="python3 pvxvoc.py", help="Render command (default: 'python3 pvxvoc.py')")
-    parser.add_argument("--render-args", required=True, help="Argument string appended after input path")
-    parser.add_argument("--report-json", type=Path, default=Path("reports/quality_regression.json"))
-    parser.add_argument("--baseline-json", type=Path, default=None, help="Optional baseline metrics JSON")
-    parser.add_argument("--tol-rms", type=float, default=0.05, help="Absolute RMS tolerance")
-    parser.add_argument("--tol-peak", type=float, default=0.08, help="Absolute peak tolerance")
-    parser.add_argument("--tol-centroid-hz", type=float, default=400.0, help="Absolute centroid tolerance")
-    parser.add_argument("--tol-flatness", type=float, default=0.08, help="Absolute flatness tolerance")
-    parser.add_argument("--tol-jumps", type=float, default=1200.0, help="Absolute jump-count tolerance")
+    parser.add_argument(
+        "--output", type=Path, required=True, help="Rendered output path"
+    )
+    parser.add_argument(
+        "--tool",
+        default="python3 pvxvoc.py",
+        help="Render command (default: 'python3 pvxvoc.py')",
+    )
+    parser.add_argument(
+        "--render-args", required=True, help="Argument string appended after input path"
+    )
+    parser.add_argument(
+        "--report-json", type=Path, default=Path("reports/quality_regression.json")
+    )
+    parser.add_argument(
+        "--baseline-json",
+        type=Path,
+        default=None,
+        help="Optional baseline metrics JSON",
+    )
+    parser.add_argument(
+        "--tol-rms", type=float, default=0.05, help="Absolute RMS tolerance"
+    )
+    parser.add_argument(
+        "--tol-peak", type=float, default=0.08, help="Absolute peak tolerance"
+    )
+    parser.add_argument(
+        "--tol-centroid-hz",
+        type=float,
+        default=400.0,
+        help="Absolute centroid tolerance",
+    )
+    parser.add_argument(
+        "--tol-flatness", type=float, default=0.08, help="Absolute flatness tolerance"
+    )
+    parser.add_argument(
+        "--tol-jumps", type=float, default=1200.0, help="Absolute jump-count tolerance"
+    )
     args = parser.parse_args(argv)
 
     input_path = args.input.resolve()
@@ -128,7 +160,9 @@ def main(argv: list[str] | None = None) -> int:
 
     report_path = args.report_json.resolve()
     report_path.parent.mkdir(parents=True, exist_ok=True)
-    report_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    report_path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
     print(f"Wrote {report_path}")
     if not bool(payload["pass"]):
         for failure in payload["failures"]:  # type: ignore[index]

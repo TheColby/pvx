@@ -67,7 +67,7 @@ def generated_stamp_lines() -> list[str]:
 
 def logo_lines() -> list[str]:
     return [
-        "<p align=\"center\"><img src=\"../assets/pvx_logo.png\" alt=\"pvx logo\" width=\"192\" /></p>",
+        '<p align="center"><img src="../assets/pvx_logo.png" alt="pvx logo" width="192" /></p>',
         "",
     ]
 
@@ -79,6 +79,7 @@ def attribution_section_lines() -> list[str]:
         f"{COPYRIGHT_NOTICE} See [`{ATTRIBUTION_DOC_PATH}`](../{ATTRIBUTION_DOC_PATH}).",
         "",
     ]
+
 
 def window_entries() -> list[dict[str, str]]:
     entries: list[dict[str, str]] = []
@@ -93,7 +94,9 @@ def window_entries() -> list[dict[str, str]]:
             family = "Sinusoidal"
             params = "none"
             formula = "W2"
-            note = "Raised-sine taper with smooth edges and moderate leakage suppression."
+            note = (
+                "Raised-sine taper with smooth edges and moderate leakage suppression."
+            )
         elif name == "cosine":
             family = "Sinusoidal"
             params = "none"
@@ -224,7 +227,13 @@ def window_tradeoffs(name: str, family: str) -> tuple[str, str, str]:
             "Highest sidelobes and strongest leakage/phasiness on non-bin-centered content.",
             "Use only for controlled test tones or when leakage is acceptable.",
         )
-    if name in {"blackman", "blackmanharris", "blackman_nuttall", "nuttall", "exact_blackman"}:
+    if name in {
+        "blackman",
+        "blackmanharris",
+        "blackman_nuttall",
+        "nuttall",
+        "exact_blackman",
+    }:
         return (
             "Strong sidelobe suppression for cleaner spectral separation.",
             "Wider main lobe than Hann/Hamming.",
@@ -339,7 +348,9 @@ def window_tradeoffs(name: str, family: str) -> tuple[str, str, str]:
     )
 
 
-def window_samples(name: str, length: int = 2048, kaiser_beta: float = 14.0) -> np.ndarray:
+def window_samples(
+    name: str, length: int = 2048, kaiser_beta: float = 14.0
+) -> np.ndarray:
     samples = voc_core.make_window(name, length, length, kaiser_beta=kaiser_beta, xp=np)
     return np.asarray(samples, dtype=np.float64)
 
@@ -379,7 +390,11 @@ def compute_window_metrics(window: np.ndarray) -> dict[str, float]:
     first_min = _first_local_minimum(spectrum)
     main_lobe_width_bins = 2.0 * first_min * float(n) / float(fft_len)
 
-    side = spectrum[first_min + 1 :] if (first_min + 1) < spectrum.size else np.array([eps])
+    side = (
+        spectrum[first_min + 1 :]
+        if (first_min + 1) < spectrum.size
+        else np.array([eps])
+    )
     peak_sidelobe_db = 20.0 * math.log10(max(float(np.max(side)), eps))
 
     return {
@@ -391,7 +406,15 @@ def compute_window_metrics(window: np.ndarray) -> dict[str, float]:
     }
 
 
-def _polyline_points(xs: np.ndarray, ys: np.ndarray, width: int, height: int, margin: int, y_min: float, y_max: float) -> str:
+def _polyline_points(
+    xs: np.ndarray,
+    ys: np.ndarray,
+    width: int,
+    height: int,
+    margin: int,
+    y_min: float,
+    y_max: float,
+) -> str:
     plot_w = max(1, width - 2 * margin)
     plot_h = max(1, height - 2 * margin)
     y_span = max(1e-9, y_max - y_min)
@@ -410,7 +433,16 @@ def _downsample_series(ys: np.ndarray, max_points: int = 1024) -> np.ndarray:
     return ys[idx]
 
 
-def write_line_svg(path: Path, ys: np.ndarray, *, title: str, y_min: float, y_max: float, x_label: str, y_label: str) -> None:
+def write_line_svg(
+    path: Path,
+    ys: np.ndarray,
+    *,
+    title: str,
+    y_min: float,
+    y_max: float,
+    x_label: str,
+    y_label: str,
+) -> None:
     width = 840
     height = 280
     margin = 36
@@ -503,22 +535,22 @@ def write_multiline_svg(
             y_max=y_hi,
         )
         plot_lines.append(
-            f"<polyline fill=\"none\" stroke=\"{color}\" stroke-width=\"2\" points=\"{pts}\" />"
+            f'<polyline fill="none" stroke="{color}" stroke-width="2" points="{pts}" />'
         )
         legend_x = margin + 14
         legend_y = margin + 14 + idx * 16
         legend_items.append(
-            f"<line x1=\"{legend_x:.1f}\" y1=\"{legend_y:.1f}\" x2=\"{legend_x + 22:.1f}\" y2=\"{legend_y:.1f}\" "
-            f"stroke=\"{color}\" stroke-width=\"2\" />"
-            f"<text x=\"{legend_x + 28:.1f}\" y=\"{legend_y + 4:.1f}\" font-family=\"Arial, Helvetica, sans-serif\" "
-            f"font-size=\"11\" fill=\"#243b53\">{name}</text>"
+            f'<line x1="{legend_x:.1f}" y1="{legend_y:.1f}" x2="{legend_x + 22:.1f}" y2="{legend_y:.1f}" '
+            f'stroke="{color}" stroke-width="2" />'
+            f'<text x="{legend_x + 28:.1f}" y="{legend_y + 4:.1f}" font-family="Arial, Helvetica, sans-serif" '
+            f'font-size="11" fill="#243b53">{name}</text>'
         )
 
     svg = f"""<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{width}\" height=\"{height}\" viewBox=\"0 0 {width} {height}\">
   <rect x=\"0\" y=\"0\" width=\"{width}\" height=\"{height}\" fill=\"#ffffff\" />
   <rect x=\"{margin}\" y=\"{margin}\" width=\"{width - 2 * margin}\" height=\"{height - 2 * margin}\" fill=\"#f7fbff\" stroke=\"#c8d9e6\" />
-  {' '.join(plot_lines)}
-  {' '.join(legend_items)}
+  {" ".join(plot_lines)}
+  {" ".join(legend_items)}
   <text x=\"{width / 2:.1f}\" y=\"24\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-size=\"16\" fill=\"#102a43\">{title}</text>
   <text x=\"{width / 2:.1f}\" y=\"{height - 8}\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-size=\"12\" fill=\"#334e68\">{x_label}</text>
   <text x=\"14\" y=\"{height / 2:.1f}\" transform=\"rotate(-90 14,{height / 2:.1f})\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-size=\"12\" fill=\"#334e68\">{y_label}</text>
@@ -531,12 +563,20 @@ def write_multiline_svg(
     path.write_text(svg, encoding="utf-8")
 
 
-def _compressor_curve_db(x_db: np.ndarray, threshold_db: float, ratio: float) -> np.ndarray:
-    return np.where(x_db <= threshold_db, x_db, threshold_db + (x_db - threshold_db) / ratio)
+def _compressor_curve_db(
+    x_db: np.ndarray, threshold_db: float, ratio: float
+) -> np.ndarray:
+    return np.where(
+        x_db <= threshold_db, x_db, threshold_db + (x_db - threshold_db) / ratio
+    )
 
 
-def _expander_curve_db(x_db: np.ndarray, threshold_db: float, ratio: float) -> np.ndarray:
-    return np.where(x_db >= threshold_db, x_db, threshold_db + (x_db - threshold_db) * ratio)
+def _expander_curve_db(
+    x_db: np.ndarray, threshold_db: float, ratio: float
+) -> np.ndarray:
+    return np.where(
+        x_db >= threshold_db, x_db, threshold_db + (x_db - threshold_db) * ratio
+    )
 
 
 def _limiter_curve_db(x_db: np.ndarray, ceiling_db: float) -> np.ndarray:
@@ -550,7 +590,16 @@ def _softclip_cubic(x: np.ndarray) -> np.ndarray:
 
 
 def generate_function_assets() -> dict[str, object]:
-    palette = ["#005f73", "#0a9396", "#ee9b00", "#ca6702", "#ae2012", "#9b2226", "#3a0ca3", "#4361ee"]
+    palette = [
+        "#005f73",
+        "#0a9396",
+        "#ee9b00",
+        "#ca6702",
+        "#ae2012",
+        "#9b2226",
+        "#3a0ca3",
+        "#4361ee",
+    ]
     entries: list[dict[str, str]] = []
 
     semitones = np.linspace(-24.0, 24.0, 801, dtype=np.float64)
@@ -650,7 +699,9 @@ def generate_function_assets() -> dict[str, object]:
     mag_a = 0.20
     mag_b = 1.00
     linear_blend = (1.0 - alpha) * mag_a + alpha * mag_b
-    geometric_blend = np.exp((1.0 - alpha) * np.log(mag_a + 1e-12) + alpha * np.log(mag_b + 1e-12))
+    geometric_blend = np.exp(
+        (1.0 - alpha) * np.log(mag_a + 1e-12) + alpha * np.log(mag_b + 1e-12)
+    )
     product_target = np.sqrt(max(mag_a * mag_b, 0.0))
     product_blend = (1.0 - alpha) * mag_a + alpha * product_target
     max_mag_blend = (1.0 - alpha) * linear_blend + alpha * max(mag_a, mag_b)
@@ -737,7 +788,9 @@ def generate_function_assets() -> dict[str, object]:
     return payload
 
 
-def _natural_cubic_spline_eval(x: np.ndarray, y: np.ndarray, xq: np.ndarray) -> np.ndarray:
+def _natural_cubic_spline_eval(
+    x: np.ndarray, y: np.ndarray, xq: np.ndarray
+) -> np.ndarray:
     x = np.asarray(x, dtype=np.float64)
     y = np.asarray(y, dtype=np.float64)
     xq = np.asarray(xq, dtype=np.float64)
@@ -860,9 +913,9 @@ def _render_interpolation_svg(
         px, py = to_xy(float(xv), float(yv))
         ctrl_points.append(f"{px:.2f},{py:.2f}")
         circles.append(
-            f"<circle cx=\"{px:.2f}\" cy=\"{py:.2f}\" r=\"3.2\" fill=\"#b42318\" />"
-            f"<text x=\"{px + 4:.2f}\" y=\"{py - 6:.2f}\" font-family=\"Arial, Helvetica, sans-serif\" "
-            f"font-size=\"10\" fill=\"#7a271a\">p{idx}</text>"
+            f'<circle cx="{px:.2f}" cy="{py:.2f}" r="3.2" fill="#b42318" />'
+            f'<text x="{px + 4:.2f}" y="{py - 6:.2f}" font-family="Arial, Helvetica, sans-serif" '
+            f'font-size="10" fill="#7a271a">p{idx}</text>'
         )
 
     legend_w = 250
@@ -873,9 +926,9 @@ def _render_interpolation_svg(
     svg = f"""<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{width}\" height=\"{height}\" viewBox=\"0 0 {width} {height}\">
   <rect x=\"0\" y=\"0\" width=\"{width}\" height=\"{height}\" fill=\"#ffffff\" />
   <rect x=\"{margin}\" y=\"{margin}\" width=\"{width - 2 * margin}\" height=\"{height - 2 * margin}\" fill=\"#f7fbff\" stroke=\"#c8d9e6\" />
-  <polyline fill=\"none\" stroke=\"#8f1d2c\" stroke-width=\"1.5\" stroke-dasharray=\"5 3\" points=\"{' '.join(ctrl_points)}\" />
-  <polyline fill=\"none\" stroke=\"#005f73\" stroke-width=\"2\" points=\"{' '.join(dense_points)}\" />
-  {''.join(circles)}
+  <polyline fill=\"none\" stroke=\"#8f1d2c\" stroke-width=\"1.5\" stroke-dasharray=\"5 3\" points=\"{" ".join(ctrl_points)}\" />
+  <polyline fill=\"none\" stroke=\"#005f73\" stroke-width=\"2\" points=\"{" ".join(dense_points)}\" />
+  {"".join(circles)}
   <rect x=\"{legend_x}\" y=\"{legend_y}\" width=\"{legend_w}\" height=\"{legend_h}\" rx=\"6\" ry=\"6\" fill=\"#ffffff\" stroke=\"#c8d9e6\" />
   <line x1=\"{legend_x + 10}\" y1=\"{legend_y + 18}\" x2=\"{legend_x + 58}\" y2=\"{legend_y + 18}\" stroke=\"#005f73\" stroke-width=\"2\" />
   <text x=\"{legend_x + 66}\" y=\"{legend_y + 22}\" font-family=\"Arial, Helvetica, sans-serif\" font-size=\"10\" fill=\"#243b53\">interpolated curve u(t)</text>
@@ -913,7 +966,9 @@ def generate_interpolation_assets() -> dict[str, object]:
 
     curves: list[tuple[str, np.ndarray, str, int | None]] = []
     for mode, label, order in specs:
-        sampled = _sample_interpolation_curve(mode, x_control, y_control, x_dense, order=order or 3)
+        sampled = _sample_interpolation_curve(
+            mode, x_control, y_control, x_dense, order=order or 3
+        )
         curves.append((mode, sampled, label, order))
 
     y_stack = np.concatenate([y_control, *(curve for _, curve, _, _ in curves)])
@@ -966,7 +1021,9 @@ def generate_interpolation_assets() -> dict[str, object]:
     return payload
 
 
-def generate_window_assets_and_metrics(entries: list[dict[str, str]]) -> dict[str, dict[str, float | str]]:
+def generate_window_assets_and_metrics(
+    entries: list[dict[str, str]],
+) -> dict[str, dict[str, float | str]]:
     metrics_by_name: dict[str, dict[str, float | str]] = {}
     for entry in entries:
         name = entry["name"]
@@ -1022,14 +1079,20 @@ def generate_window_assets_and_metrics(entries: list[dict[str, str]]) -> dict[st
     return metrics_by_name
 
 
-def write_math_foundations(interpolation_gallery: dict[str, object], function_gallery: dict[str, object]) -> None:
+def write_math_foundations(
+    interpolation_gallery: dict[str, object], function_gallery: dict[str, object]
+) -> None:
     lines: list[str] = []
     lines.extend(logo_lines())
     lines.append("# pvx Mathematical Foundations")
     lines.append("")
     lines.extend(generated_stamp_lines())
-    lines.append("This document explains the core signal-processing equations used by pvx, with plain-English interpretation.")
-    lines.append("All equations are written in GitHub-renderable LaTeX and are intended to render directly in normal GitHub Markdown view.")
+    lines.append(
+        "This document explains the core signal-processing equations used by pvx, with plain-English interpretation."
+    )
+    lines.append(
+        "All equations are written in GitHub-renderable LaTeX and are intended to render directly in normal GitHub Markdown view."
+    )
     lines.append("")
     lines.append("## Notation")
     lines.append("")
@@ -1040,7 +1103,9 @@ def write_math_foundations(interpolation_gallery: dict[str, object], function_ga
     lines.append("- Frequency-bin index: $k$")
     lines.append("- Frame phase: $\\phi_t[k]$")
     lines.append("- Bin-center angular frequency: $\\omega_k=2\\pi k/N$")
-    lines.append("- Selected transform backend: $m \\in \\{\\text{fft},\\text{dft},\\text{czt},\\text{dct},\\text{dst},\\text{hartley}\\}$")
+    lines.append(
+        "- Selected transform backend: $m \\in \\{\\text{fft},\\text{dft},\\text{czt},\\text{dct},\\text{dst},\\text{hartley}\\}$"
+    )
     lines.append("")
     lines.append("## 1. STFT Analysis and Synthesis")
     lines.append("")
@@ -1050,20 +1115,30 @@ def write_math_foundations(interpolation_gallery: dict[str, object], function_ga
     lines.append("X_t[k]=\\sum_{n=0}^{N-1} x[n+tH_a]w[n]e^{-j2\\pi kn/N}")
     lines.append("$$")
     lines.append("")
-    lines.append("Plain English: each frame `t` is windowed by `w[n]` and transformed into complex frequency bins `k`.")
+    lines.append(
+        "Plain English: each frame `t` is windowed by `w[n]` and transformed into complex frequency bins `k`."
+    )
     lines.append("")
     lines.append("Weighted overlap-add synthesis:")
     lines.append("")
     lines.append("$$")
-    lines.append("\\hat{x}[n]=\\frac{\\sum_t \\hat{x}_t[n-tH_s]w[n-tH_s]}{\\sum_t w^2[n-tH_s]+\\varepsilon}")
+    lines.append(
+        "\\hat{x}[n]=\\frac{\\sum_t \\hat{x}_t[n-tH_s]w[n-tH_s]}{\\sum_t w^2[n-tH_s]+\\varepsilon}"
+    )
     lines.append("$$")
     lines.append("")
-    lines.append("Plain English: reconstructed frames are overlap-added, then normalized by accumulated window energy.")
+    lines.append(
+        "Plain English: reconstructed frames are overlap-added, then normalized by accumulated window energy."
+    )
     lines.append("")
     lines.append("## 2. Transform Backend Families and Tradeoffs")
     lines.append("")
-    lines.append("pvx allows selecting the per-frame transform with `--transform` in STFT/ISTFT paths.")
-    lines.append("The same overlap-add framework is used, but per-bin meaning and phase behavior differ by transform family.")
+    lines.append(
+        "pvx allows selecting the per-frame transform with `--transform` in STFT/ISTFT paths."
+    )
+    lines.append(
+        "The same overlap-add framework is used, but per-bin meaning and phase behavior differ by transform family."
+    )
     lines.append("")
     lines.append("Complex Fourier family (`fft`, `dft`):")
     lines.append("")
@@ -1078,53 +1153,89 @@ def write_math_foundations(interpolation_gallery: dict[str, object], function_ga
     lines.append("X_t[k]=\\sum_{n=0}^{N-1}x_t[n]A^{-n}W^{nk}")
     lines.append("$$")
     lines.append("")
-    lines.append("With pvx defaults $A=1$ and $W=e^{-j2\\pi/N}$, CZT matches DFT samples but uses a different numerical path.")
+    lines.append(
+        "With pvx defaults $A=1$ and $W=e^{-j2\\pi/N}$, CZT matches DFT samples but uses a different numerical path."
+    )
     lines.append("")
     lines.append("DCT-II / IDCT-II (`dct`):")
     lines.append("")
     lines.append("$$")
-    lines.append("C_t[k]=\\alpha_k\\sum_{n=0}^{N-1}x_t[n]\\cos\\left(\\frac{\\pi}{N}(n+\\tfrac{1}{2})k\\right)")
+    lines.append(
+        "C_t[k]=\\alpha_k\\sum_{n=0}^{N-1}x_t[n]\\cos\\left(\\frac{\\pi}{N}(n+\\tfrac{1}{2})k\\right)"
+    )
     lines.append("$$")
     lines.append("")
     lines.append("DST-II / IDST-II (`dst`):")
     lines.append("")
     lines.append("$$")
-    lines.append("S_t[k]=\\beta_k\\sum_{n=0}^{N-1}x_t[n]\\sin\\left(\\frac{\\pi}{N}(n+\\tfrac{1}{2})(k+1)\\right)")
+    lines.append(
+        "S_t[k]=\\beta_k\\sum_{n=0}^{N-1}x_t[n]\\sin\\left(\\frac{\\pi}{N}(n+\\tfrac{1}{2})(k+1)\\right)"
+    )
     lines.append("$$")
     lines.append("")
     lines.append("Discrete Hartley (`hartley`):")
     lines.append("")
     lines.append("$$")
-    lines.append("H_t[k]=\\sum_{n=0}^{N-1}x_t[n]\\,\\mathrm{cas}\\left(\\frac{2\\pi kn}{N}\\right),\\quad")
+    lines.append(
+        "H_t[k]=\\sum_{n=0}^{N-1}x_t[n]\\,\\mathrm{cas}\\left(\\frac{2\\pi kn}{N}\\right),\\quad"
+    )
     lines.append("\\mathrm{cas}(\\theta)=\\cos(\\theta)+\\sin(\\theta)")
     lines.append("$$")
     lines.append("")
     lines.append("| Transform | Strengths | Tradeoffs | Recommended use cases |")
     lines.append("| --- | --- | --- | --- |")
-    lines.append("| `fft` | Fastest common path, stable, native one-sided complex bins, best CUDA coverage. | Needs careful window/hop tuning for extreme nonstationarity. | Default for most time-stretch, pitch-shift, and batch processing. |")
-    lines.append("| `dft` | Canonical Fourier definition, deterministic parity baseline versus FFT implementations. | Usually slower than `fft`, little practical quality advantage in normal runs. | Cross-checking, verification, or research comparisons. |")
-    lines.append("| `czt` | Useful alternative numerical path for awkward frame sizes; can be robust for prime/non-power sizes. | Requires SciPy; typically CPU-only and slower than FFT. | Edge-case frame-size experiments and diagnostic reruns. |")
-    lines.append("| `dct` | Real-valued compact basis with strong energy compaction for smooth envelopes. | Loses explicit complex phase; less transparent for strict phase-coherent resynthesis. | Spectral shaping, denoise-like creative processing, coefficient-domain experiments. |")
-    lines.append("| `dst` | Real-valued odd-symmetry basis; emphasizes different boundary behavior than DCT. | Same phase limitations as DCT; content-dependent coloration. | Creative timbre variants and odd-symmetry analysis experiments. |")
-    lines.append("| `hartley` | Real transform using `cas`, often helpful for CPU-friendly exploratory analysis. | Different bin semantics vs complex STFT; can alter artifact profile. | Alternative real-basis phase-vocoder experiments and pedagogical comparisons. |")
+    lines.append(
+        "| `fft` | Fastest common path, stable, native one-sided complex bins, best CUDA coverage. | Needs careful window/hop tuning for extreme nonstationarity. | Default for most time-stretch, pitch-shift, and batch processing. |"
+    )
+    lines.append(
+        "| `dft` | Canonical Fourier definition, deterministic parity baseline versus FFT implementations. | Usually slower than `fft`, little practical quality advantage in normal runs. | Cross-checking, verification, or research comparisons. |"
+    )
+    lines.append(
+        "| `czt` | Useful alternative numerical path for awkward frame sizes; can be robust for prime/non-power sizes. | Requires SciPy; typically CPU-only and slower than FFT. | Edge-case frame-size experiments and diagnostic reruns. |"
+    )
+    lines.append(
+        "| `dct` | Real-valued compact basis with strong energy compaction for smooth envelopes. | Loses explicit complex phase; less transparent for strict phase-coherent resynthesis. | Spectral shaping, denoise-like creative processing, coefficient-domain experiments. |"
+    )
+    lines.append(
+        "| `dst` | Real-valued odd-symmetry basis; emphasizes different boundary behavior than DCT. | Same phase limitations as DCT; content-dependent coloration. | Creative timbre variants and odd-symmetry analysis experiments. |"
+    )
+    lines.append(
+        "| `hartley` | Real transform using `cas`, often helpful for CPU-friendly exploratory analysis. | Different bin semantics vs complex STFT; can alter artifact profile. | Alternative real-basis phase-vocoder experiments and pedagogical comparisons. |"
+    )
     lines.append("")
-    lines.append("Plain English: choose `fft` first, then move to other transforms when you specifically need different numerical behavior, basis structure, or artifact character.")
+    lines.append(
+        "Plain English: choose `fft` first, then move to other transforms when you specifically need different numerical behavior, basis structure, or artifact character."
+    )
     lines.append("")
     lines.append("### Sample Transform Use Cases")
     lines.append("")
     lines.append("```bash")
-    lines.append("python3 pvxvoc.py dialog.wav --transform fft --time-stretch 1.08 --transient-preserve --output-dir out")
-    lines.append("python3 pvxvoc.py test_tones.wav --transform dft --time-stretch 1.00 --output-dir out")
-    lines.append("python3 pvxvoc.py archival_take.wav --transform czt --n-fft 1536 --win-length 1536 --hop-size 384 --output-dir out")
-    lines.append("python3 pvxvoc.py strings.wav --transform dct --pitch-shift-cents -17 --soft-clip-level 0.94 --output-dir out")
-    lines.append("python3 pvxvoc.py percussion.wav --transform dst --time-stretch 0.92 --output-dir out")
-    lines.append("python3 pvxvoc.py synth.wav --transform hartley --phase-locking off --time-stretch 1.30 --output-dir out")
+    lines.append(
+        "python3 pvxvoc.py dialog.wav --transform fft --time-stretch 1.08 --transient-preserve --output-dir out"
+    )
+    lines.append(
+        "python3 pvxvoc.py test_tones.wav --transform dft --time-stretch 1.00 --output-dir out"
+    )
+    lines.append(
+        "python3 pvxvoc.py archival_take.wav --transform czt --n-fft 1536 --win-length 1536 --hop-size 384 --output-dir out"
+    )
+    lines.append(
+        "python3 pvxvoc.py strings.wav --transform dct --pitch-shift-cents -17 --soft-clip-level 0.94 --output-dir out"
+    )
+    lines.append(
+        "python3 pvxvoc.py percussion.wav --transform dst --time-stretch 0.92 --output-dir out"
+    )
+    lines.append(
+        "python3 pvxvoc.py synth.wav --transform hartley --phase-locking off --time-stretch 1.30 --output-dir out"
+    )
     lines.append("```")
     lines.append("")
     lines.append("## 3. Phase-Vocoder Frequency and Phase Update")
     lines.append("")
     lines.append("$$")
-    lines.append("\\Delta\\phi_t[k]=\\mathrm{princarg}\\left(\\phi_t[k]-\\phi_{t-1}[k]-\\omega_kH_a\\right)")
+    lines.append(
+        "\\Delta\\phi_t[k]=\\mathrm{princarg}\\left(\\phi_t[k]-\\phi_{t-1}[k]-\\omega_kH_a\\right)"
+    )
     lines.append("$$")
     lines.append("$$")
     lines.append("\\hat{\\omega}_t[k]=\\omega_k+\\frac{\\Delta\\phi_t[k]}{H_a}")
@@ -1133,7 +1244,9 @@ def write_math_foundations(interpolation_gallery: dict[str, object], function_ga
     lines.append("\\hat{\\phi}_t[k]=\\hat{\\phi}_{t-1}[k]+\\hat{\\omega}_t[k]H_s")
     lines.append("$$")
     lines.append("")
-    lines.append("Plain English: pvx estimates true per-bin frequency from wrapped phase deviation, then re-accumulates phase at the synthesis hop.")
+    lines.append(
+        "Plain English: pvx estimates true per-bin frequency from wrapped phase deviation, then re-accumulates phase at the synthesis hop."
+    )
     lines.append("")
     lines.append("## 4. Time Stretch and Pitch Ratio")
     lines.append("")
@@ -1143,11 +1256,15 @@ def write_math_foundations(interpolation_gallery: dict[str, object], function_ga
     lines.append("r_{\\text{pitch}}=2^{\\Delta s/12}=2^{\\Delta c/1200}")
     lines.append("$$")
     lines.append("")
-    lines.append("Plain English: semitone and cent controls map to the same multiplicative ratio.")
+    lines.append(
+        "Plain English: semitone and cent controls map to the same multiplicative ratio."
+    )
     lines.append("")
     lines.append("## 5. Dynamic Control Interpolation (CSV/JSON)")
     lines.append("")
-    lines.append("When a numeric flag receives a CSV/JSON control track, pvx samples a control function $u(t)$ over render time.")
+    lines.append(
+        "When a numeric flag receives a CSV/JSON control track, pvx samples a control function $u(t)$ over render time."
+    )
     lines.append("")
     lines.append("Polynomial mode fits a global polynomial of degree $d$:")
     lines.append("")
@@ -1155,15 +1272,27 @@ def write_math_foundations(interpolation_gallery: dict[str, object], function_ga
     lines.append("u(t)=\\sum_{i=0}^{d} a_i t^i,\\qquad d=\\min(\\texttt{order}, M-1)")
     lines.append("$$")
     lines.append("")
-    lines.append("where $M$ is the number of control points. In command-line interface (CLI) usage, `--order` accepts any integer $\\ge 1$.")
-    lines.append("The effective degree is automatically capped to avoid over-specification when there are too few points.")
+    lines.append(
+        "where $M$ is the number of control points. In command-line interface (CLI) usage, `--order` accepts any integer $\\ge 1$."
+    )
+    lines.append(
+        "The effective degree is automatically capped to avoid over-specification when there are too few points."
+    )
     lines.append("")
-    lines.append("Nearest/linear/cubic are local interpolation modes; `none` is sample-and-hold (stairstep).")
-    lines.append("Legend used in each plot: blue solid line = interpolated control curve $u(t)$, red dashed line = piecewise connection of control points, red circles labeled $p_i$ = original control points.")
+    lines.append(
+        "Nearest/linear/cubic are local interpolation modes; `none` is sample-and-hold (stairstep)."
+    )
+    lines.append(
+        "Legend used in each plot: blue solid line = interpolated control curve $u(t)$, red dashed line = piecewise connection of control points, red circles labeled $p_i$ = original control points."
+    )
     lines.append("")
     lines.append("| Interpolation mode | CLI form | Example plot |")
     lines.append("| --- | --- | --- |")
-    plots = interpolation_gallery.get("plots", []) if isinstance(interpolation_gallery, dict) else []
+    plots = (
+        interpolation_gallery.get("plots", [])
+        if isinstance(interpolation_gallery, dict)
+        else []
+    )
     for plot in plots:
         if not isinstance(plot, dict):
             continue
@@ -1183,20 +1312,26 @@ def write_math_foundations(interpolation_gallery: dict[str, object], function_ga
     lines.append("")
     lines.append("## 6. Microtonal Retune Mapping")
     lines.append("")
-    lines.append("For a detected frequency $f$, pvx scale-aware retuning chooses the nearest permitted scale target $f_{\\text{scale}}$ and applies:")
+    lines.append(
+        "For a detected frequency $f$, pvx scale-aware retuning chooses the nearest permitted scale target $f_{\\text{scale}}$ and applies:"
+    )
     lines.append("")
     lines.append("$$")
     lines.append("\\Delta s = 12\\log_2\\left(\\frac{f_{\\text{scale}}}{f}\\right)")
     lines.append("$$")
     lines.append("")
-    lines.append("Plain English: each frame is shifted only as much as needed to land on the selected microtonal scale degree.")
+    lines.append(
+        "Plain English: each frame is shifted only as much as needed to land on the selected microtonal scale degree."
+    )
     lines.append("")
     lines.append("## 7. Loudness and Dynamics")
     lines.append("")
     lines.append("LUFS target gain:")
     lines.append("")
     lines.append("$$")
-    lines.append("g_{\\text{LUFS}}=10^{(L_{\\text{target}}-L_{\\text{in}})/20},\\qquad y[n]=g_{\\text{LUFS}}x[n]")
+    lines.append(
+        "g_{\\text{LUFS}}=10^{(L_{\\text{target}}-L_{\\text{in}})/20},\\qquad y[n]=g_{\\text{LUFS}}x[n]"
+    )
     lines.append("$$")
     lines.append("")
     lines.append("Compressor gain law (conceptual):")
@@ -1208,7 +1343,9 @@ def write_math_foundations(interpolation_gallery: dict[str, object], function_ga
     lines.append("\\end{cases}")
     lines.append("$$")
     lines.append("")
-    lines.append("Plain English: level is reduced above threshold $T$ by ratio $R$, then makeup/loudness stages may be applied.")
+    lines.append(
+        "Plain English: level is reduced above threshold $T$ by ratio $R$, then makeup/loudness stages may be applied."
+    )
     lines.append("")
     lines.append("## 8. Spatial Coherence and Channel Alignment")
     lines.append("")
@@ -1221,24 +1358,34 @@ def write_math_foundations(interpolation_gallery: dict[str, object], function_ga
     lines.append("Phase-drift objective:")
     lines.append("")
     lines.append("$$")
-    lines.append("J=\\sum_{k,t}\\left|\\Delta\\phi^{\\text{out}}_{ij}(k,t)-\\Delta\\phi^{\\text{in}}_{ij}(k,t)\\right|")
+    lines.append(
+        "J=\\sum_{k,t}\\left|\\Delta\\phi^{\\text{out}}_{ij}(k,t)-\\Delta\\phi^{\\text{in}}_{ij}(k,t)\\right|"
+    )
     lines.append("$$")
     lines.append("")
     lines.append("Channel delay estimate by phase-weighted cross-correlation:")
     lines.append("")
     lines.append("$$")
-    lines.append("\\tau^*=\\arg\\max_\\tau\\,\\mathcal{F}^{-1}\\left\\{\\frac{X_i(\\omega)X_j^*(\\omega)}{|X_i(\\omega)X_j^*(\\omega)|+\\varepsilon}\\right\\}(\\tau)")
+    lines.append(
+        "\\tau^*=\\arg\\max_\\tau\\,\\mathcal{F}^{-1}\\left\\{\\frac{X_i(\\omega)X_j^*(\\omega)}{|X_i(\\omega)X_j^*(\\omega)|+\\varepsilon}\\right\\}(\\tau)"
+    )
     lines.append("$$")
     lines.append("")
-    lines.append("Plain English: pvx spatial modules prioritize channel coherence, stable image cues, and robust delay alignment for multichannel processing chains.")
+    lines.append(
+        "Plain English: pvx spatial modules prioritize channel coherence, stable image cues, and robust delay alignment for multichannel processing chains."
+    )
     lines.append("")
     lines.append("## 9. Function Graph Gallery")
     lines.append("")
-    lines.append("The plots below visualize core transfer functions and parameter curves used across pvx processing modules.")
+    lines.append(
+        "The plots below visualize core transfer functions and parameter curves used across pvx processing modules."
+    )
     lines.append("")
     lines.append("| Function family | Plot | Why this matters |")
     lines.append("| --- | --- | --- |")
-    function_plots = function_gallery.get("plots", []) if isinstance(function_gallery, dict) else []
+    function_plots = (
+        function_gallery.get("plots", []) if isinstance(function_gallery, dict) else []
+    )
     for plot in function_plots:
         if not isinstance(plot, dict):
             continue
@@ -1249,7 +1396,9 @@ def write_math_foundations(interpolation_gallery: dict[str, object], function_ga
         lines.append(f"| {name} | {image_cell} | {usage} |")
     lines.append("")
     lines.extend(attribution_section_lines())
-    (DOCS_DIR / "MATHEMATICAL_FOUNDATIONS.md").write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+    (DOCS_DIR / "MATHEMATICAL_FOUNDATIONS.md").write_text(
+        "\n".join(lines).rstrip() + "\n", encoding="utf-8"
+    )
 
 
 def write_window_reference() -> None:
@@ -1261,7 +1410,9 @@ def write_window_reference() -> None:
     lines.append("# pvx Window Reference")
     lines.append("")
     lines.extend(generated_stamp_lines())
-    lines.append(f"pvx currently supports **{len(entries)}** analysis windows. This file defines each one mathematically and explains it in plain English.")
+    lines.append(
+        f"pvx currently supports **{len(entries)}** analysis windows. This file defines each one mathematically and explains it in plain English."
+    )
     lines.append("")
     lines.append("## Notation")
     lines.append("")
@@ -1278,7 +1429,9 @@ def write_window_reference() -> None:
     lines.append("")
     lines.append("**(W1) Cosine series**")
     lines.append("")
-    lines.append("$$w[n]=\\sum_{k=0}^{K} a_k\\cos\\left(\\frac{2\\pi k n}{N-1}\\right)$$")
+    lines.append(
+        "$$w[n]=\\sum_{k=0}^{K} a_k\\cos\\left(\\frac{2\\pi k n}{N-1}\\right)$$"
+    )
     lines.append("")
     lines.append("**(W2) Sine/Cosine**")
     lines.append("")
@@ -1294,20 +1447,28 @@ def write_window_reference() -> None:
     lines.append("")
     lines.append("**(W5) Bartlett-Hann**")
     lines.append("")
-    lines.append("$$x=\\frac{n}{N-1}-\\frac{1}{2},\\quad w[n]=0.62-0.48|x|+0.38\\cos(2\\pi x)$$")
+    lines.append(
+        "$$x=\\frac{n}{N-1}-\\frac{1}{2},\\quad w[n]=0.62-0.48|x|+0.38\\cos(2\\pi x)$$"
+    )
     lines.append("")
     lines.append("**(W6) Tukey**")
     lines.append("")
     lines.append("$$")
     lines.append("x=\\frac{n}{N-1},\\quad")
     lines.append("w[n]=\\begin{cases}")
-    lines.append("\\frac{1}{2}\\left(1+\\cos\\left(\\pi\\left(\\frac{2x}{\\alpha}-1\\right)\\right)\\right), & 0\\le x<\\frac{\\alpha}{2} \\\\")
+    lines.append(
+        "\\frac{1}{2}\\left(1+\\cos\\left(\\pi\\left(\\frac{2x}{\\alpha}-1\\right)\\right)\\right), & 0\\le x<\\frac{\\alpha}{2} \\\\"
+    )
     lines.append("1, & \\frac{\\alpha}{2}\\le x<1-\\frac{\\alpha}{2} \\\\")
-    lines.append("\\frac{1}{2}\\left(1+\\cos\\left(\\pi\\left(\\frac{2x}{\\alpha}-\\frac{2}{\\alpha}+1\\right)\\right)\\right), & 1-\\frac{\\alpha}{2}\\le x\\le 1")
+    lines.append(
+        "\\frac{1}{2}\\left(1+\\cos\\left(\\pi\\left(\\frac{2x}{\\alpha}-\\frac{2}{\\alpha}+1\\right)\\right)\\right), & 1-\\frac{\\alpha}{2}\\le x\\le 1"
+    )
     lines.append("\\end{cases}")
     lines.append("$$")
     lines.append("")
-    lines.append("Special cases in pvx: $\\alpha\\le 0$ gives rectangular behavior, and $\\alpha\\ge 1$ collapses to Hann.")
+    lines.append(
+        "Special cases in pvx: $\\alpha\\le 0$ gives rectangular behavior, and $\\alpha\\ge 1$ collapses to Hann."
+    )
     lines.append("")
     lines.append("**(W7) Parzen**")
     lines.append("")
@@ -1330,19 +1491,27 @@ def write_window_reference() -> None:
     lines.append("")
     lines.append("**(W10) Gaussian**")
     lines.append("")
-    lines.append("$$w[n]=\\exp\\left(-\\frac{1}{2}\\left(\\frac{n-m}{\\sigma}\\right)^2\\right),\\quad \\sigma=r_\\sigma m$$")
+    lines.append(
+        "$$w[n]=\\exp\\left(-\\frac{1}{2}\\left(\\frac{n-m}{\\sigma}\\right)^2\\right),\\quad \\sigma=r_\\sigma m$$"
+    )
     lines.append("")
     lines.append("**(W11) General Gaussian**")
     lines.append("")
-    lines.append("$$w[n]=\\exp\\left(-\\frac{1}{2}\\left|\\frac{n-m}{\\sigma}\\right|^{2p}\\right)$$")
+    lines.append(
+        "$$w[n]=\\exp\\left(-\\frac{1}{2}\\left|\\frac{n-m}{\\sigma}\\right|^{2p}\\right)$$"
+    )
     lines.append("")
     lines.append("**(W12) Exponential**")
     lines.append("")
-    lines.append("$$w[n]=\\exp\\left(-\\frac{|n-m|}{\\tau}\\right),\\quad \\tau=r_\\tau m$$")
+    lines.append(
+        "$$w[n]=\\exp\\left(-\\frac{|n-m|}{\\tau}\\right),\\quad \\tau=r_\\tau m$$"
+    )
     lines.append("")
     lines.append("**(W13) Cauchy**")
     lines.append("")
-    lines.append("$$w[n]=\\frac{1}{1+\\left(\\frac{n-m}{\\gamma}\\right)^2},\\quad \\gamma=r_\\gamma m$$")
+    lines.append(
+        "$$w[n]=\\frac{1}{1+\\left(\\frac{n-m}{\\gamma}\\right)^2},\\quad \\gamma=r_\\gamma m$$"
+    )
     lines.append("")
     lines.append("**(W14) Cosine power**")
     lines.append("")
@@ -1350,7 +1519,9 @@ def write_window_reference() -> None:
     lines.append("")
     lines.append("**(W15) Hann-Poisson**")
     lines.append("")
-    lines.append("$$w[n]=w_{\\text{Hann}}[n]\\exp\\left(-\\alpha\\frac{|n-m|}{m}\\right)$$")
+    lines.append(
+        "$$w[n]=w_{\\text{Hann}}[n]\\exp\\left(-\\alpha\\frac{|n-m|}{m}\\right)$$"
+    )
     lines.append("")
     lines.append("**(W16) General Hamming**")
     lines.append("")
@@ -1358,26 +1529,40 @@ def write_window_reference() -> None:
     lines.append("")
     lines.append("**(W17) Bohman**")
     lines.append("")
-    lines.append("$$x=\\left|\\frac{2n}{N-1}-1\\right|,\\quad w[n]=(1-x)\\cos(\\pi x)+\\frac{\\sin(\\pi x)}{\\pi}$$")
+    lines.append(
+        "$$x=\\left|\\frac{2n}{N-1}-1\\right|,\\quad w[n]=(1-x)\\cos(\\pi x)+\\frac{\\sin(\\pi x)}{\\pi}$$"
+    )
     lines.append("")
     lines.append("**(W18) Kaiser-Bessel**")
     lines.append("")
-    lines.append("$$w[n]=\\frac{I_0\\left(\\beta\\sqrt{1-r_n^2}\\right)}{I_0(\\beta)},\\quad r_n=\\frac{n-m}{m}$$")
+    lines.append(
+        "$$w[n]=\\frac{I_0\\left(\\beta\\sqrt{1-r_n^2}\\right)}{I_0(\\beta)},\\quad r_n=\\frac{n-m}{m}$$"
+    )
     lines.append("")
-    lines.append("Each supported pvx window maps to one of the formula families above with the per-window constants shown below.")
+    lines.append(
+        "Each supported pvx window maps to one of the formula families above with the per-window constants shown below."
+    )
     lines.append("")
     lines.append("## Quantitative Metrics")
     lines.append("")
     lines.append("- Coherent gain: $CG=\\frac{1}{N}\\sum_{n=0}^{N-1}w[n]$")
-    lines.append("- Equivalent noise bandwidth (bins): $ENBW=\\frac{N\\sum_n w[n]^2}{(\\sum_n w[n])^2}$")
+    lines.append(
+        "- Equivalent noise bandwidth (bins): $ENBW=\\frac{N\\sum_n w[n]^2}{(\\sum_n w[n])^2}$"
+    )
     lines.append("- Scalloping loss (dB): response ratio at a half-bin sinusoid offset")
-    lines.append("- Main-lobe width (bins): measured from the first post-DC local minimum in zero-padded FFT magnitude")
+    lines.append(
+        "- Main-lobe width (bins): measured from the first post-DC local minimum in zero-padded FFT magnitude"
+    )
     lines.append("- Peak sidelobe (dB): maximum sidelobe level outside the main lobe")
     lines.append("")
     lines.append("## Complete Window Catalog")
     lines.append("")
-    lines.append("| Window | Family | Parameters | Formula | Coherent gain | ENBW (bins) | Scalloping loss (dB) | Main-lobe width (bins) | Peak sidelobe (dB) | Plots | Pros | Cons | Usage advice |")
-    lines.append("| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- | --- | --- | --- |")
+    lines.append(
+        "| Window | Family | Parameters | Formula | Coherent gain | ENBW (bins) | Scalloping loss (dB) | Main-lobe width (bins) | Peak sidelobe (dB) | Plots | Pros | Cons | Usage advice |"
+    )
+    lines.append(
+        "| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- | --- | --- | --- |"
+    )
     for entry in entries:
         name = entry["name"]
         m = metrics_by_name[name]
@@ -1415,13 +1600,19 @@ def write_window_reference() -> None:
     lines.append("## Practical Selection Guidance")
     lines.append("")
     lines.append("- Use `hann` or `hamming` for balanced everyday phase-vocoder work.")
-    lines.append("- Use `kaiser` when you need explicit sidelobe control with `--kaiser-beta`.")
+    lines.append(
+        "- Use `kaiser` when you need explicit sidelobe control with `--kaiser-beta`."
+    )
     lines.append("- Use `flattop` for amplitude-accuracy-focused spectral measurement.")
     lines.append("- Use `tukey_*` when you want a controllable flat center region.")
-    lines.append("- Use Gaussian/Cauchy/Exponential families to experiment with edge-decay shape and time-locality.")
+    lines.append(
+        "- Use Gaussian/Cauchy/Exponential families to experiment with edge-decay shape and time-locality."
+    )
     lines.append("")
     lines.extend(attribution_section_lines())
-    (DOCS_DIR / "WINDOW_REFERENCE.md").write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+    (DOCS_DIR / "WINDOW_REFERENCE.md").write_text(
+        "\n".join(lines).rstrip() + "\n", encoding="utf-8"
+    )
 
 
 def main() -> int:

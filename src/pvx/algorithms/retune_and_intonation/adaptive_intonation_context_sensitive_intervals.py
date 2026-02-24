@@ -28,9 +28,9 @@ if __package__ is None or __package__ == "":
 
 from pvx.algorithms.base import AlgorithmResult, run_algorithm
 
-ALGORITHM_ID = 'retune_and_intonation.adaptive_intonation_context_sensitive_intervals'
-ALGORITHM_NAME = 'Adaptive intonation (context-sensitive intervals)'
-THEME = 'Retune and Intonation'
+ALGORITHM_ID = "retune_and_intonation.adaptive_intonation_context_sensitive_intervals"
+ALGORITHM_NAME = "Adaptive intonation (context-sensitive intervals)"
+THEME = "Retune and Intonation"
 
 
 def process(audio: np.ndarray, sample_rate: int, **params: Any) -> AlgorithmResult:

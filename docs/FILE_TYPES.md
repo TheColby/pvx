@@ -5,7 +5,7 @@
 
 
 
-`pvx` uses `python-soundfile` (`soundfile`) backed by `libsndfile` for audio input/output (I/O).  
+`pvx` uses `python-soundfile` (`soundfile`) backed by `libsndfile` for audio input/output (I/O).
 This means some format support is runtime/platform dependent.
 
 ## I/O Behavior by Category

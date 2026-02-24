@@ -109,7 +109,9 @@ PAPERS: list[dict[str, str]] = [
         "year": "1976",
         "title": "Implementation of the Digital Phase Vocoder Using the Fast Fourier Transform",
         "venue": "IEEE Trans. ASSP",
-        "url": scholar("Implementation of the Digital Phase Vocoder Using the Fast Fourier Transform"),
+        "url": scholar(
+            "Implementation of the Digital Phase Vocoder Using the Fast Fourier Transform"
+        ),
     },
     {
         "category": "Phase Vocoder Foundations",
@@ -117,7 +119,9 @@ PAPERS: list[dict[str, str]] = [
         "year": "1980",
         "title": "Time-Scale Modification of Speech Based on Short-Time Fourier Analysis",
         "venue": "IEEE Trans. ASSP",
-        "url": scholar("Time-Scale Modification of Speech Based on Short-Time Fourier Analysis"),
+        "url": scholar(
+            "Time-Scale Modification of Speech Based on Short-Time Fourier Analysis"
+        ),
     },
     {
         "category": "Phase Vocoder Foundations",
@@ -149,7 +153,9 @@ PAPERS: list[dict[str, str]] = [
         "year": "1986",
         "title": "Speech Analysis/Synthesis Based on a Sinusoidal Representation",
         "venue": "IEEE Trans. ASSP",
-        "url": scholar("Speech Analysis/Synthesis Based on a Sinusoidal Representation"),
+        "url": scholar(
+            "Speech Analysis/Synthesis Based on a Sinusoidal Representation"
+        ),
     },
     {
         "category": "Phase Vocoder Foundations",
@@ -197,7 +203,9 @@ PAPERS: list[dict[str, str]] = [
         "year": "2002",
         "title": "Improved Time-Scaling of Musical Audio Using Phase Locking at Transients",
         "venue": "AES Convention",
-        "url": scholar("Improved Time-Scaling of Musical Audio Using Phase Locking at Transients"),
+        "url": scholar(
+            "Improved Time-Scaling of Musical Audio Using Phase Locking at Transients"
+        ),
     },
     {
         "category": "Phase Vocoder Foundations",
@@ -205,7 +213,9 @@ PAPERS: list[dict[str, str]] = [
         "year": "2000",
         "title": "Automatic Technique in Frequency Domain for Near-Lossless Time-Scale Modification of Audio",
         "venue": "ICMC",
-        "url": scholar("Automatic Technique in Frequency Domain for Near-Lossless Time-Scale Modification of Audio"),
+        "url": scholar(
+            "Automatic Technique in Frequency Domain for Near-Lossless Time-Scale Modification of Audio"
+        ),
     },
     {
         "category": "Phase Vocoder Foundations",
@@ -269,7 +279,9 @@ PAPERS: list[dict[str, str]] = [
         "year": "1976",
         "title": "A Comparative Performance Study of Several Pitch Detection Algorithms",
         "venue": "IEEE Trans. ASSP",
-        "url": scholar("A Comparative Performance Study of Several Pitch Detection Algorithms"),
+        "url": scholar(
+            "A Comparative Performance Study of Several Pitch Detection Algorithms"
+        ),
     },
     {
         "category": "Pitch Detection and Tracking",
@@ -285,7 +297,9 @@ PAPERS: list[dict[str, str]] = [
         "year": "1993",
         "title": "Accurate Short-Term Analysis of the Fundamental Frequency and the Harmonics-to-Noise Ratio of a Sampled Sound",
         "venue": "IFA Proceedings",
-        "url": scholar("Accurate Short-Term Analysis of the Fundamental Frequency and the Harmonics-to-Noise Ratio"),
+        "url": scholar(
+            "Accurate Short-Term Analysis of the Fundamental Frequency and the Harmonics-to-Noise Ratio"
+        ),
     },
     {
         "category": "Pitch Detection and Tracking",
@@ -429,7 +443,9 @@ PAPERS: list[dict[str, str]] = [
         "year": "2007",
         "title": "Monaural Sound Source Separation by Nonnegative Matrix Factorization with Temporal Continuity and Sparseness Criteria",
         "venue": "IEEE Trans. Audio, Speech, and Language Processing",
-        "url": scholar("Monaural sound source separation by nonnegative matrix factorization with temporal continuity and sparseness criteria"),
+        "url": scholar(
+            "Monaural sound source separation by nonnegative matrix factorization with temporal continuity and sparseness criteria"
+        ),
     },
     {
         "category": "Separation and Decomposition",
@@ -501,7 +517,9 @@ PAPERS: list[dict[str, str]] = [
         "year": "1949",
         "title": "Extrapolation, Interpolation, and Smoothing of Stationary Time Series",
         "venue": "Book",
-        "url": scholar("Extrapolation Interpolation and Smoothing of Stationary Time Series Wiener"),
+        "url": scholar(
+            "Extrapolation Interpolation and Smoothing of Stationary Time Series Wiener"
+        ),
     },
     {
         "category": "Denoising, Dereverberation, and Spatial Audio",
@@ -533,7 +551,9 @@ PAPERS: list[dict[str, str]] = [
         "year": "1996",
         "title": "Speech Enhancement Based on a Priori Signal to Noise Estimation",
         "venue": "ICASSP",
-        "url": scholar("Speech Enhancement Based on a Priori Signal to Noise Estimation"),
+        "url": scholar(
+            "Speech Enhancement Based on a Priori Signal to Noise Estimation"
+        ),
     },
     {
         "category": "Denoising, Dereverberation, and Spatial Audio",
@@ -565,7 +585,9 @@ PAPERS: list[dict[str, str]] = [
         "year": "2012",
         "title": "Generalization of Multi-Channel Linear Prediction Methods for Blind MIMO Impulse Response Shortening",
         "venue": "IEEE TASLP",
-        "url": scholar("Generalization of Multi-Channel Linear Prediction Methods for Blind MIMO Impulse Response Shortening"),
+        "url": scholar(
+            "Generalization of Multi-Channel Linear Prediction Methods for Blind MIMO Impulse Response Shortening"
+        ),
     },
     {
         "category": "Denoising, Dereverberation, and Spatial Audio",
@@ -597,7 +619,9 @@ PAPERS: list[dict[str, str]] = [
         "year": "1997",
         "title": "Virtual Sound Source Positioning Using Vector Base Amplitude Panning",
         "venue": "JAES",
-        "url": scholar("Virtual Sound Source Positioning Using Vector Base Amplitude Panning"),
+        "url": scholar(
+            "Virtual Sound Source Positioning Using Vector Base Amplitude Panning"
+        ),
     },
     {
         "category": "Denoising, Dereverberation, and Spatial Audio",
@@ -851,7 +875,9 @@ def upgrade_paper_urls(papers: list[dict[str, str]]) -> list[dict[str, str]]:
         upgraded.append(
             {
                 **paper,
-                "url": _upgrade_paper_url(str(paper.get("title", "")), str(paper.get("url", ""))),
+                "url": _upgrade_paper_url(
+                    str(paper.get("title", "")), str(paper.get("url", ""))
+                ),
             }
         )
     return upgraded
@@ -872,7 +898,10 @@ def load_extra_papers() -> list[dict[str, str]]:
             continue
         if not {"category", "authors", "year", "title", "venue", "url"}.issubset(item):
             continue
-        record = {k: str(item[k]) for k in ("category", "authors", "year", "title", "venue", "url")}
+        record = {
+            k: str(item[k])
+            for k in ("category", "authors", "year", "title", "venue", "url")
+        }
         if _is_out_of_scope_paper(record):
             continue
         records.append(record)
@@ -890,7 +919,12 @@ def load_glossary() -> list[dict[str, str]]:
                         continue
                     if not {"term", "category", "description", "url"}.issubset(item):
                         continue
-                    payload.append({k: str(item[k]) for k in ("term", "category", "description", "url")})
+                    payload.append(
+                        {
+                            k: str(item[k])
+                            for k in ("term", "category", "description", "url")
+                        }
+                    )
         except Exception:
             payload = []
     if not payload:
@@ -913,7 +947,9 @@ PAPERS = [
     for paper in dedupe_papers(upgrade_paper_urls(PAPERS + load_extra_papers()))
     if not _is_out_of_scope_paper(paper)
 ]
-TECHNICAL_GLOSSARY = [entry for entry in load_glossary() if not _is_out_of_scope_glossary(entry)]
+TECHNICAL_GLOSSARY = [
+    entry for entry in load_glossary() if not _is_out_of_scope_glossary(entry)
+]
 GLOSSARY_LOOKUP = {entry["term"].lower(): entry for entry in TECHNICAL_GLOSSARY}
 
 
@@ -933,7 +969,11 @@ def infer_glossary_terms(*texts: str, limit: int = 6) -> list[dict[str, str]]:
         # Support acronym-style terms (e.g., LUFS, STFT) without
         # matching arbitrary substrings inside unrelated words.
         compact = re.sub(r"[^a-z0-9]+", "", token)
-        if compact and len(compact) <= 8 and re.search(rf"\b{re.escape(compact)}\b", norm_haystack):
+        if (
+            compact
+            and len(compact) <= 8
+            and re.search(rf"\b{re.escape(compact)}\b", norm_haystack)
+        ):
             matches.append(entry)
     dedup: list[dict[str, str]] = []
     seen: set[str] = set()
@@ -952,7 +992,7 @@ def glossary_links_html(entries: list[dict[str, str]], *, page_prefix: str = "")
     if not entries:
         return "None"
     return ", ".join(
-        f"<a href=\"{page_prefix}glossary.html#{escape(slugify(entry['term']))}\">{escape(entry['term'])}</a>"
+        f'<a href="{page_prefix}glossary.html#{escape(slugify(entry["term"]))}">{escape(entry["term"])}</a>'
         for entry in entries
     )
 
@@ -979,7 +1019,19 @@ def classify_reference_url(url: str) -> str:
         return "arxiv"
     if "scholar.google.com" in lower:
         return "scholar"
-    if any(host in lower for host in ("ieeexplore", "acm.org", "springer", "sciencedirect", "wiley", "jstor", "itu.int", "tech.ebu.ch")):
+    if any(
+        host in lower
+        for host in (
+            "ieeexplore",
+            "acm.org",
+            "springer",
+            "sciencedirect",
+            "wiley",
+            "jstor",
+            "itu.int",
+            "tech.ebu.ch",
+        )
+    ):
         return "publisher_or_standard"
     return "web"
 
@@ -1073,7 +1125,9 @@ def window_entries() -> list[dict[str, str]]:
             family = "Cosine power"
             params = f"power={voc_core._COSINE_POWER_WINDOWS[name]:g}"
             formula = "W14"
-            note = "Raises sine taper to power $p$; higher $p$ narrows effective support."
+            note = (
+                "Raises sine taper to power $p$; higher $p$ narrows effective support."
+            )
         elif name in voc_core._HANN_POISSON_WINDOWS:
             family = "Hann-Poisson"
             params = f"alpha={voc_core._HANN_POISSON_WINDOWS[name]:g}"
@@ -1128,7 +1182,13 @@ def window_tradeoffs(name: str, family: str) -> tuple[str, str, str]:
             "Highest sidelobes and strongest leakage/phasiness on non-bin-centered content.",
             "Use only for controlled test tones or when leakage is acceptable.",
         )
-    if name in {"blackman", "blackmanharris", "blackman_nuttall", "nuttall", "exact_blackman"}:
+    if name in {
+        "blackman",
+        "blackmanharris",
+        "blackman_nuttall",
+        "nuttall",
+        "exact_blackman",
+    }:
         return (
             "Strong sidelobe suppression for cleaner spectral separation.",
             "Wider main lobe than Hann/Hamming.",
@@ -1284,6 +1344,7 @@ WINDOW_EQUATIONS_HTML = """
 </div>
 """.strip()
 
+
 def _split_top_level_once(text: str, delimiter: str = ",") -> tuple[str, str | None]:
     depth = 0
     quote: str | None = None
@@ -1360,7 +1421,9 @@ def _extract_params_get_calls(line: str) -> list[tuple[str, str | None]]:
     return calls
 
 
-def extract_algorithm_param_specs(base_path: Path) -> tuple[dict[str, list[str]], dict[str, dict[str, str]]]:
+def extract_algorithm_param_specs(
+    base_path: Path,
+) -> tuple[dict[str, list[str]], dict[str, dict[str, str]]]:
     text = base_path.read_text(encoding="utf-8")
     lines = text.splitlines()
     key_map: dict[str, list[str]] = {}
@@ -1419,19 +1482,27 @@ def extract_module_cli_flags(module_path: Path) -> list[str]:
         if not isinstance(node.func, ast.Attribute) or node.func.attr != "add_argument":
             continue
         for arg in node.args:
-            if isinstance(arg, ast.Constant) and isinstance(arg.value, str) and arg.value.startswith("--"):
+            if (
+                isinstance(arg, ast.Constant)
+                and isinstance(arg.value, str)
+                and arg.value.startswith("--")
+            ):
                 flag = str(arg.value).strip()
                 if flag and flag not in flags:
                     flags.append(flag)
     return flags
 
 
-def collect_algorithm_module_flags(groups: OrderedDict[str, list[tuple[str, dict[str, str]]]]) -> dict[str, list[str]]:
+def collect_algorithm_module_flags(
+    groups: OrderedDict[str, list[tuple[str, dict[str, str]]]],
+) -> dict[str, list[str]]:
     by_slug: dict[str, list[str]] = {}
     for items in groups.values():
         for algorithm_id, meta in items:
             _, slug = algorithm_id.split(".", 1)
-            module_path = ROOT / "src" / Path(*str(meta["module"]).split(".")) .with_suffix(".py")
+            module_path = (
+                ROOT / "src" / Path(*str(meta["module"]).split(".")).with_suffix(".py")
+            )
             by_slug[slug] = extract_module_cli_flags(module_path)
     return by_slug
 
@@ -1451,7 +1522,7 @@ def sample_value_from_default(key: str, default_expr: str | None) -> str:
     if "channels" in key_l:
         return "2"
     if any(token in key_l for token in ("path", "file", "name")):
-        return "\"example\""
+        return '"example"'
     if any(token in key_l for token in ("ratio", "amount", "strength", "mix", "depth")):
         return "1.0"
     if any(token in key_l for token in ("threshold", "floor", "gain", "db", "ms")):
@@ -1459,7 +1530,9 @@ def sample_value_from_default(key: str, default_expr: str | None) -> str:
     return "<value>"
 
 
-def format_sample_params(keys: list[str], defaults: dict[str, str], *, max_items: int = 6) -> str:
+def format_sample_params(
+    keys: list[str], defaults: dict[str, str], *, max_items: int = 6
+) -> str:
     if not keys:
         return "{}"
     parts: list[str] = []
@@ -1529,7 +1602,7 @@ def html_page(
     mermaid_header = ""
     if include_mermaid:
         mermaid_header = (
-            "  <script type=\"module\">\n"
+            '  <script type="module">\n'
             "    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';\n"
             "    mermaid.initialize({ startOnLoad: true, securityLevel: 'loose' });\n"
             "  </script>\n"
@@ -1580,7 +1653,8 @@ def html_page(
 
 
 def write_style_css() -> None:
-    css = """
+    css = (
+        """
 :root {
   --bg: #f7f8fa;
   --card: #ffffff;
@@ -1746,11 +1820,16 @@ table.papers-table td.paper-link a {
   .site-header .pvx-logo { height: 40px; }
   .site-header h1 { font-size: 1.45rem; }
 }
-""".strip() + "\n"
+""".strip()
+        + "\n"
+    )
     (DOCS_HTML_DIR / "style.css").write_text(css, encoding="utf-8")
 
 
-def render_index(groups: OrderedDict[str, list[tuple[str, dict[str, str]]]], params: dict[str, list[str]]) -> None:
+def render_index(
+    groups: OrderedDict[str, list[tuple[str, dict[str, str]]]],
+    params: dict[str, list[str]],
+) -> None:
     total_algorithms = sum(len(items) for items in groups.values())
     total_param_keys = len({k for values in params.values() for k in values})
     unique_concepts = len(TECHNICAL_GLOSSARY)
@@ -1848,7 +1927,7 @@ pvx --help</code></pre>
             f"<td><code>{escape(folder)}</code></td>"
             f"<td>{escape(theme)}</td>"
             f"<td>{len(items)}</td>"
-            f"<td><a href=\"groups/{escape(folder)}.html\">Open</a></td>"
+            f'<td><a href="groups/{escape(folder)}.html">Open</a></td>'
             "</tr>"
         )
 
@@ -1875,7 +1954,7 @@ pvx --help</code></pre>
         "pvx HyperText Markup Language (HTML) Documentation",
         "\n".join(content_parts),
         css_path="style.css",
-        breadcrumbs="<p class=\"kicker\">Index of grouped algorithm docs, linked glossary, and bibliography</p>",
+        breadcrumbs='<p class="kicker">Index of grouped algorithm docs, linked glossary, and bibliography</p>',
     )
     (DOCS_HTML_DIR / "index.html").write_text(html, encoding="utf-8")
 
@@ -1884,7 +1963,10 @@ def module_path_from_meta(meta: dict[str, str]) -> str:
     return "src/" + meta["module"].replace(".", "/") + ".py"
 
 
-def render_group_pages(groups: OrderedDict[str, list[tuple[str, dict[str, str]]]], params: dict[str, list[str]]) -> None:
+def render_group_pages(
+    groups: OrderedDict[str, list[tuple[str, dict[str, str]]]],
+    params: dict[str, list[str]],
+) -> None:
     for folder, items in groups.items():
         theme = items[0][1]["theme"] if items else folder
         rows: list[str] = []
@@ -1896,8 +1978,14 @@ def render_group_pages(groups: OrderedDict[str, list[tuple[str, dict[str, str]]]
             subgroup = module_parts[-2] if len(module_parts) > 4 else "core"
             subgroup_counts[subgroup] = subgroup_counts.get(subgroup, 0) + 1
             keys = params.get(slug, [])
-            key_text = ", ".join(f"<code>{escape(k)}</code>" for k in keys) if keys else "None (generic/default path)"
-            concepts = infer_glossary_terms(algorithm_id, meta["name"], subgroup, theme, limit=6)
+            key_text = (
+                ", ".join(f"<code>{escape(k)}</code>" for k in keys)
+                if keys
+                else "None (generic/default path)"
+            )
+            concepts = infer_glossary_terms(
+                algorithm_id, meta["name"], subgroup, theme, limit=6
+            )
             rows.append(
                 "<tr>"
                 f"<td><code>{escape(algorithm_id)}</code></td>"
@@ -1910,13 +1998,13 @@ def render_group_pages(groups: OrderedDict[str, list[tuple[str, dict[str, str]]]
             )
 
         subgroup_pills = " ".join(
-            f"<span class=\"pill\"><span class=\"mono\">{escape(name)}</span> ({count})</span>"
+            f'<span class="pill"><span class="mono">{escape(name)}</span> ({count})</span>'
             for name, count in subgroup_counts.items()
         )
         subgroups_html = subgroup_pills or '<span class="small">None</span>'
 
         content = (
-            f"<div class=\"card\"><p><strong>Theme:</strong> {escape(theme)}</p>"
+            f'<div class="card"><p><strong>Theme:</strong> {escape(theme)}</p>'
             f"<p><strong>Folder:</strong> <code>{escape(folder)}</code> | <strong>Algorithms:</strong> {len(items)}</p>"
             f"<p><strong>Subgroups:</strong> {subgroups_html}</p>"
             "</div>"
@@ -1928,13 +2016,13 @@ def render_group_pages(groups: OrderedDict[str, list[tuple[str, dict[str, str]]]
 
         breadcrumbs = (
             "<nav>"
-            "<a href=\"../index.html\">Home</a> | "
-            "<a href=\"../papers.html\">Research papers</a> | "
-            "<a href=\"../glossary.html\">Technical glossary</a> | "
-            "<a href=\"../math.html\">Math</a> | "
-            "<a href=\"../windows.html\">Windows</a> | "
-            "<a href=\"../architecture.html\">Architecture</a> | "
-            "<a href=\"../limitations.html\">Limitations</a>"
+            '<a href="../index.html">Home</a> | '
+            '<a href="../papers.html">Research papers</a> | '
+            '<a href="../glossary.html">Technical glossary</a> | '
+            '<a href="../math.html">Math</a> | '
+            '<a href="../windows.html">Windows</a> | '
+            '<a href="../architecture.html">Architecture</a> | '
+            '<a href="../limitations.html">Limitations</a>'
             "</nav>"
         )
         html = html_page(
@@ -1971,45 +2059,49 @@ def render_papers_page() -> None:
     )
 
     toc_items = "".join(
-        f"<li><a href=\"#{escape(slugify(category))}\">{escape(category)} ({len(by_category[category])})</a></li>"
+        f'<li><a href="#{escape(slugify(category))}">{escape(category)} ({len(by_category[category])})</a></li>'
         for category in by_category
     )
-    sections.append(f"<div class=\"card\"><h2>Categories</h2><ul>{toc_items}</ul></div>")
+    sections.append(f'<div class="card"><h2>Categories</h2><ul>{toc_items}</ul></div>')
 
     for category, papers in by_category.items():
         anchor = slugify(category)
         rows = []
-        for p in sorted(papers, key=lambda item: (item.get("year", ""), item.get("title", "")), reverse=True):
+        for p in sorted(
+            papers,
+            key=lambda item: (item.get("year", ""), item.get("title", "")),
+            reverse=True,
+        ):
             link_type = classify_reference_url(p["url"])
             rows.append(
                 "<tr>"
-                f"<td class=\"paper-year\">{escape(p['year'])}</td>"
-                f"<td class=\"paper-authors\">{escape(p['authors'])}</td>"
-                f"<td class=\"paper-title\">{escape(p['title'])}</td>"
-                f"<td class=\"paper-venue\">{escape(p['venue'])}</td>"
-                f"<td class=\"paper-linktype\"><code>{escape(link_type)}</code></td>"
-                f"<td class=\"paper-link\"><a href=\"{escape(p['url'])}\" target=\"_blank\" rel=\"noopener\">Open</a></td>"
+                f'<td class="paper-year">{escape(p["year"])}</td>'
+                f'<td class="paper-authors">{escape(p["authors"])}</td>'
+                f'<td class="paper-title">{escape(p["title"])}</td>'
+                f'<td class="paper-venue">{escape(p["venue"])}</td>'
+                f'<td class="paper-linktype"><code>{escape(link_type)}</code></td>'
+                f'<td class="paper-link"><a href="{escape(p["url"])}" target="_blank" rel="noopener">Open</a></td>'
                 "</tr>"
             )
         sections.append(
-            f"<h2 id=\"{escape(anchor)}\">{escape(category)}</h2>"
-            "<div class=\"table-scroll\">"
-            "<table class=\"papers-table\">"
+            f'<h2 id="{escape(anchor)}">{escape(category)}</h2>'
+            '<div class="table-scroll">'
+            '<table class="papers-table">'
             "<colgroup>"
-            "<col class=\"col-year\" />"
-            "<col class=\"col-authors\" />"
-            "<col class=\"col-title\" />"
-            "<col class=\"col-venue\" />"
-            "<col class=\"col-linktype\" />"
-            "<col class=\"col-link\" />"
+            '<col class="col-year" />'
+            '<col class="col-authors" />'
+            '<col class="col-title" />'
+            '<col class="col-venue" />'
+            '<col class="col-linktype" />'
+            '<col class="col-link" />'
             "</colgroup>"
             "<thead><tr>"
-            "<th class=\"papers-col-year\">Year</th>"
+            '<th class="papers-col-year">Year</th>'
             "<th>Authors</th>"
             "<th>Title</th>"
             "<th>Venue</th>"
-            "<th class=\"papers-col-linktype\">Link type</th>"
-            "<th class=\"papers-col-link\">Link</th>"
+            '<th class="papers-col-linktype">Link type</th>'
+            '<th class="papers-col-link">Link</th>'
             "</tr></thead>"
             f"<tbody>{''.join(rows)}</tbody>"
             "</table>"
@@ -2018,11 +2110,11 @@ def render_papers_page() -> None:
 
     breadcrumbs = (
         "<nav>"
-        "<a href=\"index.html\">Home</a> | "
-        "<a href=\"glossary.html\">Technical glossary</a> | "
-        "<a href=\"math.html\">Math</a> | "
-        "<a href=\"windows.html\">Windows</a> | "
-        "<a href=\"citations.html\">Citation quality</a>"
+        '<a href="index.html">Home</a> | '
+        '<a href="glossary.html">Technical glossary</a> | '
+        '<a href="math.html">Math</a> | '
+        '<a href="windows.html">Windows</a> | '
+        '<a href="citations.html">Citation quality</a>'
         "</nav>"
     )
     html = html_page(
@@ -2056,23 +2148,23 @@ def render_glossary_page() -> None:
     )
 
     toc = "".join(
-        f"<li><a href=\"#{escape(slugify(category))}\">{escape(category)} ({len(entries)})</a></li>"
+        f'<li><a href="#{escape(slugify(category))}">{escape(category)} ({len(entries)})</a></li>'
         for category, entries in by_category.items()
     )
-    sections.append(f"<div class=\"card\"><h2>Categories</h2><ul>{toc}</ul></div>")
+    sections.append(f'<div class="card"><h2>Categories</h2><ul>{toc}</ul></div>')
 
     for category, entries in by_category.items():
         rows: list[str] = []
         for entry in sorted(entries, key=lambda item: item["term"].lower()):
             rows.append(
                 "<tr>"
-                f"<td id=\"{escape(slugify(entry['term']))}\">{escape(entry['term'])}</td>"
+                f'<td id="{escape(slugify(entry["term"]))}">{escape(entry["term"])}</td>'
                 f"<td>{escape(entry['description'])}</td>"
-                f"<td><a href=\"{escape(entry['url'])}\" target=\"_blank\" rel=\"noopener\">Reference</a></td>"
+                f'<td><a href="{escape(entry["url"])}" target="_blank" rel="noopener">Reference</a></td>'
                 "</tr>"
             )
         sections.append(
-            f"<h2 id=\"{escape(slugify(category))}\">{escape(category)}</h2>"
+            f'<h2 id="{escape(slugify(category))}">{escape(category)}</h2>'
             "<table>"
             "<thead><tr><th>Term</th><th>Description</th><th>External link</th></tr></thead>"
             f"<tbody>{''.join(rows)}</tbody>"
@@ -2081,11 +2173,11 @@ def render_glossary_page() -> None:
 
     breadcrumbs = (
         "<nav>"
-        "<a href=\"index.html\">Home</a> | "
-        "<a href=\"papers.html\">Research papers</a> | "
-        "<a href=\"math.html\">Math</a> | "
-        "<a href=\"windows.html\">Windows</a> | "
-        "<a href=\"architecture.html\">Architecture</a>"
+        '<a href="index.html">Home</a> | '
+        '<a href="papers.html">Research papers</a> | '
+        '<a href="math.html">Math</a> | '
+        '<a href="windows.html">Windows</a> | '
+        '<a href="architecture.html">Architecture</a>'
         "</nav>"
     )
     html = html_page(
@@ -2098,10 +2190,18 @@ def render_glossary_page() -> None:
 
 
 def render_math_page() -> None:
-    interpolation_payload = load_json(INTERPOLATION_GALLERY_PATH, {"plots": [], "control_points": []})
-    interpolation_plots = interpolation_payload.get("plots", []) if isinstance(interpolation_payload, dict) else []
+    interpolation_payload = load_json(
+        INTERPOLATION_GALLERY_PATH, {"plots": [], "control_points": []}
+    )
+    interpolation_plots = (
+        interpolation_payload.get("plots", [])
+        if isinstance(interpolation_payload, dict)
+        else []
+    )
     interpolation_points = (
-        interpolation_payload.get("control_points", []) if isinstance(interpolation_payload, dict) else []
+        interpolation_payload.get("control_points", [])
+        if isinstance(interpolation_payload, dict)
+        else []
     )
     control_points_text = "n/a"
     if isinstance(interpolation_points, list) and interpolation_points:
@@ -2129,19 +2229,25 @@ def render_math_page() -> None:
             path = str(plot.get("path", "")).strip()
             if not path:
                 continue
-            cli = f"--interp {mode}" if order is None else f"--interp {mode} --order {int(order)}"
+            cli = (
+                f"--interp {mode}"
+                if order is None
+                else f"--interp {mode} --order {int(order)}"
+            )
             order_text = "n/a" if order is None else str(int(order))
             interpolation_rows.append(
                 "<tr>"
                 f"<td><code>{escape(label)}</code></td>"
                 f"<td><code>{escape(cli)}</code></td>"
                 f"<td>{escape(order_text)}</td>"
-                f"<td><img src=\"../{escape(path)}\" alt=\"{escape(label)} interpolation curve\" "
-                "loading=\"lazy\" style=\"max-width: 420px; width: 100%;\" /></td>"
+                f'<td><img src="../{escape(path)}" alt="{escape(label)} interpolation curve" '
+                'loading="lazy" style="max-width: 420px; width: 100%;" /></td>'
                 "</tr>"
             )
 
-    interpolation_table_html = "<p class=\"small\">No interpolation plot gallery found.</p>"
+    interpolation_table_html = (
+        '<p class="small">No interpolation plot gallery found.</p>'
+    )
     if interpolation_rows:
         interpolation_table_html = (
             "<table>"
@@ -2151,7 +2257,9 @@ def render_math_page() -> None:
         )
 
     function_payload = load_json(FUNCTION_GALLERY_PATH, {"plots": []})
-    function_plots = function_payload.get("plots", []) if isinstance(function_payload, dict) else []
+    function_plots = (
+        function_payload.get("plots", []) if isinstance(function_payload, dict) else []
+    )
     function_rows: list[str] = []
     if isinstance(function_plots, list):
         for plot in function_plots:
@@ -2166,11 +2274,11 @@ def render_math_page() -> None:
                 "<tr>"
                 f"<td>{escape(name)}</td>"
                 f"<td>{escape(usage)}</td>"
-                f"<td><img src=\"../{escape(path)}\" alt=\"{escape(name)} function graph\" loading=\"lazy\" "
-                "style=\"max-width: 520px; width: 100%;\" /></td>"
+                f'<td><img src="../{escape(path)}" alt="{escape(name)} function graph" loading="lazy" '
+                'style="max-width: 520px; width: 100%;" /></td>'
                 "</tr>"
             )
-    function_table_html = "<p class=\"small\">No function graph gallery found.</p>"
+    function_table_html = '<p class="small">No function graph gallery found.</p>'
     if function_rows:
         function_table_html = (
             "<table>"
@@ -2373,11 +2481,11 @@ python3 pvxvoc.py synth_pad.wav --transform hartley --time-stretch 1.30 --output
     )
     breadcrumbs = (
         "<nav>"
-        "<a href=\"index.html\">Home</a> | "
-        "<a href=\"papers.html\">Research papers</a> | "
-        "<a href=\"glossary.html\">Technical glossary</a> | "
-        "<a href=\"windows.html\">Window reference</a> | "
-        "<a href=\"benchmarks.html\">Benchmarks</a>"
+        '<a href="index.html">Home</a> | '
+        '<a href="papers.html">Research papers</a> | '
+        '<a href="glossary.html">Technical glossary</a> | '
+        '<a href="windows.html">Window reference</a> | '
+        '<a href="benchmarks.html">Benchmarks</a>'
         "</nav>"
     )
     html = html_page(
@@ -2391,7 +2499,9 @@ python3 pvxvoc.py synth_pad.wav --transform hartley --time-stretch 1.30 --output
 
 def render_windows_page() -> None:
     metrics_payload = load_json(WINDOW_METRICS_PATH, {"windows": {}})
-    metrics_map = metrics_payload.get("windows", {}) if isinstance(metrics_payload, dict) else {}
+    metrics_map = (
+        metrics_payload.get("windows", {}) if isinstance(metrics_payload, dict) else {}
+    )
 
     rows: list[str] = []
     entries = window_entries()
@@ -2407,8 +2517,8 @@ def render_windows_page() -> None:
         plot_html = "n/a"
         if time_plot and freq_plot:
             plot_html = (
-                f"<a href=\"../{escape(str(time_plot))}\" target=\"_blank\" rel=\"noopener\">time</a> / "
-                f"<a href=\"../{escape(str(freq_plot))}\" target=\"_blank\" rel=\"noopener\">freq</a>"
+                f'<a href="../{escape(str(time_plot))}" target="_blank" rel="noopener">time</a> / '
+                f'<a href="../{escape(str(freq_plot))}" target="_blank" rel="noopener">freq</a>'
             )
 
         rows.append(
@@ -2436,8 +2546,8 @@ def render_windows_page() -> None:
         gallery_rows.append(
             "<tr>"
             f"<td><code>{escape(name)}</code></td>"
-            f"<td><img src=\"../assets/windows/{escape(name)}_time.svg\" alt=\"{escape(name)} time-domain plot\" loading=\"lazy\" /></td>"
-            f"<td><img src=\"../assets/windows/{escape(name)}_freq.svg\" alt=\"{escape(name)} magnitude spectrum\" loading=\"lazy\" /></td>"
+            f'<td><img src="../assets/windows/{escape(name)}_time.svg" alt="{escape(name)} time-domain plot" loading="lazy" /></td>'
+            f'<td><img src="../assets/windows/{escape(name)}_freq.svg" alt="{escape(name)} magnitude spectrum" loading="lazy" /></td>'
             "</tr>"
         )
 
@@ -2512,10 +2622,10 @@ def render_windows_page() -> None:
     )
     breadcrumbs = (
         "<nav>"
-        "<a href=\"index.html\">Home</a> | "
-        "<a href=\"math.html\">Math foundations</a> | "
-        "<a href=\"glossary.html\">Technical glossary</a> | "
-        "<a href=\"benchmarks.html\">Benchmarks</a>"
+        '<a href="index.html">Home</a> | '
+        '<a href="math.html">Math foundations</a> | '
+        '<a href="glossary.html">Technical glossary</a> | '
+        '<a href="benchmarks.html">Benchmarks</a>'
         "</nav>"
     )
     html = html_page(
@@ -2582,10 +2692,10 @@ flowchart LR
 """.strip()
     breadcrumbs = (
         "<nav>"
-        "<a href=\"index.html\">Home</a> | "
-        "<a href=\"math.html\">Math</a> | "
-        "<a href=\"windows.html\">Windows</a> | "
-        "<a href=\"limitations.html\">Limitations</a>"
+        '<a href="index.html">Home</a> | '
+        '<a href="math.html">Math</a> | '
+        '<a href="windows.html">Windows</a> | '
+        '<a href="limitations.html">Limitations</a>'
         "</nav>"
     )
     html = html_page(
@@ -2610,7 +2720,7 @@ def render_cli_flags_page() -> None:
 
     sections: list[str] = []
     sections.append(
-        "<div class=\"card\">"
+        '<div class="card">'
         f"<p>Total unique long flags: <strong>{len(payload.get('unique_flags', [])) if isinstance(payload, dict) else 0}</strong></p>"
         "<p>Source index: <code>docs/CLI_FLAGS_REFERENCE.md</code> and <code>docs/cli_flags_reference.json</code>.</p>"
         "</div>"
@@ -2621,7 +2731,9 @@ def render_cli_flags_page() -> None:
         for row in sorted(rows, key=lambda item: str(item.get("flag", ""))):
             default_text = "" if row.get("default") is None else str(row.get("default"))
             choices = row.get("choices")
-            choices_text = ", ".join(str(c) for c in choices) if isinstance(choices, list) else ""
+            choices_text = (
+                ", ".join(str(c) for c in choices) if isinstance(choices, list) else ""
+            )
             table_rows.append(
                 "<tr>"
                 f"<td><code>{escape(str(row.get('flag', '')))}</code></td>"
@@ -2643,9 +2755,9 @@ def render_cli_flags_page() -> None:
 
     breadcrumbs = (
         "<nav>"
-        "<a href=\"index.html\">Home</a> | "
-        "<a href=\"cookbook.html\">Cookbook</a> | "
-        "<a href=\"limitations.html\">Limitations</a>"
+        '<a href="index.html">Home</a> | '
+        '<a href="cookbook.html">Cookbook</a> | '
+        '<a href="limitations.html">Limitations</a>'
         "</nav>"
     )
     html = html_page(
@@ -2675,7 +2787,7 @@ def render_limitations_page() -> None:
             "</tr>"
         )
     sections.append(
-        "<div class=\"card\"><p>Limitations guidance for all algorithm groups and algorithm IDs.</p></div>"
+        '<div class="card"><p>Limitations guidance for all algorithm groups and algorithm IDs.</p></div>'
         "<h2>Group Summary</h2>"
         "<table>"
         "<thead><tr><th>Group</th><th>Assumptions</th><th>Failure modes</th><th>When not to use</th></tr></thead>"
@@ -2699,7 +2811,7 @@ def render_limitations_page() -> None:
                     "</tr>"
                 )
         sections.append(
-            f"<h2 id=\"{escape(group)}\"><code>{escape(group)}</code></h2>"
+            f'<h2 id="{escape(group)}"><code>{escape(group)}</code></h2>'
             "<table>"
             "<thead><tr><th>Algorithm ID</th><th>Assumptions</th><th>Failure modes</th><th>When not to use</th></tr></thead>"
             f"<tbody>{''.join(table_rows)}</tbody>"
@@ -2708,9 +2820,9 @@ def render_limitations_page() -> None:
 
     breadcrumbs = (
         "<nav>"
-        "<a href=\"index.html\">Home</a> | "
-        "<a href=\"architecture.html\">Architecture</a> | "
-        "<a href=\"benchmarks.html\">Benchmarks</a>"
+        '<a href="index.html">Home</a> | '
+        '<a href="architecture.html">Architecture</a> | '
+        '<a href="benchmarks.html">Benchmarks</a>'
         "</nav>"
     )
     html = html_page(
@@ -2754,12 +2866,12 @@ def render_benchmarks_page() -> None:
         )
 
     content = (
-        "<div class=\"card\">"
+        '<div class="card">'
         "<p>Reproducible STFT/ISTFT benchmark summary.</p>"
         "<p><code>python3 scripts/scripts_generate_docs_extras.py --run-benchmarks</code></p>"
-        f"<p class=\"small\">Spec: sample_rate={escape(str(spec.get('sample_rate', 'n/a')))} Hz, "
+        f'<p class="small">Spec: sample_rate={escape(str(spec.get("sample_rate", "n/a")))} Hz, '
         f"duration={escape(str(spec.get('duration_seconds', 'n/a')))} s</p>"
-        f"<p class=\"small\">Host: {escape(str(host.get('platform', 'n/a')))} | machine={escape(str(host.get('machine', 'n/a')))} | python={escape(str(host.get('python', 'n/a')))}</p>"
+        f'<p class="small">Host: {escape(str(host.get("platform", "n/a")))} | machine={escape(str(host.get("machine", "n/a")))} | python={escape(str(host.get("python", "n/a")))}</p>'
         "</div>"
         "<table>"
         "<thead><tr><th>Backend</th><th>Status</th><th>Elapsed (ms)</th><th>Peak host memory (MB)</th><th>SNR vs input (dB)</th><th>Spectral dist vs input (dB)</th><th>SNR vs CPU (dB)</th><th>Spectral dist vs CPU (dB)</th><th>Notes</th></tr></thead>"
@@ -2768,9 +2880,9 @@ def render_benchmarks_page() -> None:
     )
     breadcrumbs = (
         "<nav>"
-        "<a href=\"index.html\">Home</a> | "
-        "<a href=\"math.html\">Math</a> | "
-        "<a href=\"windows.html\">Windows</a>"
+        '<a href="index.html">Home</a> | '
+        '<a href="math.html">Math</a> | '
+        '<a href="windows.html">Windows</a>'
         "</nav>"
     )
     html = html_page(
@@ -2793,7 +2905,7 @@ def render_cookbook_page() -> None:
 
     sections: list[str] = []
     sections.append(
-        "<div class=\"card\">"
+        '<div class="card">'
         "<p>Pipeline cookbook for practical one-liners, including Unix pipes and mastering chains.</p>"
         "<p>Markdown source: <code>docs/PIPELINE_COOKBOOK.md</code>.</p>"
         "</div>"
@@ -2818,9 +2930,9 @@ def render_cookbook_page() -> None:
 
     breadcrumbs = (
         "<nav>"
-        "<a href=\"index.html\">Home</a> | "
-        "<a href=\"cli_flags.html\">CLI flags</a> | "
-        "<a href=\"benchmarks.html\">Benchmarks</a>"
+        '<a href="index.html">Home</a> | '
+        '<a href="cli_flags.html">CLI flags</a> | '
+        '<a href="benchmarks.html">Benchmarks</a>'
         "</nav>"
     )
     html = html_page(
@@ -2835,7 +2947,9 @@ def render_cookbook_page() -> None:
 def render_citations_page() -> None:
     payload = load_json(CITATION_QUALITY_PATH, {"counts": {}, "unresolved_scholar": []})
     counts = payload.get("counts", {}) if isinstance(payload, dict) else {}
-    unresolved = payload.get("unresolved_scholar", []) if isinstance(payload, dict) else []
+    unresolved = (
+        payload.get("unresolved_scholar", []) if isinstance(payload, dict) else []
+    )
 
     summary_rows = "".join(
         "<tr>"
@@ -2853,14 +2967,14 @@ def render_citations_page() -> None:
             f"<td>{escape(str(row.get('year', '')))}</td>"
             f"<td>{escape(str(row.get('authors', '')))}</td>"
             f"<td>{escape(str(row.get('title', '')))}</td>"
-            f"<td><a href=\"{escape(str(row.get('url', '')))}\" target=\"_blank\" rel=\"noopener\">link</a></td>"
+            f'<td><a href="{escape(str(row.get("url", "")))}" target="_blank" rel="noopener">link</a></td>'
             "</tr>"
         )
 
     content = (
-        "<div class=\"card\">"
+        '<div class="card">'
         "<p>Citation quality report and BibTeX export.</p>"
-        "<p><a href=\"../references.bib\"><code>docs/references.bib</code></a></p>"
+        '<p><a href="../references.bib"><code>docs/references.bib</code></a></p>'
         "</div>"
         "<h2>Link-Type Summary</h2>"
         "<table><thead><tr><th>Link type</th><th>Count</th></tr></thead>"
@@ -2871,9 +2985,9 @@ def render_citations_page() -> None:
     )
     breadcrumbs = (
         "<nav>"
-        "<a href=\"index.html\">Home</a> | "
-        "<a href=\"papers.html\">Research papers</a> | "
-        "<a href=\"glossary.html\">Glossary</a>"
+        '<a href="index.html">Home</a> | '
+        '<a href="papers.html">Research papers</a> | '
+        '<a href="glossary.html">Glossary</a>'
         "</nav>"
     )
     html = html_page(

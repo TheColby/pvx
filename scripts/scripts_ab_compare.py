@@ -85,16 +85,27 @@ def _render(
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="A/B compare pvx renders with basic objective metrics.")
+    parser = argparse.ArgumentParser(
+        description="A/B compare pvx renders with basic objective metrics."
+    )
     parser.add_argument("--input", type=Path, required=True, help="Input audio file")
     parser.add_argument(
         "--tool",
         default="python3 pvxvoc.py",
         help="Base command used for both renders (default: 'python3 pvxvoc.py')",
     )
-    parser.add_argument("--a-args", required=True, help="Additional argument string for render A")
-    parser.add_argument("--b-args", required=True, help="Additional argument string for render B")
-    parser.add_argument("--out-dir", type=Path, default=Path("reports/ab"), help="Report/output directory")
+    parser.add_argument(
+        "--a-args", required=True, help="Additional argument string for render A"
+    )
+    parser.add_argument(
+        "--b-args", required=True, help="Additional argument string for render B"
+    )
+    parser.add_argument(
+        "--out-dir",
+        type=Path,
+        default=Path("reports/ab"),
+        help="Report/output directory",
+    )
     parser.add_argument("--name", default="ab_compare", help="Report basename")
     args = parser.parse_args(argv)
 
@@ -136,7 +147,12 @@ def main(argv: list[str] | None = None) -> int:
     n = min(audio_a.shape[0], audio_b.shape[0])
     d = np.mean(audio_a[:n, :], axis=1) - np.mean(audio_b[:n, :], axis=1)
     diff_rms = float(np.sqrt(np.mean(d * d) + 1e-12))
-    snr_db = float(20.0 * np.log10(np.sqrt(np.mean(np.mean(audio_a[:n, :], axis=1) ** 2) + 1e-12) / diff_rms))
+    snr_db = float(
+        20.0
+        * np.log10(
+            np.sqrt(np.mean(np.mean(audio_a[:n, :], axis=1) ** 2) + 1e-12) / diff_rms
+        )
+    )
 
     payload = {
         "input": str(input_path),
@@ -145,12 +161,18 @@ def main(argv: list[str] | None = None) -> int:
         "b_args": args.b_args,
         "elapsed_seconds": {"A": elapsed_a, "B": elapsed_b},
         "metrics": {"A": metrics_a, "B": metrics_b},
-        "difference": {"aligned_samples": int(n), "diff_rms": diff_rms, "snr_db_vs_A": snr_db},
+        "difference": {
+            "aligned_samples": int(n),
+            "diff_rms": diff_rms,
+            "snr_db_vs_A": snr_db,
+        },
     }
 
     json_path = out_dir / f"{args.name}.json"
     md_path = out_dir / f"{args.name}.md"
-    json_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    json_path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
     md_lines = [
         f"# A/B Report: {args.name}",
         "",

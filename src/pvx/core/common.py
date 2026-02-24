@@ -81,8 +81,12 @@ def add_console_args(
         default=0,
         help="Increase verbosity (repeat for extra detail)",
     )
-    parser.add_argument("--quiet", action="store_true", help="Reduce output and hide status bars")
-    parser.add_argument("--silent", action="store_true", help="Suppress all console output")
+    parser.add_argument(
+        "--quiet", action="store_true", help="Reduce output and hide status bars"
+    )
+    parser.add_argument(
+        "--silent", action="store_true", help="Suppress all console output"
+    )
     if include_no_progress_alias:
         parser.add_argument(
             "--no-progress",
@@ -116,7 +120,9 @@ def console_level(args: argparse.Namespace) -> int:
     if cached is not None:
         return int(cached)
 
-    base_level = _VERBOSITY_TO_LEVEL.get(str(getattr(args, "verbosity", "normal")), _VERBOSITY_TO_LEVEL["normal"])
+    base_level = _VERBOSITY_TO_LEVEL.get(
+        str(getattr(args, "verbosity", "normal")), _VERBOSITY_TO_LEVEL["normal"]
+    )
     verbose_count = int(getattr(args, "verbose", 0) or 0)
     level = min(_VERBOSITY_TO_LEVEL["debug"], base_level + verbose_count)
     if bool(getattr(args, "no_progress", False)):
@@ -160,7 +166,9 @@ def log_error(args: argparse.Namespace, message: str) -> None:
 
 
 class StatusBar:
-    def __init__(self, label: str, total: int, *, enabled: bool, width: int = 32) -> None:
+    def __init__(
+        self, label: str, total: int, *, enabled: bool, width: int = 32
+    ) -> None:
         self.label = label
         self.total = max(1, int(total))
         self.enabled = enabled
@@ -215,7 +223,9 @@ def add_common_io_args(parser: argparse.ArgumentParser, default_suffix: str) -> 
         nargs="+",
         help="Input files/globs or '-' for stdin",
     )
-    parser.add_argument("-o", "--output-dir", type=Path, default=None, help="Output directory")
+    parser.add_argument(
+        "-o", "--output-dir", type=Path, default=None, help="Output directory"
+    )
     parser.add_argument(
         "--output",
         "--out",
@@ -223,15 +233,25 @@ def add_common_io_args(parser: argparse.ArgumentParser, default_suffix: str) -> 
         default=None,
         help="Explicit output file path (single-input mode only). Alias: --out",
     )
-    parser.add_argument("--suffix", default=default_suffix, help=f"Output filename suffix (default: {default_suffix})")
+    parser.add_argument(
+        "--suffix",
+        default=default_suffix,
+        help=f"Output filename suffix (default: {default_suffix})",
+    )
     parser.add_argument("--output-format", default=None, help="Output extension/format")
     parser.add_argument(
         "--stdout",
         action="store_true",
         help="Write processed audio to stdout stream (for piping); requires exactly one input",
     )
-    parser.add_argument("--overwrite", action="store_true", help="Overwrite existing outputs")
-    parser.add_argument("--dry-run", action="store_true", help="Resolve and print, but do not write files")
+    parser.add_argument(
+        "--overwrite", action="store_true", help="Overwrite existing outputs"
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Resolve and print, but do not write files",
+    )
     add_console_args(parser)
     add_mastering_args(parser)
     add_output_policy_args(parser)
@@ -282,7 +302,12 @@ def add_vocoder_args(
     default_win_length: int = 2048,
     default_hop_size: int = 512,
 ) -> None:
-    parser.add_argument("--n-fft", type=int, default=default_n_fft, help=f"FFT size (default: {default_n_fft})")
+    parser.add_argument(
+        "--n-fft",
+        type=int,
+        default=default_n_fft,
+        help=f"FFT size (default: {default_n_fft})",
+    )
     parser.add_argument(
         "--win-length",
         type=int,
@@ -295,7 +320,9 @@ def add_vocoder_args(
         default=default_hop_size,
         help=f"Hop size in samples (default: {default_hop_size})",
     )
-    parser.add_argument("--window", choices=list(WINDOW_CHOICES), default="hann", help="Window type")
+    parser.add_argument(
+        "--window", choices=list(WINDOW_CHOICES), default="hann", help="Window type"
+    )
     parser.add_argument(
         "--kaiser-beta",
         type=float,
@@ -354,7 +381,9 @@ def add_vocoder_args(
         action="store_true",
         help="Disable onset read-position realignment when onset credit is active",
     )
-    parser.add_argument("--no-center", action="store_true", help="Disable centered framing")
+    parser.add_argument(
+        "--no-center", action="store_true", help="Disable centered framing"
+    )
     add_runtime_args(parser)
 
 
@@ -386,7 +415,9 @@ def build_vocoder_config(
     )
 
 
-def validate_vocoder_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
+def validate_vocoder_args(
+    args: argparse.Namespace, parser: argparse.ArgumentParser
+) -> None:
     if args.n_fft <= 0:
         parser.error("--n-fft must be > 0")
     if args.win_length <= 0:
@@ -400,7 +431,9 @@ def validate_vocoder_args(args: argparse.Namespace, parser: argparse.ArgumentPar
     if args.kaiser_beta < 0:
         parser.error("--kaiser-beta must be >= 0")
     if str(getattr(args, "phase_engine", "propagate")) not in PHASE_ENGINE_CHOICES:
-        parser.error(f"--phase-engine must be one of: {', '.join(PHASE_ENGINE_CHOICES)}")
+        parser.error(
+            f"--phase-engine must be one of: {', '.join(PHASE_ENGINE_CHOICES)}"
+        )
     if not (0.0 <= float(getattr(args, "ambient_phase_mix", 0.5)) <= 1.0):
         parser.error("--ambient-phase-mix must be between 0.0 and 1.0")
     if not (0.0 <= float(getattr(args, "onset_credit_pull", 0.5)) <= 1.0):
@@ -451,7 +484,9 @@ def read_audio(path: Path) -> tuple[np.ndarray, int]:
     return audio.astype(np.float64, copy=False), int(sr)
 
 
-def finalize_audio(audio: np.ndarray, sample_rate: int, args: argparse.Namespace) -> np.ndarray:
+def finalize_audio(
+    audio: np.ndarray, sample_rate: int, args: argparse.Namespace
+) -> np.ndarray:
     return apply_mastering_chain(audio, int(sample_rate), args)
 
 
@@ -519,7 +554,9 @@ def print_input_output_metrics_table(
         (f"in:{input_label}", summarize_audio_metrics(input_audio, int(input_sr))),
         (f"out:{output_label}", summarize_audio_metrics(output_audio, int(output_sr))),
     ]
-    summary_table = render_audio_metrics_table(rows, title="Audio Metrics", include_delta_from_first=True)
+    summary_table = render_audio_metrics_table(
+        rows, title="Audio Metrics", include_delta_from_first=True
+    )
     compare_table = render_audio_comparison_table(
         reference_label=f"in:{input_label}",
         reference_audio=input_audio,
@@ -615,7 +652,11 @@ def time_pitch_shift_audio(
 ) -> np.ndarray:
     channels: list[np.ndarray] = []
     for idx in range(audio.shape[1]):
-        channels.append(time_pitch_shift_channel(audio[:, idx], stretch, pitch_ratio, config, resample_mode=resample_mode))
+        channels.append(
+            time_pitch_shift_channel(
+                audio[:, idx], stretch, pitch_ratio, config, resample_mode=resample_mode
+            )
+        )
     out_len = max(ch.size for ch in channels)
     out = np.zeros((out_len, len(channels)), dtype=np.float64)
     for ch, values in enumerate(channels):
@@ -632,7 +673,9 @@ def read_segment_csv(path: Path, *, has_pitch: bool) -> list[SegmentSpec]:
         if has_pitch:
             headers = set(reader.fieldnames or [])
             if not any(name in headers for name in pitch_columns):
-                raise ValueError(f"Missing CSV pitch column. Provide one of: {list(pitch_columns)}")
+                raise ValueError(
+                    f"Missing CSV pitch column. Provide one of: {list(pitch_columns)}"
+                )
         missing = required - set(reader.fieldnames or [])
         if missing:
             raise ValueError(f"Missing CSV columns: {sorted(missing)}")
@@ -650,7 +693,11 @@ def read_segment_csv(path: Path, *, has_pitch: bool) -> list[SegmentSpec]:
                 ratio_text = str(row.get("pitch_ratio", "")).strip()
                 cents_text = str(row.get("pitch_cents", "")).strip()
                 semitones_text = str(row.get("pitch_semitones", "")).strip()
-                populated = int(bool(ratio_text)) + int(bool(cents_text)) + int(bool(semitones_text))
+                populated = (
+                    int(bool(ratio_text))
+                    + int(bool(cents_text))
+                    + int(bool(semitones_text))
+                )
                 if populated == 0:
                     raise ValueError(
                         f"CSV row {row_idx}: missing pitch value. Provide pitch_ratio, pitch_cents, or pitch_semitones."
@@ -668,13 +715,22 @@ def read_segment_csv(path: Path, *, has_pitch: bool) -> list[SegmentSpec]:
                     pitch_ratio = cents_to_ratio(float(cents_text))
                 else:
                     pitch_ratio = semitone_to_ratio(float(semitones_text))
-            segments.append(SegmentSpec(start_s=start_s, end_s=end_s, stretch=stretch, pitch_ratio=pitch_ratio))
+            segments.append(
+                SegmentSpec(
+                    start_s=start_s,
+                    end_s=end_s,
+                    stretch=stretch,
+                    pitch_ratio=pitch_ratio,
+                )
+            )
 
     segments.sort(key=lambda seg: seg.start_s)
     return segments
 
 
-def concat_with_crossfade(chunks: list[np.ndarray], sr: int, crossfade_ms: float = 8.0) -> np.ndarray:
+def concat_with_crossfade(
+    chunks: list[np.ndarray], sr: int, crossfade_ms: float = 8.0
+) -> np.ndarray:
     if not chunks:
         return np.zeros((0, 1), dtype=np.float64)
     if len(chunks) == 1:

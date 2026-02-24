@@ -56,7 +56,9 @@ def _build_args(**overrides: object) -> argparse.Namespace:
     return argparse.Namespace(**base)
 
 
-def _phase_drift_internal(stereo: np.ndarray, *, n_fft: int = 1024, hop: int = 256) -> float:
+def _phase_drift_internal(
+    stereo: np.ndarray, *, n_fft: int = 1024, hop: int = 256
+) -> float:
     if stereo.shape[1] < 2:
         return 0.0
     x = np.asarray(stereo[:, 0], dtype=np.float64)
@@ -146,7 +148,9 @@ class TestTransientHybridAndStereo(unittest.TestCase):
             stereo_mode="independent",
             coherence_strength=0.0,
         )
-        block = process_audio_block(audio, sr, args, self.cfg, stretch=1.0, pitch_ratio=1.0)
+        block = process_audio_block(
+            audio, sr, args, self.cfg, stretch=1.0, pitch_ratio=1.0
+        )
         y = np.asarray(block.audio[:, 0], dtype=np.float64)
         y = y[: x.size]
         noise = np.mean((x - y) ** 2) + 1e-12
@@ -171,8 +175,12 @@ class TestTransientHybridAndStereo(unittest.TestCase):
             stereo_mode="independent",
             coherence_strength=0.0,
         )
-        out_a = process_audio_block(audio, sr, args, self.cfg, stretch=1.28, pitch_ratio=1.0).audio
-        out_b = process_audio_block(audio, sr, args, self.cfg, stretch=1.28, pitch_ratio=1.0).audio
+        out_a = process_audio_block(
+            audio, sr, args, self.cfg, stretch=1.28, pitch_ratio=1.0
+        ).audio
+        out_b = process_audio_block(
+            audio, sr, args, self.cfg, stretch=1.28, pitch_ratio=1.0
+        ).audio
         self.assertEqual(out_a.shape, out_b.shape)
         self.assertTrue(np.allclose(out_a, out_b, atol=1e-12, rtol=0.0))
 
@@ -206,21 +214,31 @@ class TestTransientHybridAndStereo(unittest.TestCase):
             ref_channel=0,
             coherence_strength=0.9,
         )
-        out_ind = process_audio_block(stereo, sr, args_ind, self.cfg, stretch=1.4, pitch_ratio=1.0).audio
-        out_lock = process_audio_block(stereo, sr, args_lock, self.cfg, stretch=1.4, pitch_ratio=1.0).audio
+        out_ind = process_audio_block(
+            stereo, sr, args_ind, self.cfg, stretch=1.4, pitch_ratio=1.0
+        ).audio
+        out_lock = process_audio_block(
+            stereo, sr, args_lock, self.cfg, stretch=1.4, pitch_ratio=1.0
+        ).audio
 
         drift_ind = _phase_drift_internal(out_ind)
         drift_lock = _phase_drift_internal(out_lock)
         self.assertLess(drift_lock, drift_ind)
 
-        report = interchannel_coherence_drift(stereo, out_lock[: stereo.shape[0], :], n_fft=1024, hop_size=256)
+        report = interchannel_coherence_drift(
+            stereo, out_lock[: stereo.shape[0], :], n_fft=1024, hop_size=256
+        )
         self.assertIn("overall_drift_rad", report)
 
     def test_mid_side_lock_mode_runs_and_preserves_stereo_shape(self) -> None:
         sr = 22050
         t = np.arange(int(sr * 0.5)) / sr
-        left = 0.3 * np.sin(2 * np.pi * 220.0 * t) + 0.08 * np.sin(2 * np.pi * 880.0 * t)
-        right = 0.3 * np.sin(2 * np.pi * 220.0 * t + 0.4) + 0.06 * np.sin(2 * np.pi * 880.0 * t + 0.3)
+        left = 0.3 * np.sin(2 * np.pi * 220.0 * t) + 0.08 * np.sin(
+            2 * np.pi * 880.0 * t
+        )
+        right = 0.3 * np.sin(2 * np.pi * 220.0 * t + 0.4) + 0.06 * np.sin(
+            2 * np.pi * 880.0 * t + 0.3
+        )
         stereo = np.stack([left, right], axis=1)
 
         args = _build_args(
@@ -231,7 +249,9 @@ class TestTransientHybridAndStereo(unittest.TestCase):
             stereo_mode="mid_side_lock",
             coherence_strength=0.85,
         )
-        out = process_audio_block(stereo, sr, args, self.cfg, stretch=1.2, pitch_ratio=1.0).audio
+        out = process_audio_block(
+            stereo, sr, args, self.cfg, stretch=1.2, pitch_ratio=1.0
+        ).audio
         self.assertEqual(out.shape[1], 2)
         self.assertTrue(np.all(np.isfinite(out)))
 

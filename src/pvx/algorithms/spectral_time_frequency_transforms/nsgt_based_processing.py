@@ -28,9 +28,9 @@ if __package__ is None or __package__ == "":
 
 from pvx.algorithms.base import AlgorithmResult, run_algorithm
 
-ALGORITHM_ID = 'spectral_time_frequency_transforms.nsgt_based_processing'
-ALGORITHM_NAME = 'NSGT-based processing'
-THEME = 'Spectral and Time-Frequency Transforms'
+ALGORITHM_ID = "spectral_time_frequency_transforms.nsgt_based_processing"
+ALGORITHM_NAME = "NSGT-based processing"
+THEME = "Spectral and Time-Frequency Transforms"
 
 
 def process(audio: np.ndarray, sample_rate: int, **params: Any) -> AlgorithmResult:

@@ -81,20 +81,40 @@ def _run_case(
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Run pvxvoc benchmark sweeps and emit CSV/JSON.")
+    parser = argparse.ArgumentParser(
+        description="Run pvxvoc benchmark sweeps and emit CSV/JSON."
+    )
     parser.add_argument("--input", type=Path, required=True, help="Input audio file")
     parser.add_argument(
         "--tool",
         default="python3 pvxvoc.py",
         help="Command used to invoke pvxvoc (default: 'python3 pvxvoc.py')",
     )
-    parser.add_argument("--transforms", default="fft,dft,czt,dct,dst,hartley", help="CSV transform list")
-    parser.add_argument("--windows", default="hann,kaiser,blackmanharris", help="CSV window list")
+    parser.add_argument(
+        "--transforms", default="fft,dft,czt,dct,dst,hartley", help="CSV transform list"
+    )
+    parser.add_argument(
+        "--windows", default="hann,kaiser,blackmanharris", help="CSV window list"
+    )
     parser.add_argument("--n-ffts", default="1024,2048,4096", help="CSV FFT-size list")
-    parser.add_argument("--devices", default="cpu", help="CSV device list (cpu,cuda,auto)")
-    parser.add_argument("--time-stretch", type=float, default=1.25, help="Stretch factor (default: 1.25)")
-    parser.add_argument("--repeats", type=int, default=1, help="Repetitions per case (default: 1)")
-    parser.add_argument("--out-dir", type=Path, default=Path("reports/benchmarks"), help="Output directory")
+    parser.add_argument(
+        "--devices", default="cpu", help="CSV device list (cpu,cuda,auto)"
+    )
+    parser.add_argument(
+        "--time-stretch",
+        type=float,
+        default=1.25,
+        help="Stretch factor (default: 1.25)",
+    )
+    parser.add_argument(
+        "--repeats", type=int, default=1, help="Repetitions per case (default: 1)"
+    )
+    parser.add_argument(
+        "--out-dir",
+        type=Path,
+        default=Path("reports/benchmarks"),
+        help="Output directory",
+    )
     parser.add_argument("--name", default="benchmark_matrix", help="Output basename")
     args = parser.parse_args(argv)
 
@@ -114,7 +134,9 @@ def main(argv: list[str] | None = None) -> int:
     cwd = Path.cwd()
 
     rows: list[dict[str, float | str | int]] = []
-    for transform, window, n_fft, device in itertools.product(transforms, windows, n_ffts, devices):
+    for transform, window, n_fft, device in itertools.product(
+        transforms, windows, n_ffts, devices
+    ):
         row = _run_case(
             tool_cmd=tool_cmd,
             input_path=input_path,
@@ -154,7 +176,9 @@ def main(argv: list[str] | None = None) -> int:
         "tool": args.tool,
         "rows": rows,
     }
-    json_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    json_path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
     print(f"Wrote {csv_path}")
     print(f"Wrote {json_path}")
     return 0

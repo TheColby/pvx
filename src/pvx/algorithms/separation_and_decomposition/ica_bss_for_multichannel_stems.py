@@ -28,9 +28,9 @@ if __package__ is None or __package__ == "":
 
 from pvx.algorithms.base import AlgorithmResult, run_algorithm
 
-ALGORITHM_ID = 'separation_and_decomposition.ica_bss_for_multichannel_stems'
-ALGORITHM_NAME = 'ICA/BSS for multichannel stems'
-THEME = 'Separation and Decomposition'
+ALGORITHM_ID = "separation_and_decomposition.ica_bss_for_multichannel_stems"
+ALGORITHM_NAME = "ICA/BSS for multichannel stems"
+THEME = "Separation and Decomposition"
 
 
 def process(audio: np.ndarray, sample_rate: int, **params: Any) -> AlgorithmResult:

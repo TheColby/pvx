@@ -39,7 +39,9 @@ class TestDocsPdfHelpers(unittest.TestCase):
             paths = pdfgen.collect_html_pages(root, include_groups=True)
             names = [p.name for p in paths]
 
-            self.assertEqual(names[:4], ["index.html", "math.html", "windows.html", "papers.html"])
+            self.assertEqual(
+                names[:4], ["index.html", "math.html", "windows.html", "papers.html"]
+            )
             self.assertEqual(names[-2:], ["alpha.html", "zeta.html"])
 
 

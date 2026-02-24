@@ -49,7 +49,9 @@ def interchannel_coherence_drift(
     ref = np.asarray(reference, dtype=np.float64)
     cand = np.asarray(candidate, dtype=np.float64)
     if ref.ndim != 2 or cand.ndim != 2:
-        raise ValueError("reference and candidate must be 2D arrays (samples, channels)")
+        raise ValueError(
+            "reference and candidate must be 2D arrays (samples, channels)"
+        )
     if ref.shape[1] != cand.shape[1]:
         raise ValueError("reference/candidate must have matching channel count")
     if ref.shape[1] < 2:
@@ -105,5 +107,7 @@ def stereo_coherence_drift_score(
         return 0.0
     if ref.shape[1] < 2 or cand.shape[1] < 2:
         return 0.0
-    report = interchannel_coherence_drift(ref[:, :2], cand[:, :2], n_fft=n_fft, hop_size=hop_size)
+    report = interchannel_coherence_drift(
+        ref[:, :2], cand[:, :2], n_fft=n_fft, hop_size=hop_size
+    )
     return float(report["overall_drift_rad"])

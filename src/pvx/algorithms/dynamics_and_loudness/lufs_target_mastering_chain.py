@@ -28,9 +28,9 @@ if __package__ is None or __package__ == "":
 
 from pvx.algorithms.base import AlgorithmResult, run_algorithm
 
-ALGORITHM_ID = 'dynamics_and_loudness.lufs_target_mastering_chain'
-ALGORITHM_NAME = 'LUFS-target mastering chain'
-THEME = 'Dynamics and Loudness'
+ALGORITHM_ID = "dynamics_and_loudness.lufs_target_mastering_chain"
+ALGORITHM_NAME = "LUFS-target mastering chain"
+THEME = "Dynamics and Loudness"
 
 
 def process(audio: np.ndarray, sample_rate: int, **params: Any) -> AlgorithmResult:

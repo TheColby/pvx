@@ -1,0 +1,26 @@
+python3 -m unittest discover -s tests -p "test_*.py"
+/home/jules/.pyenv/versions/3.12.12/lib/python3.12/site-packages/librosa/core/spectrum.py:266: UserWarning: n_fft=2048 is too large for input signal of length=1024
+  warnings.warn(
+/home/jules/.pyenv/versions/3.12.12/lib/python3.12/site-packages/librosa/core/spectrum.py:266: UserWarning: n_fft=256 is too large for input signal of length=128
+  warnings.warn(
+/home/jules/.pyenv/versions/3.12.12/lib/python3.12/site-packages/librosa/core/spectrum.py:266: UserWarning: n_fft=256 is too large for input signal of length=64
+  warnings.warn(
+/home/jules/.pyenv/versions/3.12.12/lib/python3.12/site-packages/librosa/core/spectrum.py:266: UserWarning: n_fft=256 is too large for input signal of length=32
+  warnings.warn(
+/home/jules/.pyenv/versions/3.12.12/lib/python3.12/site-packages/librosa/core/spectrum.py:266: UserWarning: n_fft=512 is too large for input signal of length=256
+  warnings.warn(
+/home/jules/.pyenv/versions/3.12.12/lib/python3.12/site-packages/librosa/core/spectrum.py:266: UserWarning: n_fft=512 is too large for input signal of length=128
+  warnings.warn(
+/home/jules/.pyenv/versions/3.12.12/lib/python3.12/site-packages/librosa/core/spectrum.py:266: UserWarning: n_fft=512 is too large for input signal of length=64
+  warnings.warn(
+/home/jules/.pyenv/versions/3.12.12/lib/python3.12/site-packages/librosa/core/spectrum.py:266: UserWarning: n_fft=512 is too large for input signal of length=32
+  warnings.warn(
+/home/jules/.pyenv/versions/3.12.12/lib/python3.12/site-packages/librosa/core/spectrum.py:266: UserWarning: n_fft=2048 is too large for input signal of length=1024
+  warnings.warn(
+...................................................................................................usage: python3 -m unittest [-h]
+python3 -m unittest: error: --dither cannot be used with floating-point --bit-depth 32f
+........
+----------------------------------------------------------------------
+Ran 107 tests in 119.433s
+
+OK

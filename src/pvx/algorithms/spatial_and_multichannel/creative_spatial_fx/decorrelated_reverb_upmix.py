@@ -31,9 +31,9 @@ if __package__ is None or __package__ == "":
 
 from pvx.algorithms.base import AlgorithmResult, run_algorithm
 
-ALGORITHM_ID = 'spatial_and_multichannel.decorrelated_reverb_upmix'
-ALGORITHM_NAME = 'Decorrelated reverb upmix'
-THEME = 'Spatial and Multichannel'
+ALGORITHM_ID = "spatial_and_multichannel.decorrelated_reverb_upmix"
+ALGORITHM_NAME = "Decorrelated reverb upmix"
+THEME = "Spatial and Multichannel"
 
 
 def process(audio: np.ndarray, sample_rate: int, **params: Any) -> AlgorithmResult:

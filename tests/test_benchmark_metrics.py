@@ -73,8 +73,12 @@ class TestBenchmarkMetrics(unittest.TestCase):
         self.assertLess(spectral_convergence(x, x), 1e-9)
         self.assertGreater(envelope_correlation(x, x), 0.999)
         self.assertAlmostEqual(rms_level_delta_db(x, x), 0.0, places=9)
-        self.assertAlmostEqual(crest_factor_delta_db(x, x, sample_rate=sr), 0.0, places=9)
-        self.assertAlmostEqual(bandwidth_95_delta_hz(x, x, sample_rate=sr), 0.0, places=6)
+        self.assertAlmostEqual(
+            crest_factor_delta_db(x, x, sample_rate=sr), 0.0, places=9
+        )
+        self.assertAlmostEqual(
+            bandwidth_95_delta_hz(x, x, sample_rate=sr), 0.0, places=6
+        )
         self.assertAlmostEqual(zero_crossing_rate_delta(x, x), 0.0, places=9)
         self.assertAlmostEqual(dc_offset_delta(x, x), 0.0, places=9)
         self.assertAlmostEqual(clipping_ratio_delta(x, x), 0.0, places=9)
@@ -84,12 +88,16 @@ class TestBenchmarkMetrics(unittest.TestCase):
         self.assertAlmostEqual(true_peak_delta_dbtp(x, x, sr), 0.0, places=7)
         self.assertAlmostEqual(f0_rmse_cents(x, x, sr), 0.0, places=7)
         self.assertGreaterEqual(voicing_f1_score(x, x, sr), 0.99)
-        self.assertAlmostEqual(harmonic_to_noise_ratio_drift_db(x, x, sr), 0.0, places=6)
+        self.assertAlmostEqual(
+            harmonic_to_noise_ratio_drift_db(x, x, sr), 0.0, places=6
+        )
         on_p, on_r, on_f1 = onset_precision_recall_f1(x, x, sample_rate=sr)
         self.assertGreaterEqual(on_p, 0.99)
         self.assertGreaterEqual(on_r, 0.99)
         self.assertGreaterEqual(on_f1, 0.99)
-        self.assertAlmostEqual(attack_time_error_ms(x, x, sample_rate=sr), 0.0, places=6)
+        self.assertAlmostEqual(
+            attack_time_error_ms(x, x, sample_rate=sr), 0.0, places=6
+        )
         self.assertLess(phasiness_index(x, x), 1e-9)
         self.assertLess(musical_noise_index(x, x), 1e-9)
 
@@ -134,7 +142,9 @@ class TestBenchmarkMetrics(unittest.TestCase):
         drift = stereo_coherence_drift(stereo, stereo)
         self.assertLess(drift, 1e-9)
         self.assertAlmostEqual(ild_drift_db(stereo, stereo), 0.0, places=7)
-        self.assertAlmostEqual(itd_drift_ms(stereo, stereo, sample_rate=sr), 0.0, places=7)
+        self.assertAlmostEqual(
+            itd_drift_ms(stereo, stereo, sample_rate=sr), 0.0, places=7
+        )
         phase = interchannel_phase_deviation_by_band(stereo, stereo, sample_rate=sr)
         self.assertLess(abs(phase["phase_deviation_mean_rad"]), 1e-9)
 
@@ -161,7 +171,9 @@ class TestBenchmarkMetrics(unittest.TestCase):
         self.assertTrue(np.isfinite(true_peak_delta_dbtp(x, y, sample_rate=24000)))
         self.assertTrue(np.isfinite(f0_rmse_cents(x, y, sample_rate=24000)))
         self.assertTrue(np.isfinite(voicing_f1_score(x, y, sample_rate=24000)))
-        self.assertTrue(np.isfinite(harmonic_to_noise_ratio_drift_db(x, y, sample_rate=24000)))
+        self.assertTrue(
+            np.isfinite(harmonic_to_noise_ratio_drift_db(x, y, sample_rate=24000))
+        )
         p, r, f1 = onset_precision_recall_f1(x, y, sample_rate=24000)
         self.assertTrue(np.isfinite(p))
         self.assertTrue(np.isfinite(r))
@@ -171,7 +183,9 @@ class TestBenchmarkMetrics(unittest.TestCase):
         self.assertTrue(np.isfinite(musical_noise_index(x, y)))
         self.assertTrue(np.isfinite(pesq_mos_lqo(x, y, sample_rate=24000).value))
         self.assertTrue(np.isfinite(stoi_score(x, y, sample_rate=24000).value))
-        self.assertTrue(np.isfinite(stoi_score(x, y, sample_rate=24000, extended=True).value))
+        self.assertTrue(
+            np.isfinite(stoi_score(x, y, sample_rate=24000, extended=True).value)
+        )
         self.assertTrue(np.isfinite(visqol_mos_lqo(x, y, sample_rate=24000).value))
         self.assertTrue(np.isfinite(polqa_mos_lqo(x, y, sample_rate=24000).value))
         self.assertTrue(np.isfinite(peaq_odg(x, y, sample_rate=24000).value))

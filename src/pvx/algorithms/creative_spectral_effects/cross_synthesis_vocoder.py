@@ -28,9 +28,9 @@ if __package__ is None or __package__ == "":
 
 from pvx.algorithms.base import AlgorithmResult, run_algorithm
 
-ALGORITHM_ID = 'creative_spectral_effects.cross_synthesis_vocoder'
-ALGORITHM_NAME = 'Cross-synthesis vocoder'
-THEME = 'Creative Spectral Effects'
+ALGORITHM_ID = "creative_spectral_effects.cross_synthesis_vocoder"
+ALGORITHM_NAME = "Cross-synthesis vocoder"
+THEME = "Creative Spectral Effects"
 
 
 def process(audio: np.ndarray, sample_rate: int, **params: Any) -> AlgorithmResult:

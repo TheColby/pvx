@@ -49,9 +49,13 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     add_common_io_args(parser, default_suffix="_trans")
-    add_vocoder_args(parser, default_n_fft=2048, default_win_length=2048, default_hop_size=256)
+    add_vocoder_args(
+        parser, default_n_fft=2048, default_win_length=2048, default_hop_size=256
+    )
     parser.add_argument("--time-stretch", type=float, default=1.0)
-    parser.add_argument("--target-duration", type=float, default=None, help="Target duration in seconds")
+    parser.add_argument(
+        "--target-duration", type=float, default=None, help="Target duration in seconds"
+    )
     parser.add_argument("--pitch-shift-semitones", type=float, default=0.0)
     parser.add_argument(
         "--pitch-shift-cents",
@@ -69,7 +73,9 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument("--transient-threshold", type=float, default=1.6)
-    parser.add_argument("--resample-mode", choices=["auto", "fft", "linear"], default="auto")
+    parser.add_argument(
+        "--resample-mode", choices=["auto", "fft", "linear"], default="auto"
+    )
     return parser
 
 
@@ -99,7 +105,9 @@ def main(argv: list[str] | None = None) -> int:
         pitch_ratio = args.pitch_shift_ratio
     else:
         pitch_ratio = semitone_to_ratio(args.pitch_shift_semitones) * (
-            cents_to_ratio(args.pitch_shift_cents) if args.pitch_shift_cents is not None else 1.0
+            cents_to_ratio(args.pitch_shift_cents)
+            if args.pitch_shift_cents is not None
+            else 1.0
         )
     config = build_vocoder_config(
         args,
@@ -146,13 +154,21 @@ def main(argv: list[str] | None = None) -> int:
                 output_sr=sr,
             )
             write_output(out_path, out, sr, args, input_path=path)
-            log_message(args, f"[ok] {path} -> {out_path} | stretch={stretch:.4f} pitch={pitch_ratio:.4f}", min_level="verbose")
+            log_message(
+                args,
+                f"[ok] {path} -> {out_path} | stretch={stretch:.4f} pitch={pitch_ratio:.4f}",
+                min_level="verbose",
+            )
         except Exception as exc:
             failures += 1
             log_error(args, f"[error] {path}: {exc}")
         status.step(idx, path.name)
     status.finish("done" if failures == 0 else f"errors={failures}")
-    log_message(args, f"[done] pvxtransient processed={len(paths)} failed={failures}", min_level="normal")
+    log_message(
+        args,
+        f"[done] pvxtransient processed={len(paths)} failed={failures}",
+        min_level="normal",
+    )
     return 1 if failures else 0
 
 

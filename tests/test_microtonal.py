@@ -28,20 +28,20 @@ class TestMicrotonalSupport(unittest.TestCase):
             csv_path = Path(tmp) / "map.csv"
             write_text(
                 csv_path,
-                "start_sec,end_sec,stretch,pitch_cents\n"
-                "0.0,1.0,1.0,50\n",
+                "start_sec,end_sec,stretch,pitch_cents\n0.0,1.0,1.0,50\n",
             )
             segments = read_segment_csv(csv_path, has_pitch=True)
             self.assertEqual(len(segments), 1)
-            self.assertAlmostEqual(segments[0].pitch_ratio, cents_to_ratio(50.0), delta=1e-12)
+            self.assertAlmostEqual(
+                segments[0].pitch_ratio, cents_to_ratio(50.0), delta=1e-12
+            )
 
     def test_read_segment_csv_accepts_pitch_ratio(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             csv_path = Path(tmp) / "map.csv"
             write_text(
                 csv_path,
-                "start_sec,end_sec,stretch,pitch_ratio\n"
-                "0.0,1.0,1.0,1.03715\n",
+                "start_sec,end_sec,stretch,pitch_ratio\n0.0,1.0,1.0,1.03715\n",
             )
             segments = read_segment_csv(csv_path, has_pitch=True)
             self.assertEqual(len(segments), 1)
@@ -52,8 +52,7 @@ class TestMicrotonalSupport(unittest.TestCase):
             csv_path = Path(tmp) / "map.csv"
             write_text(
                 csv_path,
-                "start_sec,end_sec,stretch,pitch_ratio\n"
-                "0.0,1.0,1.0,3/2\n",
+                "start_sec,end_sec,stretch,pitch_ratio\n0.0,1.0,1.0,3/2\n",
             )
             segments = read_segment_csv(csv_path, has_pitch=True)
             self.assertEqual(len(segments), 1)
@@ -64,12 +63,13 @@ class TestMicrotonalSupport(unittest.TestCase):
             csv_path = Path(tmp) / "map.csv"
             write_text(
                 csv_path,
-                "start_sec,end_sec,stretch,pitch_ratio\n"
-                "0.0,1.0,1.0,2^(1/12)\n",
+                "start_sec,end_sec,stretch,pitch_ratio\n0.0,1.0,1.0,2^(1/12)\n",
             )
             segments = read_segment_csv(csv_path, has_pitch=True)
             self.assertEqual(len(segments), 1)
-            self.assertAlmostEqual(segments[0].pitch_ratio, 2.0 ** (1.0 / 12.0), delta=1e-12)
+            self.assertAlmostEqual(
+                segments[0].pitch_ratio, 2.0 ** (1.0 / 12.0), delta=1e-12
+            )
 
     def test_read_segment_csv_rejects_multiple_pitch_fields(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -130,8 +130,12 @@ class TestMicrotonalSupport(unittest.TestCase):
 
     def test_parse_pitch_ratio_value_supports_fraction_and_constants(self) -> None:
         self.assertAlmostEqual(parse_pitch_ratio_value("5/4"), 1.25, delta=1e-12)
-        self.assertAlmostEqual(parse_pitch_ratio_value("exp(log(2)/12)"), 2.0 ** (1.0 / 12.0), delta=1e-12)
-        self.assertAlmostEqual(parse_pitch_ratio_value("pi/e"), math.pi / math.e, delta=1e-12)
+        self.assertAlmostEqual(
+            parse_pitch_ratio_value("exp(log(2)/12)"), 2.0 ** (1.0 / 12.0), delta=1e-12
+        )
+        self.assertAlmostEqual(
+            parse_pitch_ratio_value("pi/e"), math.pi / math.e, delta=1e-12
+        )
 
 
 if __name__ == "__main__":

@@ -102,7 +102,9 @@ def nearest_scale_freq(
     return midi_to_freq(best / 100.0)
 
 
-def overlap_add(chunks: list[np.ndarray], starts: list[int], total_len: int) -> np.ndarray:
+def overlap_add(
+    chunks: list[np.ndarray], starts: list[int], total_len: int
+) -> np.ndarray:
     channels = chunks[0].shape[1]
     out = np.zeros((total_len, channels), dtype=np.float64)
     weight = np.zeros((total_len, 1), dtype=np.float64)
@@ -140,9 +142,16 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     add_common_io_args(parser, default_suffix="_retune")
-    add_vocoder_args(parser, default_n_fft=2048, default_win_length=2048, default_hop_size=512)
+    add_vocoder_args(
+        parser, default_n_fft=2048, default_win_length=2048, default_hop_size=512
+    )
     parser.add_argument("--root", default="C", help="Scale root note (C,C#,D,...,B)")
-    parser.add_argument("--scale", choices=sorted(SCALES.keys()), default="chromatic", help="Named scale for 12-TET quantization")
+    parser.add_argument(
+        "--scale",
+        choices=sorted(SCALES.keys()),
+        default="chromatic",
+        help="Named scale for 12-TET quantization",
+    )
     parser.add_argument(
         "--scale-cents",
         default=None,
@@ -151,12 +160,23 @@ def build_parser() -> argparse.ArgumentParser:
             "relative to --root (example: 0,90,204,294,408,498,612,702,816,906,1020,1110)"
         ),
     )
-    parser.add_argument("--strength", type=float, default=0.85, help="Correction strength 0..1")
-    parser.add_argument("--chunk-ms", type=float, default=80.0, help="Analysis/process chunk duration in ms")
-    parser.add_argument("--overlap-ms", type=float, default=20.0, help="Chunk overlap in ms")
+    parser.add_argument(
+        "--strength", type=float, default=0.85, help="Correction strength 0..1"
+    )
+    parser.add_argument(
+        "--chunk-ms",
+        type=float,
+        default=80.0,
+        help="Analysis/process chunk duration in ms",
+    )
+    parser.add_argument(
+        "--overlap-ms", type=float, default=20.0, help="Chunk overlap in ms"
+    )
     parser.add_argument("--f0-min", type=float, default=60.0)
     parser.add_argument("--f0-max", type=float, default=1200.0)
-    parser.add_argument("--resample-mode", choices=["auto", "fft", "linear"], default="auto")
+    parser.add_argument(
+        "--resample-mode", choices=["auto", "fft", "linear"], default="auto"
+    )
     return parser
 
 
@@ -184,7 +204,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.f0_min <= 0 or args.f0_max <= 0 or args.f0_min >= args.f0_max:
         parser.error("0 < --f0-min < --f0-max required")
 
-    config = build_vocoder_config(args, phase_locking="identity", transient_preserve=True, transient_threshold=1.8)
+    config = build_vocoder_config(
+        args, phase_locking="identity", transient_preserve=True, transient_threshold=1.8
+    )
     paths = resolve_inputs(args.inputs, parser, args)
     status = build_status_bar(args, "pvxretune", len(paths))
 
@@ -209,7 +231,9 @@ def main(argv: list[str] | None = None) -> int:
                     continue
                 ratio = 1.0
                 try:
-                    f0 = estimate_f0_autocorrelation(mono_piece, sr, args.f0_min, args.f0_max)
+                    f0 = estimate_f0_autocorrelation(
+                        mono_piece, sr, args.f0_min, args.f0_max
+                    )
                     target = nearest_scale_freq(
                         f0,
                         args.root,
@@ -249,7 +273,11 @@ def main(argv: list[str] | None = None) -> int:
             )
             write_output(out_path, out, sr, args, input_path=path)
             if ratios:
-                log_message(args, f"[ok] {path} -> {out_path} | median_ratio={float(np.median(ratios)):.4f}", min_level="verbose")
+                log_message(
+                    args,
+                    f"[ok] {path} -> {out_path} | median_ratio={float(np.median(ratios)):.4f}",
+                    min_level="verbose",
+                )
             else:
                 log_message(args, f"[ok] {path} -> {out_path}", min_level="verbose")
         except Exception as exc:
@@ -257,7 +285,11 @@ def main(argv: list[str] | None = None) -> int:
             log_error(args, f"[error] {path}: {exc}")
         status.step(idx, path.name)
     status.finish("done" if failures == 0 else f"errors={failures}")
-    log_message(args, f"[done] pvxretune processed={len(paths)} failed={failures}", min_level="normal")
+    log_message(
+        args,
+        f"[done] pvxretune processed={len(paths)} failed={failures}",
+        min_level="normal",
+    )
     return 1 if failures else 0
 
 

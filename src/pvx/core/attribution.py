@@ -22,5 +22,5 @@ def html_notice(relative_attribution_path: str) -> str:
     """Return an HTML attribution notice sentence with a relative link."""
     return (
         f"{COPYRIGHT_NOTICE} "
-        f"See <a href=\"{relative_attribution_path}\"><code>{ATTRIBUTION_DOC_PATH}</code></a>."
+        f'See <a href="{relative_attribution_path}"><code>{ATTRIBUTION_DOC_PATH}</code></a>.'
     )

@@ -50,7 +50,9 @@ def _resample_linear_1d(signal: np.ndarray, output_samples: int) -> np.ndarray:
     return np.interp(x_new, x_old, x).astype(np.float64)
 
 
-def true_peak_dbtp(audio: np.ndarray, sample_rate: int, *, oversample: int = 4) -> float:
+def true_peak_dbtp(
+    audio: np.ndarray, sample_rate: int, *, oversample: int = 4
+) -> float:
     arr = np.asarray(audio, dtype=np.float64)
     if arr.ndim == 1:
         arr = arr[:, None]
@@ -69,7 +71,9 @@ def true_peak_dbtp(audio: np.ndarray, sample_rate: int, *, oversample: int = 4) 
     return float(20.0 * np.log10(max(max_peak, 1e-12)))
 
 
-def enforce_true_peak_limit(audio: np.ndarray, sample_rate: int, max_dbtp: float) -> np.ndarray:
+def enforce_true_peak_limit(
+    audio: np.ndarray, sample_rate: int, max_dbtp: float
+) -> np.ndarray:
     arr = np.asarray(audio, dtype=np.float64)
     if arr.ndim == 1:
         arr = arr[:, None]
@@ -103,7 +107,9 @@ def subtype_bit_depth(subtype: str | None) -> int | None:
     return _SUBTYPE_TO_BITS.get(str(subtype).upper())
 
 
-def apply_dither_if_needed(audio: np.ndarray, args: argparse.Namespace, *, subtype: str | None) -> np.ndarray:
+def apply_dither_if_needed(
+    audio: np.ndarray, args: argparse.Namespace, *, subtype: str | None
+) -> np.ndarray:
     mode = str(getattr(args, "dither", "none") or "none").lower()
     if mode == "none":
         return np.asarray(audio, dtype=np.float64)
@@ -193,7 +199,9 @@ def write_metadata_sidecar(
             "sample_rate": int(sample_rate),
             "channels": int(arr.shape[1]) if arr.ndim == 2 else 1,
             "samples": int(arr.shape[0]) if arr.ndim == 2 else int(arr.size),
-            "duration_s": float((arr.shape[0] if arr.ndim == 2 else arr.size) / max(1, int(sample_rate))),
+            "duration_s": float(
+                (arr.shape[0] if arr.ndim == 2 else arr.size) / max(1, int(sample_rate))
+            ),
             "subtype": subtype,
             "true_peak_dbtp": float(true_peak_dbtp(arr, int(sample_rate))),
         },
@@ -214,11 +222,15 @@ def write_metadata_sidecar(
 
     sidecar = output_path.with_suffix(output_path.suffix + ".metadata.json")
     sidecar.parent.mkdir(parents=True, exist_ok=True)
-    sidecar.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    sidecar.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
     return sidecar
 
 
-def validate_output_policy_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
+def validate_output_policy_args(
+    args: argparse.Namespace, parser: argparse.ArgumentParser
+) -> None:
     bit_depth = str(getattr(args, "bit_depth", "inherit") or "inherit").lower()
     if bit_depth not in BIT_DEPTH_CHOICES:
         parser.error(f"--bit-depth must be one of: {', '.join(BIT_DEPTH_CHOICES)}")
@@ -227,11 +239,16 @@ def validate_output_policy_args(args: argparse.Namespace, parser: argparse.Argum
         parser.error(f"--dither must be one of: {', '.join(DITHER_CHOICES)}")
     if dither != "none" and bit_depth == "32f":
         parser.error("--dither cannot be used with floating-point --bit-depth 32f")
-    if getattr(args, "dither_seed", None) is not None and int(getattr(args, "dither_seed")) < 0:
+    if (
+        getattr(args, "dither_seed", None) is not None
+        and int(getattr(args, "dither_seed")) < 0
+    ):
         parser.error("--dither-seed must be >= 0")
     tp = getattr(args, "true_peak_max_dbtp", None)
     if tp is not None and not np.isfinite(float(tp)):
         parser.error("--true-peak-max-dbtp must be finite")
     policy = str(getattr(args, "metadata_policy", "none") or "none").lower()
     if policy not in METADATA_POLICY_CHOICES:
-        parser.error(f"--metadata-policy must be one of: {', '.join(METADATA_POLICY_CHOICES)}")
+        parser.error(
+            f"--metadata-policy must be one of: {', '.join(METADATA_POLICY_CHOICES)}"
+        )

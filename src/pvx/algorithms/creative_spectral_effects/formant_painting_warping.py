@@ -28,9 +28,9 @@ if __package__ is None or __package__ == "":
 
 from pvx.algorithms.base import AlgorithmResult, run_algorithm
 
-ALGORITHM_ID = 'creative_spectral_effects.formant_painting_warping'
-ALGORITHM_NAME = 'Formant painting/warping'
-THEME = 'Creative Spectral Effects'
+ALGORITHM_ID = "creative_spectral_effects.formant_painting_warping"
+ALGORITHM_NAME = "Formant painting/warping"
+THEME = "Creative Spectral Effects"
 
 
 def process(audio: np.ndarray, sample_rate: int, **params: Any) -> AlgorithmResult:

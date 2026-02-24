@@ -79,7 +79,11 @@ from pvx.core.control_bus import (
     parse_control_routes,
 )
 from pvx.core.stereo import lr_to_ms, ms_to_lr, validate_ref_channel
-from pvx.core.transients import detect_transient_regions, map_mask_to_output, smooth_binary_mask
+from pvx.core.transients import (
+    detect_transient_regions,
+    map_mask_to_output,
+    smooth_binary_mask,
+)
 from pvx.core.wsola import wsola_time_stretch
 
 WINDOW_CHOICES = (
@@ -147,9 +151,22 @@ StereoMode = Literal["independent", "mid_side_lock", "ref_channel_lock"]
 ProgressCallback = Callable[[int, int], None]
 ControlInterpolationMode = Literal["none", "linear", "nearest", "cubic", "polynomial"]
 
-TRANSFORM_CHOICES: tuple[TransformMode, ...] = ("fft", "dft", "czt", "dct", "dst", "hartley")
+TRANSFORM_CHOICES: tuple[TransformMode, ...] = (
+    "fft",
+    "dft",
+    "czt",
+    "dct",
+    "dst",
+    "hartley",
+)
 PHASE_ENGINE_CHOICES: tuple[PhaseEngineMode, ...] = ("propagate", "hybrid", "random")
-CONTROL_INTERP_CHOICES: tuple[ControlInterpolationMode, ...] = ("none", "linear", "nearest", "cubic", "polynomial")
+CONTROL_INTERP_CHOICES: tuple[ControlInterpolationMode, ...] = (
+    "none",
+    "linear",
+    "nearest",
+    "cubic",
+    "polynomial",
+)
 QUALITY_PROFILE_CHOICES: tuple[str, ...] = (
     "neutral",
     "speech",
@@ -159,7 +176,9 @@ QUALITY_PROFILE_CHOICES: tuple[str, ...] = (
     "extreme",
 )
 
-_DYNAMIC_NUMERIC_ARG_SPECS: tuple[tuple[str, str, Literal["float", "int"], float], ...] = (
+_DYNAMIC_NUMERIC_ARG_SPECS: tuple[
+    tuple[str, str, Literal["float", "int"], float], ...
+] = (
     ("time_stretch", "time_stretch", "float", 1.0),
     ("extreme_stretch_threshold", "extreme_stretch_threshold", "float", 2.0),
     ("max_stage_stretch", "max_stage_stretch", "float", 1.8),
@@ -566,8 +585,12 @@ def add_console_args(
         default=0,
         help="Increase verbosity (repeat for extra detail)",
     )
-    parser.add_argument("--quiet", action="store_true", help="Reduce output and hide status bars")
-    parser.add_argument("--silent", action="store_true", help="Suppress all console output")
+    parser.add_argument(
+        "--quiet", action="store_true", help="Reduce output and hide status bars"
+    )
+    parser.add_argument(
+        "--silent", action="store_true", help="Suppress all console output"
+    )
     if include_no_progress_alias:
         parser.add_argument(
             "--no-progress",
@@ -581,7 +604,9 @@ def console_level(args: argparse.Namespace) -> int:
     if cached is not None:
         return int(cached)
 
-    base_level = _VERBOSITY_TO_LEVEL.get(str(getattr(args, "verbosity", "normal")), _VERBOSITY_TO_LEVEL["normal"])
+    base_level = _VERBOSITY_TO_LEVEL.get(
+        str(getattr(args, "verbosity", "normal")), _VERBOSITY_TO_LEVEL["normal"]
+    )
     verbose_count = int(getattr(args, "verbose", 0) or 0)
     level = min(_VERBOSITY_TO_LEVEL["debug"], base_level + verbose_count)
     if bool(getattr(args, "no_progress", False)):
@@ -602,7 +627,13 @@ def is_silent(args: argparse.Namespace) -> bool:
     return console_level(args) == _VERBOSITY_TO_LEVEL["silent"]
 
 
-def log_message(args: argparse.Namespace, message: str, *, min_level: str = "normal", error: bool = False) -> None:
+def log_message(
+    args: argparse.Namespace,
+    message: str,
+    *,
+    min_level: str = "normal",
+    error: bool = False,
+) -> None:
     if console_level(args) < _VERBOSITY_TO_LEVEL[min_level]:
         return
     stream_to_stdout = bool(getattr(args, "stdout", False))
@@ -705,15 +736,27 @@ def run_guided_mode(args: argparse.Namespace) -> argparse.Namespace:
         if output_text:
             out.output = Path(output_text)
 
-    mode = _prompt_choice("Operation (stretch/pitch/both)", ("stretch", "pitch", "both"), "stretch")
+    mode = _prompt_choice(
+        "Operation (stretch/pitch/both)", ("stretch", "pitch", "both"), "stretch"
+    )
     if mode in {"stretch", "both"}:
-        stretch_raw = _prompt_text("Stretch factor (>0)", f"{float(out.time_stretch):.3f}")
-        out.time_stretch = float(parse_numeric_expression(stretch_raw, context="guided stretch factor"))
+        stretch_raw = _prompt_text(
+            "Stretch factor (>0)", f"{float(out.time_stretch):.3f}"
+        )
+        out.time_stretch = float(
+            parse_numeric_expression(stretch_raw, context="guided stretch factor")
+        )
 
     if mode in {"pitch", "both"}:
-        if out.pitch_shift_cents is None and out.pitch_shift_ratio is None and out.target_f0 is None:
+        if (
+            out.pitch_shift_cents is None
+            and out.pitch_shift_ratio is None
+            and out.target_f0 is None
+        ):
             semi_raw = _prompt_text("Pitch shift semitones", "0")
-            out.pitch_shift_semitones = float(parse_numeric_expression(semi_raw, context="guided semitones"))
+            out.pitch_shift_semitones = float(
+                parse_numeric_expression(semi_raw, context="guided semitones")
+            )
 
     preset_default = str(getattr(out, "preset", "none") or "none")
     out.preset = _prompt_choice(
@@ -721,9 +764,14 @@ def run_guided_mode(args: argparse.Namespace) -> argparse.Namespace:
         PRESET_CHOICES,
         preset_default,
     )
-    out.device = _prompt_choice("Device (auto/cpu/cuda)", ("auto", "cpu", "cuda"), str(out.device))
+    out.device = _prompt_choice(
+        "Device (auto/cpu/cuda)", ("auto", "cpu", "cuda"), str(out.device)
+    )
 
-    if _prompt_choice("Write to stdout instead of file? (no/yes)", ("no", "yes"), "no") == "yes":
+    if (
+        _prompt_choice("Write to stdout instead of file? (no/yes)", ("no", "yes"), "no")
+        == "yes"
+    ):
         out.stdout = True
         out.output = None
 
@@ -817,7 +865,9 @@ def parse_numeric_expression(value: str, *, context: str = "value") -> float:
     try:
         tree = ast.parse(normalized, mode="eval")
     except SyntaxError as exc:
-        raise ValueError(f"{context} is not a valid numeric expression: {value!r}") from exc
+        raise ValueError(
+            f"{context} is not a valid numeric expression: {value!r}"
+        ) from exc
 
     try:
         out = float(_eval_numeric_expr(tree.body))
@@ -835,7 +885,9 @@ def parse_numeric_expression(value: str, *, context: str = "value") -> float:
     return out
 
 
-def parse_pitch_ratio_value(value: str | float | int, *, context: str = "pitch ratio") -> float:
+def parse_pitch_ratio_value(
+    value: str | float | int, *, context: str = "pitch ratio"
+) -> float:
     if isinstance(value, bool):
         raise ValueError(f"{context} must be numeric")
 
@@ -918,7 +970,9 @@ def _parse_int_cli_value(value: Any, *, context: str) -> int:
 def _parse_control_signal_value(
     value: Any,
     *,
-    value_kind: Literal["float", "int", "pitch_ratio", "pitch_semitones", "pitch_cents"],
+    value_kind: Literal[
+        "float", "int", "pitch_ratio", "pitch_semitones", "pitch_cents"
+    ],
     context: str,
 ) -> float:
     if value_kind == "float":
@@ -965,7 +1019,9 @@ def _control_value_column_candidates(parameter: str) -> tuple[str, ...]:
     )
 
 
-def _deduplicate_points(times: np.ndarray, values: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+def _deduplicate_points(
+    times: np.ndarray, values: np.ndarray
+) -> tuple[np.ndarray, np.ndarray]:
     if times.size == 0:
         return times, values
     out_t: list[float] = []
@@ -1015,11 +1071,17 @@ def _parse_csv_control_points(
     payload: str,
     *,
     parameter: str,
-    value_kind: Literal["float", "int", "pitch_ratio", "pitch_semitones", "pitch_cents"],
+    value_kind: Literal[
+        "float", "int", "pitch_ratio", "pitch_semitones", "pitch_cents"
+    ],
     source_label: str,
 ) -> tuple[np.ndarray, np.ndarray]:
     reader = csv.DictReader(io.StringIO(payload))
-    fields = [str(name).strip().lower() for name in (reader.fieldnames or []) if name is not None]
+    fields = [
+        str(name).strip().lower()
+        for name in (reader.fieldnames or [])
+        if name is not None
+    ]
     if not fields:
         raise ValueError(f"{source_label}: CSV is empty or missing header")
 
@@ -1059,8 +1121,12 @@ def _parse_csv_control_points(
         )
 
         if has_segment_time and norm.get("start_sec", "") and norm.get("end_sec", ""):
-            start = _parse_scalar_cli_value(norm["start_sec"], context=f"{source_label} row {row_idx} start_sec")
-            end = _parse_scalar_cli_value(norm["end_sec"], context=f"{source_label} row {row_idx} end_sec")
+            start = _parse_scalar_cli_value(
+                norm["start_sec"], context=f"{source_label} row {row_idx} start_sec"
+            )
+            end = _parse_scalar_cli_value(
+                norm["end_sec"], context=f"{source_label} row {row_idx} end_sec"
+            )
             if end <= start:
                 continue
             times.extend([float(start), float(end)])
@@ -1068,10 +1134,14 @@ def _parse_csv_control_points(
             continue
 
         if has_point_time:
-            time_text = norm.get("time_sec", "") or norm.get("time", "") or norm.get("t", "")
+            time_text = (
+                norm.get("time_sec", "") or norm.get("time", "") or norm.get("t", "")
+            )
             if not time_text:
                 continue
-            t = _parse_scalar_cli_value(time_text, context=f"{source_label} row {row_idx} time")
+            t = _parse_scalar_cli_value(
+                time_text, context=f"{source_label} row {row_idx} time"
+            )
             times.append(float(t))
             values.append(float(parsed_value))
             continue
@@ -1090,7 +1160,9 @@ def _parse_json_control_points(
     payload: Any,
     *,
     parameter: str,
-    value_kind: Literal["float", "int", "pitch_ratio", "pitch_semitones", "pitch_cents"],
+    value_kind: Literal[
+        "float", "int", "pitch_ratio", "pitch_semitones", "pitch_cents"
+    ],
     source_label: str,
 ) -> tuple[np.ndarray, np.ndarray, ControlInterpolationMode | None, int | None]:
     interpolation_override: ControlInterpolationMode | None = None
@@ -1139,7 +1211,9 @@ def _parse_json_control_points(
 
     if isinstance(points, list):
         for idx, entry in enumerate(points, start=1):
-            if isinstance(entry, dict) and {"start_sec", "end_sec"}.issubset(set(entry.keys())):
+            if isinstance(entry, dict) and {"start_sec", "end_sec"}.issubset(
+                set(entry.keys())
+            ):
                 start = _parse_scalar_cli_value(
                     entry.get("start_sec"),
                     context=f"{source_label} segment {idx} start_sec",
@@ -1150,7 +1224,9 @@ def _parse_json_control_points(
                 )
                 if end <= start:
                     continue
-                value_raw = entry.get("value", entry.get(parameter, entry.get("stretch")))
+                value_raw = entry.get(
+                    "value", entry.get(parameter, entry.get("stretch"))
+                )
                 if value_raw is None:
                     raise ValueError(f"{source_label} segment {idx} missing value")
                 value = _parse_control_signal_value(
@@ -1164,10 +1240,16 @@ def _parse_json_control_points(
 
             if isinstance(entry, dict):
                 time_raw = entry.get("time_sec", entry.get("time", entry.get("t")))
-                value_raw = entry.get("value", entry.get(parameter, entry.get("stretch")))
+                value_raw = entry.get(
+                    "value", entry.get(parameter, entry.get("stretch"))
+                )
                 if time_raw is None or value_raw is None:
-                    raise ValueError(f"{source_label} point {idx} must include time and value")
-                t = _parse_scalar_cli_value(time_raw, context=f"{source_label} point {idx} time")
+                    raise ValueError(
+                        f"{source_label} point {idx} must include time and value"
+                    )
+                t = _parse_scalar_cli_value(
+                    time_raw, context=f"{source_label} point {idx} time"
+                )
                 value = _parse_control_signal_value(
                     value_raw,
                     value_kind=value_kind,
@@ -1178,7 +1260,9 @@ def _parse_json_control_points(
                 continue
 
             if isinstance(entry, (list, tuple)) and len(entry) >= 2:
-                t = _parse_scalar_cli_value(entry[0], context=f"{source_label} point {idx} time")
+                t = _parse_scalar_cli_value(
+                    entry[0], context=f"{source_label} point {idx} time"
+                )
                 value = _parse_control_signal_value(
                     entry[1],
                     value_kind=value_kind,
@@ -1188,7 +1272,9 @@ def _parse_json_control_points(
                 values.append(float(value))
                 continue
 
-            raise ValueError(f"{source_label}: unsupported control point format at index {idx}")
+            raise ValueError(
+                f"{source_label}: unsupported control point format at index {idx}"
+            )
     elif isinstance(root, dict):
         numeric_keys = []
         for key, val in root.items():
@@ -1196,7 +1282,9 @@ def _parse_json_control_points(
             if key_text in {"interp", "interpolation", "order", "parameters"}:
                 continue
             try:
-                t = _parse_scalar_cli_value(key_text, context=f"{source_label} time key")
+                t = _parse_scalar_cli_value(
+                    key_text, context=f"{source_label} time key"
+                )
             except ValueError:
                 continue
             value = _parse_control_signal_value(
@@ -1251,7 +1339,9 @@ def load_dynamic_control_signal(
             value_kind=ref.value_kind,
             source_label=str(ref.path),
         )
-    times, values = _normalize_control_points(times, values, total_seconds=total_seconds)
+    times, values = _normalize_control_points(
+        times, values, total_seconds=total_seconds
+    )
     return DynamicControlSignal(
         parameter=ref.parameter,
         interpolation=interp,
@@ -1261,7 +1351,9 @@ def load_dynamic_control_signal(
     )
 
 
-def _sample_dynamic_signal(signal: DynamicControlSignal, query_sec: np.ndarray) -> np.ndarray:
+def _sample_dynamic_signal(
+    signal: DynamicControlSignal, query_sec: np.ndarray
+) -> np.ndarray:
     if signal.times_sec.size == 0:
         raise ValueError("Dynamic control signal has no points")
     if signal.times_sec.size == 1:
@@ -1302,6 +1394,7 @@ def _sample_dynamic_signal(signal: DynamicControlSignal, query_sec: np.ndarray) 
             return np.interp(query_sec, x, y)
 
     return np.interp(query_sec, x, y)
+
 
 def estimate_content_features(
     audio: np.ndarray,
@@ -1438,7 +1531,11 @@ def resolve_transform_auto(
         return requested_transform
     if requested_transform != "fft":
         return requested_transform
-    if profile in {"ambient", "extreme"} and not _is_power_of_two(n_fft) and scipy_czt is not None:
+    if (
+        profile in {"ambient", "extreme"}
+        and not _is_power_of_two(n_fft)
+        and scipy_czt is not None
+    ):
         return "czt"
     if profile == "percussion":
         return "dst" if scipy_fft is not None else "fft"
@@ -1514,7 +1611,9 @@ def transform_bin_count(n_fft: int, transform: TransformMode) -> int:
     return int(n_fft // 2 + 1)
 
 
-def _analysis_angular_velocity(n_bins: int, n_fft: int, hop_size: int, transform: TransformMode, *, xp=np):
+def _analysis_angular_velocity(
+    n_bins: int, n_fft: int, hop_size: int, transform: TransformMode, *, xp=np
+):
     idx = xp.arange(n_bins, dtype=xp.float64)
     if transform in {"dct", "dst", "hartley"}:
         pivot = n_fft // 2
@@ -1577,7 +1676,9 @@ def _onesided_to_full_spectrum(spectrum, n_fft: int, *, xp=np):
     return full
 
 
-def _forward_transform_numpy(frame: np.ndarray, n_fft: int, transform: TransformMode) -> np.ndarray:
+def _forward_transform_numpy(
+    frame: np.ndarray, n_fft: int, transform: TransformMode
+) -> np.ndarray:
     if transform == "fft":
         return np.fft.rfft(frame, n=n_fft).astype(np.complex128, copy=False)
     if transform == "dft":
@@ -1604,7 +1705,9 @@ def _forward_transform_numpy(frame: np.ndarray, n_fft: int, transform: Transform
     raise ValueError(f"Unsupported transform: {transform}")
 
 
-def _inverse_transform_numpy(spectrum: np.ndarray, n_fft: int, transform: TransformMode) -> np.ndarray:
+def _inverse_transform_numpy(
+    spectrum: np.ndarray, n_fft: int, transform: TransformMode
+) -> np.ndarray:
     if transform == "fft":
         spec = _resize_or_pad_1d(spectrum, n_fft // 2 + 1, xp=np)
         return np.fft.irfft(spec, n=n_fft).astype(np.float64, copy=False)
@@ -1614,15 +1717,25 @@ def _inverse_transform_numpy(spectrum: np.ndarray, n_fft: int, transform: Transf
     if transform == "dct":
         ensure_transform_backend_available(transform)
         assert scipy_fft is not None
-        coeff = _resize_or_pad_1d(spectrum.real.astype(np.float64, copy=False), n_fft, xp=np)
-        return scipy_fft.idct(coeff, type=2, n=n_fft, norm="ortho").astype(np.float64, copy=False)
+        coeff = _resize_or_pad_1d(
+            spectrum.real.astype(np.float64, copy=False), n_fft, xp=np
+        )
+        return scipy_fft.idct(coeff, type=2, n=n_fft, norm="ortho").astype(
+            np.float64, copy=False
+        )
     if transform == "dst":
         ensure_transform_backend_available(transform)
         assert scipy_fft is not None
-        coeff = _resize_or_pad_1d(spectrum.real.astype(np.float64, copy=False), n_fft, xp=np)
-        return scipy_fft.idst(coeff, type=2, n=n_fft, norm="ortho").astype(np.float64, copy=False)
+        coeff = _resize_or_pad_1d(
+            spectrum.real.astype(np.float64, copy=False), n_fft, xp=np
+        )
+        return scipy_fft.idst(coeff, type=2, n=n_fft, norm="ortho").astype(
+            np.float64, copy=False
+        )
     if transform == "hartley":
-        coeff = _resize_or_pad_1d(spectrum.real.astype(np.float64, copy=False), n_fft, xp=np)
+        coeff = _resize_or_pad_1d(
+            spectrum.real.astype(np.float64, copy=False), n_fft, xp=np
+        )
         full = np.fft.fft(coeff, n=n_fft)
         return ((full.real - full.imag) / float(n_fft)).astype(np.float64, copy=False)
     raise ValueError(f"Unsupported transform: {transform}")
@@ -1674,7 +1787,9 @@ def _inverse_transform(spectrum, n_fft: int, transform: TransformMode, *, xp=np)
         full = _onesided_to_full_spectrum(spectrum, n_fft, xp=xp)
         return xp.fft.ifft(full, n=n_fft).real.astype(xp.float64, copy=False)
     if transform == "hartley":
-        coeff = _resize_or_pad_1d(spectrum.real.astype(xp.float64, copy=False), n_fft, xp=xp)
+        coeff = _resize_or_pad_1d(
+            spectrum.real.astype(xp.float64, copy=False), n_fft, xp=xp
+        )
         full = xp.fft.fft(coeff, n=n_fft)
         return ((full.real - full.imag) / float(n_fft)).astype(xp.float64, copy=False)
     raise ValueError(f"Unsupported transform: {transform}")
@@ -1726,7 +1841,9 @@ def configure_runtime(
     if not _has_cupy():
         reason = "CuPy is not installed"
         if requested == "cuda":
-            raise RuntimeError("CUDA mode requires CuPy. Install a matching `cupy-cudaXXx` package.")
+            raise RuntimeError(
+                "CUDA mode requires CuPy. Install a matching `cupy-cudaXXx` package."
+            )
         _RUNTIME_CONFIG = RuntimeConfig(
             requested_device="auto",
             active_device="cpu",
@@ -1885,7 +2002,9 @@ def _tukey_window(length: int, alpha: float, *, xp=np):
     left = x < (alpha * 0.5)
     right = x >= (1.0 - alpha * 0.5)
     w[left] = 0.5 * (1.0 + xp.cos(xp.pi * ((2.0 * x[left] / alpha) - 1.0)))
-    w[right] = 0.5 * (1.0 + xp.cos(xp.pi * ((2.0 * x[right] / alpha) - (2.0 / alpha) + 1.0)))
+    w[right] = 0.5 * (
+        1.0 + xp.cos(xp.pi * ((2.0 * x[right] / alpha) - (2.0 / alpha) + 1.0))
+    )
     return w
 
 
@@ -2012,7 +2131,9 @@ def _kaiser_window(length: int, beta: float, *, xp=np):
     return _i0(arg, xp=xp) / denom
 
 
-def make_window(kind: WindowType, n_fft: int, win_length: int, *, kaiser_beta: float = 14.0, xp=np):
+def make_window(
+    kind: WindowType, n_fft: int, win_length: int, *, kaiser_beta: float = 14.0, xp=np
+):
     if kind in _COSINE_SERIES_WINDOWS:
         base = _cosine_series_window(_COSINE_SERIES_WINDOWS[kind], win_length, xp=xp)
     elif kind == "sine":
@@ -2047,7 +2168,9 @@ def make_window(kind: WindowType, n_fft: int, win_length: int, *, kaiser_beta: f
     elif kind in _HANN_POISSON_WINDOWS:
         base = _hann_poisson_window(win_length, _HANN_POISSON_WINDOWS[kind], xp=xp)
     elif kind in _GENERAL_HAMMING_WINDOWS:
-        base = _general_hamming_window(win_length, _GENERAL_HAMMING_WINDOWS[kind], xp=xp)
+        base = _general_hamming_window(
+            win_length, _GENERAL_HAMMING_WINDOWS[kind], xp=xp
+        )
     elif kind == "bohman":
         base = _bohman_window(win_length, xp=xp)
     elif kind == "cosine":
@@ -2086,12 +2209,16 @@ def pad_for_framing(signal, n_fft: int, hop: int, center: bool):
 
 
 def stft(signal: np.ndarray, config: VocoderConfig):
-    bridge_to_cuda = _RUNTIME_CONFIG.active_device == "cuda" and not _is_cupy_array(signal)
+    bridge_to_cuda = _RUNTIME_CONFIG.active_device == "cuda" and not _is_cupy_array(
+        signal
+    )
     work_signal = _to_runtime_array(signal) if bridge_to_cuda else signal
     xp = _array_module(work_signal)
     transform = normalize_transform_name(config.transform)
 
-    work_signal, frame_count = pad_for_framing(work_signal, config.n_fft, config.hop_size, config.center)
+    work_signal, frame_count = pad_for_framing(
+        work_signal, config.n_fft, config.hop_size, config.center
+    )
     window = make_window(
         config.window,
         config.n_fft,
@@ -2105,7 +2232,9 @@ def stft(signal: np.ndarray, config: VocoderConfig):
     for frame_idx in range(frame_count):
         start = frame_idx * config.hop_size
         frame = work_signal[start : start + config.n_fft]
-        spectrum[:, frame_idx] = _forward_transform(frame * window, config.n_fft, transform, xp=xp)
+        spectrum[:, frame_idx] = _forward_transform(
+            frame * window, config.n_fft, transform, xp=xp
+        )
 
     if bridge_to_cuda:
         return _to_numpy(spectrum)
@@ -2117,7 +2246,9 @@ def istft(
     config: VocoderConfig,
     expected_length: int | None = None,
 ):
-    bridge_to_cuda = _RUNTIME_CONFIG.active_device == "cuda" and not _is_cupy_array(spectrum)
+    bridge_to_cuda = _RUNTIME_CONFIG.active_device == "cuda" and not _is_cupy_array(
+        spectrum
+    )
     work_spectrum = _to_runtime_array(spectrum) if bridge_to_cuda else spectrum
     xp = _array_module(work_spectrum)
     transform = normalize_transform_name(config.transform)
@@ -2136,7 +2267,9 @@ def istft(
 
     for frame_idx in range(n_frames):
         start = frame_idx * config.hop_size
-        frame = _inverse_transform(work_spectrum[:, frame_idx], config.n_fft, transform, xp=xp)
+        frame = _inverse_transform(
+            work_spectrum[:, frame_idx], config.n_fft, transform, xp=xp
+        )
         output[start : start + config.n_fft] += frame * window
         weight[start : start + config.n_fft] += window * window
 
@@ -2248,7 +2381,9 @@ def build_fourier_sync_plan(
     smooth_span: int,
     progress_callback: ProgressCallback | None = None,
 ) -> FourierSyncPlan:
-    framed, frame_count = pad_for_framing(signal, config.n_fft, config.hop_size, config.center)
+    framed, frame_count = pad_for_framing(
+        signal, config.n_fft, config.hop_size, config.center
+    )
     if frame_count <= 0:
         return FourierSyncPlan(
             frame_lengths=np.array([config.n_fft], dtype=np.int64),
@@ -2262,14 +2397,18 @@ def build_fourier_sync_plan(
         frame = framed[start : start + config.n_fft]
         if frame.size >= 4 and float(np.sqrt(np.mean(frame * frame))) >= 1e-6:
             try:
-                f0_track[frame_idx] = estimate_f0_autocorrelation(frame, sample_rate, f0_min_hz, f0_max_hz)
+                f0_track[frame_idx] = estimate_f0_autocorrelation(
+                    frame, sample_rate, f0_min_hz, f0_max_hz
+                )
             except Exception:
                 pass
         if progress_callback is not None:
             progress_callback(frame_idx + 1, frame_count)
 
     finite_f0 = f0_track[np.isfinite(f0_track)]
-    fallback_f0 = float(np.median(finite_f0)) if finite_f0.size else (f0_min_hz + f0_max_hz) * 0.5
+    fallback_f0 = (
+        float(np.median(finite_f0)) if finite_f0.size else (f0_min_hz + f0_max_hz) * 0.5
+    )
     f0_track = fill_nan_with_nearest(f0_track, fallback=fallback_f0)
     f0_track = smooth_series(f0_track, smooth_span)
     f0_track = np.clip(f0_track, f0_min_hz, f0_max_hz)
@@ -2291,14 +2430,20 @@ def build_fourier_sync_plan(
         ],
         dtype=np.int64,
     )
-    frame_lengths = np.rint(smooth_series(frame_lengths.astype(np.float64), smooth_span)).astype(np.int64)
+    frame_lengths = np.rint(
+        smooth_series(frame_lengths.astype(np.float64), smooth_span)
+    ).astype(np.int64)
     frame_lengths = np.clip(frame_lengths, min_fft, max_fft)
     frame_lengths = regularize_frame_lengths(
         frame_lengths,
         max_step=max(2, int(round(config.n_fft * 0.015))),
     )
     reference_n_fft = int(max(config.n_fft, int(np.max(frame_lengths))))
-    return FourierSyncPlan(frame_lengths=frame_lengths, f0_track_hz=f0_track, reference_n_fft=reference_n_fft)
+    return FourierSyncPlan(
+        frame_lengths=frame_lengths,
+        f0_track_hz=f0_track,
+        reference_n_fft=reference_n_fft,
+    )
 
 
 def compute_transient_flags(magnitude, threshold_scale: float):
@@ -2403,7 +2548,9 @@ def draw_random_phase(n_bins: int, *, xp=np, rng=None):
         return np.asarray(rng.uniform(-np.pi, np.pi, size=n_bins), dtype=np.float64)
     if xp is cp:
         generator = rng if rng is not None else cp.random
-        return generator.uniform(-np.pi, np.pi, size=n_bins).astype(cp.float64, copy=False)
+        return generator.uniform(-np.pi, np.pi, size=n_bins).astype(
+            cp.float64, copy=False
+        )
     return xp.zeros(n_bins, dtype=xp.float64)
 
 
@@ -2425,7 +2572,9 @@ def apply_phase_engine(
         return phase
     if blend >= 1.0:
         return random_phase
-    return xp.angle((1.0 - blend) * xp.exp(1j * phase) + blend * xp.exp(1j * random_phase))
+    return xp.angle(
+        (1.0 - blend) * xp.exp(1j * phase) + blend * xp.exp(1j * random_phase)
+    )
 
 
 def find_spectral_peaks(magnitude: np.ndarray) -> np.ndarray:
@@ -2433,10 +2582,7 @@ def find_spectral_peaks(magnitude: np.ndarray) -> np.ndarray:
     if mag.size < 3:
         return np.array([int(np.argmax(mag))], dtype=np.int64)
 
-    interior = (
-        (mag[1:-1] > mag[:-2])
-        & (mag[1:-1] >= mag[2:])
-    )
+    interior = (mag[1:-1] > mag[:-2]) & (mag[1:-1] >= mag[2:])
     peak_bins = np.where(interior)[0] + 1
     if peak_bins.size == 0:
         peak_bins = np.array([int(np.argmax(mag))], dtype=np.int64)
@@ -2475,7 +2621,9 @@ def phase_vocoder_time_stretch(
     if signal.size == 0:
         return signal
 
-    bridge_to_cuda = _RUNTIME_CONFIG.active_device == "cuda" and not _is_cupy_array(signal)
+    bridge_to_cuda = _RUNTIME_CONFIG.active_device == "cuda" and not _is_cupy_array(
+        signal
+    )
     work_signal = _to_runtime_array(signal) if bridge_to_cuda else signal
     xp = _array_module(work_signal)
     transform = normalize_transform_name(config.transform)
@@ -2509,7 +2657,9 @@ def phase_vocoder_time_stretch(
 
     phase = input_phase[:, 0].copy()
     phase_rng = create_phase_rng(xp=xp, seed=config.phase_random_seed)
-    omega = _analysis_angular_velocity(n_bins, config.n_fft, config.hop_size, transform, xp=xp)
+    omega = _analysis_angular_velocity(
+        n_bins, config.n_fft, config.hop_size, transform, xp=xp
+    )
     output_stft = xp.zeros((n_bins, out_frames), dtype=xp.complex128)
     if progress_callback is not None:
         progress_callback(0, out_frames)
@@ -2539,7 +2689,9 @@ def phase_vocoder_time_stretch(
         if config.transient_preserve:
             transient_idx = min(frame_idx + (1 if frac >= 0.5 else 0), n_frames - 1)
             if _as_bool(transient_flags[transient_idx]):
-                phase_blend = (1.0 - frac) * xp.exp(1j * left_phase) + frac * xp.exp(1j * right_phase)
+                phase_blend = (1.0 - frac) * xp.exp(1j * left_phase) + frac * xp.exp(
+                    1j * right_phase
+                )
                 synth_phase = xp.angle(phase_blend)
 
         if config.phase_locking == "identity" and config.phase_engine != "random":
@@ -2550,7 +2702,9 @@ def phase_vocoder_time_stretch(
 
         phase = synth_phase
         output_stft[:, out_idx] = mag * xp.exp(1j * phase)
-        if progress_callback is not None and (out_idx == out_frames - 1 or (out_idx % 8) == 0):
+        if progress_callback is not None and (
+            out_idx == out_frames - 1 or (out_idx % 8) == 0
+        ):
             progress_callback(out_idx + 1, out_frames)
 
     target_length = max(1, int(round(work_signal.size * stretch)))
@@ -2570,12 +2724,16 @@ def phase_vocoder_time_stretch_fourier_sync(
     if signal.size == 0:
         return signal
 
-    bridge_to_cuda = _RUNTIME_CONFIG.active_device == "cuda" and not _is_cupy_array(signal)
+    bridge_to_cuda = _RUNTIME_CONFIG.active_device == "cuda" and not _is_cupy_array(
+        signal
+    )
     work_signal = _to_runtime_array(signal) if bridge_to_cuda else signal
     xp = _array_module(work_signal)
     transform = normalize_transform_name(config.transform)
 
-    framed, frame_count = pad_for_framing(work_signal, config.n_fft, config.hop_size, config.center)
+    framed, frame_count = pad_for_framing(
+        work_signal, config.n_fft, config.hop_size, config.center
+    )
     if frame_count < 2:
         target_len = max(1, int(round(work_signal.size * stretch)))
         out = force_length(work_signal.copy(), target_len)
@@ -2592,7 +2750,9 @@ def phase_vocoder_time_stretch_fourier_sync(
     out_frames = max(2, int(round(frame_count * stretch)))
     total_steps = frame_count + out_frames + out_frames
 
-    ref_n_fft = int(max(sync_plan.reference_n_fft, config.n_fft, int(np.max(frame_lengths))))
+    ref_n_fft = int(
+        max(sync_plan.reference_n_fft, config.n_fft, int(np.max(frame_lengths)))
+    )
     ref_bins = transform_bin_count(ref_n_fft, transform)
     input_stft = xp.empty((ref_bins, frame_count), dtype=xp.complex128)
     if progress_callback is not None:
@@ -2612,7 +2772,9 @@ def phase_vocoder_time_stretch_fourier_sync(
         )
         spectrum = _forward_transform(frame * window, n_fft_i, transform, xp=xp)
         input_stft[:, frame_idx] = resize_spectrum_bins(spectrum, ref_bins)
-        if progress_callback is not None and (frame_idx == frame_count - 1 or (frame_idx % 8) == 0):
+        if progress_callback is not None and (
+            frame_idx == frame_count - 1 or (frame_idx % 8) == 0
+        ):
             progress_callback(frame_idx + 1, total_steps)
 
     input_phase = xp.angle(input_stft)
@@ -2636,7 +2798,9 @@ def phase_vocoder_time_stretch_fourier_sync(
 
     phase = input_phase[:, 0].copy()
     phase_rng = create_phase_rng(xp=xp, seed=config.phase_random_seed)
-    omega = _analysis_angular_velocity(ref_bins, ref_n_fft, config.hop_size, transform, xp=xp)
+    omega = _analysis_angular_velocity(
+        ref_bins, ref_n_fft, config.hop_size, transform, xp=xp
+    )
     output_stft = xp.zeros((ref_bins, out_frames), dtype=xp.complex128)
     output_lengths = np.zeros(out_frames, dtype=np.int64)
     completed_steps = 0
@@ -2665,7 +2829,9 @@ def phase_vocoder_time_stretch_fourier_sync(
         if config.transient_preserve:
             transient_idx = min(frame_idx + (1 if frac >= 0.5 else 0), frame_count - 1)
             if _as_bool(transient_flags[transient_idx]):
-                phase_blend = (1.0 - frac) * xp.exp(1j * left_phase) + frac * xp.exp(1j * right_phase)
+                phase_blend = (1.0 - frac) * xp.exp(1j * left_phase) + frac * xp.exp(
+                    1j * right_phase
+                )
                 synth_phase = xp.angle(phase_blend)
 
         if config.phase_locking == "identity" and config.phase_engine != "random":
@@ -2679,9 +2845,13 @@ def phase_vocoder_time_stretch_fourier_sync(
 
         n_left = int(frame_lengths[frame_idx])
         n_right = int(frame_lengths[right_idx])
-        output_lengths[out_idx] = max(16, int(round((1.0 - frac) * n_left + frac * n_right)))
+        output_lengths[out_idx] = max(
+            16, int(round((1.0 - frac) * n_left + frac * n_right))
+        )
         completed_steps += 1
-        if progress_callback is not None and (out_idx == out_frames - 1 or (out_idx % 8) == 0):
+        if progress_callback is not None and (
+            out_idx == out_frames - 1 or (out_idx % 8) == 0
+        ):
             progress_callback(frame_count + completed_steps, total_steps)
 
     output_len = config.hop_size * max(0, out_frames - 1) + int(np.max(output_lengths))
@@ -2705,7 +2875,9 @@ def phase_vocoder_time_stretch_fourier_sync(
         start = frame_idx * config.hop_size
         output[start : start + n_fft_i] += frame * window
         weight[start : start + n_fft_i] += window * window
-        if progress_callback is not None and (frame_idx == out_frames - 1 or (frame_idx % 8) == 0):
+        if progress_callback is not None and (
+            frame_idx == out_frames - 1 or (frame_idx % 8) == 0
+        ):
             progress_callback(frame_count + out_frames + frame_idx + 1, total_steps)
 
     nz = weight > 1e-12
@@ -2723,7 +2895,9 @@ def phase_vocoder_time_stretch_fourier_sync(
     return _to_numpy(out) if bridge_to_cuda else out
 
 
-def compute_multistage_stretches(stretch: float, max_stage_stretch: float) -> list[float]:
+def compute_multistage_stretches(
+    stretch: float, max_stage_stretch: float
+) -> list[float]:
     if stretch <= 0.0:
         raise ValueError("stretch must be > 0")
     max_stage = max(1.01, float(max_stage_stretch))
@@ -2794,7 +2968,14 @@ def phase_vocoder_time_stretch_multistage(
 
         stage_cb: ProgressCallback | None = None
         if progress_callback is not None:
-            def _stage_cb(done: int, total: int, *, _stage_start: float = stage_start, _stage_span: float = stage_span) -> None:
+
+            def _stage_cb(
+                done: int,
+                total: int,
+                *,
+                _stage_start: float = stage_start,
+                _stage_span: float = stage_span,
+            ) -> None:
                 frac = _stage_start + _stage_span * (done / max(1, total))
                 progress_callback(frac, 1.0)
 
@@ -2932,7 +3113,9 @@ def phase_vocoder_time_stretch_multires_fusion(
     fused = np.zeros(target_len, dtype=np.float64)
     max_stages = 1
 
-    for idx, (fft_size, weight) in enumerate(zip(fft_sizes, valid_weights, strict=True)):
+    for idx, (fft_size, weight) in enumerate(
+        zip(fft_sizes, valid_weights, strict=True)
+    ):
         fft_i = max(16, int(fft_size))
         win_i = max(2, min(fft_i, int(round(win_ratio * fft_i))))
         hop_i = max(1, min(win_i, int(round(hop_ratio * fft_i))))
@@ -2961,7 +3144,13 @@ def phase_vocoder_time_stretch_multires_fusion(
             sub_start = idx / len(fft_sizes)
             sub_end = (idx + 1) / len(fft_sizes)
 
-            def _sub_cb(done: int, total: int, *, _start: float = sub_start, _span: float = sub_end - sub_start) -> None:
+            def _sub_cb(
+                done: int,
+                total: int,
+                *,
+                _start: float = sub_start,
+                _span: float = sub_end - sub_start,
+            ) -> None:
                 frac = _start + _span * (done / max(1, total))
                 progress_callback(frac, 1)
 
@@ -2982,7 +3171,9 @@ def phase_vocoder_time_stretch_multires_fusion(
             fourier_sync_smooth=fourier_sync_smooth,
             progress_callback=sub_cb,
         )
-        stretched_i = np.asarray(force_length(stretched_i, target_len), dtype=np.float64)
+        stretched_i = np.asarray(
+            force_length(stretched_i, target_len), dtype=np.float64
+        )
         fused += float(weight) * stretched_i
         max_stages = max(max_stages, int(stage_count_i))
 
@@ -3013,7 +3204,9 @@ def resample_1d(signal, output_samples: int, mode: ResampleMode):
     if output_samples == signal.size:
         return signal.copy()
 
-    bridge_to_cuda = _RUNTIME_CONFIG.active_device == "cuda" and not _is_cupy_array(signal)
+    bridge_to_cuda = _RUNTIME_CONFIG.active_device == "cuda" and not _is_cupy_array(
+        signal
+    )
     work_signal = _to_runtime_array(signal) if bridge_to_cuda else signal
     xp = _array_module(work_signal)
 
@@ -3026,7 +3219,9 @@ def resample_1d(signal, output_samples: int, mode: ResampleMode):
             out = cupyx_resample(work_signal, output_samples).astype(cp.float64)
             return _to_numpy(out) if bridge_to_cuda else out
         if xp is cp and scipy_resample is not None:
-            out = scipy_resample(_to_numpy(work_signal), output_samples).astype(np.float64)
+            out = scipy_resample(_to_numpy(work_signal), output_samples).astype(
+                np.float64
+            )
             return out
 
     out = linear_resample_1d(work_signal, output_samples)
@@ -3082,7 +3277,7 @@ def estimate_f0_autocorrelation(
     # Optional parabolic refinement around the autocorrelation peak.
     if 1 <= lag < corr.size - 1:
         y0, y1, y2 = corr[lag - 1], corr[lag], corr[lag + 1]
-        denom = (y0 - 2.0 * y1 + y2)
+        denom = y0 - 2.0 * y1 + y2
         if abs(denom) > 1e-12:
             lag = lag + 0.5 * (y0 - y2) / denom
 
@@ -3123,7 +3318,9 @@ def _envelope_coeff(sample_rate: int, ms: float) -> float:
     return float(np.exp(-1.0 / max(1.0, sample_rate * tau)))
 
 
-def _envelope_follower(signal_1d: np.ndarray, sample_rate: int, attack_ms: float, release_ms: float) -> np.ndarray:
+def _envelope_follower(
+    signal_1d: np.ndarray, sample_rate: int, attack_ms: float, release_ms: float
+) -> np.ndarray:
     attack = _envelope_coeff(sample_rate, attack_ms)
     release = _envelope_coeff(sample_rate, release_ms)
     env = np.zeros(signal_1d.size, dtype=np.float64)
@@ -3231,7 +3428,9 @@ def _apply_limiter(audio: np.ndarray, threshold: float) -> np.ndarray:
     return out * (threshold / (peak + 1e-12))
 
 
-def _apply_soft_clip(audio: np.ndarray, level: float, clip_type: str, drive: float) -> np.ndarray:
+def _apply_soft_clip(
+    audio: np.ndarray, level: float, clip_type: str, drive: float
+) -> np.ndarray:
     out = np.asarray(audio, dtype=np.float64).copy()
     lvl = max(1e-6, float(level))
     drv = max(1e-6, float(drive))
@@ -3251,34 +3450,149 @@ def _apply_soft_clip(audio: np.ndarray, level: float, clip_type: str, drive: flo
 
 
 def add_mastering_args(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--normalize", choices=["none", "peak", "rms"], default="none", help="Output normalization mode")
-    parser.add_argument("--peak-dbfs", type=float, default=-1.0, help="Target peak dBFS when --normalize peak")
-    parser.add_argument("--rms-dbfs", type=float, default=-18.0, help="Target RMS dBFS when --normalize rms")
-    parser.add_argument("--target-lufs", type=float, default=None, help="Integrated loudness target in LUFS")
-    parser.add_argument("--compressor-threshold-db", type=float, default=None, help="Enable compressor above threshold dBFS")
-    parser.add_argument("--compressor-ratio", type=float, default=4.0, help="Compressor ratio (>=1)")
-    parser.add_argument("--compressor-attack-ms", type=float, default=10.0, help="Compressor attack time in ms")
-    parser.add_argument("--compressor-release-ms", type=float, default=120.0, help="Compressor release time in ms")
-    parser.add_argument("--compressor-makeup-db", type=float, default=0.0, help="Compressor makeup gain in dB")
-    parser.add_argument("--expander-threshold-db", type=float, default=None, help="Enable downward expander below threshold dBFS")
-    parser.add_argument("--expander-ratio", type=float, default=2.0, help="Expander ratio (>=1)")
-    parser.add_argument("--expander-attack-ms", type=float, default=5.0, help="Expander attack time in ms")
-    parser.add_argument("--expander-release-ms", type=float, default=120.0, help="Expander release time in ms")
-    parser.add_argument("--compander-threshold-db", type=float, default=None, help="Enable compander threshold in dBFS")
-    parser.add_argument("--compander-compress-ratio", type=float, default=3.0, help="Compander compression ratio (>=1)")
-    parser.add_argument("--compander-expand-ratio", type=float, default=1.8, help="Compander expansion ratio (>=1)")
-    parser.add_argument("--compander-attack-ms", type=float, default=8.0, help="Compander attack time in ms")
-    parser.add_argument("--compander-release-ms", type=float, default=120.0, help="Compander release time in ms")
-    parser.add_argument("--compander-makeup-db", type=float, default=0.0, help="Compander makeup gain in dB")
-    parser.add_argument("--limiter-threshold", type=float, default=None, help="Peak limiter threshold in linear full-scale")
-    parser.add_argument("--soft-clip-level", type=float, default=None, help="Soft clip output ceiling in linear full-scale")
-    parser.add_argument("--soft-clip-type", choices=["tanh", "arctan", "cubic"], default="tanh", help="Soft clip transfer type")
-    parser.add_argument("--soft-clip-drive", type=float, default=1.0, help="Soft clip drive amount (>0)")
-    parser.add_argument("--hard-clip-level", type=float, default=None, help="Hard clip level in linear full-scale")
-    parser.add_argument("--clip", action="store_true", help="Legacy alias: hard clip at +/-1.0 when set")
+    parser.add_argument(
+        "--normalize",
+        choices=["none", "peak", "rms"],
+        default="none",
+        help="Output normalization mode",
+    )
+    parser.add_argument(
+        "--peak-dbfs",
+        type=float,
+        default=-1.0,
+        help="Target peak dBFS when --normalize peak",
+    )
+    parser.add_argument(
+        "--rms-dbfs",
+        type=float,
+        default=-18.0,
+        help="Target RMS dBFS when --normalize rms",
+    )
+    parser.add_argument(
+        "--target-lufs",
+        type=float,
+        default=None,
+        help="Integrated loudness target in LUFS",
+    )
+    parser.add_argument(
+        "--compressor-threshold-db",
+        type=float,
+        default=None,
+        help="Enable compressor above threshold dBFS",
+    )
+    parser.add_argument(
+        "--compressor-ratio", type=float, default=4.0, help="Compressor ratio (>=1)"
+    )
+    parser.add_argument(
+        "--compressor-attack-ms",
+        type=float,
+        default=10.0,
+        help="Compressor attack time in ms",
+    )
+    parser.add_argument(
+        "--compressor-release-ms",
+        type=float,
+        default=120.0,
+        help="Compressor release time in ms",
+    )
+    parser.add_argument(
+        "--compressor-makeup-db",
+        type=float,
+        default=0.0,
+        help="Compressor makeup gain in dB",
+    )
+    parser.add_argument(
+        "--expander-threshold-db",
+        type=float,
+        default=None,
+        help="Enable downward expander below threshold dBFS",
+    )
+    parser.add_argument(
+        "--expander-ratio", type=float, default=2.0, help="Expander ratio (>=1)"
+    )
+    parser.add_argument(
+        "--expander-attack-ms",
+        type=float,
+        default=5.0,
+        help="Expander attack time in ms",
+    )
+    parser.add_argument(
+        "--expander-release-ms",
+        type=float,
+        default=120.0,
+        help="Expander release time in ms",
+    )
+    parser.add_argument(
+        "--compander-threshold-db",
+        type=float,
+        default=None,
+        help="Enable compander threshold in dBFS",
+    )
+    parser.add_argument(
+        "--compander-compress-ratio",
+        type=float,
+        default=3.0,
+        help="Compander compression ratio (>=1)",
+    )
+    parser.add_argument(
+        "--compander-expand-ratio",
+        type=float,
+        default=1.8,
+        help="Compander expansion ratio (>=1)",
+    )
+    parser.add_argument(
+        "--compander-attack-ms",
+        type=float,
+        default=8.0,
+        help="Compander attack time in ms",
+    )
+    parser.add_argument(
+        "--compander-release-ms",
+        type=float,
+        default=120.0,
+        help="Compander release time in ms",
+    )
+    parser.add_argument(
+        "--compander-makeup-db",
+        type=float,
+        default=0.0,
+        help="Compander makeup gain in dB",
+    )
+    parser.add_argument(
+        "--limiter-threshold",
+        type=float,
+        default=None,
+        help="Peak limiter threshold in linear full-scale",
+    )
+    parser.add_argument(
+        "--soft-clip-level",
+        type=float,
+        default=None,
+        help="Soft clip output ceiling in linear full-scale",
+    )
+    parser.add_argument(
+        "--soft-clip-type",
+        choices=["tanh", "arctan", "cubic"],
+        default="tanh",
+        help="Soft clip transfer type",
+    )
+    parser.add_argument(
+        "--soft-clip-drive", type=float, default=1.0, help="Soft clip drive amount (>0)"
+    )
+    parser.add_argument(
+        "--hard-clip-level",
+        type=float,
+        default=None,
+        help="Hard clip level in linear full-scale",
+    )
+    parser.add_argument(
+        "--clip", action="store_true", help="Legacy alias: hard clip at +/-1.0 when set"
+    )
 
 
-def validate_mastering_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
+def validate_mastering_args(
+    args: argparse.Namespace, parser: argparse.ArgumentParser
+) -> None:
     if args.target_lufs is not None and not np.isfinite(args.target_lufs):
         parser.error("--target-lufs must be finite")
     if args.compressor_ratio < 1.0:
@@ -3309,7 +3623,9 @@ def validate_mastering_args(args: argparse.Namespace, parser: argparse.ArgumentP
         parser.error("--hard-clip-level must be > 0")
 
 
-def apply_mastering_chain(audio: np.ndarray, sample_rate: int, args: argparse.Namespace) -> np.ndarray:
+def apply_mastering_chain(
+    audio: np.ndarray, sample_rate: int, args: argparse.Namespace
+) -> np.ndarray:
     out = np.asarray(audio, dtype=np.float64)
     if out.ndim == 1:
         out = out[:, None]
@@ -3359,7 +3675,9 @@ def apply_mastering_chain(audio: np.ndarray, sample_rate: int, args: argparse.Na
         out = _apply_limiter(out, float(args.limiter_threshold))
 
     if args.soft_clip_level is not None:
-        out = _apply_soft_clip(out, args.soft_clip_level, args.soft_clip_type, args.soft_clip_drive)
+        out = _apply_soft_clip(
+            out, args.soft_clip_level, args.soft_clip_type, args.soft_clip_drive
+        )
 
     hard_clip_level = args.hard_clip_level
     if hard_clip_level is None and bool(getattr(args, "clip", False)):
@@ -3442,9 +3760,13 @@ def apply_formant_preservation(
     return _to_numpy(out) if bridge_to_cuda else out
 
 
-def choose_pitch_ratio(args: argparse.Namespace, signal: np.ndarray, sr: int) -> PitchConfig:
+def choose_pitch_ratio(
+    args: argparse.Namespace, signal: np.ndarray, sr: int
+) -> PitchConfig:
     if args.pitch_shift_ratio is not None:
-        ratio = parse_pitch_ratio_value(args.pitch_shift_ratio, context="--pitch-shift-ratio")
+        ratio = parse_pitch_ratio_value(
+            args.pitch_shift_ratio, context="--pitch-shift-ratio"
+        )
         return PitchConfig(ratio=ratio)
 
     if args.pitch_shift_semitones is not None:
@@ -3491,7 +3813,13 @@ def parse_control_segments_csv(
     if not required.issubset(fields):
         raise ValueError("Control-map CSV must include: start_sec,end_sec")
 
-    stretch_keys = ("stretch", "time_stretch", "time-stretch", "time_stretch_factor", "time-stretch-factor")
+    stretch_keys = (
+        "stretch",
+        "time_stretch",
+        "time-stretch",
+        "time_stretch_factor",
+        "time-stretch-factor",
+    )
     ratio_keys = ("pitch_ratio",)
     cents_keys = ("pitch_cents",)
     semitone_keys = ("pitch_semitones",)
@@ -3507,7 +3835,9 @@ def parse_control_segments_csv(
         start_raw = values.get("start_sec", "")
         end_raw = values.get("end_sec", "")
         if not start_raw or not end_raw:
-            raise ValueError(f"Control-map row {row_index}: start_sec and end_sec are required")
+            raise ValueError(
+                f"Control-map row {row_index}: start_sec and end_sec are required"
+            )
 
         start_sec = float(start_raw)
         end_sec = float(end_raw)
@@ -3539,7 +3869,9 @@ def parse_control_segments_csv(
             if semitone_text:
                 break
 
-        populated = int(bool(ratio_text)) + int(bool(cents_text)) + int(bool(semitone_text))
+        populated = (
+            int(bool(ratio_text)) + int(bool(cents_text)) + int(bool(semitone_text))
+        )
         if populated > 1:
             raise ValueError(
                 f"Control-map row {row_index}: use only one of pitch_ratio, pitch_cents, or pitch_semitones"
@@ -3594,10 +3926,7 @@ def apply_control_confidence_policy(
 
     ratios = np.array([seg.pitch_ratio for seg in segments], dtype=np.float64)
     conf = np.array(
-        [
-            1.0 if seg.confidence is None else float(seg.confidence)
-            for seg in segments
-        ],
+        [1.0 if seg.confidence is None else float(seg.confidence) for seg in segments],
         dtype=np.float64,
     )
     valid = conf >= conf_min
@@ -3635,11 +3964,15 @@ def apply_control_confidence_policy(
     return out
 
 
-def smooth_control_ratios(segments: list[ControlSegment], *, smooth_ms: float) -> list[ControlSegment]:
+def smooth_control_ratios(
+    segments: list[ControlSegment], *, smooth_ms: float
+) -> list[ControlSegment]:
     if smooth_ms <= 0.0 or len(segments) < 3:
         return segments
 
-    durations = np.array([max(1e-9, seg.end_sec - seg.start_sec) for seg in segments], dtype=np.float64)
+    durations = np.array(
+        [max(1e-9, seg.end_sec - seg.start_sec) for seg in segments], dtype=np.float64
+    )
     median_duration = float(np.median(durations))
     if median_duration <= 0.0:
         return segments
@@ -3765,7 +4098,9 @@ def load_control_segments(
         payload = apply_control_routes_csv(
             payload,
             routes=routes,
-            source_label="stdin control-map" if use_stdin else f"control-map {map_path}",
+            source_label="stdin control-map"
+            if use_stdin
+            else f"control-map {map_path}",
         )
 
     segments = parse_control_segments_csv(
@@ -3847,7 +4182,8 @@ def process_audio_block(
     *,
     stretch: float,
     pitch_ratio: float,
-    progress_callback_factory: Callable[[float, float, str], ProgressCallback | None] | None = None,
+    progress_callback_factory: Callable[[float, float, str], ProgressCallback | None]
+    | None = None,
 ) -> AudioBlockResult:
     internal_stretch = float(stretch * pitch_ratio)
     if internal_stretch <= 0.0:
@@ -3863,7 +4199,9 @@ def process_audio_block(
     transient_mode = str(getattr(args, "transient_mode", "off")).strip().lower()
     if transient_mode == "off" and bool(getattr(args, "transient_preserve", False)):
         transient_mode = "reset"
-    coherence_strength = float(np.clip(getattr(args, "coherence_strength", 0.0), 0.0, 1.0))
+    coherence_strength = float(
+        np.clip(getattr(args, "coherence_strength", 0.0), 0.0, 1.0)
+    )
     stereo_mode = str(getattr(args, "stereo_mode", "independent")).strip().lower()
 
     ms_active = stereo_mode == "mid_side_lock" and audio.shape[1] == 2
@@ -3885,16 +4223,22 @@ def process_audio_block(
 
     stage_count = 1
     if use_multistage:
-        stage_count = len(compute_multistage_stretches(internal_stretch, args.max_stage_stretch))
+        stage_count = len(
+            compute_multistage_stretches(internal_stretch, args.max_stage_stretch)
+        )
 
     multires_enabled = bool(getattr(args, "multires_fusion", False))
     multires_ffts = list(getattr(args, "_multires_ffts", [config.n_fft]))
-    multires_weights = list(getattr(args, "_multires_weights", [1.0 for _ in multires_ffts]))
+    multires_weights = list(
+        getattr(args, "_multires_weights", [1.0 for _ in multires_ffts])
+    )
     if multires_enabled and not multires_ffts:
         multires_enabled = False
 
     sync_plan: FourierSyncPlan | None = None
-    use_global_sync_plan = args.fourier_sync and (not use_multistage) and (not multires_enabled)
+    use_global_sync_plan = (
+        args.fourier_sync and (not use_multistage) and (not multires_enabled)
+    )
     if use_global_sync_plan:
         sync_source = (
             working_audio[:, 0]
@@ -3976,10 +4320,18 @@ def process_audio_block(
     channel_end = 0.88
     processed_channels: list[np.ndarray] = []
     for ch in range(working_audio.shape[1]):
-        sub_start = channel_start + (channel_end - channel_start) * (ch / working_audio.shape[1])
-        sub_end = channel_start + (channel_end - channel_start) * ((ch + 1) / working_audio.shape[1])
+        sub_start = channel_start + (channel_end - channel_start) * (
+            ch / working_audio.shape[1]
+        )
+        sub_end = channel_start + (channel_end - channel_start) * (
+            (ch + 1) / working_audio.shape[1]
+        )
         detail = f"channel {ch + 1}/{working_audio.shape[1]}"
-        callback = None if progress_callback_factory is None else progress_callback_factory(sub_start, sub_end, detail)
+        callback = (
+            None
+            if progress_callback_factory is None
+            else progress_callback_factory(sub_start, sub_end, detail)
+        )
         source_ch = working_audio[:, ch]
 
         if transient_mode in {"hybrid", "wsola"}:
@@ -3993,7 +4345,9 @@ def process_audio_block(
                 crossfade_ms=float(args.transient_crossfade_ms),
                 center=config.center,
             )
-            frame_ms = 1000.0 * max(config.win_length, config.hop_size * 2) / float(max(1, sr))
+            frame_ms = (
+                1000.0 * max(config.win_length, config.hop_size * 2) / float(max(1, sr))
+            )
             hop_ms = 1000.0 * max(1, config.hop_size) / float(max(1, sr))
             stretched_wsola = wsola_time_stretch(
                 source_ch,
@@ -4004,17 +4358,27 @@ def process_audio_block(
                 search_ms=max(4.0, min(60.0, float(args.transient_protect_ms) * 0.8)),
             )
             target_len = max(1, int(round(source_ch.size * internal_stretch)))
-            stretched_wsola = np.asarray(force_length(stretched_wsola, target_len), dtype=np.float64)
+            stretched_wsola = np.asarray(
+                force_length(stretched_wsola, target_len), dtype=np.float64
+            )
 
             if transient_mode == "wsola":
                 stretched = stretched_wsola
                 stage_count_i = 1
             else:
                 steady_cfg = replace(config, transient_preserve=False)
-                stretched_pv, stage_count_i = _run_core_stretch(source_ch, steady_cfg, callback)
-                stretched_pv = np.asarray(force_length(stretched_pv, target_len), dtype=np.float64)
-                mask_out = map_mask_to_output(transient_mask, internal_stretch, target_len)
-                fade_samples = int(round(sr * max(0.0, float(args.transient_crossfade_ms)) / 1000.0))
+                stretched_pv, stage_count_i = _run_core_stretch(
+                    source_ch, steady_cfg, callback
+                )
+                stretched_pv = np.asarray(
+                    force_length(stretched_pv, target_len), dtype=np.float64
+                )
+                mask_out = map_mask_to_output(
+                    transient_mask, internal_stretch, target_len
+                )
+                fade_samples = int(
+                    round(sr * max(0.0, float(args.transient_crossfade_ms)) / 1000.0)
+                )
                 blend = smooth_binary_mask(mask_out, fade_samples)
                 stretched = stretched_pv * (1.0 - blend) + stretched_wsola * blend
         else:
@@ -4054,8 +4418,14 @@ def process_audio_block(
                 strength=coherence_strength,
             )
         out_audio = ms_to_lr(out_audio)
-    elif stereo_mode == "ref_channel_lock" and out_audio.shape[1] > 1 and coherence_strength > 1e-9:
-        ref_idx = validate_ref_channel(int(getattr(args, "ref_channel", 0)), out_audio.shape[1])
+    elif (
+        stereo_mode == "ref_channel_lock"
+        and out_audio.shape[1] > 1
+        and coherence_strength > 1e-9
+    ):
+        ref_idx = validate_ref_channel(
+            int(getattr(args, "ref_channel", 0)), out_audio.shape[1]
+        )
         reference = out_audio[:, ref_idx].copy()
         for ch in range(out_audio.shape[1]):
             if ch == ref_idx:
@@ -4132,37 +4502,61 @@ def _finalize_dynamic_segment_values(
     if "kaiser_beta" in overrides:
         out["kaiser_beta"] = max(0.0, float(overrides["kaiser_beta"]))
     if "fourier_sync_min_fft" in overrides:
-        out["fourier_sync_min_fft"] = max(16, int(round(float(overrides["fourier_sync_min_fft"]))))
+        out["fourier_sync_min_fft"] = max(
+            16, int(round(float(overrides["fourier_sync_min_fft"])))
+        )
     if "fourier_sync_max_fft" in overrides:
         max_fft = max(16, int(round(float(overrides["fourier_sync_max_fft"]))))
-        min_fft = int(out.get("fourier_sync_min_fft", int(getattr(args, "fourier_sync_min_fft", 256))))
+        min_fft = int(
+            out.get(
+                "fourier_sync_min_fft", int(getattr(args, "fourier_sync_min_fft", 256))
+            )
+        )
         out["fourier_sync_max_fft"] = max(min_fft, max_fft)
     if "fourier_sync_smooth" in overrides:
-        out["fourier_sync_smooth"] = max(1, int(round(float(overrides["fourier_sync_smooth"]))))
+        out["fourier_sync_smooth"] = max(
+            1, int(round(float(overrides["fourier_sync_smooth"])))
+        )
     if "ambient_phase_mix" in overrides:
-        out["ambient_phase_mix"] = float(np.clip(overrides["ambient_phase_mix"], 0.0, 1.0))
+        out["ambient_phase_mix"] = float(
+            np.clip(overrides["ambient_phase_mix"], 0.0, 1.0)
+        )
     if "transient_threshold" in overrides:
         out["transient_threshold"] = max(1e-9, float(overrides["transient_threshold"]))
     if "transient_sensitivity" in overrides:
-        out["transient_sensitivity"] = float(np.clip(overrides["transient_sensitivity"], 0.0, 1.0))
+        out["transient_sensitivity"] = float(
+            np.clip(overrides["transient_sensitivity"], 0.0, 1.0)
+        )
     if "transient_protect_ms" in overrides:
-        out["transient_protect_ms"] = max(1e-9, float(overrides["transient_protect_ms"]))
+        out["transient_protect_ms"] = max(
+            1e-9, float(overrides["transient_protect_ms"])
+        )
     if "transient_crossfade_ms" in overrides:
-        out["transient_crossfade_ms"] = max(0.0, float(overrides["transient_crossfade_ms"]))
+        out["transient_crossfade_ms"] = max(
+            0.0, float(overrides["transient_crossfade_ms"])
+        )
     if "coherence_strength" in overrides:
-        out["coherence_strength"] = float(np.clip(overrides["coherence_strength"], 0.0, 1.0))
+        out["coherence_strength"] = float(
+            np.clip(overrides["coherence_strength"], 0.0, 1.0)
+        )
     if "onset_credit_pull" in overrides:
-        out["onset_credit_pull"] = float(np.clip(overrides["onset_credit_pull"], 0.0, 1.0))
+        out["onset_credit_pull"] = float(
+            np.clip(overrides["onset_credit_pull"], 0.0, 1.0)
+        )
     if "onset_credit_max" in overrides:
         out["onset_credit_max"] = max(0.0, float(overrides["onset_credit_max"]))
     if "extreme_stretch_threshold" in overrides:
-        out["extreme_stretch_threshold"] = max(1.0000001, float(overrides["extreme_stretch_threshold"]))
+        out["extreme_stretch_threshold"] = max(
+            1.0000001, float(overrides["extreme_stretch_threshold"])
+        )
     if "max_stage_stretch" in overrides:
         out["max_stage_stretch"] = max(1.0000001, float(overrides["max_stage_stretch"]))
     if "formant_lifter" in overrides:
         out["formant_lifter"] = max(0, int(round(float(overrides["formant_lifter"]))))
     if "formant_strength" in overrides:
-        out["formant_strength"] = float(np.clip(overrides["formant_strength"], 0.0, 1.0))
+        out["formant_strength"] = float(
+            np.clip(overrides["formant_strength"], 0.0, 1.0)
+        )
     if "formant_max_gain_db" in overrides:
         out["formant_max_gain_db"] = max(1e-9, float(overrides["formant_max_gain_db"]))
 
@@ -4177,7 +4571,9 @@ def build_dynamic_control_segments(
     base_stretch: float,
     base_pitch_ratio: float,
 ) -> list[ControlSegment]:
-    refs: dict[str, DynamicControlRef] = dict(getattr(args, "_dynamic_control_refs", {}) or {})
+    refs: dict[str, DynamicControlRef] = dict(
+        getattr(args, "_dynamic_control_refs", {}) or {}
+    )
     if not refs:
         return []
 
@@ -4259,13 +4655,19 @@ def compute_output_path(
     output_format: str | None,
 ) -> Path:
     base_dir = output_dir if output_dir is not None else input_path.parent
-    ext = output_format.lower().lstrip(".") if output_format else input_path.suffix.lstrip(".")
+    ext = (
+        output_format.lower().lstrip(".")
+        if output_format
+        else input_path.suffix.lstrip(".")
+    )
     if not ext:
         ext = "wav"
     return base_dir / f"{input_path.stem}{suffix}.{ext}"
 
 
-def _stream_format_name(output_format: str | None, output_path: Path | None = None) -> str:
+def _stream_format_name(
+    output_format: str | None, output_path: Path | None = None
+) -> str:
     if output_format:
         ext = output_format.lower().lstrip(".")
     elif output_path is not None and str(output_path) != "-" and output_path.suffix:
@@ -4309,7 +4711,9 @@ def _write_audio_output(
     subtype: str | None = None,
 ) -> None:
     if bool(getattr(args, "stdout", False)) or str(output_path) == "-":
-        stream_fmt = _stream_format_name(getattr(args, "output_format", None), output_path=output_path)
+        stream_fmt = _stream_format_name(
+            getattr(args, "output_format", None), output_path=output_path
+        )
         buffer = io.BytesIO()
         sf.write(buffer, audio, sr, format=stream_fmt, subtype=subtype)
         sys.stdout.buffer.write(buffer.getvalue())
@@ -4319,7 +4723,9 @@ def _write_audio_output(
     sf.write(str(output_path), audio, sr, subtype=subtype)
 
 
-def concat_audio_chunks(chunks: list[np.ndarray], *, sr: int, crossfade_ms: float) -> np.ndarray:
+def concat_audio_chunks(
+    chunks: list[np.ndarray], *, sr: int, crossfade_ms: float
+) -> np.ndarray:
     if not chunks:
         return np.zeros((0, 1), dtype=np.float64)
     if len(chunks) == 1:
@@ -4452,7 +4858,9 @@ def write_manifest(
         "entries": payload_entries,
     }
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
 
 
 def process_file(
@@ -4468,7 +4876,9 @@ def process_file(
         enabled=progress_enabled,
     )
 
-    def make_progress_callback(start: float, end: float, detail: str) -> ProgressCallback | None:
+    def make_progress_callback(
+        start: float, end: float, detail: str
+    ) -> ProgressCallback | None:
         if not progress_enabled:
             return None
 
@@ -4492,7 +4902,11 @@ def process_file(
     use_dynamic_controls = bool(getattr(args, "_dynamic_control_refs", {}))
     use_control_map = bool(args.pitch_map is not None) or bool(args.pitch_map_stdin)
     auto_segment_seconds = float(getattr(args, "auto_segment_seconds", 0.0))
-    use_auto_segments = (not use_control_map) and (not use_dynamic_controls) and (auto_segment_seconds > 0.0)
+    use_auto_segments = (
+        (not use_control_map)
+        and (not use_dynamic_controls)
+        and (auto_segment_seconds > 0.0)
+    )
     segment_mode = use_control_map or use_auto_segments or use_dynamic_controls
     map_segments: list[ControlSegment] = []
     internal_stretch = base_stretch * pitch.ratio
@@ -4552,7 +4966,9 @@ def process_file(
             if end <= start:
                 continue
             progress_fraction = 0.12 + 0.70 * (seg_idx / max(1, len(map_segments)))
-            progress.set(progress_fraction, f"segment {seg_idx + 1}/{len(map_segments)}")
+            progress.set(
+                progress_fraction, f"segment {seg_idx + 1}/{len(map_segments)}"
+            )
             checkpoint_chunk_path = (
                 None
                 if checkpoint_dir is None
@@ -4602,7 +5018,9 @@ def process_file(
                     "profile": str(getattr(args, "_active_quality_profile", "neutral")),
                     "updated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
                 }
-                checkpoint_state_path.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
+                checkpoint_state_path.write_text(
+                    json.dumps(state, indent=2) + "\n", encoding="utf-8"
+                )
 
         progress.set(0.88, "assemble")
         crossfade_ms = float(args.pitch_map_crossfade_ms)
@@ -4618,12 +5036,18 @@ def process_file(
                 [max(1e-9, seg.end_sec - seg.start_sec) for seg in map_segments],
                 dtype=np.float64,
             )
-            stretch_values = np.array([seg.stretch for seg in map_segments], dtype=np.float64)
-            pitch_values = np.array([seg.pitch_ratio for seg in map_segments], dtype=np.float64)
+            stretch_values = np.array(
+                [seg.stretch for seg in map_segments], dtype=np.float64
+            )
+            pitch_values = np.array(
+                [seg.pitch_ratio for seg in map_segments], dtype=np.float64
+            )
             total_weight = float(np.sum(durations))
             if total_weight > 0.0:
                 base_stretch = float(np.sum(stretch_values * durations) / total_weight)
-                pitch = PitchConfig(ratio=float(np.sum(pitch_values * durations) / total_weight))
+                pitch = PitchConfig(
+                    ratio=float(np.sum(pitch_values * durations) / total_weight)
+                )
                 internal_stretch = base_stretch * pitch.ratio
     else:
         block = process_audio_block(
@@ -4668,7 +5092,9 @@ def process_file(
             )
     else:
         source_path = Path("stdin.wav") if str(input_path) == "-" else input_path
-        output_path = compute_output_path(source_path, args.output_dir, args.suffix, args.output_format)
+        output_path = compute_output_path(
+            source_path, args.output_dir, args.suffix, args.output_format
+        )
         if output_path.exists() and not args.overwrite and not args.dry_run:
             raise FileExistsError(
                 f"Output exists: {output_path}. Use --overwrite to replace it."
@@ -4695,7 +5121,9 @@ def process_file(
 
     if not args.dry_run:
         progress.set(0.96, "write")
-        _write_audio_output(output_path, out_audio, out_sr, args, subtype=resolved_subtype)
+        _write_audio_output(
+            output_path, out_audio, out_sr, args, subtype=resolved_subtype
+        )
         sidecar = write_metadata_sidecar(
             output_path=output_path,
             input_path=(None if str(input_path) == "-" else input_path),
@@ -4704,7 +5132,9 @@ def process_file(
             subtype=resolved_subtype,
             args=args,
             extra={
-                "quality_profile": str(getattr(args, "_active_quality_profile", "neutral")),
+                "quality_profile": str(
+                    getattr(args, "_active_quality_profile", "neutral")
+                ),
                 "stages": int(stage_count),
                 "control_map_segments": int(len(map_segments)),
                 "dynamic_controls": [
@@ -4715,7 +5145,9 @@ def process_file(
                         "interp": ref.interpolation,
                         "order": int(ref.order),
                     }
-                    for ref in dict(getattr(args, "_dynamic_control_refs", {}) or {}).values()
+                    for ref in dict(
+                        getattr(args, "_dynamic_control_refs", {}) or {}
+                    ).values()
                 ],
                 "checkpoint_id": checkpoint_id,
                 "transform": str(config.transform),
@@ -4727,7 +5159,9 @@ def process_file(
             },
         )
         if sidecar is not None:
-            log_message(args, f"[info] metadata sidecar -> {sidecar}", min_level="verbose")
+            log_message(
+                args, f"[info] metadata sidecar -> {sidecar}", min_level="verbose"
+            )
 
     if console_level(args) >= _VERBOSITY_TO_LEVEL["verbose"]:
         rt = runtime_config()
@@ -4770,7 +5204,9 @@ def process_file(
             "profile": str(getattr(args, "_active_quality_profile", "neutral")),
             "updated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         }
-        checkpoint_state_path.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
+        checkpoint_state_path.write_text(
+            json.dumps(state, indent=2) + "\n", encoding="utf-8"
+        )
 
     progress.finish("done")
 
@@ -4800,7 +5236,9 @@ def force_length_multi(audio: np.ndarray, length: int) -> np.ndarray:
     return np.vstack([audio, pad])
 
 
-def resample_multi(audio: np.ndarray, output_samples: int, mode: ResampleMode) -> np.ndarray:
+def resample_multi(
+    audio: np.ndarray, output_samples: int, mode: ResampleMode
+) -> np.ndarray:
     out = np.zeros((output_samples, audio.shape[1]), dtype=np.float64)
     for ch in range(audio.shape[1]):
         out[:, ch] = resample_1d(audio[:, ch], output_samples, mode)
@@ -4808,7 +5246,9 @@ def resample_multi(audio: np.ndarray, output_samples: int, mode: ResampleMode) -
 
 
 def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
-    raw_dynamic_values: dict[str, str] = dict(getattr(args, "_dynamic_control_raw_values", {}) or {})
+    raw_dynamic_values: dict[str, str] = dict(
+        getattr(args, "_dynamic_control_raw_values", {}) or {}
+    )
     for attr_name, raw_value in raw_dynamic_values.items():
         if hasattr(args, attr_name):
             setattr(args, attr_name, raw_value)
@@ -4816,7 +5256,9 @@ def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> 
     if args.stretch is not None:
         args.time_stretch = args.stretch
 
-    interp_mode = _coerce_control_interp(getattr(args, "interp", "linear"), context="--interp")
+    interp_mode = _coerce_control_interp(
+        getattr(args, "interp", "linear"), context="--interp"
+    )
     args.interp = interp_mode
     args.order = _parse_int_cli_value(getattr(args, "order", 3), context="--order")
     if int(args.order) < 1:
@@ -4835,7 +5277,9 @@ def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> 
                 order=int(args.order),
             )
             if str(ref.path) == "-":
-                parser.error(f"Dynamic control for --{attr.replace('_', '-')} does not support stdin ('-')")
+                parser.error(
+                    f"Dynamic control for --{attr.replace('_', '-')} does not support stdin ('-')"
+                )
             if ref.path.suffix.lower() not in {".csv", ".json"}:
                 parser.error(
                     f"--{attr.replace('_', '-')} control file must use .csv or .json extension: {ref.path}"
@@ -4853,13 +5297,17 @@ def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> 
                     setattr(
                         args,
                         attr,
-                        _parse_int_cli_value(raw, context=f"--{attr.replace('_', '-')}"),
+                        _parse_int_cli_value(
+                            raw, context=f"--{attr.replace('_', '-')}"
+                        ),
                     )
                 else:
                     setattr(
                         args,
                         attr,
-                        _parse_scalar_cli_value(raw, context=f"--{attr.replace('_', '-')}"),
+                        _parse_scalar_cli_value(
+                            raw, context=f"--{attr.replace('_', '-')}"
+                        ),
                     )
             except ValueError as exc:
                 parser.error(str(exc))
@@ -4875,9 +5323,13 @@ def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> 
                 order=int(args.order),
             )
             if str(ref.path) == "-":
-                parser.error("--pitch-shift-ratio dynamic control does not support stdin ('-')")
+                parser.error(
+                    "--pitch-shift-ratio dynamic control does not support stdin ('-')"
+                )
             if ref.path.suffix.lower() not in {".csv", ".json"}:
-                parser.error(f"--pitch-shift-ratio control file must be .csv or .json: {ref.path}")
+                parser.error(
+                    f"--pitch-shift-ratio control file must be .csv or .json: {ref.path}"
+                )
             dynamic_refs["pitch_ratio"] = ref
             raw_dynamic_values["pitch_shift_ratio"] = str(ref.path)
             args.pitch_shift_ratio = None
@@ -4902,9 +5354,13 @@ def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> 
                 order=int(args.order),
             )
             if str(ref.path) == "-":
-                parser.error("--pitch-shift-semitones dynamic control does not support stdin ('-')")
+                parser.error(
+                    "--pitch-shift-semitones dynamic control does not support stdin ('-')"
+                )
             if ref.path.suffix.lower() not in {".csv", ".json"}:
-                parser.error(f"--pitch-shift-semitones control file must be .csv or .json: {ref.path}")
+                parser.error(
+                    f"--pitch-shift-semitones control file must be .csv or .json: {ref.path}"
+                )
             dynamic_refs["pitch_ratio"] = ref
             raw_dynamic_values["pitch_shift_semitones"] = str(ref.path)
             args.pitch_shift_semitones = None
@@ -4929,9 +5385,13 @@ def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> 
                 order=int(args.order),
             )
             if str(ref.path) == "-":
-                parser.error("--pitch-shift-cents dynamic control does not support stdin ('-')")
+                parser.error(
+                    "--pitch-shift-cents dynamic control does not support stdin ('-')"
+                )
             if ref.path.suffix.lower() not in {".csv", ".json"}:
-                parser.error(f"--pitch-shift-cents control file must be .csv or .json: {ref.path}")
+                parser.error(
+                    f"--pitch-shift-cents control file must be .csv or .json: {ref.path}"
+                )
             dynamic_refs["pitch_ratio"] = ref
             raw_dynamic_values["pitch_shift_cents"] = str(ref.path)
             args.pitch_shift_cents = None
@@ -4995,16 +5455,28 @@ def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> 
     if args.pitch_map_crossfade_ms < 0.0:
         parser.error("--pitch-map-crossfade-ms must be >= 0")
     if dynamic_refs and (args.pitch_map is not None or args.pitch_map_stdin):
-        parser.error("Dynamic per-parameter control files cannot be combined with --pitch-map/--pitch-map-stdin")
+        parser.error(
+            "Dynamic per-parameter control files cannot be combined with --pitch-map/--pitch-map-stdin"
+        )
     if "time_stretch" in dynamic_refs and args.target_duration is not None:
-        parser.error("--target-duration cannot be combined with dynamic --time-stretch control files")
+        parser.error(
+            "--target-duration cannot be combined with dynamic --time-stretch control files"
+        )
     for ref in dynamic_refs.values():
         if not ref.path.exists():
             parser.error(f"Dynamic control file not found: {ref.path}")
-    if args.pitch_map_stdin and args.pitch_map is not None and str(args.pitch_map) != "-":
+    if (
+        args.pitch_map_stdin
+        and args.pitch_map is not None
+        and str(args.pitch_map) != "-"
+    ):
         parser.error("--pitch-map-stdin cannot be combined with --pitch-map path")
-    if args._control_routes and not (args.pitch_map is not None or args.pitch_map_stdin):
-        parser.error("--route requires --pitch-map, --pitch-map-stdin, or --control-stdin")
+    if args._control_routes and not (
+        args.pitch_map is not None or args.pitch_map_stdin
+    ):
+        parser.error(
+            "--route requires --pitch-map, --pitch-map-stdin, or --control-stdin"
+        )
     if args.target_f0 is not None and args.target_f0 <= 0:
         parser.error("--target-f0 must be > 0")
     if args.f0_min <= 0 or args.f0_max <= 0 or args.f0_min >= args.f0_max:
@@ -5021,14 +5493,22 @@ def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> 
         parser.error("--transient-protect-ms must be > 0")
     if float(args.transient_crossfade_ms) < 0.0:
         parser.error("--transient-crossfade-ms must be >= 0")
-    if str(args.stereo_mode) not in {"independent", "mid_side_lock", "ref_channel_lock"}:
-        parser.error("--stereo-mode must be one of: independent, mid_side_lock, ref_channel_lock")
+    if str(args.stereo_mode) not in {
+        "independent",
+        "mid_side_lock",
+        "ref_channel_lock",
+    }:
+        parser.error(
+            "--stereo-mode must be one of: independent, mid_side_lock, ref_channel_lock"
+        )
     if int(args.ref_channel) < 0:
         parser.error("--ref-channel must be >= 0")
     if not (0.0 <= float(args.coherence_strength) <= 1.0):
         parser.error("--coherence-strength must be between 0.0 and 1.0")
     if str(args.phase_engine) not in PHASE_ENGINE_CHOICES:
-        parser.error(f"--phase-engine must be one of: {', '.join(PHASE_ENGINE_CHOICES)}")
+        parser.error(
+            f"--phase-engine must be one of: {', '.join(PHASE_ENGINE_CHOICES)}"
+        )
     if not (0.0 <= args.ambient_phase_mix <= 1.0):
         parser.error("--ambient-phase-mix must be between 0.0 and 1.0")
     if not (0.0 <= args.onset_credit_pull <= 1.0):
@@ -5051,7 +5531,11 @@ def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> 
         parser.error("--kaiser-beta must be >= 0")
     if args.cuda_device < 0:
         parser.error("--cuda-device must be >= 0")
-    if args.pitch_map is not None and str(args.pitch_map) != "-" and not args.pitch_map.exists():
+    if (
+        args.pitch_map is not None
+        and str(args.pitch_map) != "-"
+        and not args.pitch_map.exists()
+    ):
         parser.error(f"Control-map file not found: {args.pitch_map}")
     if args.auto_profile_lookahead_seconds <= 0.0:
         parser.error("--auto-profile-lookahead-seconds must be > 0")
@@ -5062,7 +5546,9 @@ def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> 
     if args.manifest_append and args.manifest_json is None:
         parser.error("--manifest-append requires --manifest-json")
     if str(args.quality_profile) not in QUALITY_PROFILE_CHOICES:
-        parser.error(f"--quality-profile must be one of: {', '.join(QUALITY_PROFILE_CHOICES)}")
+        parser.error(
+            f"--quality-profile must be one of: {', '.join(QUALITY_PROFILE_CHOICES)}"
+        )
     if str(args.preset) not in PRESET_CHOICES:
         parser.error(f"--preset must be one of: {', '.join(PRESET_CHOICES)}")
     if args.auto_profile and str(args.preset) not in {"none", "default"}:
@@ -5085,15 +5571,21 @@ def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> 
             args._multires_weights = [1.0 for _ in args._multires_ffts]
         else:
             try:
-                weights = parse_numeric_list(args.multires_weights, context="--multires-weights")
+                weights = parse_numeric_list(
+                    args.multires_weights, context="--multires-weights"
+                )
             except ValueError as exc:
                 parser.error(str(exc))
             if len(weights) != len(args._multires_ffts):
-                parser.error("--multires-weights count must equal --multires-ffts count")
+                parser.error(
+                    "--multires-weights count must equal --multires-ffts count"
+                )
             if any(float(w) < 0.0 for w in weights):
                 parser.error("--multires-weights entries must be non-negative")
             if not any(float(w) > 0.0 for w in weights):
-                parser.error("--multires-weights must contain at least one positive value")
+                parser.error(
+                    "--multires-weights must contain at least one positive value"
+                )
             args._multires_weights = [float(w) for w in weights]
     else:
         args._multires_ffts = [int(args.n_fft)]
@@ -5126,7 +5618,9 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
 
-    parser.add_argument("inputs", nargs="*", help="Input audio files/globs or '-' for stdin")
+    parser.add_argument(
+        "inputs", nargs="*", help="Input audio files/globs or '-' for stdin"
+    )
 
     io_args_group = parser.add_argument_group("I/O")
     io_args_group.add_argument(
@@ -5154,8 +5648,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Explicit output file path (single-input mode only). Alias: --out",
     )
-    io_args_group.add_argument("--overwrite", action="store_true", help="Overwrite existing outputs")
-    io_args_group.add_argument("--dry-run", action="store_true", help="Resolve settings without writing files")
+    io_args_group.add_argument(
+        "--overwrite", action="store_true", help="Overwrite existing outputs"
+    )
+    io_args_group.add_argument(
+        "--dry-run", action="store_true", help="Resolve settings without writing files"
+    )
     io_args_group.add_argument(
         "--stdout",
         action="store_true",
@@ -5796,7 +6294,9 @@ def main(argv: list[str] | None = None) -> int:
     # Backward-compatible transient mapping:
     # if legacy --transient-preserve is set and transient-mode is not explicitly set,
     # default to transient reset mode.
-    if ("--transient-mode" not in cli_flags) and bool(getattr(args, "transient_preserve", False)):
+    if ("--transient-mode" not in cli_flags) and bool(
+        getattr(args, "transient_preserve", False)
+    ):
         args.transient_mode = "reset"
 
     validate_args(args, parser)
@@ -5825,7 +6325,11 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--output-dir cannot be used with --stdout")
     if args.output is not None and len(input_paths) != 1:
         parser.error("--output requires exactly one resolved input")
-    control_map_stdin = bool(args.pitch_map_stdin) or bool(getattr(args, "control_stdin", False)) or str(args.pitch_map) == "-"
+    control_map_stdin = (
+        bool(args.pitch_map_stdin)
+        or bool(getattr(args, "control_stdin", False))
+        or str(args.pitch_map) == "-"
+    )
     if control_map_stdin and len(input_paths) != 1:
         parser.error("Control-map stdin mode requires exactly one input file")
     if control_map_stdin and stdin_count:
@@ -5846,14 +6350,18 @@ def main(argv: list[str] | None = None) -> int:
         profile_audio, profile_sr = _read_audio_input(input_paths[0])
         if profile_audio.size == 0:
             parser.error("Cannot auto-profile an empty input")
-        stretch_estimate = resolve_base_stretch(args, profile_audio.shape[0], profile_sr)
+        stretch_estimate = resolve_base_stretch(
+            args, profile_audio.shape[0], profile_sr
+        )
         auto_features = estimate_content_features(
             profile_audio,
             profile_sr,
             channel_mode=str(args.analysis_channel),
             lookahead_seconds=float(args.auto_profile_lookahead_seconds),
         )
-        active_profile = suggest_quality_profile(stretch_ratio=stretch_estimate, features=auto_features)
+        active_profile = suggest_quality_profile(
+            stretch_ratio=stretch_estimate, features=auto_features
+        )
 
     args._active_quality_profile = active_profile
     profile_changes = apply_quality_profile_overrides(
@@ -5867,7 +6375,9 @@ def main(argv: list[str] | None = None) -> int:
         n_fft_for_auto = 2048
         try:
             if not _looks_like_control_signal_reference(getattr(args, "n_fft", 2048)):
-                n_fft_for_auto = _parse_int_cli_value(getattr(args, "n_fft", 2048), context="--n-fft")
+                n_fft_for_auto = _parse_int_cli_value(
+                    getattr(args, "n_fft", 2048), context="--n-fft"
+                )
         except ValueError:
             n_fft_for_auto = 2048
         resolved_transform = resolve_transform_auto(
@@ -5961,8 +6471,12 @@ def main(argv: list[str] | None = None) -> int:
             "io": {
                 "output_dir": None if args.output_dir is None else str(args.output_dir),
                 "stdout": bool(args.stdout),
-                "manifest_json": None if args.manifest_json is None else str(args.manifest_json),
-                "checkpoint_dir": None if args.checkpoint_dir is None else str(args.checkpoint_dir),
+                "manifest_json": None
+                if args.manifest_json is None
+                else str(args.manifest_json),
+                "checkpoint_dir": None
+                if args.checkpoint_dir is None
+                else str(args.checkpoint_dir),
                 "dynamic_controls": [
                     {
                         "parameter": ref.parameter,
@@ -5971,7 +6485,9 @@ def main(argv: list[str] | None = None) -> int:
                         "interp": ref.interpolation,
                         "order": int(ref.order),
                     }
-                    for ref in dict(getattr(args, "_dynamic_control_refs", {}) or {}).values()
+                    for ref in dict(
+                        getattr(args, "_dynamic_control_refs", {}) or {}
+                    ).values()
                 ],
                 "output_policy": {
                     "subtype": None if args.subtype is None else str(args.subtype),
@@ -5991,7 +6507,9 @@ def main(argv: list[str] | None = None) -> int:
 
     for idx, path in enumerate(input_paths):
         try:
-            result = process_file(path, args, config, file_index=idx, file_total=len(input_paths))
+            result = process_file(
+                path, args, config, file_index=idx, file_total=len(input_paths)
+            )
             results.append(result)
         except Exception as exc:  # pragma: no cover - runtime I/O errors
             failures.append((path, exc))

@@ -28,9 +28,9 @@ if __package__ is None or __package__ == "":
 
 from pvx.algorithms.base import AlgorithmResult, run_algorithm
 
-ALGORITHM_ID = 'granular_and_modulation.granular_time_stretch_engine'
-ALGORITHM_NAME = 'Granular time-stretch engine'
-THEME = 'Granular and Modulation'
+ALGORITHM_ID = "granular_and_modulation.granular_time_stretch_engine"
+ALGORITHM_NAME = "Granular time-stretch engine"
+THEME = "Granular and Modulation"
 
 
 def process(audio: np.ndarray, sample_rate: int, **params: Any) -> AlgorithmResult:

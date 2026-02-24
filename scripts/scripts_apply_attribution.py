@@ -121,9 +121,15 @@ def apply_markdown_notices() -> int:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Apply attribution references to code and docs")
-    parser.add_argument("--skip-python", action="store_true", help="Skip Python header updates")
-    parser.add_argument("--skip-markdown", action="store_true", help="Skip Markdown notice updates")
+    parser = argparse.ArgumentParser(
+        description="Apply attribution references to code and docs"
+    )
+    parser.add_argument(
+        "--skip-python", action="store_true", help="Skip Python header updates"
+    )
+    parser.add_argument(
+        "--skip-markdown", action="store_true", help="Skip Markdown notice updates"
+    )
     args = parser.parse_args()
 
     touched_py = 0

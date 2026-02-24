@@ -36,7 +36,9 @@ class TestBenchmarkRunnerProfiles(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "mono.wav"
             self._write_wav(path, channels=1)
-            args = _pvx_bench_args(path, TaskSpec("stretch", "stretch", 1.8), tuned=True)
+            args = _pvx_bench_args(
+                path, TaskSpec("stretch", "stretch", 1.8), tuned=True
+            )
             self.assertIn("--transient-mode", args)
             self.assertIn("off", args)
             self.assertIn("--n-fft", args)
@@ -58,7 +60,9 @@ class TestBenchmarkRunnerProfiles(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "mono.wav"
             self._write_wav(path, channels=1)
-            args = _pvx_bench_args(path, TaskSpec("stretch", "stretch", 1.8), tuned=False)
+            args = _pvx_bench_args(
+                path, TaskSpec("stretch", "stretch", 1.8), tuned=False
+            )
             self.assertIn("--transient-mode", args)
             self.assertIn("hybrid", args)
             self.assertIn("--stereo-mode", args)
@@ -152,7 +156,12 @@ class TestBenchmarkRunnerProfiles(unittest.TestCase):
             row_level=True,
             signature_gate=False,
         )
-        self.assertTrue(any("row a.wav::stretch metric log_spectral_distance regressed" in msg for msg in failures))
+        self.assertTrue(
+            any(
+                "row a.wav::stretch metric log_spectral_distance regressed" in msg
+                for msg in failures
+            )
+        )
 
     def test_diagnostics_emit_actionable_hints(self) -> None:
         diagnostics = _diagnose_metrics(
@@ -194,7 +203,9 @@ class TestBenchmarkRunnerProfiles(unittest.TestCase):
             )
             self.assertEqual(issues2, [])
             self.assertEqual(len(paths2), len(paths))
-            self.assertEqual(len(payload2.get("entries", [])), len(payload.get("entries", [])))
+            self.assertEqual(
+                len(payload2.get("entries", [])), len(payload.get("entries", []))
+            )
 
 
 if __name__ == "__main__":

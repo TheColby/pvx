@@ -14,7 +14,9 @@ PYPROJECT = ROOT / "pyproject.toml"
 
 
 def normalize_name(spec: str) -> str:
-    name = re.split(r"[<>=!~;\[]", spec, maxsplit=1)[0].strip().lower().replace("_", "-")
+    name = (
+        re.split(r"[<>=!~;\[]", spec, maxsplit=1)[0].strip().lower().replace("_", "-")
+    )
     return name
 
 
@@ -49,7 +51,9 @@ def main() -> int:
         return 0
 
     if missing_in_requirements:
-        print("[error] missing in requirements.txt:", ", ".join(missing_in_requirements))
+        print(
+            "[error] missing in requirements.txt:", ", ".join(missing_in_requirements)
+        )
     if extra_in_requirements:
         print("[error] extra in requirements.txt:", ", ".join(extra_in_requirements))
     return 1

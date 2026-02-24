@@ -48,7 +48,9 @@ def freeze_channel(
 
     mag = np.abs(spectrum[:, frame_idx])
     phase = np.angle(spectrum[:, frame_idx]).copy()
-    omega = 2.0 * np.pi * config.hop_size * np.arange(bins, dtype=np.float64) / config.n_fft
+    omega = (
+        2.0 * np.pi * config.hop_size * np.arange(bins, dtype=np.float64) / config.n_fft
+    )
     out = np.zeros((bins, out_frames), dtype=np.complex128)
 
     rng = np.random.default_rng(12345)
@@ -80,10 +82,20 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     add_common_io_args(parser, default_suffix="_freeze")
-    add_vocoder_args(parser, default_n_fft=2048, default_win_length=2048, default_hop_size=256)
-    parser.add_argument("--freeze-time", type=float, default=0.2, help="Freeze anchor time in seconds")
-    parser.add_argument("--duration", type=float, default=3.0, help="Output freeze duration in seconds")
-    parser.add_argument("--random-phase", action="store_true", help="Add subtle phase randomization per frame")
+    add_vocoder_args(
+        parser, default_n_fft=2048, default_win_length=2048, default_hop_size=256
+    )
+    parser.add_argument(
+        "--freeze-time", type=float, default=0.2, help="Freeze anchor time in seconds"
+    )
+    parser.add_argument(
+        "--duration", type=float, default=3.0, help="Output freeze duration in seconds"
+    )
+    parser.add_argument(
+        "--random-phase",
+        action="store_true",
+        help="Add subtle phase randomization per frame",
+    )
     return parser
 
 
@@ -135,13 +147,21 @@ def main(argv: list[str] | None = None) -> int:
                 output_sr=sr,
             )
             write_output(out_path, out, sr, args, input_path=path)
-            log_message(args, f"[ok] {path} -> {out_path} | ch={out.shape[1]}, dur={out.shape[0]/sr:.3f}s", min_level="verbose")
+            log_message(
+                args,
+                f"[ok] {path} -> {out_path} | ch={out.shape[1]}, dur={out.shape[0] / sr:.3f}s",
+                min_level="verbose",
+            )
         except Exception as exc:
             failures += 1
             log_error(args, f"[error] {path}: {exc}")
         status.step(idx, path.name)
     status.finish("done" if failures == 0 else f"errors={failures}")
-    log_message(args, f"[done] pvxfreeze processed={len(paths)} failed={failures}", min_level="normal")
+    log_message(
+        args,
+        f"[done] pvxfreeze processed={len(paths)} failed={failures}",
+        min_level="normal",
+    )
     return 1 if failures else 0
 
 

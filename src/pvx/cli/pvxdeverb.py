@@ -73,10 +73,18 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     add_common_io_args(parser, default_suffix="_deverb")
-    add_vocoder_args(parser, default_n_fft=2048, default_win_length=2048, default_hop_size=512)
-    parser.add_argument("--strength", type=float, default=0.45, help="Tail suppression strength 0..1")
-    parser.add_argument("--decay", type=float, default=0.92, help="Tail memory decay 0..1")
-    parser.add_argument("--floor", type=float, default=0.12, help="Per-bin floor multiplier")
+    add_vocoder_args(
+        parser, default_n_fft=2048, default_win_length=2048, default_hop_size=512
+    )
+    parser.add_argument(
+        "--strength", type=float, default=0.45, help="Tail suppression strength 0..1"
+    )
+    parser.add_argument(
+        "--decay", type=float, default=0.92, help="Tail memory decay 0..1"
+    )
+    parser.add_argument(
+        "--floor", type=float, default=0.12, help="Per-bin floor multiplier"
+    )
     return parser
 
 
@@ -127,7 +135,11 @@ def main(argv: list[str] | None = None) -> int:
             log_error(args, f"[error] {path}: {exc}")
         status.step(idx, path.name)
     status.finish("done" if failures == 0 else f"errors={failures}")
-    log_message(args, f"[done] pvxdeverb processed={len(paths)} failed={failures}", min_level="normal")
+    log_message(
+        args,
+        f"[done] pvxdeverb processed={len(paths)} failed={failures}",
+        min_level="normal",
+    )
     return 1 if failures else 0
 
 

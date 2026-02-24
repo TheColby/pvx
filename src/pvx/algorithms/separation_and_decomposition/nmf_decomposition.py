@@ -28,9 +28,9 @@ if __package__ is None or __package__ == "":
 
 from pvx.algorithms.base import AlgorithmResult, run_algorithm
 
-ALGORITHM_ID = 'separation_and_decomposition.nmf_decomposition'
-ALGORITHM_NAME = 'NMF decomposition'
-THEME = 'Separation and Decomposition'
+ALGORITHM_ID = "separation_and_decomposition.nmf_decomposition"
+ALGORITHM_NAME = "NMF decomposition"
+THEME = "Separation and Decomposition"
 
 
 def process(audio: np.ndarray, sample_rate: int, **params: Any) -> AlgorithmResult:

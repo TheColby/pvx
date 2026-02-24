@@ -28,9 +28,9 @@ if __package__ is None or __package__ == "":
 
 from pvx.algorithms.base import AlgorithmResult, run_algorithm
 
-ALGORITHM_ID = 'dereverb_and_room_correction.spectral_decay_subtraction'
-ALGORITHM_NAME = 'Spectral decay subtraction'
-THEME = 'Dereverb and Room Correction'
+ALGORITHM_ID = "dereverb_and_room_correction.spectral_decay_subtraction"
+ALGORITHM_NAME = "Spectral decay subtraction"
+THEME = "Dereverb and Room Correction"
 
 
 def process(audio: np.ndarray, sample_rate: int, **params: Any) -> AlgorithmResult:

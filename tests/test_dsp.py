@@ -124,7 +124,9 @@ class TestPhaseVocoderDSP(unittest.TestCase):
 
         ratio = 1.5
         stretched = phase_vocoder_time_stretch(x, ratio, self.cfg_lock)
-        shifted = resample_1d(stretched, int(round(stretched.size / ratio)), mode="linear")
+        shifted = resample_1d(
+            stretched, int(round(stretched.size / ratio)), mode="linear"
+        )
         preserved = apply_formant_preservation(
             reference=x,
             shifted=shifted,
@@ -272,7 +274,9 @@ class TestPhaseVocoderDSP(unittest.TestCase):
         sr = 16000
         t = np.arange(int(sr * 0.3)) / sr
         x = 0.4 * np.sin(2 * np.pi * 220.0 * t)
-        features = estimate_content_features(x, sr, channel_mode="mix", lookahead_seconds=0.2)
+        features = estimate_content_features(
+            x, sr, channel_mode="mix", lookahead_seconds=0.2
+        )
         self.assertGreater(features["rms"], 0.0)
         self.assertGreater(features["centroid_hz"], 0.0)
         self.assertGreaterEqual(features["zcr"], 0.0)

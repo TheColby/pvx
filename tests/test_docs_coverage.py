@@ -43,7 +43,10 @@ def extract_flags_from_code() -> set[tuple[str, str]]:
         for node in ast.walk(tree):
             if not isinstance(node, ast.Call):
                 continue
-            if not isinstance(node.func, ast.Attribute) or node.func.attr != "add_argument":
+            if (
+                not isinstance(node.func, ast.Attribute)
+                or node.func.attr != "add_argument"
+            ):
                 continue
             flags = [_string_literal(arg) for arg in node.args]
             for flag in flags:
@@ -66,8 +69,12 @@ def test_cli_flag_docs_match_parser_definitions() -> None:
     missing_in_docs = sorted(code_pairs - doc_pairs)
     stale_in_docs = sorted(doc_pairs - code_pairs)
 
-    assert not missing_in_docs, f"Flags present in parser code but missing from docs: {missing_in_docs}"
-    assert not stale_in_docs, f"Flags documented but no longer in parser code: {stale_in_docs}"
+    assert not missing_in_docs, (
+        f"Flags present in parser code but missing from docs: {missing_in_docs}"
+    )
+    assert not stale_in_docs, (
+        f"Flags documented but no longer in parser code: {stale_in_docs}"
+    )
 
 
 def test_readme_long_flags_exist_in_parser_sources() -> None:
@@ -76,6 +83,10 @@ def test_readme_long_flags_exist_in_parser_sources() -> None:
 
     known_flags = {flag for _, flag in extract_flags_from_code()}
     allowed = {"--help"}
-    unknown = sorted(flag for flag in (readme_flags - known_flags) if flag not in allowed)
+    unknown = sorted(
+        flag for flag in (readme_flags - known_flags) if flag not in allowed
+    )
 
-    assert not unknown, f"README references long flags not found in parser sources: {unknown}"
+    assert not unknown, (
+        f"README references long flags not found in parser sources: {unknown}"
+    )

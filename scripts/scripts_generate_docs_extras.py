@@ -73,7 +73,7 @@ def generated_stamp_lines() -> list[str]:
 
 def logo_lines() -> list[str]:
     return [
-        "<p align=\"center\"><img src=\"../assets/pvx_logo.png\" alt=\"pvx logo\" width=\"192\" /></p>",
+        '<p align="center"><img src="../assets/pvx_logo.png" alt="pvx logo" width="192" /></p>',
         "",
     ]
 
@@ -86,8 +86,11 @@ def attribution_section_lines() -> list[str]:
         "",
     ]
 
+
 def write_json(path: Path, payload: Any) -> None:
-    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
 
 
 def _string_literal(node: ast.AST) -> str | None:
@@ -197,7 +200,9 @@ def collect_cli_flags() -> list[dict[str, Any]]:
         key = (str(row["tool"]), str(row["flag"]))
         if key not in dedup:
             dedup[key] = row
-    return sorted(dedup.values(), key=lambda item: (str(item["tool"]), str(item["flag"])))
+    return sorted(
+        dedup.values(), key=lambda item: (str(item["tool"]), str(item["flag"]))
+    )
 
 
 def generate_cli_flags_reference() -> None:
@@ -209,7 +214,9 @@ def generate_cli_flags_reference() -> None:
     lines.append("# pvx Command-Line Interface (CLI) Flags Reference")
     lines.append("")
     lines.extend(generated_stamp_lines())
-    lines.append("This file enumerates long-form CLI flags discovered from argparse declarations in canonical pvx CLI sources.")
+    lines.append(
+        "This file enumerates long-form CLI flags discovered from argparse declarations in canonical pvx CLI sources."
+    )
     lines.append("")
     lines.append(f"Total tool+flag entries: **{len(rows)}**")
     lines.append(f"Total unique long flags: **{len(unique_flags)}**")
@@ -226,11 +233,15 @@ def generate_cli_flags_reference() -> None:
     for tool in sorted(by_tool):
         lines.append(f"## `{tool}`")
         lines.append("")
-        lines.append("| Flag | Required | Default | Choices | Action | Description | Source |")
+        lines.append(
+            "| Flag | Required | Default | Choices | Action | Description | Source |"
+        )
         lines.append("| --- | --- | --- | --- | --- | --- | --- |")
         for row in by_tool[tool]:
             default_text = "" if row["default"] is None else str(row["default"])
-            choices_text = ", ".join(str(c) for c in row["choices"]) if row["choices"] else ""
+            choices_text = (
+                ", ".join(str(c) for c in row["choices"]) if row["choices"] else ""
+            )
             action_text = str(row["action"] or "")
             desc = str(row["help"] or "")
             source = str(row["source"])
@@ -240,7 +251,9 @@ def generate_cli_flags_reference() -> None:
         lines.append("")
 
     lines.extend(attribution_section_lines())
-    (DOCS_DIR / "CLI_FLAGS_REFERENCE.md").write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+    (DOCS_DIR / "CLI_FLAGS_REFERENCE.md").write_text(
+        "\n".join(lines).rstrip() + "\n", encoding="utf-8"
+    )
     write_json(
         DOCS_DIR / "cli_flags_reference.json",
         {
@@ -385,8 +398,12 @@ def generate_algorithm_limitations() -> None:
                 avoids.append(w_text)
 
         if "mono" in text or "monophonic" in text:
-            assumptions.append("Monophonic pitch contours are expected to dominate frame-wise estimates.")
-            failures.append("Polyphonic overlap can trigger octave and target-selection instability.")
+            assumptions.append(
+                "Monophonic pitch contours are expected to dominate frame-wise estimates."
+            )
+            failures.append(
+                "Polyphonic overlap can trigger octave and target-selection instability."
+            )
             avoids.append("Avoid as a single-stage processor for dense harmony stacks.")
 
         grouped.setdefault(folder, []).append(
@@ -406,7 +423,9 @@ def generate_algorithm_limitations() -> None:
     lines.append("# pvx Algorithm Limitations and Applicability")
     lines.append("")
     lines.extend(generated_stamp_lines())
-    lines.append("This document summarizes assumptions, likely failure modes, and practical exclusion cases for each algorithm group and algorithm module.")
+    lines.append(
+        "This document summarizes assumptions, likely failure modes, and practical exclusion cases for each algorithm group and algorithm module."
+    )
     lines.append("")
 
     lines.append("## Group-Level Summary")
@@ -442,7 +461,9 @@ def generate_algorithm_limitations() -> None:
         lines.append("")
 
     lines.extend(attribution_section_lines())
-    (DOCS_DIR / "ALGORITHM_LIMITATIONS.md").write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+    (DOCS_DIR / "ALGORITHM_LIMITATIONS.md").write_text(
+        "\n".join(lines).rstrip() + "\n", encoding="utf-8"
+    )
     write_json(
         DOCS_DIR / "algorithm_limitations.json",
         {
@@ -537,7 +558,7 @@ def generate_cookbook() -> None:
         {
             "category": "Transform selection",
             "title": "A/B sweep of transform backends from shell loop",
-            "command": "for t in fft dft czt dct dst hartley; do python3 pvxvoc.py voice.wav --transform \"$t\" --time-stretch 1.1 --output-dir out --suffix \"_$t\"; done",
+            "command": 'for t in fft dft czt dct dst hartley; do python3 pvxvoc.py voice.wav --transform "$t" --time-stretch 1.1 --output-dir out --suffix "_$t"; done',
             "why": "Fast listening workflow for selecting the least-artifact transform on your source.",
         },
         {
@@ -597,7 +618,7 @@ def generate_cookbook() -> None:
         {
             "category": "Automation",
             "title": "A/B report generation",
-            "command": "python3 scripts/scripts_ab_compare.py --input mix.wav --a-args \"--time-stretch 1.1 --transform fft\" --b-args \"--time-stretch 1.1 --transform dct\" --out-dir reports/ab --name fft_vs_dct",
+            "command": 'python3 scripts/scripts_ab_compare.py --input mix.wav --a-args "--time-stretch 1.1 --transform fft" --b-args "--time-stretch 1.1 --transform dct" --out-dir reports/ab --name fft_vs_dct',
             "why": "Creates JSON/Markdown objective reports for fast algorithm and parameter comparisons.",
         },
         {
@@ -609,7 +630,7 @@ def generate_cookbook() -> None:
         {
             "category": "Automation",
             "title": "Quality regression check",
-            "command": "python3 scripts/scripts_quality_regression.py --input mix.wav --output out/reg.wav --render-args \"--time-stretch 1.2 --transform fft\" --baseline-json reports/baseline.json --report-json reports/regression.json",
+            "command": 'python3 scripts/scripts_quality_regression.py --input mix.wav --output out/reg.wav --render-args "--time-stretch 1.2 --transform fft" --baseline-json reports/baseline.json --report-json reports/regression.json',
             "why": "Compares current renders against baseline objective metrics with configurable tolerances.",
         },
         {
@@ -635,7 +656,9 @@ def generate_cookbook() -> None:
     lines.append("# pvx Pipeline Cookbook")
     lines.append("")
     lines.extend(generated_stamp_lines())
-    lines.append("Curated one-line workflows for practical chaining, mastering, microtonal processing, and batch operation.")
+    lines.append(
+        "Curated one-line workflows for practical chaining, mastering, microtonal processing, and batch operation."
+    )
     lines.append("")
 
     for category in sorted(by_cat):
@@ -654,12 +677,18 @@ def generate_cookbook() -> None:
     lines.append("## Notes")
     lines.append("")
     lines.append("- Use `--stdout`/`-` to chain tools without intermediate files.")
-    lines.append("- Add `--quiet` for script-driven runs; use default verbosity for live progress bars.")
-    lines.append("- For production mastering, validate true peaks and loudness after all nonlinear stages.")
+    lines.append(
+        "- Add `--quiet` for script-driven runs; use default verbosity for live progress bars."
+    )
+    lines.append(
+        "- For production mastering, validate true peaks and loudness after all nonlinear stages."
+    )
     lines.append("")
 
     lines.extend(attribution_section_lines())
-    (DOCS_DIR / "PIPELINE_COOKBOOK.md").write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+    (DOCS_DIR / "PIPELINE_COOKBOOK.md").write_text(
+        "\n".join(lines).rstrip() + "\n", encoding="utf-8"
+    )
     write_json(
         DOCS_DIR / "pipeline_cookbook.json",
         {
@@ -676,7 +705,9 @@ def generate_architecture_doc() -> None:
     lines.append("# pvx Architecture")
     lines.append("")
     lines.extend(generated_stamp_lines())
-    lines.append("System architecture for runtime processing, algorithm dispatch, and documentation pipelines.")
+    lines.append(
+        "System architecture for runtime processing, algorithm dispatch, and documentation pipelines."
+    )
     lines.append("")
 
     lines.append("## 1. Runtime and CLI Flow")
@@ -695,7 +726,9 @@ def generate_architecture_doc() -> None:
     lines.append("")
     lines.append("```mermaid")
     lines.append("flowchart TD")
-    lines.append("  R[src/pvx/algorithms/registry.py] --> B[src/pvx/algorithms/base.py]")
+    lines.append(
+        "  R[src/pvx/algorithms/registry.py] --> B[src/pvx/algorithms/base.py]"
+    )
     lines.append("  B --> M1[time_scale_and_pitch_core/*]")
     lines.append("  B --> M2[retune_and_intonation/*]")
     lines.append("  B --> M3[dynamics_and_loudness/*]")
@@ -728,7 +761,9 @@ def generate_architecture_doc() -> None:
     lines.append("")
 
     lines.extend(attribution_section_lines())
-    (DOCS_DIR / "ARCHITECTURE.md").write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+    (DOCS_DIR / "ARCHITECTURE.md").write_text(
+        "\n".join(lines).rstrip() + "\n", encoding="utf-8"
+    )
 
 
 def _spectral_distance_db(reference: np.ndarray, candidate: np.ndarray) -> float:
@@ -804,7 +839,9 @@ def _benchmark_backend(
             "elapsed_ms": round(elapsed_ms, 3),
             "peak_host_memory_mb": round(float(peak_bytes) / (1024.0 * 1024.0), 3),
             "snr_vs_input_db": round(_snr_db(signal_f, reconstructed), 4),
-            "spectral_distance_vs_input_db": round(_spectral_distance_db(signal_f, reconstructed), 4),
+            "spectral_distance_vs_input_db": round(
+                _spectral_distance_db(signal_f, reconstructed), 4
+            ),
             "runtime_active_device": voc_core.runtime_config().active_device,
             "runtime_fallback_reason": voc_core.runtime_config().fallback_reason,
         }
@@ -813,16 +850,37 @@ def _benchmark_backend(
     if reference is not None:
         payload.update(
             {
-                "snr_vs_cpu_db": round(_snr_db(np.asarray(reference, dtype=np.float64), reconstructed), 4),
-                "spectral_distance_vs_cpu_db": round(_spectral_distance_db(np.asarray(reference, dtype=np.float64), reconstructed), 4),
-                "max_abs_error_vs_cpu": round(float(np.max(np.abs(np.asarray(reference, dtype=np.float64) - reconstructed))), 10),
+                "snr_vs_cpu_db": round(
+                    _snr_db(np.asarray(reference, dtype=np.float64), reconstructed), 4
+                ),
+                "spectral_distance_vs_cpu_db": round(
+                    _spectral_distance_db(
+                        np.asarray(reference, dtype=np.float64), reconstructed
+                    ),
+                    4,
+                ),
+                "max_abs_error_vs_cpu": round(
+                    float(
+                        np.max(
+                            np.abs(
+                                np.asarray(reference, dtype=np.float64) - reconstructed
+                            )
+                        )
+                    ),
+                    10,
+                ),
             }
         )
 
-    if voc_core.runtime_config().active_device == "cuda" and getattr(voc_core, "cp", None) is not None:
+    if (
+        voc_core.runtime_config().active_device == "cuda"
+        and getattr(voc_core, "cp", None) is not None
+    ):
         try:
             mem_pool = voc_core.cp.get_default_memory_pool()
-            payload["gpu_pool_used_mb"] = round(float(mem_pool.used_bytes()) / (1024.0 * 1024.0), 3)
+            payload["gpu_pool_used_mb"] = round(
+                float(mem_pool.used_bytes()) / (1024.0 * 1024.0), 3
+            )
             mem_pool.free_all_blocks()
         except Exception:
             pass
@@ -852,18 +910,31 @@ def generate_benchmarks(run_benchmarks: bool) -> None:
         cpu_reference = None
         if cpu_result.get("status") == "ok":
             voc_core.configure_runtime(device="cpu", cuda_device=0, verbose=False)
-            cpu_reference = voc_core.istft(voc_core.stft(signal, config), config, expected_length=signal.size)
+            cpu_reference = voc_core.istft(
+                voc_core.stft(signal, config), config, expected_length=signal.size
+            )
 
-        cuda_result = _benchmark_backend("cuda", "cuda", signal, config, reference=np.asarray(cpu_reference) if cpu_reference is not None else None)
+        cuda_result = _benchmark_backend(
+            "cuda",
+            "cuda",
+            signal,
+            config,
+            reference=np.asarray(cpu_reference) if cpu_reference is not None else None,
+        )
 
-        is_apple_silicon = platform.system() == "Darwin" and platform.machine().lower() in {"arm64", "aarch64"}
+        is_apple_silicon = (
+            platform.system() == "Darwin"
+            and platform.machine().lower() in {"arm64", "aarch64"}
+        )
         if is_apple_silicon:
             apple_result = _benchmark_backend(
                 "apple_silicon_native_cpu",
                 "cpu",
                 signal,
                 config,
-                reference=np.asarray(cpu_reference) if cpu_reference is not None else None,
+                reference=np.asarray(cpu_reference)
+                if cpu_reference is not None
+                else None,
             )
         else:
             apple_result = {
@@ -910,7 +981,9 @@ def generate_benchmarks(run_benchmarks: bool) -> None:
     lines.append("# pvx Benchmarks")
     lines.append("")
     lines.extend(generated_stamp_lines())
-    lines.append("Reproducible benchmark summary for core short-time Fourier transform/inverse short-time Fourier transform (STFT/ISTFT) path across central processing unit/Compute Unified Device Architecture/Apple-Silicon-native contexts.")
+    lines.append(
+        "Reproducible benchmark summary for core short-time Fourier transform/inverse short-time Fourier transform (STFT/ISTFT) path across central processing unit/Compute Unified Device Architecture/Apple-Silicon-native contexts."
+    )
     lines.append("")
     lines.append("## Quick Setup (Install + PATH)")
     lines.append("")
@@ -921,10 +994,12 @@ def generate_benchmarks(run_benchmarks: bool) -> None:
     lines.append("pvx --help")
     lines.append("```")
     lines.append("")
-    lines.append("If `pvx` is not found, add the virtualenv binaries to your shell path (`zsh`):")
+    lines.append(
+        "If `pvx` is not found, add the virtualenv binaries to your shell path (`zsh`):"
+    )
     lines.append("")
     lines.append("```bash")
-    lines.append("printf 'export PATH=\"%s/.venv/bin:$PATH\"\\n' \"$(pwd)\" >> ~/.zshrc")
+    lines.append('printf \'export PATH="%s/.venv/bin:$PATH"\\n\' "$(pwd)" >> ~/.zshrc')
     lines.append("source ~/.zshrc")
     lines.append("pvx --help")
     lines.append("```")
@@ -964,7 +1039,9 @@ def generate_benchmarks(run_benchmarks: bool) -> None:
 
     lines.append("## Results")
     lines.append("")
-    lines.append("| Backend | Status | Elapsed (ms) | Peak host memory (MB) | SNR vs input (dB) | Spectral distance vs input (dB) | SNR vs CPU (dB) | Spectral distance vs CPU (dB) | Notes |")
+    lines.append(
+        "| Backend | Status | Elapsed (ms) | Peak host memory (MB) | SNR vs input (dB) | Spectral distance vs input (dB) | SNR vs CPU (dB) | Spectral distance vs CPU (dB) | Notes |"
+    )
     lines.append("| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |")
     for run in payload.get("runs", []):
         note_parts: list[str] = []
@@ -990,11 +1067,15 @@ def generate_benchmarks(run_benchmarks: bool) -> None:
         )
     lines.append("")
 
-    lines.append("Raw machine-readable benchmark output: `docs/benchmarks/latest.json`.")
+    lines.append(
+        "Raw machine-readable benchmark output: `docs/benchmarks/latest.json`."
+    )
     lines.append("")
 
     lines.extend(attribution_section_lines())
-    (DOCS_DIR / "BENCHMARKS.md").write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+    (DOCS_DIR / "BENCHMARKS.md").write_text(
+        "\n".join(lines).rstrip() + "\n", encoding="utf-8"
+    )
 
 
 def _classify_reference_url(url: str) -> str:
@@ -1005,7 +1086,19 @@ def _classify_reference_url(url: str) -> str:
         return "arxiv"
     if "scholar.google.com" in lower:
         return "scholar"
-    if any(host in lower for host in ("ieeexplore", "acm.org", "springer", "sciencedirect", "wiley", "jstor", "itu.int", "tech.ebu.ch")):
+    if any(
+        host in lower
+        for host in (
+            "ieeexplore",
+            "acm.org",
+            "springer",
+            "sciencedirect",
+            "wiley",
+            "jstor",
+            "itu.int",
+            "tech.ebu.ch",
+        )
+    ):
         return "publisher_or_standard"
     return "web"
 
@@ -1022,7 +1115,7 @@ def _bib_escape(text: str) -> str:
         text.replace("\\", "\\\\")
         .replace("{", "\\{")
         .replace("}", "\\}")
-        .replace('"', "\\\"")
+        .replace('"', '\\"')
     )
 
 
@@ -1032,7 +1125,10 @@ def _bib_key(paper: dict[str, str], index: int) -> str:
     surname = first_author[-1].lower() if first_author else "ref"
     surname = re.sub(r"[^a-z0-9]+", "", surname) or "ref"
     year = re.sub(r"[^0-9]", "", paper.get("year", "")) or "0000"
-    title_word = re.sub(r"[^a-z0-9]+", "", paper.get("title", "").lower().split(" ")[0]) or "item"
+    title_word = (
+        re.sub(r"[^a-z0-9]+", "", paper.get("title", "").lower().split(" ")[0])
+        or "item"
+    )
     return f"{surname}{year}{title_word}{index:03d}"
 
 
@@ -1059,7 +1155,9 @@ def generate_citation_docs() -> None:
     lines.append("# pvx Citation Quality Report")
     lines.append("")
     lines.extend(generated_stamp_lines())
-    lines.append("This report classifies bibliography URLs by citation quality and highlights entries still using search-index links.")
+    lines.append(
+        "This report classifies bibliography URLs by citation quality and highlights entries still using search-index links."
+    )
     lines.append("")
     lines.append(f"Total references analyzed: **{len(papers)}**")
     lines.append("")
@@ -1077,7 +1175,9 @@ def generate_citation_docs() -> None:
     lines.append("")
     lines.append("| Year | Authors | Title | URL |")
     lines.append("| --- | --- | --- | --- |")
-    for entry in sorted(unresolved_scholar, key=lambda item: (item["year"], item["title"]), reverse=True):
+    for entry in sorted(
+        unresolved_scholar, key=lambda item: (item["year"], item["title"]), reverse=True
+    ):
         lines.append(
             "| {year} | {authors} | {title} | {url} |".format(
                 year=entry["year"],
@@ -1089,26 +1189,45 @@ def generate_citation_docs() -> None:
     lines.append("")
 
     lines.extend(attribution_section_lines())
-    (DOCS_DIR / "CITATION_QUALITY.md").write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+    (DOCS_DIR / "CITATION_QUALITY.md").write_text(
+        "\n".join(lines).rstrip() + "\n", encoding="utf-8"
+    )
 
     bib_lines: list[str] = []
-    bib_lines.append(f"% Auto-generated by scripts/scripts_generate_docs_extras.py from commit {COMMIT_HASH} ({COMMIT_DATE})")
-    for index, paper in enumerate(sorted(papers, key=lambda item: (item.get("year", ""), item.get("title", ""), item.get("authors", "")))):
+    bib_lines.append(
+        f"% Auto-generated by scripts/scripts_generate_docs_extras.py from commit {COMMIT_HASH} ({COMMIT_DATE})"
+    )
+    for index, paper in enumerate(
+        sorted(
+            papers,
+            key=lambda item: (
+                item.get("year", ""),
+                item.get("title", ""),
+                item.get("authors", ""),
+            ),
+        )
+    ):
         key = _bib_key(paper, index)
-        authors = " and ".join(a.strip() for a in str(paper.get("authors", "")).split(";") if a.strip())
+        authors = " and ".join(
+            a.strip() for a in str(paper.get("authors", "")).split(";") if a.strip()
+        )
         doi = _extract_doi(str(paper.get("url", "")))
         bib_lines.append(f"@misc{{{key},")
-        bib_lines.append(f"  title = \"{_bib_escape(str(paper.get('title', '')))}\",")
-        bib_lines.append(f"  author = \"{_bib_escape(authors)}\",")
-        bib_lines.append(f"  year = \"{_bib_escape(str(paper.get('year', '')))}\",")
-        bib_lines.append(f"  howpublished = \"{_bib_escape(str(paper.get('venue', '')))}\",")
-        bib_lines.append(f"  url = \"{_bib_escape(str(paper.get('url', '')))}\",")
+        bib_lines.append(f'  title = "{_bib_escape(str(paper.get("title", "")))}",')
+        bib_lines.append(f'  author = "{_bib_escape(authors)}",')
+        bib_lines.append(f'  year = "{_bib_escape(str(paper.get("year", "")))}",')
+        bib_lines.append(
+            f'  howpublished = "{_bib_escape(str(paper.get("venue", "")))}",'
+        )
+        bib_lines.append(f'  url = "{_bib_escape(str(paper.get("url", "")))}",')
         if doi:
-            bib_lines.append(f"  doi = \"{_bib_escape(doi)}\",")
+            bib_lines.append(f'  doi = "{_bib_escape(doi)}",')
         bib_lines.append("}")
         bib_lines.append("")
 
-    (DOCS_DIR / "references.bib").write_text("\n".join(bib_lines).rstrip() + "\n", encoding="utf-8")
+    (DOCS_DIR / "references.bib").write_text(
+        "\n".join(bib_lines).rstrip() + "\n", encoding="utf-8"
+    )
     write_json(
         DOCS_DIR / "citation_quality.json",
         {
@@ -1126,7 +1245,9 @@ def generate_docs_contract() -> None:
     lines.append("# pvx Documentation Contribution Contract")
     lines.append("")
     lines.extend(generated_stamp_lines())
-    lines.append("Any code change that affects behavior, parameters, algorithms, windows, outputs, or references must update generated documentation in the same PR.")
+    lines.append(
+        "Any code change that affects behavior, parameters, algorithms, windows, outputs, or references must update generated documentation in the same PR."
+    )
     lines.append("")
     lines.append("## Required in Every Relevant PR")
     lines.append("")
@@ -1137,11 +1258,21 @@ def generate_docs_contract() -> None:
     lines.append("python3 scripts/scripts_generate_docs_extras.py")
     lines.append("python3 scripts/scripts_generate_html_docs.py")
     lines.append("```")
-    lines.append("2. Ensure no doc drift remains (ignoring commit-stamp lines): `git diff --exit-code -I '^_Generated from commit' -I '^% Auto-generated by scripts/scripts_generate_docs_extras.py from commit' -I 'Generated by <code>scripts/scripts_generate_html_docs.py</code> from commit'` after generation.")
-    lines.append("3. Keep README links and algorithm inventories consistent with generated docs.")
-    lines.append("4. Expand each acronym on first use (for example, command-line interface (CLI), digital signal processing (DSP), short-time Fourier transform (STFT)).")
-    lines.append("5. If CLI flags changed, verify `docs/CLI_FLAGS_REFERENCE.md` and `tests/test_docs_coverage.py` pass.")
-    lines.append("6. If bibliography changed, regenerate `docs/references.bib` and `docs/CITATION_QUALITY.md`.")
+    lines.append(
+        "2. Ensure no doc drift remains (ignoring commit-stamp lines): `git diff --exit-code -I '^_Generated from commit' -I '^% Auto-generated by scripts/scripts_generate_docs_extras.py from commit' -I 'Generated by <code>scripts/scripts_generate_html_docs.py</code> from commit'` after generation."
+    )
+    lines.append(
+        "3. Keep README links and algorithm inventories consistent with generated docs."
+    )
+    lines.append(
+        "4. Expand each acronym on first use (for example, command-line interface (CLI), digital signal processing (DSP), short-time Fourier transform (STFT))."
+    )
+    lines.append(
+        "5. If CLI flags changed, verify `docs/CLI_FLAGS_REFERENCE.md` and `tests/test_docs_coverage.py` pass."
+    )
+    lines.append(
+        "6. If bibliography changed, regenerate `docs/references.bib` and `docs/CITATION_QUALITY.md`."
+    )
     lines.append("")
 
     lines.append("## PR Checklist")
@@ -1155,11 +1286,15 @@ def generate_docs_contract() -> None:
     lines.append("")
 
     lines.extend(attribution_section_lines())
-    (DOCS_DIR / "DOCS_CONTRACT.md").write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+    (DOCS_DIR / "DOCS_CONTRACT.md").write_text(
+        "\n".join(lines).rstrip() + "\n", encoding="utf-8"
+    )
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Generate advanced pvx documentation artifacts")
+    parser = argparse.ArgumentParser(
+        description="Generate advanced pvx documentation artifacts"
+    )
     parser.add_argument(
         "--run-benchmarks",
         action="store_true",

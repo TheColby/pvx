@@ -28,9 +28,9 @@ if __package__ is None or __package__ == "":
 
 from pvx.algorithms.base import AlgorithmResult, run_algorithm
 
-ALGORITHM_ID = 'retune_and_intonation.time_varying_cents_maps'
-ALGORITHM_NAME = 'Time-varying cents maps'
-THEME = 'Retune and Intonation'
+ALGORITHM_ID = "retune_and_intonation.time_varying_cents_maps"
+ALGORITHM_NAME = "Time-varying cents maps"
+THEME = "Retune and Intonation"
 
 
 def process(audio: np.ndarray, sample_rate: int, **params: Any) -> AlgorithmResult:

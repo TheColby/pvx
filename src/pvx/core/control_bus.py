@@ -133,7 +133,9 @@ def _parse_signal_name(value: str, *, context: str, allowed: set[str] | None) ->
         return name
     if name not in allowed:
         allowed_txt = ", ".join(sorted(allowed))
-        raise ValueError(f"{context}: unsupported signal '{value}'. Allowed: {allowed_txt}")
+        raise ValueError(
+            f"{context}: unsupported signal '{value}'. Allowed: {allowed_txt}"
+        )
     return name
 
 
@@ -145,7 +147,9 @@ def parse_control_route(expression: str) -> ControlRoute:
         raise ValueError(f"Route expression must contain '=': {raw!r}")
 
     lhs, rhs = raw.split("=", 1)
-    target = _parse_signal_name(lhs, context=f"route '{raw}' target", allowed=_TARGET_NAMES)
+    target = _parse_signal_name(
+        lhs, context=f"route '{raw}' target", allowed=_TARGET_NAMES
+    )
     rhs_text = rhs.strip()
     if not rhs_text:
         raise ValueError(f"Route expression has an empty right-hand side: {raw!r}")
@@ -166,7 +170,9 @@ def parse_control_route(expression: str) -> ControlRoute:
 
     if lower_rhs.startswith("inv(") and rhs_text.endswith(")"):
         src_text = rhs_text[4:-1]
-        source = _parse_signal_name(src_text, context=f"route '{raw}' inv()", allowed=None)
+        source = _parse_signal_name(
+            src_text, context=f"route '{raw}' inv()", allowed=None
+        )
         return ControlRoute(
             target=target,
             op="inv",
@@ -184,8 +190,12 @@ def parse_control_route(expression: str) -> ControlRoute:
             raise ValueError(
                 f"route '{raw}' pow() must be in the form pow(source, exponent)"
             )
-        source = _parse_signal_name(parts[0], context=f"route '{raw}' pow() source", allowed=None)
-        exponent = _parse_finite_float(parts[1], context=f"route '{raw}' pow() exponent")
+        source = _parse_signal_name(
+            parts[0], context=f"route '{raw}' pow() source", allowed=None
+        )
+        exponent = _parse_finite_float(
+            parts[1], context=f"route '{raw}' pow() exponent"
+        )
         return ControlRoute(
             target=target,
             op="pow",
@@ -200,8 +210,12 @@ def parse_control_route(expression: str) -> ControlRoute:
         inner = rhs_text[4:-1]
         parts = [chunk.strip() for chunk in inner.split(",", 1)]
         if len(parts) != 2:
-            raise ValueError(f"route '{raw}' mul() must be in the form mul(source, factor)")
-        source = _parse_signal_name(parts[0], context=f"route '{raw}' mul() source", allowed=None)
+            raise ValueError(
+                f"route '{raw}' mul() must be in the form mul(source, factor)"
+            )
+        source = _parse_signal_name(
+            parts[0], context=f"route '{raw}' mul() source", allowed=None
+        )
         factor = _parse_finite_float(parts[1], context=f"route '{raw}' mul() factor")
         return ControlRoute(
             target=target,
@@ -217,8 +231,12 @@ def parse_control_route(expression: str) -> ControlRoute:
         inner = rhs_text[4:-1]
         parts = [chunk.strip() for chunk in inner.split(",", 1)]
         if len(parts) != 2:
-            raise ValueError(f"route '{raw}' add() must be in the form add(source, offset)")
-        source = _parse_signal_name(parts[0], context=f"route '{raw}' add() source", allowed=None)
+            raise ValueError(
+                f"route '{raw}' add() must be in the form add(source, offset)"
+            )
+        source = _parse_signal_name(
+            parts[0], context=f"route '{raw}' add() source", allowed=None
+        )
         offset = _parse_finite_float(parts[1], context=f"route '{raw}' add() offset")
         return ControlRoute(
             target=target,
@@ -234,8 +252,12 @@ def parse_control_route(expression: str) -> ControlRoute:
         inner = rhs_text[7:-1]
         parts = [chunk.strip() for chunk in inner.split(",")]
         if len(parts) != 3:
-            raise ValueError(f"route '{raw}' affine() must be affine(source, scale, bias)")
-        source = _parse_signal_name(parts[0], context=f"route '{raw}' affine() source", allowed=None)
+            raise ValueError(
+                f"route '{raw}' affine() must be affine(source, scale, bias)"
+            )
+        source = _parse_signal_name(
+            parts[0], context=f"route '{raw}' affine() source", allowed=None
+        )
         scale = _parse_finite_float(parts[1], context=f"route '{raw}' affine() scale")
         bias = _parse_finite_float(parts[2], context=f"route '{raw}' affine() bias")
         return ControlRoute(
@@ -253,7 +275,9 @@ def parse_control_route(expression: str) -> ControlRoute:
         parts = [chunk.strip() for chunk in inner.split(",")]
         if len(parts) != 3:
             raise ValueError(f"route '{raw}' clip() must be clip(source, lo, hi)")
-        source = _parse_signal_name(parts[0], context=f"route '{raw}' clip() source", allowed=None)
+        source = _parse_signal_name(
+            parts[0], context=f"route '{raw}' clip() source", allowed=None
+        )
         lo = _parse_finite_float(parts[1], context=f"route '{raw}' clip() lo")
         hi = _parse_finite_float(parts[2], context=f"route '{raw}' clip() hi")
         if hi < lo:
@@ -306,7 +330,13 @@ def parse_control_routes(expressions: Iterable[str]) -> list[ControlRoute]:
 
 def _source_column_candidates(source: str) -> tuple[str, ...]:
     if source == "stretch":
-        return ("stretch", "time_stretch", "time-stretch", "time_stretch_factor", "time-stretch-factor")
+        return (
+            "stretch",
+            "time_stretch",
+            "time-stretch",
+            "time_stretch_factor",
+            "time-stretch-factor",
+        )
     if source == "pitch_ratio":
         return ("pitch_ratio", "ratio")
     if source == "confidence":
@@ -320,7 +350,12 @@ def _source_column_candidates(source: str) -> tuple[str, ...]:
     if source == "zcr":
         return ("zcr", "zero_crossing_rate")
     if source == "spectral_centroid_hz":
-        return ("spectral_centroid_hz", "spectral_centroid", "centroid_hz", "brightness_hz")
+        return (
+            "spectral_centroid_hz",
+            "spectral_centroid",
+            "centroid_hz",
+            "brightness_hz",
+        )
     if source == "spectral_flatness":
         return ("spectral_flatness", "flatness")
     if source == "spectral_flux":
@@ -368,7 +403,9 @@ def _parse_row_float(
         if not math.isfinite(value):
             raise ValueError(f"{context}: value for '{key}' must be finite")
         return float(value)
-    raise ValueError(f"{context}: missing source column (expected one of {list(candidates)})")
+    raise ValueError(
+        f"{context}: missing source column (expected one of {list(candidates)})"
+    )
 
 
 def _read_source_value(row: dict[str, str], source: str, *, row_index: int) -> float:
@@ -414,7 +451,9 @@ def _eval_route(route: ControlRoute, row: dict[str, str], *, row_index: int) -> 
         out = src
     elif route.op == "inv":
         if abs(src) <= 1e-12:
-            raise ValueError(f"control-map row {row_index}: inv({route.source}) division by zero")
+            raise ValueError(
+                f"control-map row {row_index}: inv({route.source}) division by zero"
+            )
         out = 1.0 / src
     elif route.op == "mul":
         params = tuple(route.params or ())
@@ -435,9 +474,11 @@ def _eval_route(route: ControlRoute, row: dict[str, str], *, row_index: int) -> 
     else:
         assert route.op == "pow"
         assert route.exponent is not None
-        out = float(src ** route.exponent)
+        out = float(src**route.exponent)
     if not math.isfinite(out):
-        raise ValueError(f"control-map row {row_index}: route '{route.expression}' produced a non-finite value")
+        raise ValueError(
+            f"control-map row {row_index}: route '{route.expression}' produced a non-finite value"
+        )
     return float(out)
 
 
@@ -455,9 +496,13 @@ def apply_control_routes_csv(
     if not fields_raw:
         raise ValueError(f"{source_label}: CSV is empty")
 
-    fields_norm = [normalize_control_name(name) for name in fields_raw if name is not None]
+    fields_norm = [
+        normalize_control_name(name) for name in fields_raw if name is not None
+    ]
     if "start_sec" not in fields_norm or "end_sec" not in fields_norm:
-        raise ValueError(f"{source_label}: CSV must include start_sec and end_sec columns")
+        raise ValueError(
+            f"{source_label}: CSV must include start_sec and end_sec columns"
+        )
 
     output_fields = list(fields_norm)
     for route in routes:

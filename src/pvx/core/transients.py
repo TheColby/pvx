@@ -44,7 +44,9 @@ def _normalize_robust(values: np.ndarray) -> np.ndarray:
     return np.clip((x - lo) / span, 0.0, 1.0)
 
 
-def _frame_signal(signal: np.ndarray, n_fft: int, hop_size: int, *, center: bool = True) -> np.ndarray:
+def _frame_signal(
+    signal: np.ndarray, n_fft: int, hop_size: int, *, center: bool = True
+) -> np.ndarray:
     x = np.asarray(signal, dtype=np.float64).reshape(-1)
     if x.size == 0:
         return np.zeros((n_fft, 0), dtype=np.float64)
@@ -104,7 +106,9 @@ def compute_transient_features(
     hfc = np.sum(mag * freq_idx[:, None], axis=0)
 
     # Broadbandness = blend of spectral flatness and HF energy ratio.
-    flatness = np.exp(np.mean(np.log(mag + 1e-12), axis=0)) / (np.mean(mag + 1e-12, axis=0))
+    flatness = np.exp(np.mean(np.log(mag + 1e-12), axis=0)) / (
+        np.mean(mag + 1e-12, axis=0)
+    )
     hf_start = int(round(0.35 * (bins - 1)))
     hf_energy = np.sum(mag[hf_start:, :], axis=0)
     total_energy = np.sum(mag, axis=0) + 1e-12
@@ -116,7 +120,9 @@ def compute_transient_features(
     broad_n = _normalize_robust(broadbandness)
     score = np.clip(0.5 * flux_n + 0.3 * hfc_n + 0.2 * broad_n, 0.0, 1.0)
 
-    frame_times_s = (np.arange(frame_count, dtype=np.float64) * hop_size) / float(max(1, sample_rate))
+    frame_times_s = (np.arange(frame_count, dtype=np.float64) * hop_size) / float(
+        max(1, sample_rate)
+    )
     return TransientFeatures(
         flux=flux,
         hfc=hfc,
@@ -138,7 +144,11 @@ def pick_onset_frames(
     if score.size == 0:
         return np.zeros(0, dtype=np.int64)
     if score.size <= 2:
-        return np.array([int(np.argmax(score))], dtype=np.int64) if score.size else np.zeros(0, dtype=np.int64)
+        return (
+            np.array([int(np.argmax(score))], dtype=np.int64)
+            if score.size
+            else np.zeros(0, dtype=np.int64)
+        )
 
     s = float(np.clip(sensitivity, 0.0, 1.0))
     threshold = float(np.quantile(score, 0.92 - 0.50 * s))
@@ -171,14 +181,24 @@ def _mask_to_regions(mask: np.ndarray) -> list[TransientRegion]:
     for idx in range(1, values.size):
         state = bool(values[idx])
         if state != current:
-            regions.append(TransientRegion(start_sample=start, end_sample=idx, is_transient=current))
+            regions.append(
+                TransientRegion(
+                    start_sample=start, end_sample=idx, is_transient=current
+                )
+            )
             start = idx
             current = state
-    regions.append(TransientRegion(start_sample=start, end_sample=values.size, is_transient=current))
+    regions.append(
+        TransientRegion(
+            start_sample=start, end_sample=values.size, is_transient=current
+        )
+    )
     return regions
 
 
-def _enforce_min_region_samples(mask: np.ndarray, min_region_samples: int) -> np.ndarray:
+def _enforce_min_region_samples(
+    mask: np.ndarray, min_region_samples: int
+) -> np.ndarray:
     if min_region_samples <= 1:
         return np.asarray(mask, dtype=bool)
     out = np.asarray(mask, dtype=bool).copy()
@@ -224,7 +244,9 @@ def build_transient_mask(
     return _enforce_min_region_samples(mask, int(max(1, min_region_samples)))
 
 
-def map_mask_to_output(mask_in: np.ndarray, stretch: float, output_samples: int) -> np.ndarray:
+def map_mask_to_output(
+    mask_in: np.ndarray, stretch: float, output_samples: int
+) -> np.ndarray:
     src = np.asarray(mask_in, dtype=bool).reshape(-1)
     out_len = max(0, int(output_samples))
     if out_len == 0:
@@ -268,7 +290,9 @@ def detect_transient_regions(
     )
     protect_samples = int(round(max(2.0, float(protect_ms)) * sample_rate / 1000.0))
     crossfade_samples = int(round(max(0.0, float(crossfade_ms)) * sample_rate / 1000.0))
-    min_sep_frames = max(1, int(round((0.5 * protect_samples) / float(max(1, hop_size)))))
+    min_sep_frames = max(
+        1, int(round((0.5 * protect_samples) / float(max(1, hop_size))))
+    )
     onset_frames = pick_onset_frames(
         features,
         sensitivity=float(np.clip(sensitivity, 0.0, 1.0)),

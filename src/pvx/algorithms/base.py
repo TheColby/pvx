@@ -109,7 +109,9 @@ def resample_length(audio: np.ndarray, length: int) -> np.ndarray:
     return out
 
 
-def envelope_follower(signal_1d: np.ndarray, attack: float, release: float) -> np.ndarray:
+def envelope_follower(
+    signal_1d: np.ndarray, attack: float, release: float
+) -> np.ndarray:
     out = np.zeros_like(signal_1d)
     env = 0.0
     for i, x in enumerate(np.abs(signal_1d)):
@@ -131,7 +133,9 @@ def _resolve_transform_name(transform: str | None) -> str:
     return str(name)
 
 
-def _stft_config(n_fft: int, hop: int, window: str, transform: str) -> CoreVocoderConfig:
+def _stft_config(
+    n_fft: int, hop: int, window: str, transform: str
+) -> CoreVocoderConfig:
     return CoreVocoderConfig(
         n_fft=int(n_fft),
         win_length=int(n_fft),
@@ -205,15 +209,21 @@ def spectral_sharpen(spec: np.ndarray, power: float = 1.15) -> np.ndarray:
     return mag * np.exp(1j * pha)
 
 
-def spectral_blur(spec: np.ndarray, sigma_time: float = 1.0, sigma_freq: float = 0.7) -> np.ndarray:
+def spectral_blur(
+    spec: np.ndarray, sigma_time: float = 1.0, sigma_freq: float = 0.7
+) -> np.ndarray:
     mag = np.abs(spec)
     pha = np.angle(spec)
     for ch in range(mag.shape[2]):
-        mag[:, :, ch] = ndimage.gaussian_filter(mag[:, :, ch], sigma=(sigma_freq, sigma_time), mode="nearest")
+        mag[:, :, ch] = ndimage.gaussian_filter(
+            mag[:, :, ch], sigma=(sigma_freq, sigma_time), mode="nearest"
+        )
     return mag * np.exp(1j * pha)
 
 
-def hpss_split(audio: np.ndarray, n_fft: int = 2048, hop: int = 512) -> tuple[np.ndarray, np.ndarray]:
+def hpss_split(
+    audio: np.ndarray, n_fft: int = 2048, hop: int = 512
+) -> tuple[np.ndarray, np.ndarray]:
     librosa = maybe_librosa()
     if librosa is not None:
         harm_channels: list[np.ndarray] = []
@@ -236,9 +246,9 @@ def hpss_split(audio: np.ndarray, n_fft: int = 2048, hop: int = 512) -> tuple[np
     mp = perc / denom
     h_spec = spec * mh
     p_spec = spec * mp
-    return istft_multi(h_spec, n_fft=n_fft, hop=hop, length=audio.shape[0]), istft_multi(
-        p_spec, n_fft=n_fft, hop=hop, length=audio.shape[0]
-    )
+    return istft_multi(
+        h_spec, n_fft=n_fft, hop=hop, length=audio.shape[0]
+    ), istft_multi(p_spec, n_fft=n_fft, hop=hop, length=audio.shape[0])
 
 
 def time_stretch(audio: np.ndarray, stretch: float, sample_rate: int) -> np.ndarray:
@@ -266,7 +276,9 @@ def pitch_shift(audio: np.ndarray, sample_rate: int, semitones: float) -> np.nda
     if librosa is not None:
         out_channels: list[np.ndarray] = []
         for ch in range(audio.shape[1]):
-            y = librosa.effects.pitch_shift(audio[:, ch], sr=sample_rate, n_steps=semitones)
+            y = librosa.effects.pitch_shift(
+                audio[:, ch], sr=sample_rate, n_steps=semitones
+            )
             out_channels.append(y.astype(np.float64, copy=False))
         n = max(v.size for v in out_channels)
         out = np.zeros((n, audio.shape[1]), dtype=np.float64)
@@ -296,7 +308,9 @@ def overlap_add_frames(frames: np.ndarray, hop: int, length: int) -> np.ndarray:
     return out[:length]
 
 
-def granular_time_stretch(audio: np.ndarray, stretch: float, grain: int = 2048, hop: int = 512) -> np.ndarray:
+def granular_time_stretch(
+    audio: np.ndarray, stretch: float, grain: int = 2048, hop: int = 512
+) -> np.ndarray:
     stretch = float(max(1e-4, stretch))
     hop_out = max(1, int(round(hop * stretch)))
     out_channels: list[np.ndarray] = []
@@ -317,7 +331,9 @@ def granular_time_stretch(audio: np.ndarray, stretch: float, grain: int = 2048, 
     return out
 
 
-def spectral_gate(audio: np.ndarray, strength: float = 1.2, floor: float = 0.05) -> np.ndarray:
+def spectral_gate(
+    audio: np.ndarray, strength: float = 1.2, floor: float = 0.05
+) -> np.ndarray:
     spec, _, _ = stft_multi(audio, n_fft=2048, hop=512)
     mag = np.abs(spec)
     pha = np.angle(spec)
@@ -328,7 +344,9 @@ def spectral_gate(audio: np.ndarray, strength: float = 1.2, floor: float = 0.05)
     return istft_multi(out, n_fft=2048, hop=512, length=audio.shape[0])
 
 
-def spectral_subtract_denoise(audio: np.ndarray, reduction_db: float = 12.0) -> np.ndarray:
+def spectral_subtract_denoise(
+    audio: np.ndarray, reduction_db: float = 12.0
+) -> np.ndarray:
     spec, _, _ = stft_multi(audio, n_fft=2048, hop=512)
     mag = np.abs(spec)
     pha = np.angle(spec)
@@ -339,7 +357,9 @@ def spectral_subtract_denoise(audio: np.ndarray, reduction_db: float = 12.0) -> 
     return istft_multi(out, n_fft=2048, hop=512, length=audio.shape[0])
 
 
-def mmse_like_denoise(audio: np.ndarray, alpha: float = 0.98, beta: float = 0.15, log_domain: bool = False) -> np.ndarray:
+def mmse_like_denoise(
+    audio: np.ndarray, alpha: float = 0.98, beta: float = 0.15, log_domain: bool = False
+) -> np.ndarray:
     spec, _, _ = stft_multi(audio, n_fft=2048, hop=512)
     mag = np.abs(spec)
     pha = np.angle(spec)
@@ -396,7 +416,9 @@ def simple_declip(audio: np.ndarray, clip_threshold: float = 0.98) -> np.ndarray
     return out
 
 
-def dereverb_decay_subtract(audio: np.ndarray, strength: float = 0.45, decay: float = 0.90) -> np.ndarray:
+def dereverb_decay_subtract(
+    audio: np.ndarray, strength: float = 0.45, decay: float = 0.90
+) -> np.ndarray:
     spec, _, _ = stft_multi(audio, n_fft=2048, hop=512)
     mag = np.abs(spec)
     pha = np.angle(spec)
@@ -424,7 +446,12 @@ def dereverb_wpe_style(audio: np.ndarray, taps: int = 4, delay: int = 2) -> np.n
     return istft_multi(out, n_fft=1024, hop=256, length=audio.shape[0])
 
 
-def compressor(audio: np.ndarray, threshold_db: float = -18.0, ratio: float = 4.0, makeup_db: float = 0.0) -> np.ndarray:
+def compressor(
+    audio: np.ndarray,
+    threshold_db: float = -18.0,
+    ratio: float = 4.0,
+    makeup_db: float = 0.0,
+) -> np.ndarray:
     thr = 10.0 ** (threshold_db / 20.0)
     ratio = max(1.0, ratio)
     out = audio.copy()
@@ -439,7 +466,9 @@ def compressor(audio: np.ndarray, threshold_db: float = -18.0, ratio: float = 4.
     return out
 
 
-def upward_compressor(audio: np.ndarray, threshold_db: float = -36.0, ratio: float = 2.0) -> np.ndarray:
+def upward_compressor(
+    audio: np.ndarray, threshold_db: float = -36.0, ratio: float = 2.0
+) -> np.ndarray:
     thr = 10.0 ** (threshold_db / 20.0)
     ratio = max(1.0, ratio)
     out = audio.copy()
@@ -460,7 +489,9 @@ def true_peak_limit(audio: np.ndarray, threshold: float = 0.95) -> np.ndarray:
     return audio * (threshold / (over + 1e-12))
 
 
-def transient_shaper(audio: np.ndarray, attack_boost: float = 1.4, sustain: float = 0.92) -> np.ndarray:
+def transient_shaper(
+    audio: np.ndarray, attack_boost: float = 1.4, sustain: float = 0.92
+) -> np.ndarray:
     out = np.zeros_like(audio)
     for ch in range(audio.shape[1]):
         x = audio[:, ch]
@@ -472,7 +503,9 @@ def transient_shaper(audio: np.ndarray, attack_boost: float = 1.4, sustain: floa
     return out
 
 
-def spectral_dynamics(audio: np.ndarray, threshold_db: float = -24.0, ratio: float = 2.5) -> np.ndarray:
+def spectral_dynamics(
+    audio: np.ndarray, threshold_db: float = -24.0, ratio: float = 2.5
+) -> np.ndarray:
     spec, _, _ = stft_multi(audio, n_fft=2048, hop=512)
     mag = np.abs(spec)
     pha = np.angle(spec)
@@ -484,10 +517,14 @@ def spectral_dynamics(audio: np.ndarray, threshold_db: float = -24.0, ratio: flo
     return istft_multi(out, n_fft=2048, hop=512, length=audio.shape[0])
 
 
-def split_bands(audio: np.ndarray, sample_rate: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def split_bands(
+    audio: np.ndarray, sample_rate: int
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     nyq = sample_rate * 0.5
     b1, a1 = signal.butter(4, min(0.99, 250.0 / nyq), btype="low")
-    b2, a2 = signal.butter(4, [min(0.98, 250.0 / nyq), min(0.99, 2500.0 / nyq)], btype="band")
+    b2, a2 = signal.butter(
+        4, [min(0.98, 250.0 / nyq), min(0.99, 2500.0 / nyq)], btype="band"
+    )
     b3, a3 = signal.butter(4, min(0.99, 2500.0 / nyq), btype="high")
     lo = signal.lfilter(b1, a1, audio, axis=0)
     mid = signal.lfilter(b2, a2, audio, axis=0)
@@ -529,12 +566,16 @@ def spectral_convolution(audio: np.ndarray, kernel_size: int = 7) -> np.ndarray:
     kernel = np.ones((kernel_size, kernel_size, 1), dtype=np.float64)
     kernel /= np.sum(kernel)
     mag2 = ndimage.convolve(mag, kernel, mode="nearest")
-    return istft_multi(mag2 * np.exp(1j * pha), n_fft=2048, hop=512, length=audio.shape[0])
+    return istft_multi(
+        mag2 * np.exp(1j * pha), n_fft=2048, hop=512, length=audio.shape[0]
+    )
 
 
 def spectral_freeze(audio: np.ndarray, frame_ratio: float = 0.35) -> np.ndarray:
     spec, _, _ = stft_multi(audio, n_fft=2048, hop=512)
-    idx = int(np.clip(round(frame_ratio * (spec.shape[1] - 1)), 0, max(0, spec.shape[1] - 1)))
+    idx = int(
+        np.clip(round(frame_ratio * (spec.shape[1] - 1)), 0, max(0, spec.shape[1] - 1))
+    )
     frozen = spec[:, idx : idx + 1, :]
     rep = np.repeat(frozen, spec.shape[1], axis=1)
     return istft_multi(rep, n_fft=2048, hop=512, length=audio.shape[0])
@@ -547,7 +588,9 @@ def phase_randomize(audio: np.ndarray, strength: float = 1.0) -> np.ndarray:
     rng = np.random.default_rng(1307)
     rand_phase = rng.uniform(-np.pi, np.pi, size=pha.shape)
     pha2 = (1.0 - strength) * pha + strength * rand_phase
-    return istft_multi(mag * np.exp(1j * pha2), n_fft=2048, hop=512, length=audio.shape[0])
+    return istft_multi(
+        mag * np.exp(1j * pha2), n_fft=2048, hop=512, length=audio.shape[0]
+    )
 
 
 def formant_warp(audio: np.ndarray, ratio: float = 1.15) -> np.ndarray:
@@ -561,7 +604,9 @@ def formant_warp(audio: np.ndarray, ratio: float = 1.15) -> np.ndarray:
     for t in range(mag.shape[1]):
         for ch in range(mag.shape[2]):
             mag2[:, t, ch] = np.interp(src, x, mag[:, t, ch])
-    return istft_multi(mag2 * np.exp(1j * pha), n_fft=2048, hop=512, length=audio.shape[0])
+    return istft_multi(
+        mag2 * np.exp(1j * pha), n_fft=2048, hop=512, length=audio.shape[0]
+    )
 
 
 def resonator_bank(audio: np.ndarray, sample_rate: int) -> np.ndarray:
@@ -580,33 +625,45 @@ def spectral_contrast_exaggerate(audio: np.ndarray, amount: float = 1.35) -> np.
     pha = np.angle(spec)
     mean = np.mean(mag, axis=0, keepdims=True)
     mag2 = np.maximum(1e-9, mean + (mag - mean) * amount)
-    return istft_multi(mag2 * np.exp(1j * pha), n_fft=2048, hop=512, length=audio.shape[0])
+    return istft_multi(
+        mag2 * np.exp(1j * pha), n_fft=2048, hop=512, length=audio.shape[0]
+    )
 
 
-def rhythmic_gate(audio: np.ndarray, sample_rate: int, rate_hz: float = 8.0, duty: float = 0.35) -> np.ndarray:
+def rhythmic_gate(
+    audio: np.ndarray, sample_rate: int, rate_hz: float = 8.0, duty: float = 0.35
+) -> np.ndarray:
     t = np.arange(audio.shape[0]) / float(sample_rate)
     phase = np.mod(t * rate_hz, 1.0)
     gate = (phase < duty).astype(np.float64)
     return audio * gate[:, None]
 
 
-def ring_mod(audio: np.ndarray, sample_rate: int, freq_hz: float = 40.0, fm_depth: float = 0.0) -> np.ndarray:
+def ring_mod(
+    audio: np.ndarray, sample_rate: int, freq_hz: float = 40.0, fm_depth: float = 0.0
+) -> np.ndarray:
     t = np.arange(audio.shape[0]) / float(sample_rate)
     mod = np.sin(2.0 * np.pi * freq_hz * t + fm_depth * np.sin(2.0 * np.pi * 3.0 * t))
     return audio * mod[:, None]
 
 
-def spectral_tremolo(audio: np.ndarray, sample_rate: int, lfo_hz: float = 3.5) -> np.ndarray:
+def spectral_tremolo(
+    audio: np.ndarray, sample_rate: int, lfo_hz: float = 3.5
+) -> np.ndarray:
     spec, _, _ = stft_multi(audio, n_fft=2048, hop=512)
     mag = np.abs(spec)
     pha = np.angle(spec)
     t = np.arange(spec.shape[1]) / max(1.0, float(sample_rate / 512.0))
     lfo = 0.5 + 0.5 * np.sin(2.0 * np.pi * lfo_hz * t)
     mag *= lfo[None, :, None]
-    return istft_multi(mag * np.exp(1j * pha), n_fft=2048, hop=512, length=audio.shape[0])
+    return istft_multi(
+        mag * np.exp(1j * pha), n_fft=2048, hop=512, length=audio.shape[0]
+    )
 
 
-def envelope_modulation(audio: np.ndarray, sample_rate: int, depth: float = 0.7) -> np.ndarray:
+def envelope_modulation(
+    audio: np.ndarray, sample_rate: int, depth: float = 0.7
+) -> np.ndarray:
     env = np.mean(np.abs(audio), axis=1)
     env = env / (np.max(env) + 1e-12)
     lfo = np.sin(2.0 * np.pi * 2.0 * np.arange(audio.shape[0]) / float(sample_rate))
@@ -614,11 +671,24 @@ def envelope_modulation(audio: np.ndarray, sample_rate: int, depth: float = 0.7)
     return audio * mod[:, None]
 
 
-def estimate_f0_track(audio_mono: np.ndarray, sample_rate: int, fmin: float = 50.0, fmax: float = 1200.0, hop: int = 256) -> np.ndarray:
+def estimate_f0_track(
+    audio_mono: np.ndarray,
+    sample_rate: int,
+    fmin: float = 50.0,
+    fmax: float = 1200.0,
+    hop: int = 256,
+) -> np.ndarray:
     librosa = maybe_librosa()
     if librosa is not None:
         try:
-            f0 = librosa.yin(audio_mono, fmin=fmin, fmax=fmax, sr=sample_rate, frame_length=2048, hop_length=hop)
+            f0 = librosa.yin(
+                audio_mono,
+                fmin=fmin,
+                fmax=fmax,
+                sr=sample_rate,
+                frame_length=2048,
+                hop_length=hop,
+            )
             return np.nan_to_num(f0, nan=0.0, posinf=0.0, neginf=0.0)
         except Exception:
             pass
@@ -648,7 +718,9 @@ def estimate_f0_track(audio_mono: np.ndarray, sample_rate: int, fmin: float = 50
     return np.asarray(values, dtype=np.float64)
 
 
-def nearest_scale_freq(freq_hz: float, root_midi: int, scale_cents: list[float]) -> float:
+def nearest_scale_freq(
+    freq_hz: float, root_midi: int, scale_cents: list[float]
+) -> float:
     midi = 69.0 + 12.0 * np.log2(max(1e-9, freq_hz) / 440.0)
     cents = midi * 100.0
     best = cents
@@ -666,7 +738,13 @@ def nearest_scale_freq(freq_hz: float, root_midi: int, scale_cents: list[float])
     return 440.0 * (2.0 ** ((best / 100.0 - 69.0) / 12.0))
 
 
-def variable_pitch_shift(audio: np.ndarray, sample_rate: int, semitone_track: np.ndarray, hop: int = 256, frame: int = 1024) -> np.ndarray:
+def variable_pitch_shift(
+    audio: np.ndarray,
+    sample_rate: int,
+    semitone_track: np.ndarray,
+    hop: int = 256,
+    frame: int = 1024,
+) -> np.ndarray:
     n_frames = semitone_track.size
     win = np.hanning(frame)
     out = np.zeros((audio.shape[0] + frame, audio.shape[1]), dtype=np.float64)
@@ -695,14 +773,20 @@ def detect_key_from_chroma(chroma: np.ndarray) -> tuple[str, float]:
     return note_names[idx], conf
 
 
-def cqt_or_stft(audio: np.ndarray, sample_rate: int, bins_per_octave: int = 24) -> tuple[np.ndarray, dict[str, Any]]:
+def cqt_or_stft(
+    audio: np.ndarray, sample_rate: int, bins_per_octave: int = 24
+) -> tuple[np.ndarray, dict[str, Any]]:
     librosa = maybe_librosa()
     if librosa is None:
         spec, _, _ = stft_multi(audio, n_fft=4096, hop=512)
         return spec, {"mode": "stft", "n_fft": 4096, "hop": 512}
     fmin = float(librosa.note_to_hz("C1"))
     nyquist = 0.5 * float(sample_rate)
-    max_n_bins = int(np.floor(bins_per_octave * np.log2(max((nyquist * 0.98) / max(fmin, 1e-12), 1e-12))))
+    max_n_bins = int(
+        np.floor(
+            bins_per_octave * np.log2(max((nyquist * 0.98) / max(fmin, 1e-12), 1e-12))
+        )
+    )
     target_n_bins = 8 * bins_per_octave
     n_bins = min(target_n_bins, max_n_bins)
     if n_bins < bins_per_octave:
@@ -723,7 +807,12 @@ def cqt_or_stft(audio: np.ndarray, sample_rate: int, bins_per_octave: int = 24) 
     arr = np.zeros((max_bins, max_frames, audio.shape[1]), dtype=np.complex128)
     for idx, c in enumerate(out_specs):
         arr[: c.shape[0], : c.shape[1], idx] = c
-    return arr, {"mode": "cqt", "bins_per_octave": bins_per_octave, "n_bins": n_bins, "fmin": fmin}
+    return arr, {
+        "mode": "cqt",
+        "bins_per_octave": bins_per_octave,
+        "n_bins": n_bins,
+        "fmin": fmin,
+    }
 
 
 def icqt_or_istft(
@@ -760,12 +849,19 @@ def icqt_or_istft(
     return ensure_length(out, length)
 
 
-def _dispatch_time_scale(slug: str, audio: np.ndarray, sr: int, params: dict[str, Any]) -> tuple[np.ndarray, list[str], dict[str, Any]]:
+def _dispatch_time_scale(
+    slug: str, audio: np.ndarray, sr: int, params: dict[str, Any]
+) -> tuple[np.ndarray, list[str], dict[str, Any]]:
     notes: list[str] = []
     extras: dict[str, Any] = {}
     if slug == "wsola_waveform_similarity_overlap_add":
         stretch = float(params.get("stretch", 1.25))
-        out = granular_time_stretch(audio, stretch=stretch, grain=int(params.get("grain_size", 2048)), hop=int(params.get("hop", 512)))
+        out = granular_time_stretch(
+            audio,
+            stretch=stretch,
+            grain=int(params.get("grain_size", 2048)),
+            hop=int(params.get("hop", 512)),
+        )
         notes.append("Applied waveform-overlap style granular stretch.")
     elif slug == "td_psola":
         semis = float(params.get("semitones", 2.0))
@@ -776,7 +872,9 @@ def _dispatch_time_scale(slug: str, audio: np.ndarray, sr: int, params: dict[str
         semis = float(params.get("semitones", -1.0))
         x = signal.lfilter([1.0, -0.97], [1.0], audio, axis=0)
         y = pitch_shift(x, sr, semis)
-        out = signal.lfilter([1.0], [1.0, -0.97], ensure_length(y, audio.shape[0]), axis=0)
+        out = signal.lfilter(
+            [1.0], [1.0, -0.97], ensure_length(y, audio.shape[0]), axis=0
+        )
         notes.append("Applied LP pre-emphasis with PSOLA-like shift.")
     elif slug == "multi_resolution_phase_vocoder":
         s1 = time_stretch(audio, float(params.get("stretch", 1.2)), sr)
@@ -804,7 +902,11 @@ def _dispatch_time_scale(slug: str, audio: np.ndarray, sr: int, params: dict[str
                     seg = audio[beats[i] : beats[i + 1], :]
                     local = stretch * (1.0 + 0.08 * np.sin(i))
                     segments.append(time_stretch(seg, local, sr))
-                out = np.vstack(segments) if segments else time_stretch(audio, stretch, sr)
+                out = (
+                    np.vstack(segments)
+                    if segments
+                    else time_stretch(audio, stretch, sr)
+                )
                 extras["tempo_bpm"] = float(tempo)
             else:
                 out = time_stretch(audio, stretch, sr)
@@ -829,9 +931,16 @@ def _dispatch_time_scale(slug: str, audio: np.ndarray, sr: int, params: dict[str
     return normalize_peak(out), notes, extras
 
 
-def _dispatch_pitch_tracking(slug: str, audio: np.ndarray, sr: int, params: dict[str, Any]) -> tuple[np.ndarray, list[str], dict[str, Any]]:
+def _dispatch_pitch_tracking(
+    slug: str, audio: np.ndarray, sr: int, params: dict[str, Any]
+) -> tuple[np.ndarray, list[str], dict[str, Any]]:
     mono = np.mean(audio, axis=1)
-    f0 = estimate_f0_track(mono, sr, fmin=float(params.get("fmin", 50.0)), fmax=float(params.get("fmax", 1200.0)))
+    f0 = estimate_f0_track(
+        mono,
+        sr,
+        fmin=float(params.get("fmin", 50.0)),
+        fmax=float(params.get("fmax", 1200.0)),
+    )
     extras: dict[str, Any] = {
         "f0_hz_mean": float(np.mean(f0[f0 > 0])) if np.any(f0 > 0) else 0.0,
         "f0_hz_median": float(np.median(f0[f0 > 0])) if np.any(f0 > 0) else 0.0,
@@ -899,7 +1008,9 @@ def _scale_cents_from_name(name: str) -> list[float]:
     return scales.get(name, scales["chromatic"])
 
 
-def _dispatch_retune(slug: str, audio: np.ndarray, sr: int, params: dict[str, Any]) -> tuple[np.ndarray, list[str], dict[str, Any]]:
+def _dispatch_retune(
+    slug: str, audio: np.ndarray, sr: int, params: dict[str, Any]
+) -> tuple[np.ndarray, list[str], dict[str, Any]]:
     root = int(params.get("root_midi", 60))
     scale_cents = params.get("scale_cents")
     if scale_cents is None:
@@ -907,7 +1018,13 @@ def _dispatch_retune(slug: str, audio: np.ndarray, sr: int, params: dict[str, An
     else:
         scale_cents = sorted({float(v) % 1200.0 for v in scale_cents})
     mono = np.mean(audio, axis=1)
-    f0 = estimate_f0_track(mono, sr, fmin=float(params.get("fmin", 60.0)), fmax=float(params.get("fmax", 1000.0)), hop=256)
+    f0 = estimate_f0_track(
+        mono,
+        sr,
+        fmin=float(params.get("fmin", 60.0)),
+        fmax=float(params.get("fmax", 1000.0)),
+        hop=256,
+    )
     semis = np.zeros_like(f0)
     for i, hz in enumerate(f0):
         if hz <= 0:
@@ -947,7 +1064,9 @@ def _dispatch_retune(slug: str, audio: np.ndarray, sr: int, params: dict[str, An
     elif slug == "scala_mts_scale_import_and_quantization":
         notes.append("Applied arbitrary scala/MTS cents quantization map.")
     elif slug == "time_varying_cents_maps":
-        curve = np.asarray(params.get("cents_curve", [0.0, 25.0, -20.0, 10.0]), dtype=np.float64)
+        curve = np.asarray(
+            params.get("cents_curve", [0.0, 25.0, -20.0, 10.0]), dtype=np.float64
+        )
         idx = np.linspace(0, curve.size - 1, num=semis.size)
         semis = semis + np.interp(idx, np.arange(curve.size), curve) / 100.0
         notes.append("Applied time-varying cents modulation map.")
@@ -969,22 +1088,41 @@ def _dispatch_retune(slug: str, audio: np.ndarray, sr: int, params: dict[str, An
     return normalize_peak(out), notes, extras
 
 
-def _dispatch_transforms(slug: str, audio: np.ndarray, sr: int, params: dict[str, Any]) -> tuple[np.ndarray, list[str], dict[str, Any]]:
+def _dispatch_transforms(
+    slug: str, audio: np.ndarray, sr: int, params: dict[str, Any]
+) -> tuple[np.ndarray, list[str], dict[str, Any]]:
     notes: list[str] = []
     extras: dict[str, Any] = {}
-    if slug in {"constant_q_transform_cqt_processing", "variable_q_transform_vqt", "nsgt_based_processing"}:
-        bins = 24 if slug == "constant_q_transform_cqt_processing" else 36 if slug == "variable_q_transform_vqt" else 48
+    if slug in {
+        "constant_q_transform_cqt_processing",
+        "variable_q_transform_vqt",
+        "nsgt_based_processing",
+    }:
+        bins = (
+            24
+            if slug == "constant_q_transform_cqt_processing"
+            else 36
+            if slug == "variable_q_transform_vqt"
+            else 48
+        )
         spec, transform_meta = cqt_or_stft(audio, sr, bins_per_octave=bins)
         mag = np.abs(spec)
         pha = np.angle(spec)
         mag = np.power(mag + 1e-9, float(params.get("compression", 0.92)))
-        out = icqt_or_istft(mag * np.exp(1j * pha), sr, audio.shape[0], transform_meta=transform_meta)
+        out = icqt_or_istft(
+            mag * np.exp(1j * pha), sr, audio.shape[0], transform_meta=transform_meta
+        )
         notes.append("Applied CQT-like transform-domain dynamic shaping.")
         extras["bins_per_octave"] = bins
         extras["transform_mode"] = str(transform_meta.get("mode", "stft"))
     elif slug == "reassigned_spectrogram_methods":
         spec, _, _ = stft_multi(audio, n_fft=2048, hop=256)
-        out = istft_multi(spectral_sharpen(spec, power=1.22), n_fft=2048, hop=256, length=audio.shape[0])
+        out = istft_multi(
+            spectral_sharpen(spec, power=1.22),
+            n_fft=2048,
+            hop=256,
+            length=audio.shape[0],
+        )
         notes.append("Applied reassigned-spectrogram-inspired spectral sharpening.")
     elif slug == "synchrosqueezed_stft":
         spec, _, _ = stft_multi(audio, n_fft=2048, hop=256)
@@ -998,13 +1136,17 @@ def _dispatch_transforms(slug: str, audio: np.ndarray, sr: int, params: dict[str
                 hi = min(mag.shape[0], p + 3)
                 squeezed[p, t] = np.sum(mag[lo:hi, t, ch])
             mag[:, :, ch] = ndimage.gaussian_filter(squeezed, sigma=(1.5, 0.4))
-        out = istft_multi(mag * np.exp(1j * pha), n_fft=2048, hop=256, length=audio.shape[0])
+        out = istft_multi(
+            mag * np.exp(1j * pha), n_fft=2048, hop=256, length=audio.shape[0]
+        )
         notes.append("Applied synchrosqueezed-style energy concentration.")
     elif slug == "chirplet_transform_analysis":
         t = np.arange(audio.shape[0]) / float(sr)
         chirp = np.sin(2.0 * np.pi * (100.0 * t + 0.5 * 1800.0 * t * t))
         out = audio * chirp[:, None]
-        out = spectral_blur(stft_multi(out, n_fft=2048, hop=512)[0], sigma_time=0.8, sigma_freq=1.4)
+        out = spectral_blur(
+            stft_multi(out, n_fft=2048, hop=512)[0], sigma_time=0.8, sigma_freq=1.4
+        )
         out = istft_multi(out, n_fft=2048, hop=512, length=audio.shape[0])
         notes.append("Applied chirplet-style chirp demodulation and reconstruction.")
     elif slug == "wavelet_packet_processing":
@@ -1016,11 +1158,16 @@ def _dispatch_transforms(slug: str, audio: np.ndarray, sr: int, params: dict[str
             for w in widths:
                 sigma = max(1.0, float(w))
                 filtered = ndimage.gaussian_filter1d(x, sigma=sigma, mode="reflect")
-                coeffs.append(filtered - ndimage.gaussian_filter1d(x, sigma=sigma * 1.8, mode="reflect"))
+                coeffs.append(
+                    filtered
+                    - ndimage.gaussian_filter1d(x, sigma=sigma * 1.8, mode="reflect")
+                )
             coeff = np.stack(coeffs, axis=0)
             out[:, ch] = np.mean(coeff, axis=0)
         out = normalize_peak(out)
-        notes.append("Applied wavelet-packet-like multi-scale decomposition and averaging.")
+        notes.append(
+            "Applied wavelet-packet-like multi-scale decomposition and averaging."
+        )
     elif slug == "multi_window_stft_fusion":
         specs = []
         for win in ("hann", "blackman", "bartlett"):
@@ -1035,7 +1182,9 @@ def _dispatch_transforms(slug: str, audio: np.ndarray, sr: int, params: dict[str
     return normalize_peak(out), notes, extras
 
 
-def _dispatch_separation(slug: str, audio: np.ndarray, sr: int, params: dict[str, Any]) -> tuple[np.ndarray, list[str], dict[str, Any]]:
+def _dispatch_separation(
+    slug: str, audio: np.ndarray, sr: int, params: dict[str, Any]
+) -> tuple[np.ndarray, list[str], dict[str, Any]]:
     notes: list[str] = []
     extras: dict[str, Any] = {}
     if slug == "rpca_hpss":
@@ -1054,9 +1203,14 @@ def _dispatch_separation(slug: str, audio: np.ndarray, sr: int, params: dict[str
             H *= (W.T @ (mag / WH)) / (np.sum(W, axis=0)[:, None] + 1e-12)
             WH = W @ H + 1e-12
             W *= ((mag / WH) @ H.T) / (np.sum(H, axis=1)[None, :] + 1e-12)
-        recon = (W @ H)
+        recon = W @ H
         pha = np.angle(spec[:, :, 0])
-        out_mono = istft_multi((recon * np.exp(1j * pha))[:, :, None], n_fft=1024, hop=256, length=audio.shape[0])
+        out_mono = istft_multi(
+            (recon * np.exp(1j * pha))[:, :, None],
+            n_fft=1024,
+            hop=256,
+            length=audio.shape[0],
+        )
         out = np.repeat(out_mono, audio.shape[1], axis=1)
         notes.append("Applied NMF decomposition on magnitude spectrogram.")
         extras["components"] = k
@@ -1104,7 +1258,9 @@ def _dispatch_separation(slug: str, audio: np.ndarray, sr: int, params: dict[str
         mask = np.zeros_like(mag)
         mask[vocal_band, :, :] = 1.0
         mask = ndimage.gaussian_filter(mask, sigma=(2.0, 1.0, 0.0))
-        vocal = istft_multi(mask * mag * np.exp(1j * pha), n_fft=2048, hop=512, length=audio.shape[0])
+        vocal = istft_multi(
+            mask * mag * np.exp(1j * pha), n_fft=2048, hop=512, length=audio.shape[0]
+        )
         out = normalize_peak(vocal)
         notes.append("Applied U-Net-like spectral masking for vocal emphasis.")
     elif slug == "tensor_decomposition_cp_tucker":
@@ -1113,7 +1269,12 @@ def _dispatch_separation(slug: str, audio: np.ndarray, sr: int, params: dict[str
         rank = int(params.get("rank", 16))
         rank = max(2, min(rank, s.size))
         recon = (u[:, :rank] * s[:rank]) @ vh[:rank, :]
-        out_mono = istft_multi((recon * np.exp(1j * np.angle(spec[:, :, 0])))[:, :, None], n_fft=1024, hop=256, length=audio.shape[0])
+        out_mono = istft_multi(
+            (recon * np.exp(1j * np.angle(spec[:, :, 0])))[:, :, None],
+            n_fft=1024,
+            hop=256,
+            length=audio.shape[0],
+        )
         out = np.repeat(out_mono, audio.shape[1], axis=1)
         notes.append("Applied low-rank tensor-style decomposition.")
     elif slug == "probabilistic_latent_component_separation":
@@ -1123,7 +1284,9 @@ def _dispatch_separation(slug: str, audio: np.ndarray, sr: int, params: dict[str
         prior = np.mean(mag, axis=1, keepdims=True)
         post = mag / (prior + 1e-9)
         soft = post / (1.0 + post)
-        out = istft_multi(soft * mag * np.exp(1j * pha), n_fft=1024, hop=256, length=audio.shape[0])
+        out = istft_multi(
+            soft * mag * np.exp(1j * pha), n_fft=1024, hop=256, length=audio.shape[0]
+        )
         notes.append("Applied probabilistic soft-mask latent component separation.")
     else:
         out = audio.copy()
@@ -1131,7 +1294,9 @@ def _dispatch_separation(slug: str, audio: np.ndarray, sr: int, params: dict[str
     return normalize_peak(out), notes, extras
 
 
-def _dispatch_denoise(slug: str, audio: np.ndarray, sr: int, params: dict[str, Any]) -> tuple[np.ndarray, list[str], dict[str, Any]]:
+def _dispatch_denoise(
+    slug: str, audio: np.ndarray, sr: int, params: dict[str, Any]
+) -> tuple[np.ndarray, list[str], dict[str, Any]]:
     notes: list[str] = []
     if slug == "wiener_denoising":
         out = np.zeros_like(audio)
@@ -1158,7 +1323,9 @@ def _dispatch_denoise(slug: str, audio: np.ndarray, sr: int, params: dict[str, A
             out = 0.65 * out + 0.35 * spectral_gate(out, strength=1.1, floor=0.12)
         notes.append("Applied iterative diffusion-like denoise refinement.")
     elif slug == "declip_via_sparse_reconstruction":
-        out = simple_declip(audio, clip_threshold=float(params.get("clip_threshold", 0.97)))
+        out = simple_declip(
+            audio, clip_threshold=float(params.get("clip_threshold", 0.97))
+        )
         out = spectral_gate(out, strength=1.05, floor=0.1)
         notes.append("Applied clipped-sample interpolation + sparse spectral cleanup.")
     elif slug == "declick_decrackle_median_wavelet_interpolation":
@@ -1171,10 +1338,14 @@ def _dispatch_denoise(slug: str, audio: np.ndarray, sr: int, params: dict[str, A
     return normalize_peak(out), notes, {}
 
 
-def _dispatch_dereverb(slug: str, audio: np.ndarray, sr: int, params: dict[str, Any]) -> tuple[np.ndarray, list[str], dict[str, Any]]:
+def _dispatch_dereverb(
+    slug: str, audio: np.ndarray, sr: int, params: dict[str, Any]
+) -> tuple[np.ndarray, list[str], dict[str, Any]]:
     notes: list[str] = []
     if slug == "wpe_dereverberation":
-        out = dereverb_wpe_style(audio, taps=int(params.get("taps", 4)), delay=int(params.get("delay", 2)))
+        out = dereverb_wpe_style(
+            audio, taps=int(params.get("taps", 4)), delay=int(params.get("delay", 2))
+        )
         notes.append("Applied WPE-style late reflection prediction cancellation.")
     elif slug == "spectral_decay_subtraction":
         out = dereverb_decay_subtract(audio, strength=0.42, decay=0.90)
@@ -1184,10 +1355,12 @@ def _dispatch_dereverb(slug: str, audio: np.ndarray, sr: int, params: dict[str, 
             out = dereverb_decay_subtract(audio, strength=0.35, decay=0.92)
         else:
             mid = np.mean(audio[:, :2], axis=1, keepdims=True)
-            side = (audio[:, :1] - audio[:, 1:2])
+            side = audio[:, :1] - audio[:, 1:2]
             side = signal.lfilter([1.0, -0.85], [1.0], side, axis=0)
             out = np.hstack([mid + side, mid - side])
-        notes.append("Suppressed late reverb via coherence-inspired mid/side processing.")
+        notes.append(
+            "Suppressed late reverb via coherence-inspired mid/side processing."
+        )
     elif slug == "room_impulse_inverse_filtering":
         rir = np.exp(-np.linspace(0, 8, num=1024))
         rir /= np.sum(rir)
@@ -1229,7 +1402,9 @@ def _dispatch_dereverb(slug: str, audio: np.ndarray, sr: int, params: dict[str, 
     elif slug == "neural_dereverb_module":
         out = audio.copy()
         for _ in range(3):
-            out = 0.7 * out + 0.3 * dereverb_decay_subtract(out, strength=0.38, decay=0.91)
+            out = 0.7 * out + 0.3 * dereverb_decay_subtract(
+                out, strength=0.38, decay=0.91
+            )
         notes.append("Applied neural-style iterative dereverb refinement module.")
     else:
         out = audio.copy()
@@ -1259,7 +1434,9 @@ def _lufs_estimate(audio: np.ndarray, sr: int) -> float:
     return float(20.0 * np.log10(rms + 1e-12))
 
 
-def _dispatch_dynamics(slug: str, audio: np.ndarray, sr: int, params: dict[str, Any]) -> tuple[np.ndarray, list[str], dict[str, Any]]:
+def _dispatch_dynamics(
+    slug: str, audio: np.ndarray, sr: int, params: dict[str, Any]
+) -> tuple[np.ndarray, list[str], dict[str, Any]]:
     notes: list[str] = []
     extras: dict[str, Any] = {}
     if slug == "ebu_r128_normalization":
@@ -1280,13 +1457,25 @@ def _dispatch_dynamics(slug: str, audio: np.ndarray, sr: int, params: dict[str, 
         out = multiband_compression(audio, sr)
         notes.append("Applied three-band dynamic range compression.")
     elif slug == "upward_compression":
-        out = upward_compressor(audio, threshold_db=float(params.get("threshold_db", -34.0)), ratio=float(params.get("ratio", 2.0)))
+        out = upward_compressor(
+            audio,
+            threshold_db=float(params.get("threshold_db", -34.0)),
+            ratio=float(params.get("ratio", 2.0)),
+        )
         notes.append("Applied upward compression to low-level detail.")
     elif slug == "transient_shaping":
-        out = transient_shaper(audio, attack_boost=float(params.get("attack_boost", 1.4)), sustain=float(params.get("sustain", 0.9)))
+        out = transient_shaper(
+            audio,
+            attack_boost=float(params.get("attack_boost", 1.4)),
+            sustain=float(params.get("sustain", 0.9)),
+        )
         notes.append("Applied transient shaping envelope transfer.")
     elif slug == "spectral_dynamics_bin_wise_compressor_expander":
-        out = spectral_dynamics(audio, threshold_db=float(params.get("threshold_db", -24.0)), ratio=float(params.get("ratio", 2.3)))
+        out = spectral_dynamics(
+            audio,
+            threshold_db=float(params.get("threshold_db", -24.0)),
+            ratio=float(params.get("ratio", 2.3)),
+        )
         notes.append("Applied bin-wise spectral compression/expansion.")
     elif slug == "true_peak_limiting":
         out = true_peak_limit(audio, threshold=float(params.get("threshold", 0.95)))
@@ -1299,7 +1488,9 @@ def _dispatch_dynamics(slug: str, audio: np.ndarray, sr: int, params: dict[str, 
         current = _lufs_estimate(out, sr)
         out *= 10.0 ** ((target - current) / 20.0)
         out = true_peak_limit(out, threshold=0.92)
-        notes.append("Applied LUFS-target mastering chain (compress->shape->limit->normalize).")
+        notes.append(
+            "Applied LUFS-target mastering chain (compress->shape->limit->normalize)."
+        )
         extras["target_lufs"] = target
         extras["post_lufs"] = _lufs_estimate(out, sr)
     else:
@@ -1308,7 +1499,9 @@ def _dispatch_dynamics(slug: str, audio: np.ndarray, sr: int, params: dict[str, 
     return normalize_peak(out), notes, extras
 
 
-def _dispatch_creative(slug: str, audio: np.ndarray, sr: int, params: dict[str, Any]) -> tuple[np.ndarray, list[str], dict[str, Any]]:
+def _dispatch_creative(
+    slug: str, audio: np.ndarray, sr: int, params: dict[str, Any]
+) -> tuple[np.ndarray, list[str], dict[str, Any]]:
     notes: list[str] = []
     if slug == "cross_synthesis_vocoder":
         out = cross_synthesis(audio)
@@ -1321,7 +1514,12 @@ def _dispatch_creative(slug: str, audio: np.ndarray, sr: int, params: dict[str, 
         notes.append("Applied spectral freeze bank texture rendering.")
     elif slug == "spectral_blur_smear":
         spec, _, _ = stft_multi(audio, n_fft=2048, hop=512)
-        out = istft_multi(spectral_blur(spec, sigma_time=1.7, sigma_freq=1.0), n_fft=2048, hop=512, length=audio.shape[0])
+        out = istft_multi(
+            spectral_blur(spec, sigma_time=1.7, sigma_freq=1.0),
+            n_fft=2048,
+            hop=512,
+            length=audio.shape[0],
+        )
         notes.append("Applied spectral blur/smear smoothing.")
     elif slug == "phase_randomization_textures":
         out = phase_randomize(audio, strength=float(params.get("strength", 1.0)))
@@ -1333,7 +1531,9 @@ def _dispatch_creative(slug: str, audio: np.ndarray, sr: int, params: dict[str, 
         out = resonator_bank(audio, sr)
         notes.append("Applied resonator filterbank morphing.")
     elif slug == "spectral_contrast_exaggeration":
-        out = spectral_contrast_exaggerate(audio, amount=float(params.get("amount", 1.4)))
+        out = spectral_contrast_exaggerate(
+            audio, amount=float(params.get("amount", 1.4))
+        )
         notes.append("Applied spectral contrast exaggeration.")
     else:
         out = audio.copy()
@@ -1341,10 +1541,17 @@ def _dispatch_creative(slug: str, audio: np.ndarray, sr: int, params: dict[str, 
     return normalize_peak(out), notes, {}
 
 
-def _dispatch_granular(slug: str, audio: np.ndarray, sr: int, params: dict[str, Any]) -> tuple[np.ndarray, list[str], dict[str, Any]]:
+def _dispatch_granular(
+    slug: str, audio: np.ndarray, sr: int, params: dict[str, Any]
+) -> tuple[np.ndarray, list[str], dict[str, Any]]:
     notes: list[str] = []
     if slug == "granular_time_stretch_engine":
-        out = granular_time_stretch(audio, stretch=float(params.get("stretch", 1.3)), grain=int(params.get("grain", 2048)), hop=int(params.get("hop", 512)))
+        out = granular_time_stretch(
+            audio,
+            stretch=float(params.get("stretch", 1.3)),
+            grain=int(params.get("grain", 2048)),
+            hop=int(params.get("hop", 512)),
+        )
         notes.append("Applied granular overlap-add time stretch engine.")
     elif slug == "grain_cloud_pitch_textures":
         rng = np.random.default_rng(int(params.get("seed", 1307)))
@@ -1374,12 +1581,19 @@ def _dispatch_granular(slug: str, audio: np.ndarray, sr: int, params: dict[str, 
             if n <= 0:
                 break
             alpha = pos / max(1, out.shape[0] - n)
-            chunk = (1.0 - alpha) * ensure_length(audio[pos : pos + grain, :], grain) + alpha * g
+            chunk = (1.0 - alpha) * ensure_length(
+                audio[pos : pos + grain, :], grain
+            ) + alpha * g
             out[pos : pos + n, :] += (chunk * win)[:n, :]
         out = normalize_peak(out)
         notes.append("Applied freeze-grain morphing between source and frozen grain.")
     elif slug == "am_fm_ring_modulation_blocks":
-        out = ring_mod(audio, sr, freq_hz=float(params.get("freq_hz", 42.0)), fm_depth=float(params.get("fm_depth", 2.5)))
+        out = ring_mod(
+            audio,
+            sr,
+            freq_hz=float(params.get("freq_hz", 42.0)),
+            fm_depth=float(params.get("fm_depth", 2.5)),
+        )
         notes.append("Applied AM/FM/ring modulation block.")
     elif slug == "spectral_tremolo":
         out = spectral_tremolo(audio, sr, lfo_hz=float(params.get("lfo_hz", 4.0)))
@@ -1391,7 +1605,12 @@ def _dispatch_granular(slug: str, audio: np.ndarray, sr: int, params: dict[str, 
         out = base * lfo[:, None]
         notes.append("Applied formant LFO modulation.")
     elif slug == "rhythmic_gate_stutter_quantizer":
-        out = rhythmic_gate(audio, sr, rate_hz=float(params.get("rate_hz", 7.0)), duty=float(params.get("duty", 0.28)))
+        out = rhythmic_gate(
+            audio,
+            sr,
+            rate_hz=float(params.get("rate_hz", 7.0)),
+            duty=float(params.get("duty", 0.28)),
+        )
         notes.append("Applied rhythmic gate/stutter quantization.")
     elif slug == "envelope_followed_modulation_routing":
         out = envelope_modulation(audio, sr, depth=float(params.get("depth", 0.75)))
@@ -1402,7 +1621,9 @@ def _dispatch_granular(slug: str, audio: np.ndarray, sr: int, params: dict[str, 
     return normalize_peak(out), notes, {}
 
 
-def _dispatch_analysis(slug: str, audio: np.ndarray, sr: int, params: dict[str, Any]) -> tuple[np.ndarray, list[str], dict[str, Any]]:
+def _dispatch_analysis(
+    slug: str, audio: np.ndarray, sr: int, params: dict[str, Any]
+) -> tuple[np.ndarray, list[str], dict[str, Any]]:
     mono = np.mean(audio, axis=1)
     notes: list[str] = []
     extras: dict[str, Any] = {}
@@ -1428,7 +1649,9 @@ def _dispatch_analysis(slug: str, audio: np.ndarray, sr: int, params: dict[str, 
             extras["estimated_key"] = key
             extras["confidence"] = conf
             chord_root = int(np.argmax(np.mean(chroma, axis=1)))
-            extras["estimated_chord"] = f"{['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'][chord_root]}maj"
+            extras["estimated_chord"] = (
+                f"{['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'][chord_root]}maj"
+            )
         else:
             extras["estimated_key"] = "C"
             extras["confidence"] = 0.0
@@ -1442,12 +1665,17 @@ def _dispatch_analysis(slug: str, audio: np.ndarray, sr: int, params: dict[str, 
             env.append(float(np.sqrt(np.mean(mono[s : s + frame] ** 2))))
         env_arr = np.asarray(env, dtype=np.float64)
         novelty = np.abs(np.diff(env_arr, prepend=env_arr[0]))
-        cuts, _ = signal.find_peaks(novelty, distance=8, prominence=np.mean(novelty) + np.std(novelty))
+        cuts, _ = signal.find_peaks(
+            novelty, distance=8, prominence=np.mean(novelty) + np.std(novelty)
+        )
         extras["section_boundaries_frames"] = cuts.tolist()
         notes.append("Computed structure segmentation boundaries from novelty curve.")
     elif slug == "silence_speech_music_classifiers":
         zcr = np.mean(np.abs(np.diff(np.sign(mono))))
-        flat = float(np.exp(np.mean(np.log(np.abs(np.fft.rfft(mono)) + 1e-12))) / (np.mean(np.abs(np.fft.rfft(mono))) + 1e-12))
+        flat = float(
+            np.exp(np.mean(np.log(np.abs(np.fft.rfft(mono)) + 1e-12)))
+            / (np.mean(np.abs(np.fft.rfft(mono))) + 1e-12)
+        )
         label = "music"
         if np.max(np.abs(mono)) < 0.02:
             label = "silence"
@@ -1461,14 +1689,35 @@ def _dispatch_analysis(slug: str, audio: np.ndarray, sr: int, params: dict[str, 
         freqs = np.fft.rfftfreq(mono.size, d=1.0 / sr)
         hum_bins = (np.abs(freqs - 50.0) < 2.0) | (np.abs(freqs - 60.0) < 2.0)
         hum = float(np.sum(spec[hum_bins]) / (np.sum(spec) + 1e-12))
-        extras.update({"clip_ratio": clipped, "hum_ratio": hum, "buzz_score": float(clipped * 0.6 + hum * 0.4)})
+        extras.update(
+            {
+                "clip_ratio": clipped,
+                "hum_ratio": hum,
+                "buzz_score": float(clipped * 0.6 + hum * 0.4),
+            }
+        )
         notes.append("Detected clipping/hum/buzz artifact indicators.")
     elif slug == "pesq_stoi_visqol_quality_metrics":
         spec = np.abs(np.fft.rfft(mono))
-        centroid = float(np.sum(np.fft.rfftfreq(mono.size, 1.0 / sr) * spec) / (np.sum(spec) + 1e-12))
-        snr_proxy = float(20.0 * np.log10(np.sqrt(np.mean(mono * mono) + 1e-12) / (np.std(np.diff(mono)) + 1e-12)))
-        extras.update({"pesq_proxy": max(1.0, min(4.5, 1.0 + 0.03 * snr_proxy)), "stoi_proxy": max(0.0, min(1.0, 0.5 + 0.004 * snr_proxy)), "visqol_proxy": max(1.0, min(5.0, 2.0 + 0.0004 * centroid))})
-        notes.append("Computed PESQ/STOI/VISQOL proxy metrics from spectral statistics.")
+        centroid = float(
+            np.sum(np.fft.rfftfreq(mono.size, 1.0 / sr) * spec) / (np.sum(spec) + 1e-12)
+        )
+        snr_proxy = float(
+            20.0
+            * np.log10(
+                np.sqrt(np.mean(mono * mono) + 1e-12) / (np.std(np.diff(mono)) + 1e-12)
+            )
+        )
+        extras.update(
+            {
+                "pesq_proxy": max(1.0, min(4.5, 1.0 + 0.03 * snr_proxy)),
+                "stoi_proxy": max(0.0, min(1.0, 0.5 + 0.004 * snr_proxy)),
+                "visqol_proxy": max(1.0, min(5.0, 2.0 + 0.0004 * centroid)),
+            }
+        )
+        notes.append(
+            "Computed PESQ/STOI/VISQOL proxy metrics from spectral statistics."
+        )
     elif slug == "auto_parameter_tuning_bayesian_optimization":
         candidates = np.linspace(0.1, 1.0, num=10)
         target_centroid = float(params.get("target_centroid", 1800.0))
@@ -1488,7 +1737,10 @@ def _dispatch_analysis(slug: str, audio: np.ndarray, sr: int, params: dict[str, 
     elif slug == "batch_preset_recommendation_based_on_source_features":
         rms = float(np.sqrt(np.mean(mono * mono)))
         crest = float(np.max(np.abs(mono)) / (rms + 1e-12))
-        flat = float(np.exp(np.mean(np.log(np.abs(np.fft.rfft(mono)) + 1e-12))) / (np.mean(np.abs(np.fft.rfft(mono))) + 1e-12))
+        flat = float(
+            np.exp(np.mean(np.log(np.abs(np.fft.rfft(mono)) + 1e-12)))
+            / (np.mean(np.abs(np.fft.rfft(mono))) + 1e-12)
+        )
         preset = "balanced"
         if crest > 5.0:
             preset = "transient_focus"
@@ -1496,7 +1748,14 @@ def _dispatch_analysis(slug: str, audio: np.ndarray, sr: int, params: dict[str, 
             preset = "denoise_focus"
         elif rms < 0.05:
             preset = "upward_compress"
-        extras.update({"recommended_preset": preset, "rms": rms, "crest_factor": crest, "spectral_flatness": flat})
+        extras.update(
+            {
+                "recommended_preset": preset,
+                "rms": rms,
+                "crest_factor": crest,
+                "spectral_flatness": flat,
+            }
+        )
         notes.append("Recommended batch preset from extracted source features.")
     else:
         notes.append("Analysis fallback metadata only.")
@@ -1533,7 +1792,9 @@ def _spatial_apply_delays(audio: np.ndarray, delays: list[float]) -> np.ndarray:
     return out
 
 
-def _spatial_circular_gains(num_channels: int, azimuth_deg: float, width: float = 1.0, rolloff: float = 2.0) -> np.ndarray:
+def _spatial_circular_gains(
+    num_channels: int, azimuth_deg: float, width: float = 1.0, rolloff: float = 2.0
+) -> np.ndarray:
     num_channels = max(1, int(num_channels))
     angles = np.linspace(-180.0, 180.0, num=num_channels, endpoint=False)
     delta = np.abs(((angles - azimuth_deg + 180.0) % 360.0) - 180.0)
@@ -1561,7 +1822,9 @@ def _spatial_delay_by_xcorr(x: np.ndarray, y: np.ndarray, max_lag: int) -> float
     return float(lag)
 
 
-def _spatial_estimate_channel_delays(audio: np.ndarray, max_lag: int = 128) -> list[float]:
+def _spatial_estimate_channel_delays(
+    audio: np.ndarray, max_lag: int = 128
+) -> list[float]:
     delays = [0.0]
     if audio.shape[1] < 2:
         return delays
@@ -1571,7 +1834,9 @@ def _spatial_estimate_channel_delays(audio: np.ndarray, max_lag: int = 128) -> l
     return delays
 
 
-def _spatial_synthetic_rir(length: int, decay_s: float, sr: int, seed: int, channel_index: int) -> np.ndarray:
+def _spatial_synthetic_rir(
+    length: int, decay_s: float, sr: int, seed: int, channel_index: int
+) -> np.ndarray:
     length = max(16, int(length))
     rng = np.random.default_rng(int(seed) + int(channel_index) * 37)
     t = np.arange(length, dtype=np.float64) / float(sr)
@@ -1584,7 +1849,9 @@ def _spatial_synthetic_rir(length: int, decay_s: float, sr: int, seed: int, chan
     return rir
 
 
-def _dispatch_spatial(slug: str, audio: np.ndarray, sr: int, params: dict[str, Any]) -> tuple[np.ndarray, list[str], dict[str, Any]]:
+def _dispatch_spatial(
+    slug: str, audio: np.ndarray, sr: int, params: dict[str, Any]
+) -> tuple[np.ndarray, list[str], dict[str, Any]]:
     notes: list[str] = []
     extras: dict[str, Any] = {}
     work = audio
@@ -1640,7 +1907,9 @@ def _dispatch_spatial(slug: str, audio: np.ndarray, sr: int, params: dict[str, A
         left = stereo[:, 0] - cancellation * _spatial_fractional_delay(stereo[:, 1], d)
         right = stereo[:, 1] - cancellation * _spatial_fractional_delay(stereo[:, 0], d)
         out = np.stack([left, right], axis=1)
-        notes.append("Applied transaural crosstalk cancellation matrix with delayed crossfeed.")
+        notes.append(
+            "Applied transaural crosstalk cancellation matrix with delayed crossfeed."
+        )
 
     elif slug == "stereo_width_frequency_dependent_control":
         width_low = float(params.get("width_low", 0.8))
@@ -1649,12 +1918,16 @@ def _dispatch_spatial(slug: str, audio: np.ndarray, sr: int, params: dict[str, A
         stereo = _spatial_to_channels(work, 2)
         mid = 0.5 * (stereo[:, 0] + stereo[:, 1])
         side = 0.5 * (stereo[:, 0] - stereo[:, 1])
-        b, a = signal.butter(2, min(0.98, max(0.001, crossover_hz / (0.5 * sr))), btype="low")
+        b, a = signal.butter(
+            2, min(0.98, max(0.001, crossover_hz / (0.5 * sr))), btype="low"
+        )
         side_low = signal.lfilter(b, a, side)
         side_high = side - side_low
         side2 = width_low * side_low + width_high * side_high
         out = np.stack([mid + side2, mid - side2], axis=1)
-        notes.append("Applied frequency-dependent stereo width control in mid/side domain.")
+        notes.append(
+            "Applied frequency-dependent stereo width control in mid/side domain."
+        )
 
     elif slug == "phase_aligned_mid_side_field_rotation":
         rotation_deg = float(params.get("rotation_deg", 20.0))
@@ -1675,8 +1948,12 @@ def _dispatch_spatial(slug: str, audio: np.ndarray, sr: int, params: dict[str, A
         ref = pha[:, :, 0]
         for ch in range(1, pha.shape[2]):
             pha[:, :, ch] = (1.0 - lock_strength) * pha[:, :, ch] + lock_strength * ref
-        out = istft_multi(mag * np.exp(1j * pha), n_fft=2048, hop=512, length=work.shape[0])
-        notes.append("Locked interchannel phase to a reference channel in the phase-vocoder domain.")
+        out = istft_multi(
+            mag * np.exp(1j * pha), n_fft=2048, hop=512, length=work.shape[0]
+        )
+        notes.append(
+            "Locked interchannel phase to a reference channel in the phase-vocoder domain."
+        )
 
     elif slug == "pvx_spatial_transient_preservation":
         transient_threshold = float(params.get("transient_threshold", 1.6))
@@ -1693,11 +1970,21 @@ def _dispatch_spatial(slug: str, audio: np.ndarray, sr: int, params: dict[str, A
         for ch in range(pha.shape[2]):
             for t in range(1, pha.shape[1]):
                 if transient[t]:
-                    pha2[:, t, ch] = preserve_amount * pha[:, t, ch] + (1.0 - preserve_amount) * pha2[:, t - 1, ch]
+                    pha2[:, t, ch] = (
+                        preserve_amount * pha[:, t, ch]
+                        + (1.0 - preserve_amount) * pha2[:, t - 1, ch]
+                    )
                 else:
-                    pha2[:, t, ch] = phase_smooth * pha2[:, t - 1, ch] + (1.0 - phase_smooth) * pha[:, t, ch]
-        out = istft_multi(mag * np.exp(1j * pha2), n_fft=2048, hop=512, length=work.shape[0])
-        notes.append("Preserved transients while smoothing inter-frame spatial phase trajectories.")
+                    pha2[:, t, ch] = (
+                        phase_smooth * pha2[:, t - 1, ch]
+                        + (1.0 - phase_smooth) * pha[:, t, ch]
+                    )
+        out = istft_multi(
+            mag * np.exp(1j * pha2), n_fft=2048, hop=512, length=work.shape[0]
+        )
+        notes.append(
+            "Preserved transients while smoothing inter-frame spatial phase trajectories."
+        )
 
     elif slug == "pvx_interaural_coherence_shaping":
         coherence_target = float(params.get("coherence_target", 0.75))
@@ -1709,11 +1996,18 @@ def _dispatch_spatial(slug: str, audio: np.ndarray, sr: int, params: dict[str, A
         side = (left - right) / np.sqrt(2.0)
         rng = np.random.default_rng(1307)
         rand_phase = np.exp(1j * rng.uniform(-np.pi, np.pi, size=side.shape))
-        side2 = coherence_target * side + (1.0 - coherence_target) * np.abs(side) * rand_phase
+        side2 = (
+            coherence_target * side
+            + (1.0 - coherence_target) * np.abs(side) * rand_phase
+        )
         left2 = (mid + side2) / np.sqrt(2.0)
         right2 = (mid - side2) / np.sqrt(2.0)
-        out = istft_multi(np.stack([left2, right2], axis=2), n_fft=2048, hop=512, length=work.shape[0])
-        notes.append("Shaped interaural coherence by controlled side-channel decorrelation.")
+        out = istft_multi(
+            np.stack([left2, right2], axis=2), n_fft=2048, hop=512, length=work.shape[0]
+        )
+        notes.append(
+            "Shaped interaural coherence by controlled side-channel decorrelation."
+        )
 
     elif slug == "pvx_directional_spectral_warp":
         warp_amount = float(params.get("warp_amount", 0.16))
@@ -1726,13 +2020,25 @@ def _dispatch_spatial(slug: str, audio: np.ndarray, sr: int, params: dict[str, A
         az = np.deg2rad(azimuth_deg)
         mag2 = np.zeros_like(mag)
         for ch in range(mag.shape[2]):
-            shift = warp_amount * pos[ch] * (bins / max(1.0, bins[-1])) * mag.shape[0] * 0.35
+            shift = (
+                warp_amount
+                * pos[ch]
+                * (bins / max(1.0, bins[-1]))
+                * mag.shape[0]
+                * 0.35
+            )
             src = np.clip(bins - shift, 0.0, bins[-1])
             for t in range(mag.shape[1]):
                 mag2[:, t, ch] = np.interp(src, bins, mag[:, t, ch])
-            pha[:, :, ch] = pha[:, :, ch] + az * pos[ch] * (bins[:, None] / max(1.0, bins[-1]))
-        out = istft_multi(mag2 * np.exp(1j * pha), n_fft=2048, hop=512, length=work.shape[0])
-        notes.append("Applied directional spectral warp with channel-dependent phase skew.")
+            pha[:, :, ch] = pha[:, :, ch] + az * pos[ch] * (
+                bins[:, None] / max(1.0, bins[-1])
+            )
+        out = istft_multi(
+            mag2 * np.exp(1j * pha), n_fft=2048, hop=512, length=work.shape[0]
+        )
+        notes.append(
+            "Applied directional spectral warp with channel-dependent phase skew."
+        )
 
     elif slug == "pvx_multichannel_time_alignment":
         max_lag = int(params.get("max_lag", max(8, int(0.002 * sr))))
@@ -1743,13 +2049,19 @@ def _dispatch_spatial(slug: str, audio: np.ndarray, sr: int, params: dict[str, A
             delays = _spatial_estimate_channel_delays(work, max_lag=max_lag)
             out = _spatial_apply_delays(work, delays)
         extras["estimated_delays_samples"] = delays
-        notes.append("Aligned channels by phase-weighted cross-correlation delay estimation and fractional delay compensation.")
+        notes.append(
+            "Aligned channels by phase-weighted cross-correlation delay estimation and fractional delay compensation."
+        )
 
     elif slug == "pvx_spatial_freeze_and_trajectory":
         frame_ratio = float(params.get("frame_ratio", 0.35))
         orbit_hz = float(params.get("orbit_hz", 0.12))
         spec, _, _ = stft_multi(work, n_fft=2048, hop=512)
-        idx = int(np.clip(round(frame_ratio * (spec.shape[1] - 1)), 0, max(0, spec.shape[1] - 1)))
+        idx = int(
+            np.clip(
+                round(frame_ratio * (spec.shape[1] - 1)), 0, max(0, spec.shape[1] - 1)
+            )
+        )
         frozen = spec[:, idx, :]
         mag = np.abs(frozen)
         base_phase = np.angle(frozen)
@@ -1761,16 +2073,22 @@ def _dispatch_spatial(slug: str, audio: np.ndarray, sr: int, params: dict[str, A
                 phase = base_phase[:, ch] + theta * (1.0 + 0.15 * ch)
                 out_spec[:, t, ch] = mag[:, ch] * np.exp(1j * phase)
         out = istft_multi(out_spec, n_fft=2048, hop=512, length=work.shape[0])
-        notes.append("Froze spatial spectrum and animated channel trajectories with phase orbits.")
+        notes.append(
+            "Froze spatial spectrum and animated channel trajectories with phase orbits."
+        )
 
     elif slug == "multichannel_wiener_postfilter":
         noise_floor = float(params.get("noise_floor", 0.15))
         spec, _, _ = stft_multi(work, n_fft=2048, hop=512)
         mag = np.abs(spec)
         noise = np.percentile(mag, 20, axis=1, keepdims=True)
-        gain = mag * mag / (mag * mag + np.power(noise * (1.0 + noise_floor), 2.0) + 1e-12)
+        gain = (
+            mag * mag / (mag * mag + np.power(noise * (1.0 + noise_floor), 2.0) + 1e-12)
+        )
         out = istft_multi(spec * gain, n_fft=2048, hop=512, length=work.shape[0])
-        notes.append("Applied multichannel Wiener postfilter using percentile noise estimate.")
+        notes.append(
+            "Applied multichannel Wiener postfilter using percentile noise estimate."
+        )
 
     elif slug == "coherence_based_dereverb_multichannel":
         coherence_threshold = float(params.get("coherence_threshold", 0.5))
@@ -1780,16 +2098,26 @@ def _dispatch_spatial(slug: str, audio: np.ndarray, sr: int, params: dict[str, A
         ref = spec[:, :, 0]
         coh = np.ones((spec.shape[0], spec.shape[1]), dtype=np.float64)
         for ch in range(1, spec.shape[2]):
-            coh += np.abs(ref * np.conj(spec[:, :, ch])) / (np.abs(ref) * np.abs(spec[:, :, ch]) + 1e-12)
+            coh += np.abs(ref * np.conj(spec[:, :, ch])) / (
+                np.abs(ref) * np.abs(spec[:, :, ch]) + 1e-12
+            )
         coh /= float(spec.shape[2])
         tail = np.zeros((mag.shape[0], mag.shape[2]), dtype=np.float64)
         mask = np.zeros_like(mag)
         for t in range(mag.shape[1]):
             tail = np.maximum(decay * tail, mag[:, t, :])
-            base = np.clip((coh[:, t] - coherence_threshold) / (1.0 - coherence_threshold + 1e-9), 0.15, 1.0)
-            mask[:, t, :] = base[:, None] * np.clip(mag[:, t, :] / (mag[:, t, :] + 0.5 * tail + 1e-9), 0.1, 1.0)
+            base = np.clip(
+                (coh[:, t] - coherence_threshold) / (1.0 - coherence_threshold + 1e-9),
+                0.15,
+                1.0,
+            )
+            mask[:, t, :] = base[:, None] * np.clip(
+                mag[:, t, :] / (mag[:, t, :] + 0.5 * tail + 1e-9), 0.1, 1.0
+            )
         out = istft_multi(spec * mask, n_fft=2048, hop=512, length=work.shape[0])
-        notes.append("Applied coherence-guided late-reverb suppression for multichannel material.")
+        notes.append(
+            "Applied coherence-guided late-reverb suppression for multichannel material."
+        )
 
     elif slug == "multichannel_noise_psd_tracking":
         alpha = float(params.get("alpha", 1.0))
@@ -1799,9 +2127,13 @@ def _dispatch_spatial(slug: str, audio: np.ndarray, sr: int, params: dict[str, A
         noise = np.minimum.accumulate(power, axis=1)
         noise = ndimage.minimum_filter1d(noise, size=11, axis=1)
         gain = np.clip((power - alpha * noise) / (power + 1e-12), floor, 1.0)
-        out = istft_multi(spec * np.sqrt(gain), n_fft=2048, hop=512, length=work.shape[0])
+        out = istft_multi(
+            spec * np.sqrt(gain), n_fft=2048, hop=512, length=work.shape[0]
+        )
         extras["mean_noise_power"] = float(np.mean(noise))
-        notes.append("Tracked multichannel noise PSD and applied adaptive subtraction mask.")
+        notes.append(
+            "Tracked multichannel noise PSD and applied adaptive subtraction mask."
+        )
 
     elif slug == "phase_consistent_multichannel_denoise":
         reduction_db = float(params.get("reduction_db", 10.0))
@@ -1810,7 +2142,11 @@ def _dispatch_spatial(slug: str, audio: np.ndarray, sr: int, params: dict[str, A
         mag = np.abs(spec)
         shared = np.mean(mag, axis=2, keepdims=True)
         noise = np.percentile(shared, 15, axis=1, keepdims=True)
-        gain = np.clip((shared - noise * (10.0 ** (reduction_db / 20.0))) / (shared + 1e-12), floor, 1.0)
+        gain = np.clip(
+            (shared - noise * (10.0 ** (reduction_db / 20.0))) / (shared + 1e-12),
+            floor,
+            1.0,
+        )
         out = istft_multi(spec * gain, n_fft=2048, hop=512, length=work.shape[0])
         notes.append("Applied phase-consistent denoise mask shared across channels.")
 
@@ -1847,7 +2183,9 @@ def _dispatch_spatial(slug: str, audio: np.ndarray, sr: int, params: dict[str, A
             out = work.copy()
         extras["estimated_gain_db"] = (20.0 * np.log10(gains + 1e-12)).tolist()
         extras["estimated_delay_samples"] = delays.tolist()
-        notes.append("Estimated microphone gain/delay mismatches from calibration tones.")
+        notes.append(
+            "Estimated microphone gain/delay mismatches from calibration tones."
+        )
 
     elif slug == "cross_channel_click_pop_repair":
         spike_threshold = float(params.get("spike_threshold", 6.0))
@@ -1862,7 +2200,9 @@ def _dispatch_spatial(slug: str, audio: np.ndarray, sr: int, params: dict[str, A
                 hi = min(out.shape[0], idx + 2)
                 out[idx, ch] = float(np.median(out[lo:hi, :]))
             out[:, ch] = signal.medfilt(out[:, ch], kernel_size=3)
-        notes.append("Repaired click/pop outliers using cross-channel robust interpolation.")
+        notes.append(
+            "Repaired click/pop outliers using cross-channel robust interpolation."
+        )
 
     elif slug == "rotating_speaker_doppler_field":
         output_channels = int(params.get("output_channels", max(2, work.shape[1])))
@@ -1902,10 +2242,16 @@ def _dispatch_spatial(slug: str, audio: np.ndarray, sr: int, params: dict[str, A
         g_r = np.sin(pan * np.pi * 0.5)
         itd = itd_ms * 1e-3 * sr * np.sin(np.deg2rad(az))
         idx = np.arange(work.shape[0], dtype=np.float64)
-        left = np.interp(idx - np.maximum(itd, 0.0), idx, mono, left=mono[0], right=mono[-1])
-        right = np.interp(idx + np.minimum(itd, 0.0), idx, mono, left=mono[0], right=mono[-1])
+        left = np.interp(
+            idx - np.maximum(itd, 0.0), idx, mono, left=mono[0], right=mono[-1]
+        )
+        right = np.interp(
+            idx + np.minimum(itd, 0.0), idx, mono, left=mono[0], right=mono[-1]
+        )
         out = np.stack([left * g_l, right * g_r], axis=1)
-        notes.append("Designed dynamic binaural motion trajectory with time-varying pan and ITD.")
+        notes.append(
+            "Designed dynamic binaural motion trajectory with time-varying pan and ITD."
+        )
 
     elif slug == "stochastic_spatial_diffusion_cloud":
         output_channels = int(params.get("output_channels", 6))
@@ -1923,12 +2269,16 @@ def _dispatch_spatial(slug: str, audio: np.ndarray, sr: int, params: dict[str, A
             y = signal.lfilter([a, 1.0], [1.0, a], y)
             y = signal.lfilter([1.0, -0.4 * a], [1.0], y)
             out[:, ch] = y * rng.uniform(0.6, 1.0)
-        notes.append("Generated stochastic spatial diffusion cloud with decorrelated delay/all-pass taps.")
+        notes.append(
+            "Generated stochastic spatial diffusion cloud with decorrelated delay/all-pass taps."
+        )
 
     elif slug == "decorrelated_reverb_upmix":
         output_channels = int(params.get("output_channels", 6))
         decay_s = float(params.get("decay_s", 1.2))
-        rir_length = int(params.get("rir_length", max(256, int(sr * min(3.0, decay_s * 2.0)))))
+        rir_length = int(
+            params.get("rir_length", max(256, int(sr * min(3.0, decay_s * 2.0))))
+        )
         mix = float(params.get("mix", 0.45))
         seed = int(params.get("seed", 1307))
         mono = np.mean(work, axis=1)
@@ -1936,7 +2286,11 @@ def _dispatch_spatial(slug: str, audio: np.ndarray, sr: int, params: dict[str, A
         for ch in range(output_channels):
             rir = _spatial_synthetic_rir(rir_length, decay_s, sr, seed + 911, ch)
             wet = signal.fftconvolve(mono, rir, mode="full")[: work.shape[0]]
-            dry = mono if ch % 2 == 0 else _spatial_fractional_delay(mono, float((ch + 1) * 2.0))
+            dry = (
+                mono
+                if ch % 2 == 0
+                else _spatial_fractional_delay(mono, float((ch + 1) * 2.0))
+            )
             out[:, ch] = (1.0 - mix) * dry + mix * wet
         notes.append("Upmixed source with decorrelated synthetic reverb field.")
 
@@ -1950,14 +2304,23 @@ def _dispatch_spatial(slug: str, audio: np.ndarray, sr: int, params: dict[str, A
         mono = np.mean(work, axis=1)[:, None]
         out = np.zeros((work.shape[0], output_channels), dtype=np.float64)
         for ch in range(output_channels):
-            stretch = float(np.clip(1.0 + rng.normal(0.0, 0.18 * max(0.1, density)), 0.5, 2.0))
-            g = granular_time_stretch(mono, stretch=stretch, grain=grain, hop=max(64, grain // 4))
+            stretch = float(
+                np.clip(1.0 + rng.normal(0.0, 0.18 * max(0.1, density)), 0.5, 2.0)
+            )
+            g = granular_time_stretch(
+                mono, stretch=stretch, grain=grain, hop=max(64, grain // 4)
+            )
             semi = float(rng.normal(0.0, spread_semitones))
             g = pitch_shift(g, sr, semi)
             g = ensure_length(g, work.shape[0])[:, 0]
-            lfo = 0.7 + 0.3 * np.sin(2.0 * np.pi * (0.07 * (ch + 1)) * np.arange(work.shape[0]) / float(sr) + rng.uniform(0.0, 2.0 * np.pi))
+            lfo = 0.7 + 0.3 * np.sin(
+                2.0 * np.pi * (0.07 * (ch + 1)) * np.arange(work.shape[0]) / float(sr)
+                + rng.uniform(0.0, 2.0 * np.pi)
+            )
             out[:, ch] = g * lfo
-        notes.append("Rendered spectral-spatial granulator with per-channel stochastic pitch/grain trajectories.")
+        notes.append(
+            "Rendered spectral-spatial granulator with per-channel stochastic pitch/grain trajectories."
+        )
 
     elif slug == "spatial_freeze_resynthesis":
         output_channels = int(params.get("output_channels", work.shape[1]))
@@ -1965,7 +2328,11 @@ def _dispatch_spatial(slug: str, audio: np.ndarray, sr: int, params: dict[str, A
         phase_drift = float(params.get("phase_drift", 0.03))
         src = _spatial_to_channels(work, output_channels)
         spec, _, _ = stft_multi(src, n_fft=2048, hop=512)
-        idx = int(np.clip(round(frame_ratio * (spec.shape[1] - 1)), 0, max(0, spec.shape[1] - 1)))
+        idx = int(
+            np.clip(
+                round(frame_ratio * (spec.shape[1] - 1)), 0, max(0, spec.shape[1] - 1)
+            )
+        )
         frozen = spec[:, idx, :]
         mag = np.abs(frozen)
         base_phase = np.angle(frozen)
@@ -1976,7 +2343,9 @@ def _dispatch_spatial(slug: str, audio: np.ndarray, sr: int, params: dict[str, A
                 phase = base_phase[:, ch] + theta * (1.0 + 0.15 * ch)
                 out_spec[:, t, ch] = mag[:, ch] * np.exp(1j * phase)
         out = istft_multi(out_spec, n_fft=2048, hop=512, length=work.shape[0])
-        notes.append("Resynthesized frozen spatial spectra with controlled per-channel phase drift.")
+        notes.append(
+            "Resynthesized frozen spatial spectra with controlled per-channel phase drift."
+        )
 
     else:
         out = work.copy()
@@ -2041,4 +2410,6 @@ def run_algorithm(
         status="implemented",
         extras=extras,
     )
-    return AlgorithmResult(audio=np.asarray(out, dtype=np.float64), sample_rate=sr, metadata=metadata)
+    return AlgorithmResult(
+        audio=np.asarray(out, dtype=np.float64), sample_rate=sr, metadata=metadata
+    )

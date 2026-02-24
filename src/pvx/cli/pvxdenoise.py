@@ -88,12 +88,30 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     add_common_io_args(parser, default_suffix="_denoise")
-    add_vocoder_args(parser, default_n_fft=2048, default_win_length=2048, default_hop_size=512)
-    parser.add_argument("--noise-seconds", type=float, default=0.35, help="Noise profile duration from start")
-    parser.add_argument("--noise-file", type=Path, default=None, help="Optional external noise reference")
-    parser.add_argument("--reduction-db", type=float, default=12.0, help="Reduction strength in dB")
-    parser.add_argument("--floor", type=float, default=0.1, help="Noise floor multiplier")
-    parser.add_argument("--smooth", type=int, default=5, help="Temporal smoothing frames")
+    add_vocoder_args(
+        parser, default_n_fft=2048, default_win_length=2048, default_hop_size=512
+    )
+    parser.add_argument(
+        "--noise-seconds",
+        type=float,
+        default=0.35,
+        help="Noise profile duration from start",
+    )
+    parser.add_argument(
+        "--noise-file",
+        type=Path,
+        default=None,
+        help="Optional external noise reference",
+    )
+    parser.add_argument(
+        "--reduction-db", type=float, default=12.0, help="Reduction strength in dB"
+    )
+    parser.add_argument(
+        "--floor", type=float, default=0.1, help="Noise floor multiplier"
+    )
+    parser.add_argument(
+        "--smooth", type=int, default=5, help="Temporal smoothing frames"
+    )
     return parser
 
 
@@ -157,7 +175,11 @@ def main(argv: list[str] | None = None) -> int:
             log_error(args, f"[error] {path}: {exc}")
         status.step(idx, path.name)
     status.finish("done" if failures == 0 else f"errors={failures}")
-    log_message(args, f"[done] pvxdenoise processed={len(paths)} failed={failures}", min_level="normal")
+    log_message(
+        args,
+        f"[done] pvxdenoise processed={len(paths)} failed={failures}",
+        min_level="normal",
+    )
     return 1 if failures else 0
 
 

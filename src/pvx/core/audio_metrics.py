@@ -103,7 +103,9 @@ def _stft_mag_db(x: np.ndarray, n_fft: int, hop: int) -> np.ndarray:
     return 20.0 * np.log10(np.abs(spec) + 1e-9)
 
 
-def _onset_envelope(x: np.ndarray, *, n_fft: int = 1024, hop_size: int = 256) -> np.ndarray:
+def _onset_envelope(
+    x: np.ndarray, *, n_fft: int = 1024, hop_size: int = 256
+) -> np.ndarray:
     if x.size == 0:
         return np.zeros(0, dtype=np.float64)
     spec_db = _stft_mag_db(x, n_fft=n_fft, hop=hop_size)
@@ -214,7 +216,11 @@ def _ascii_table(headers: list[str], rows: list[list[str]]) -> str:
             widths[idx] = max(widths[idx], len(cell))
 
     def fmt_row(cells: list[str]) -> str:
-        return "| " + " | ".join(cell.ljust(widths[idx]) for idx, cell in enumerate(cells)) + " |"
+        return (
+            "| "
+            + " | ".join(cell.ljust(widths[idx]) for idx, cell in enumerate(cells))
+            + " |"
+        )
 
     sep = "+-" + "-+-".join("-" * w for w in widths) + "-+"
     lines = [sep, fmt_row(headers), sep]
@@ -307,26 +313,47 @@ def summarize_audio_comparison_metrics(
     ref_2d, cand_2d = _match_length(ref_2d, cand_2d)
 
     if ref_2d.size == 0 or cand_2d.size == 0:
-        return {key: float("nan") for key in (
-            "snr_input", "snr_output",
-            "si_sdr_input", "si_sdr_output",
-            "lsd_input", "lsd_output",
-            "modspec_input", "modspec_output",
-            "spectral_convergence_input", "spectral_convergence_output",
-            "envelope_corr_input", "envelope_corr_output",
-            "transient_smear_input", "transient_smear_output",
-            "rms_dbfs_input", "rms_dbfs_output",
-            "crest_db_input", "crest_db_output",
-            "bw95_hz_input", "bw95_hz_output",
-            "zcr_input", "zcr_output",
-            "dc_input", "dc_output",
-            "clip_pct_input", "clip_pct_output",
-            "lufs_input", "lufs_output",
-            "true_peak_dbtp_input", "true_peak_dbtp_output",
-            "stereo_phase_drift_input", "stereo_phase_drift_output",
-            "ild_drift_db_input", "ild_drift_db_output",
-            "itd_drift_ms_input", "itd_drift_ms_output",
-        )}
+        return {
+            key: float("nan")
+            for key in (
+                "snr_input",
+                "snr_output",
+                "si_sdr_input",
+                "si_sdr_output",
+                "lsd_input",
+                "lsd_output",
+                "modspec_input",
+                "modspec_output",
+                "spectral_convergence_input",
+                "spectral_convergence_output",
+                "envelope_corr_input",
+                "envelope_corr_output",
+                "transient_smear_input",
+                "transient_smear_output",
+                "rms_dbfs_input",
+                "rms_dbfs_output",
+                "crest_db_input",
+                "crest_db_output",
+                "bw95_hz_input",
+                "bw95_hz_output",
+                "zcr_input",
+                "zcr_output",
+                "dc_input",
+                "dc_output",
+                "clip_pct_input",
+                "clip_pct_output",
+                "lufs_input",
+                "lufs_output",
+                "true_peak_dbtp_input",
+                "true_peak_dbtp_output",
+                "stereo_phase_drift_input",
+                "stereo_phase_drift_output",
+                "ild_drift_db_input",
+                "ild_drift_db_output",
+                "itd_drift_ms_input",
+                "itd_drift_ms_output",
+            )
+        }
 
     ref = _to_mono(ref_2d)
     cand = _to_mono(cand_2d)
@@ -350,7 +377,13 @@ def summarize_audio_comparison_metrics(
         alpha = float(np.dot(degraded, reference) / denom)
         target = alpha * reference
         noise = degraded - target
-        return float(10.0 * np.log10((float(np.dot(target, target)) + eps) / (float(np.dot(noise, noise)) + eps)))
+        return float(
+            10.0
+            * np.log10(
+                (float(np.dot(target, target)) + eps)
+                / (float(np.dot(noise, noise)) + eps)
+            )
+        )
 
     snr_input = _snr_db(ref, ref)
     snr_output = _snr_db(ref, cand)
@@ -376,13 +409,18 @@ def summarize_audio_comparison_metrics(
         m_bins = min(ref_mod.shape[1], cand_mod.shape[1])
         if m_bins > 0:
             m_diff = ref_mod[:, :m_bins] - cand_mod[:, :m_bins]
-            modspec_output = float(np.sqrt(np.mean(m_diff * m_diff)) / (np.mean(np.abs(ref_mod[:, :m_bins])) + eps))
+            modspec_output = float(
+                np.sqrt(np.mean(m_diff * m_diff))
+                / (np.mean(np.abs(ref_mod[:, :m_bins])) + eps)
+            )
         else:
             modspec_output = float("nan")
 
         ref_mag = np.power(10.0, ref_db[:bins, :frames] / 20.0)
         cand_mag = np.power(10.0, cand_db[:bins, :frames] / 20.0)
-        spectral_convergence_output = float(np.linalg.norm(ref_mag - cand_mag) / (np.linalg.norm(ref_mag) + eps))
+        spectral_convergence_output = float(
+            np.linalg.norm(ref_mag - cand_mag) / (np.linalg.norm(ref_mag) + eps)
+        )
 
     env_ref = _onset_envelope(ref, n_fft=1024, hop_size=256)
     env_cand = _onset_envelope(cand, n_fft=1024, hop_size=256)
@@ -390,7 +428,9 @@ def summarize_audio_comparison_metrics(
     if e_n >= 3:
         a = env_ref[:e_n] - float(np.mean(env_ref[:e_n]))
         b = env_cand[:e_n] - float(np.mean(env_cand[:e_n]))
-        envelope_corr_output = float(np.dot(a, b) / (float(np.linalg.norm(a) * np.linalg.norm(b)) + eps))
+        envelope_corr_output = float(
+            np.dot(a, b) / (float(np.linalg.norm(a) * np.linalg.norm(b)) + eps)
+        )
         transient_smear_output = float(np.mean(np.abs(env_ref[:e_n] - env_cand[:e_n])))
     else:
         envelope_corr_output = float("nan")
@@ -404,7 +444,11 @@ def summarize_audio_comparison_metrics(
             import pyloudnorm as pyln  # type: ignore
 
             meter = pyln.Meter(sample_rate)
-            return float(meter.integrated_loudness(np.asarray(signal, dtype=np.float64).reshape(-1)))
+            return float(
+                meter.integrated_loudness(
+                    np.asarray(signal, dtype=np.float64).reshape(-1)
+                )
+            )
         except Exception:
             rms = float(np.sqrt(np.mean(signal * signal)) + eps)
             return float(-0.691 + 20.0 * np.log10(rms + eps))
@@ -429,12 +473,28 @@ def summarize_audio_comparison_metrics(
         spec_ref_r = _stft_complex(ref_lr[:, 1], n_fft=1024, hop=256)
         spec_cand_l = _stft_complex(cand_lr[:, 0], n_fft=1024, hop=256)
         spec_cand_r = _stft_complex(cand_lr[:, 1], n_fft=1024, hop=256)
-        b2 = min(spec_ref_l.shape[0], spec_ref_r.shape[0], spec_cand_l.shape[0], spec_cand_r.shape[0])
-        f2 = min(spec_ref_l.shape[1], spec_ref_r.shape[1], spec_cand_l.shape[1], spec_cand_r.shape[1])
+        b2 = min(
+            spec_ref_l.shape[0],
+            spec_ref_r.shape[0],
+            spec_cand_l.shape[0],
+            spec_cand_r.shape[0],
+        )
+        f2 = min(
+            spec_ref_l.shape[1],
+            spec_ref_r.shape[1],
+            spec_cand_l.shape[1],
+            spec_cand_r.shape[1],
+        )
         if b2 > 0 and f2 > 0:
-            ipd_ref = _principal_angle(np.angle(spec_ref_l[:b2, :f2]) - np.angle(spec_ref_r[:b2, :f2]))
-            ipd_cand = _principal_angle(np.angle(spec_cand_l[:b2, :f2]) - np.angle(spec_cand_r[:b2, :f2]))
-            stereo_phase_drift_output = float(np.mean(np.abs(_principal_angle(ipd_cand - ipd_ref))))
+            ipd_ref = _principal_angle(
+                np.angle(spec_ref_l[:b2, :f2]) - np.angle(spec_ref_r[:b2, :f2])
+            )
+            ipd_cand = _principal_angle(
+                np.angle(spec_cand_l[:b2, :f2]) - np.angle(spec_cand_r[:b2, :f2])
+            )
+            stereo_phase_drift_output = float(
+                np.mean(np.abs(_principal_angle(ipd_cand - ipd_ref)))
+            )
 
         l_ref = float(np.sqrt(np.mean(ref_lr[:, 0] * ref_lr[:, 0])) + eps)
         r_ref = float(np.sqrt(np.mean(ref_lr[:, 1] * ref_lr[:, 1])) + eps)
@@ -460,7 +520,9 @@ def summarize_audio_comparison_metrics(
 
         ref_lag = _lag(ref_lr[:, 0], ref_lr[:, 1])
         cand_lag = _lag(cand_lr[:, 0], cand_lr[:, 1])
-        itd_drift_ms_output = float(1000.0 * (cand_lag - ref_lag) / max(1, int(reference_sr)))
+        itd_drift_ms_output = float(
+            1000.0 * (cand_lag - ref_lag) / max(1, int(reference_sr))
+        )
 
     return {
         "snr_input": snr_input,
@@ -471,11 +533,17 @@ def summarize_audio_comparison_metrics(
         "lsd_output": lsd_output,
         "modspec_input": 0.0 if np.isfinite(modspec_output) else float("nan"),
         "modspec_output": modspec_output,
-        "spectral_convergence_input": 0.0 if np.isfinite(spectral_convergence_output) else float("nan"),
+        "spectral_convergence_input": 0.0
+        if np.isfinite(spectral_convergence_output)
+        else float("nan"),
         "spectral_convergence_output": spectral_convergence_output,
-        "envelope_corr_input": 1.0 if np.isfinite(envelope_corr_output) else float("nan"),
+        "envelope_corr_input": 1.0
+        if np.isfinite(envelope_corr_output)
+        else float("nan"),
         "envelope_corr_output": envelope_corr_output,
-        "transient_smear_input": 0.0 if np.isfinite(transient_smear_output) else float("nan"),
+        "transient_smear_input": 0.0
+        if np.isfinite(transient_smear_output)
+        else float("nan"),
         "transient_smear_output": transient_smear_output,
         "rms_dbfs_input": float(summary_ref.rms_dbfs),
         "rms_dbfs_output": float(summary_cand.rms_dbfs),
@@ -493,7 +561,9 @@ def summarize_audio_comparison_metrics(
         "lufs_output": lufs_output,
         "true_peak_dbtp_input": true_peak_input,
         "true_peak_dbtp_output": true_peak_output,
-        "stereo_phase_drift_input": 0.0 if np.isfinite(stereo_phase_drift_output) else float("nan"),
+        "stereo_phase_drift_input": 0.0
+        if np.isfinite(stereo_phase_drift_output)
+        else float("nan"),
         "stereo_phase_drift_output": stereo_phase_drift_output,
         "ild_drift_db_input": 0.0 if np.isfinite(ild_drift_db_output) else float("nan"),
         "ild_drift_db_output": ild_drift_db_output,
@@ -518,7 +588,13 @@ def render_audio_comparison_table(
         candidate_audio=candidate_audio,
         candidate_sr=int(candidate_sr),
     )
-    headers = ["metric", f"input ({reference_label})", f"output ({candidate_label})", "delta(out-in)", "ideal"]
+    headers = [
+        "metric",
+        f"input ({reference_label})",
+        f"output ({candidate_label})",
+        "delta(out-in)",
+        "ideal",
+    ]
 
     def _delta(out_key: str, in_key: str) -> float:
         out_v = float(cmp.get(out_key, float("nan")))
@@ -528,23 +604,135 @@ def render_audio_comparison_table(
         return out_v - in_v
 
     rows = [
-        ["SNR dB", _format_float(cmp["snr_input"], 3), _format_float(cmp["snr_output"], 3), _format_float(_delta("snr_output", "snr_input"), 3), "higher"],
-        ["SI-SDR dB", _format_float(cmp["si_sdr_input"], 3), _format_float(cmp["si_sdr_output"], 3), _format_float(_delta("si_sdr_output", "si_sdr_input"), 3), "higher"],
-        ["LSD", _format_float(cmp["lsd_input"], 4), _format_float(cmp["lsd_output"], 4), _format_float(_delta("lsd_output", "lsd_input"), 4), "lower"],
-        ["ModSpec Dist", _format_float(cmp["modspec_input"], 4), _format_float(cmp["modspec_output"], 4), _format_float(_delta("modspec_output", "modspec_input"), 4), "lower"],
-        ["Spectral Conv", _format_float(cmp["spectral_convergence_input"], 4), _format_float(cmp["spectral_convergence_output"], 4), _format_float(_delta("spectral_convergence_output", "spectral_convergence_input"), 4), "lower"],
-        ["Envelope Corr", _format_float(cmp["envelope_corr_input"], 4), _format_float(cmp["envelope_corr_output"], 4), _format_float(_delta("envelope_corr_output", "envelope_corr_input"), 4), "higher"],
-        ["Transient Smear", _format_float(cmp["transient_smear_input"], 4), _format_float(cmp["transient_smear_output"], 4), _format_float(_delta("transient_smear_output", "transient_smear_input"), 4), "lower"],
-        ["RMS dBFS", _format_float(cmp["rms_dbfs_input"], 3), _format_float(cmp["rms_dbfs_output"], 3), _format_float(_delta("rms_dbfs_output", "rms_dbfs_input"), 3), "0 ideal"],
-        ["Crest dB", _format_float(cmp["crest_db_input"], 3), _format_float(cmp["crest_db_output"], 3), _format_float(_delta("crest_db_output", "crest_db_input"), 3), "0 ideal"],
-        ["BW95 Hz", _format_float(cmp["bw95_hz_input"], 2), _format_float(cmp["bw95_hz_output"], 2), _format_float(_delta("bw95_hz_output", "bw95_hz_input"), 2), "0 ideal"],
-        ["ZCR", _format_float(cmp["zcr_input"], 6), _format_float(cmp["zcr_output"], 6), _format_float(_delta("zcr_output", "zcr_input"), 6), "0 ideal"],
-        ["DC", _format_float(cmp["dc_input"], 8), _format_float(cmp["dc_output"], 8), _format_float(_delta("dc_output", "dc_input"), 8), "0 ideal"],
-        ["Clip %", _format_float(cmp["clip_pct_input"], 3), _format_float(cmp["clip_pct_output"], 3), _format_float(_delta("clip_pct_output", "clip_pct_input"), 3), "0 ideal"],
-        ["LUFS", _format_float(cmp["lufs_input"], 3), _format_float(cmp["lufs_output"], 3), _format_float(_delta("lufs_output", "lufs_input"), 3), "0 ideal"],
-        ["TruePeak dBTP", _format_float(cmp["true_peak_dbtp_input"], 3), _format_float(cmp["true_peak_dbtp_output"], 3), _format_float(_delta("true_peak_dbtp_output", "true_peak_dbtp_input"), 3), "0 ideal"],
-        ["Stereo Phase Drift", _format_float(cmp["stereo_phase_drift_input"], 4), _format_float(cmp["stereo_phase_drift_output"], 4), _format_float(_delta("stereo_phase_drift_output", "stereo_phase_drift_input"), 4), "lower"],
-        ["ILD Drift dB", _format_float(cmp["ild_drift_db_input"], 4), _format_float(cmp["ild_drift_db_output"], 4), _format_float(_delta("ild_drift_db_output", "ild_drift_db_input"), 4), "0 ideal"],
-        ["ITD Drift ms", _format_float(cmp["itd_drift_ms_input"], 4), _format_float(cmp["itd_drift_ms_output"], 4), _format_float(_delta("itd_drift_ms_output", "itd_drift_ms_input"), 4), "0 ideal"],
+        [
+            "SNR dB",
+            _format_float(cmp["snr_input"], 3),
+            _format_float(cmp["snr_output"], 3),
+            _format_float(_delta("snr_output", "snr_input"), 3),
+            "higher",
+        ],
+        [
+            "SI-SDR dB",
+            _format_float(cmp["si_sdr_input"], 3),
+            _format_float(cmp["si_sdr_output"], 3),
+            _format_float(_delta("si_sdr_output", "si_sdr_input"), 3),
+            "higher",
+        ],
+        [
+            "LSD",
+            _format_float(cmp["lsd_input"], 4),
+            _format_float(cmp["lsd_output"], 4),
+            _format_float(_delta("lsd_output", "lsd_input"), 4),
+            "lower",
+        ],
+        [
+            "ModSpec Dist",
+            _format_float(cmp["modspec_input"], 4),
+            _format_float(cmp["modspec_output"], 4),
+            _format_float(_delta("modspec_output", "modspec_input"), 4),
+            "lower",
+        ],
+        [
+            "Spectral Conv",
+            _format_float(cmp["spectral_convergence_input"], 4),
+            _format_float(cmp["spectral_convergence_output"], 4),
+            _format_float(
+                _delta("spectral_convergence_output", "spectral_convergence_input"), 4
+            ),
+            "lower",
+        ],
+        [
+            "Envelope Corr",
+            _format_float(cmp["envelope_corr_input"], 4),
+            _format_float(cmp["envelope_corr_output"], 4),
+            _format_float(_delta("envelope_corr_output", "envelope_corr_input"), 4),
+            "higher",
+        ],
+        [
+            "Transient Smear",
+            _format_float(cmp["transient_smear_input"], 4),
+            _format_float(cmp["transient_smear_output"], 4),
+            _format_float(_delta("transient_smear_output", "transient_smear_input"), 4),
+            "lower",
+        ],
+        [
+            "RMS dBFS",
+            _format_float(cmp["rms_dbfs_input"], 3),
+            _format_float(cmp["rms_dbfs_output"], 3),
+            _format_float(_delta("rms_dbfs_output", "rms_dbfs_input"), 3),
+            "0 ideal",
+        ],
+        [
+            "Crest dB",
+            _format_float(cmp["crest_db_input"], 3),
+            _format_float(cmp["crest_db_output"], 3),
+            _format_float(_delta("crest_db_output", "crest_db_input"), 3),
+            "0 ideal",
+        ],
+        [
+            "BW95 Hz",
+            _format_float(cmp["bw95_hz_input"], 2),
+            _format_float(cmp["bw95_hz_output"], 2),
+            _format_float(_delta("bw95_hz_output", "bw95_hz_input"), 2),
+            "0 ideal",
+        ],
+        [
+            "ZCR",
+            _format_float(cmp["zcr_input"], 6),
+            _format_float(cmp["zcr_output"], 6),
+            _format_float(_delta("zcr_output", "zcr_input"), 6),
+            "0 ideal",
+        ],
+        [
+            "DC",
+            _format_float(cmp["dc_input"], 8),
+            _format_float(cmp["dc_output"], 8),
+            _format_float(_delta("dc_output", "dc_input"), 8),
+            "0 ideal",
+        ],
+        [
+            "Clip %",
+            _format_float(cmp["clip_pct_input"], 3),
+            _format_float(cmp["clip_pct_output"], 3),
+            _format_float(_delta("clip_pct_output", "clip_pct_input"), 3),
+            "0 ideal",
+        ],
+        [
+            "LUFS",
+            _format_float(cmp["lufs_input"], 3),
+            _format_float(cmp["lufs_output"], 3),
+            _format_float(_delta("lufs_output", "lufs_input"), 3),
+            "0 ideal",
+        ],
+        [
+            "TruePeak dBTP",
+            _format_float(cmp["true_peak_dbtp_input"], 3),
+            _format_float(cmp["true_peak_dbtp_output"], 3),
+            _format_float(_delta("true_peak_dbtp_output", "true_peak_dbtp_input"), 3),
+            "0 ideal",
+        ],
+        [
+            "Stereo Phase Drift",
+            _format_float(cmp["stereo_phase_drift_input"], 4),
+            _format_float(cmp["stereo_phase_drift_output"], 4),
+            _format_float(
+                _delta("stereo_phase_drift_output", "stereo_phase_drift_input"), 4
+            ),
+            "lower",
+        ],
+        [
+            "ILD Drift dB",
+            _format_float(cmp["ild_drift_db_input"], 4),
+            _format_float(cmp["ild_drift_db_output"], 4),
+            _format_float(_delta("ild_drift_db_output", "ild_drift_db_input"), 4),
+            "0 ideal",
+        ],
+        [
+            "ITD Drift ms",
+            _format_float(cmp["itd_drift_ms_input"], 4),
+            _format_float(cmp["itd_drift_ms_output"], 4),
+            _format_float(_delta("itd_drift_ms_output", "itd_drift_ms_input"), 4),
+            "0 ideal",
+        ],
     ]
     return f"{title}\n" + _ascii_table(headers, rows)

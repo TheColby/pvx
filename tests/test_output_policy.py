@@ -46,7 +46,9 @@ class TestOutputPolicy(unittest.TestCase):
 
     def test_prepare_output_audio_enforces_true_peak(self) -> None:
         args = _make_args(true_peak_max_dbtp=-12.0)
-        x = (0.95 * np.sin(2.0 * np.pi * np.arange(4096, dtype=np.float64) / 64.0))[:, None]
+        x = (0.95 * np.sin(2.0 * np.pi * np.arange(4096, dtype=np.float64) / 64.0))[
+            :, None
+        ]
         y, subtype = prepare_output_audio(x, 24000, args)
         self.assertIsNone(subtype)
         self.assertLessEqual(true_peak_dbtp(y, 24000), -11.9)

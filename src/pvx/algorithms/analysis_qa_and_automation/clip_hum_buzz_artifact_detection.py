@@ -28,9 +28,9 @@ if __package__ is None or __package__ == "":
 
 from pvx.algorithms.base import AlgorithmResult, run_algorithm
 
-ALGORITHM_ID = 'analysis_qa_and_automation.clip_hum_buzz_artifact_detection'
-ALGORITHM_NAME = 'Clip/hum/buzz artifact detection'
-THEME = 'Analysis, QA, and Automation'
+ALGORITHM_ID = "analysis_qa_and_automation.clip_hum_buzz_artifact_detection"
+ALGORITHM_NAME = "Clip/hum/buzz artifact detection"
+THEME = "Analysis, QA, and Automation"
 
 
 def process(audio: np.ndarray, sample_rate: int, **params: Any) -> AlgorithmResult:

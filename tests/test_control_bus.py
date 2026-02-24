@@ -16,7 +16,11 @@ if str(ROOT) not in sys.path:
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from pvx.core.control_bus import apply_control_routes_csv, parse_control_route, parse_control_routes
+from pvx.core.control_bus import (
+    apply_control_routes_csv,
+    parse_control_route,
+    parse_control_routes,
+)
 
 
 class TestControlBus(unittest.TestCase):
@@ -45,8 +49,7 @@ class TestControlBus(unittest.TestCase):
 
     def test_apply_control_route_missing_source_column_raises(self) -> None:
         payload = (
-            "start_sec,end_sec,stretch,pitch_ratio,confidence\n"
-            "0.0,0.1,1.0,1.0,1.0\n"
+            "start_sec,end_sec,stretch,pitch_ratio,confidence\n0.0,0.1,1.0,1.0,1.0\n"
         )
         with self.assertRaises(ValueError):
             apply_control_routes_csv(
@@ -63,7 +66,9 @@ class TestControlBus(unittest.TestCase):
         )
         routed = apply_control_routes_csv(
             payload,
-            routes=parse_control_routes(["stretch=pitch_ratio", "pitch_ratio=const(1.0)"]),
+            routes=parse_control_routes(
+                ["stretch=pitch_ratio", "pitch_ratio=const(1.0)"]
+            ),
             source_label="unit",
         )
         lines = [line.strip() for line in routed.splitlines() if line.strip()]
@@ -75,8 +80,7 @@ class TestControlBus(unittest.TestCase):
 
     def test_apply_control_routes_csv_pitch_ratio_from_cents(self) -> None:
         payload = (
-            "start_sec,end_sec,stretch,pitch_cents,confidence\n"
-            "0.0,0.1,1.0,1200,1.0\n"
+            "start_sec,end_sec,stretch,pitch_cents,confidence\n0.0,0.1,1.0,1200,1.0\n"
         )
         routed = apply_control_routes_csv(
             payload,

@@ -42,11 +42,22 @@ def expand_segments(segments: list[SegmentSpec], total_s: float) -> list[Segment
         if end <= start:
             continue
         if start > cursor:
-            merged.append(SegmentSpec(start_s=cursor, end_s=start, stretch=1.0, pitch_ratio=1.0))
-        merged.append(SegmentSpec(start_s=start, end_s=end, stretch=seg.stretch, pitch_ratio=seg.pitch_ratio))
+            merged.append(
+                SegmentSpec(start_s=cursor, end_s=start, stretch=1.0, pitch_ratio=1.0)
+            )
+        merged.append(
+            SegmentSpec(
+                start_s=start,
+                end_s=end,
+                stretch=seg.stretch,
+                pitch_ratio=seg.pitch_ratio,
+            )
+        )
         cursor = max(cursor, end)
     if cursor < total_s:
-        merged.append(SegmentSpec(start_s=cursor, end_s=total_s, stretch=1.0, pitch_ratio=1.0))
+        merged.append(
+            SegmentSpec(start_s=cursor, end_s=total_s, stretch=1.0, pitch_ratio=1.0)
+        )
     return merged
 
 
@@ -71,10 +82,19 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     add_common_io_args(parser, default_suffix="_conform")
-    add_vocoder_args(parser, default_n_fft=2048, default_win_length=2048, default_hop_size=512)
+    add_vocoder_args(
+        parser, default_n_fft=2048, default_win_length=2048, default_hop_size=512
+    )
     parser.add_argument("--map", required=True, type=Path, help="CSV map path")
-    parser.add_argument("--crossfade-ms", type=float, default=8.0, help="Segment crossfade in milliseconds")
-    parser.add_argument("--resample-mode", choices=["auto", "fft", "linear"], default="auto")
+    parser.add_argument(
+        "--crossfade-ms",
+        type=float,
+        default=8.0,
+        help="Segment crossfade in milliseconds",
+    )
+    parser.add_argument(
+        "--resample-mode", choices=["auto", "fft", "linear"], default="auto"
+    )
     return parser
 
 
@@ -90,7 +110,9 @@ def main(argv: list[str] | None = None) -> int:
     if not map_segments:
         parser.error("Map has no valid segments")
 
-    config = build_vocoder_config(args, phase_locking="identity", transient_preserve=True, transient_threshold=2.0)
+    config = build_vocoder_config(
+        args, phase_locking="identity", transient_preserve=True, transient_threshold=2.0
+    )
     paths = resolve_inputs(args.inputs, parser, args)
     status = build_status_bar(args, "pvxconform", len(paths))
 
@@ -130,14 +152,22 @@ def main(argv: list[str] | None = None) -> int:
                 output_sr=sr,
             )
             write_output(out_path, out, sr, args, input_path=path)
-            log_message(args, f"[ok] {path} -> {out_path} | segs={len(segments)}, dur={out.shape[0]/sr:.3f}s", min_level="verbose")
+            log_message(
+                args,
+                f"[ok] {path} -> {out_path} | segs={len(segments)}, dur={out.shape[0] / sr:.3f}s",
+                min_level="verbose",
+            )
         except Exception as exc:
             failures += 1
             log_error(args, f"[error] {path}: {exc}")
         status.step(idx, path.name)
 
     status.finish("done" if failures == 0 else f"errors={failures}")
-    log_message(args, f"[done] pvxconform processed={len(paths)} failed={failures}", min_level="normal")
+    log_message(
+        args,
+        f"[done] pvxconform processed={len(paths)} failed={failures}",
+        min_level="normal",
+    )
     return 1 if failures else 0
 
 

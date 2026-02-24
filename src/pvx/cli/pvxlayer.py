@@ -56,7 +56,9 @@ def hpss_masks(
     return mh, mp
 
 
-def split_hpss(signal: np.ndarray, config, hk: int, pk: int) -> tuple[np.ndarray, np.ndarray]:
+def split_hpss(
+    signal: np.ndarray, config, hk: int, pk: int
+) -> tuple[np.ndarray, np.ndarray]:
     spec = stft(signal, config)
     mag = np.abs(spec)
     mh, mp = hpss_masks(mag, hk, pk)
@@ -82,7 +84,9 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     add_common_io_args(parser, default_suffix="_layer")
-    add_vocoder_args(parser, default_n_fft=2048, default_win_length=2048, default_hop_size=512)
+    add_vocoder_args(
+        parser, default_n_fft=2048, default_win_length=2048, default_hop_size=512
+    )
     parser.add_argument("--harmonic-stretch", type=float, default=1.0)
     parser.add_argument("--harmonic-pitch-semitones", type=float, default=0.0)
     parser.add_argument("--harmonic-pitch-cents", type=float, default=0.0)
@@ -93,7 +97,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--percussive-gain", type=float, default=1.0)
     parser.add_argument("--harmonic-kernel", type=int, default=31)
     parser.add_argument("--percussive-kernel", type=int, default=31)
-    parser.add_argument("--resample-mode", choices=["auto", "fft", "linear"], default="auto")
+    parser.add_argument(
+        "--resample-mode", choices=["auto", "fft", "linear"], default="auto"
+    )
     return parser
 
 
@@ -107,11 +113,17 @@ def main(argv: list[str] | None = None) -> int:
     if args.harmonic_kernel <= 0 or args.percussive_kernel <= 0:
         parser.error("kernel sizes must be > 0")
 
-    config = build_vocoder_config(args, phase_locking="identity", transient_preserve=True, transient_threshold=1.7)
+    config = build_vocoder_config(
+        args, phase_locking="identity", transient_preserve=True, transient_threshold=1.7
+    )
     paths = resolve_inputs(args.inputs, parser, args)
 
-    harm_ratio = semitone_to_ratio(args.harmonic_pitch_semitones) * cents_to_ratio(args.harmonic_pitch_cents)
-    perc_ratio = semitone_to_ratio(args.percussive_pitch_semitones) * cents_to_ratio(args.percussive_pitch_cents)
+    harm_ratio = semitone_to_ratio(args.harmonic_pitch_semitones) * cents_to_ratio(
+        args.harmonic_pitch_cents
+    )
+    perc_ratio = semitone_to_ratio(args.percussive_pitch_semitones) * cents_to_ratio(
+        args.percussive_pitch_cents
+    )
     status = build_status_bar(args, "pvxlayer", len(paths))
 
     failures = 0
@@ -121,27 +133,35 @@ def main(argv: list[str] | None = None) -> int:
             harm_channels: list[np.ndarray] = []
             perc_channels: list[np.ndarray] = []
             for ch in range(audio.shape[1]):
-                h, p = split_hpss(audio[:, ch], config, args.harmonic_kernel, args.percussive_kernel)
+                h, p = split_hpss(
+                    audio[:, ch], config, args.harmonic_kernel, args.percussive_kernel
+                )
                 harm_channels.append(h)
                 perc_channels.append(p)
 
             hsig = np.stack(harm_channels, axis=1)
             psig = np.stack(perc_channels, axis=1)
 
-            hproc = time_pitch_shift_audio(
-                hsig,
-                stretch=args.harmonic_stretch,
-                pitch_ratio=harm_ratio,
-                config=config,
-                resample_mode=args.resample_mode,
-            ) * args.harmonic_gain
-            pproc = time_pitch_shift_audio(
-                psig,
-                stretch=args.percussive_stretch,
-                pitch_ratio=perc_ratio,
-                config=config,
-                resample_mode=args.resample_mode,
-            ) * args.percussive_gain
+            hproc = (
+                time_pitch_shift_audio(
+                    hsig,
+                    stretch=args.harmonic_stretch,
+                    pitch_ratio=harm_ratio,
+                    config=config,
+                    resample_mode=args.resample_mode,
+                )
+                * args.harmonic_gain
+            )
+            pproc = (
+                time_pitch_shift_audio(
+                    psig,
+                    stretch=args.percussive_stretch,
+                    pitch_ratio=perc_ratio,
+                    config=config,
+                    resample_mode=args.resample_mode,
+                )
+                * args.percussive_gain
+            )
 
             out_len = max(hproc.shape[0], pproc.shape[0])
             out = np.zeros((out_len, audio.shape[1]), dtype=np.float64)
@@ -160,13 +180,21 @@ def main(argv: list[str] | None = None) -> int:
                 output_sr=sr,
             )
             write_output(out_path, out, sr, args, input_path=path)
-            log_message(args, f"[ok] {path} -> {out_path} | out_dur={out.shape[0]/sr:.3f}s", min_level="verbose")
+            log_message(
+                args,
+                f"[ok] {path} -> {out_path} | out_dur={out.shape[0] / sr:.3f}s",
+                min_level="verbose",
+            )
         except Exception as exc:
             failures += 1
             log_error(args, f"[error] {path}: {exc}")
         status.step(idx, path.name)
     status.finish("done" if failures == 0 else f"errors={failures}")
-    log_message(args, f"[done] pvxlayer processed={len(paths)} failed={failures}", min_level="normal")
+    log_message(
+        args,
+        f"[done] pvxlayer processed={len(paths)} failed={failures}",
+        min_level="normal",
+    )
     return 1 if failures else 0
 
 

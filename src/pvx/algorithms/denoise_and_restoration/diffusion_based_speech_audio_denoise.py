@@ -28,9 +28,9 @@ if __package__ is None or __package__ == "":
 
 from pvx.algorithms.base import AlgorithmResult, run_algorithm
 
-ALGORITHM_ID = 'denoise_and_restoration.diffusion_based_speech_audio_denoise'
-ALGORITHM_NAME = 'Diffusion-based speech/audio denoise'
-THEME = 'Denoise and Restoration'
+ALGORITHM_ID = "denoise_and_restoration.diffusion_based_speech_audio_denoise"
+ALGORITHM_NAME = "Diffusion-based speech/audio denoise"
+THEME = "Denoise and Restoration"
 
 
 def process(audio: np.ndarray, sample_rate: int, **params: Any) -> AlgorithmResult:

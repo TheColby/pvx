@@ -11,6 +11,7 @@ Use these keys as `**params` when calling module `process(audio, sample_rate, **
 
 ## `am_fm_ring_modulation_blocks`
 - `freq_hz`
+- `fm_depth`
 
 ## `auto_parameter_tuning_bayesian_optimization`
 - `target_centroid`
@@ -47,6 +48,9 @@ Use these keys as `**params` when calling module `process(audio, sample_rate, **
 ## `coherence_based_dereverb_multichannel`
 - `coherence_threshold`
 - `decay`
+
+## `constant_q_transform_cqt_processing`
+- No algorithm-specific keys (uses generic/default path).
 
 ## `crepe_style_neural_f0`
 - No algorithm-specific keys (uses generic/default path).
@@ -109,6 +113,8 @@ Use these keys as `**params` when calling module `process(audio, sample_rate, **
 
 ## `granular_time_stretch_engine`
 - `stretch`
+- `grain`
+- `hop`
 
 ## `harmonic_percussive_split_tsm`
 - `harmonic_stretch`
@@ -183,6 +189,7 @@ Use these keys as `**params` when calling module `process(audio, sample_rate, **
 - `curve`
 - `stretch`
 - `fmin`
+- `fmax`
 
 ## `onset_beat_downbeat_tracking`
 - No algorithm-specific keys (uses generic/default path).
@@ -202,7 +209,6 @@ Use these keys as `**params` when calling module `process(audio, sample_rate, **
 
 ## `portamento_aware_retune_curves`
 - `max_semitone_step`
-- `compression`
 
 ## `probabilistic_latent_component_separation`
 - No algorithm-specific keys (uses generic/default path).
@@ -243,6 +249,7 @@ Use these keys as `**params` when calling module `process(audio, sample_rate, **
 
 ## `rhythmic_gate_stutter_quantizer`
 - `rate_hz`
+- `duty`
 
 ## `rnnoise_style_denoiser`
 - No algorithm-specific keys (uses generic/default path).
@@ -287,6 +294,7 @@ Use these keys as `**params` when calling module `process(audio, sample_rate, **
 
 ## `spectral_dynamics_bin_wise_compressor_expander`
 - `threshold_db`
+- `ratio`
 
 ## `spectral_freeze_banks`
 - `frame_ratio`
@@ -340,6 +348,7 @@ Use these keys as `**params` when calling module `process(audio, sample_rate, **
 
 ## `transient_shaping`
 - `attack_boost`
+- `sustain`
 
 ## `true_peak_limiting`
 - `threshold`
@@ -349,6 +358,10 @@ Use these keys as `**params` when calling module `process(audio, sample_rate, **
 
 ## `upward_compression`
 - `threshold_db`
+- `ratio`
+
+## `variable_q_transform_vqt`
+- `compression`
 
 ## `vbap_adaptive_panning`
 - `output_channels`
@@ -363,6 +376,7 @@ Use these keys as `**params` when calling module `process(audio, sample_rate, **
 - `scale_cents`
 - `scale`
 - `fmin`
+- `fmax`
 
 ## `wavelet_packet_processing`
 - No algorithm-specific keys (uses generic/default path).
@@ -376,6 +390,7 @@ Use these keys as `**params` when calling module `process(audio, sample_rate, **
 ## `wsola_waveform_similarity_overlap_add`
 - `stretch`
 - `grain_size`
+- `hop`
 
 ## `yin`
 - No algorithm-specific keys (uses generic/default path).
