@@ -10,6 +10,7 @@ import math
 from pathlib import Path
 import subprocess
 import sys
+from typing import Any
 
 import numpy as np
 
@@ -79,6 +80,40 @@ def attribution_section_lines() -> list[str]:
         f"{COPYRIGHT_NOTICE} See [`{ATTRIBUTION_DOC_PATH}`](../{ATTRIBUTION_DOC_PATH}).",
         "",
     ]
+
+
+def _write_json_idempotent(path: Path, new_payload: dict[str, Any]) -> None:
+    if path.exists():
+        try:
+            old_payload = json.loads(path.read_text(encoding="utf-8"))
+            # If the only difference is commit metadata, preserve the old metadata
+            # to avoid CI drift on every commit.
+            temp_new = new_payload.copy()
+            temp_old = old_payload.copy()
+
+            # Remove metadata keys for comparison
+            meta_keys = ["commit", "commit_date"]
+            for k in meta_keys:
+                temp_new.pop(k, None)
+                temp_old.pop(k, None)
+
+            # Special case for benchmarks generated_utc which changes every run
+            if "generated_utc" in temp_new:
+                temp_new.pop("generated_utc", None)
+                temp_old.pop("generated_utc", None)
+
+            if json.dumps(temp_new, sort_keys=True) == json.dumps(temp_old, sort_keys=True):
+                # Content is identical, restore old metadata
+                for k in meta_keys:
+                    if k in old_payload:
+                        new_payload[k] = old_payload[k]
+                if "generated_utc" in old_payload:
+                    new_payload["generated_utc"] = old_payload["generated_utc"]
+        except Exception:
+            pass
+
+    path.write_text(json.dumps(new_payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
 
 def window_entries() -> list[dict[str, str]]:
     entries: list[dict[str, str]] = []
@@ -730,10 +765,7 @@ def generate_function_assets() -> dict[str, object]:
         "commit_date": COMMIT_DATE,
         "plots": entries,
     }
-    (DOCS_DIR / "function_gallery.json").write_text(
-        json.dumps(payload, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
+    _write_json_idempotent(DOCS_DIR / "function_gallery.json", payload)
     return payload
 
 
@@ -959,10 +991,7 @@ def generate_interpolation_assets() -> dict[str, object]:
         ],
         "plots": plot_entries,
     }
-    (DOCS_DIR / "interpolation_gallery.json").write_text(
-        json.dumps(payload, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
+    _write_json_idempotent(DOCS_DIR / "interpolation_gallery.json", payload)
     return payload
 
 
@@ -1010,15 +1039,22 @@ def generate_window_assets_and_metrics(entries: list[dict[str, str]]) -> dict[st
             "freq_plot": f"assets/windows/{name}_freq.svg",
         }
 
+    # Round metrics to avoid drift
+    rounded_metrics: dict[str, dict[str, float | str]] = {}
+    for win_name, m in metrics_by_name.items():
+        rounded_metrics[win_name] = {}
+        for k, v in m.items():
+            if isinstance(v, float):
+                rounded_metrics[win_name][k] = round(v, 10)
+            else:
+                rounded_metrics[win_name][k] = v
+
     metrics_payload = {
         "commit": COMMIT_HASH,
         "commit_date": COMMIT_DATE,
-        "windows": metrics_by_name,
+        "windows": rounded_metrics,
     }
-    (DOCS_DIR / "window_metrics.json").write_text(
-        json.dumps(metrics_payload, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
+    _write_json_idempotent(DOCS_DIR / "window_metrics.json", metrics_payload)
     return metrics_by_name
 
 

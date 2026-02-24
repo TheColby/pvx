@@ -59,11 +59,10 @@ def _frame_signal(signal: np.ndarray, n_fft: int, hop_size: int, *, center: bool
         x = np.pad(x, (0, hop_size - rem), mode="constant")
 
     frame_count = 1 + (x.size - n_fft) // hop_size
-    out = np.empty((n_fft, frame_count), dtype=np.float64)
-    for idx in range(frame_count):
-        start = idx * hop_size
-        out[:, idx] = x[start : start + n_fft]
-    return out
+    shape = (frame_count, n_fft)
+    strides = (x.strides[0] * hop_size, x.strides[0])
+    out = np.lib.stride_tricks.as_strided(x, shape=shape, strides=strides)
+    return out.copy().T
 
 
 def compute_transient_features(

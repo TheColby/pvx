@@ -86,7 +86,38 @@ def attribution_section_lines() -> list[str]:
         "",
     ]
 
+
 def write_json(path: Path, payload: Any) -> None:
+    if path.exists():
+        try:
+            old_payload = json.loads(path.read_text(encoding="utf-8"))
+            # If the only difference is commit metadata, preserve the old metadata
+            # to avoid CI drift on every commit.
+            if isinstance(payload, dict) and isinstance(old_payload, dict):
+                temp_new = payload.copy()
+                temp_old = old_payload.copy()
+
+                # Remove metadata keys for comparison
+                meta_keys = ["commit", "commit_date"]
+                for k in meta_keys:
+                    temp_new.pop(k, None)
+                    temp_old.pop(k, None)
+
+                # Special case for benchmarks generated_utc which changes every run
+                if "generated_utc" in temp_new:
+                    temp_new.pop("generated_utc", None)
+                    temp_old.pop("generated_utc", None)
+
+                if json.dumps(temp_new, sort_keys=True) == json.dumps(temp_old, sort_keys=True):
+                    # Content is identical, restore old metadata
+                    for k in meta_keys:
+                        if k in old_payload:
+                            payload[k] = old_payload[k]
+                    if "generated_utc" in old_payload:
+                        payload["generated_utc"] = old_payload["generated_utc"]
+        except Exception:
+            pass
+
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
