@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import ast
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -113,6 +114,8 @@ def parse_module(path: Path) -> dict:
 
 
 def cli_help(path: Path) -> str | None:
+    env = os.environ.copy()
+    env["COLUMNS"] = "80"
     try:
         proc = subprocess.run(
             ["python3", str(path), "--help"],
@@ -121,6 +124,7 @@ def cli_help(path: Path) -> str | None:
             capture_output=True,
             timeout=25,
             check=False,
+            env=env,
         )
     except Exception as exc:  # pragma: no cover
         return f"[help unavailable: {exc}]"
@@ -226,7 +230,7 @@ def generate_python_help_doc() -> None:
             lines.append(f"**Algorithm ID:** `{info['algorithm_id']}`")
             lines.append(f"**Theme:** `{info['theme']}`")
             lines.append("**Primary API:** `process(audio, sample_rate, **params) -> AlgorithmResult`")
-            lines.append("**Parameter docs:** see `/Users/cleider/dev/pvx/docs/pvx_ALGORITHM_PARAMS.md`.")
+            lines.append("**Parameter docs:** see `docs/pvx_ALGORITHM_PARAMS.md`.")
             lines.append("")
 
         lines.append(f"**Classes:** {', '.join('`'+c+'`' for c in info['classes']) if info['classes'] else 'None'}")

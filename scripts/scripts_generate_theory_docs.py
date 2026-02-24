@@ -383,11 +383,11 @@ def compute_window_metrics(window: np.ndarray) -> dict[str, float]:
     peak_sidelobe_db = 20.0 * math.log10(max(float(np.max(side)), eps))
 
     return {
-        "coherent_gain": coherent_gain,
-        "enbw_bins": enbw_bins,
-        "scalloping_loss_db": scalloping_loss_db,
-        "main_lobe_width_bins": main_lobe_width_bins,
-        "peak_sidelobe_db": peak_sidelobe_db,
+        "coherent_gain": float(round(coherent_gain, 10)),
+        "enbw_bins": float(round(enbw_bins, 10)),
+        "scalloping_loss_db": float(round(scalloping_loss_db, 10)),
+        "main_lobe_width_bins": float(round(main_lobe_width_bins, 10)),
+        "peak_sidelobe_db": float(round(peak_sidelobe_db, 10)),
     }
 
 
