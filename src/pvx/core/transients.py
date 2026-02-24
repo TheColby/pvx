@@ -165,16 +165,25 @@ def _mask_to_regions(mask: np.ndarray) -> list[TransientRegion]:
     if values.size == 0:
         return []
 
+    # Find indices where value changes.
+    # Diff is True where values[i] != values[i+1].
+    # Flatnonzero gives indices of True. Add 1 because change happens after index i.
+    change_indices = np.flatnonzero(np.diff(values)) + 1
+
+    # Define boundaries: start=0, all change points, end=size
+    boundaries = np.concatenate(([0], change_indices, [values.size]))
+
     regions: list[TransientRegion] = []
-    start = 0
-    current = bool(values[0])
-    for idx in range(1, values.size):
-        state = bool(values[idx])
-        if state != current:
-            regions.append(TransientRegion(start_sample=start, end_sample=idx, is_transient=current))
-            start = idx
-            current = state
-    regions.append(TransientRegion(start_sample=start, end_sample=values.size, is_transient=current))
+    for i in range(len(boundaries) - 1):
+        start = boundaries[i]
+        end = boundaries[i+1]
+        regions.append(
+            TransientRegion(
+                start_sample=int(start),
+                end_sample=int(end),
+                is_transient=bool(values[start]),
+            )
+        )
     return regions
 
 
