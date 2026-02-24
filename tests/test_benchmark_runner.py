@@ -152,7 +152,7 @@ class TestBenchmarkRunnerProfiles(unittest.TestCase):
             row_level=True,
             signature_gate=False,
         )
-        self.assertTrue(any("row a.wav::stretch metric log_spectral_distance regressed" in msg for msg in failures))
+        self.assertTrue(any("row a:stretch metric log_spectral_distance regressed" in msg for msg in failures))
 
     def test_diagnostics_emit_actionable_hints(self) -> None:
         diagnostics = _diagnose_metrics(

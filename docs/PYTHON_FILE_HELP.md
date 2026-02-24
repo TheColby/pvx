@@ -4,7 +4,7 @@
 
 Comprehensive reference for every Python file in this repository.
 
-Total Python files documented: **210**
+Total Python files documented: **211**
 
 ## Contents
 
@@ -215,6 +215,7 @@ Total Python files documented: **210**
 - [`tests/test_docs_coverage.py`](#teststestdocscoveragepy)
 - [`tests/test_docs_pdf.py`](#teststestdocspdfpy)
 - [`tests/test_dsp.py`](#teststestdsppy)
+- [`tests/test_feature_tracking.py`](#teststestfeaturetrackingpy)
 - [`tests/test_microtonal.py`](#teststestmicrotonalpy)
 - [`tests/test_output_policy.py`](#teststestoutputpolicypy)
 - [`tests/test_transient_and_stereo.py`](#teststesttransientandstereopy)
@@ -6147,6 +6148,21 @@ DSP unit tests for core vocoder and analysis primitives.
 These tests validate transform length behavior, F0 estimation, transient
 handling, formant-preserving correction, Fourier-sync operation, runtime
 selection, and support for all registered analysis windows.
+```
+
+## `tests/test_feature_tracking.py`
+
+**Purpose:** Tests for feature tracking extraction.
+
+**Classes:** `TestFeatureTracking`
+**Functions:** None
+
+**Help commands:** `python3 tests/test_feature_tracking.py`
+
+### Module Docstring
+
+```text
+Tests for feature tracking extraction.
 ```
 
 ## `tests/test_microtonal.py`

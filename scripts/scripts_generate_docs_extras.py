@@ -10,6 +10,7 @@ import ast
 from datetime import datetime, timezone
 import json
 import math
+import os
 from pathlib import Path
 import platform
 import re
@@ -37,6 +38,10 @@ import scripts_generate_html_docs as html_docs  # noqa: E402
 
 
 def git_commit_meta() -> tuple[str, str]:
+    # CI override: avoid drift failures by using placeholder values.
+    if os.environ.get("PVX_DOCS_NO_METADATA", "").lower() in ("1", "true", "yes"):
+        return "COMMIT_HASH", "COMMIT_DATE"
+
     commit = "unknown"
     commit_date = "unknown"
     try:

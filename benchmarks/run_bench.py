@@ -304,6 +304,7 @@ def _prepare_dataset(
 
 
 def _case_key(input_path: Path, task: TaskSpec) -> str:
+    # Use stem only to avoid absolute path mismatches in CI gates.
     return f"{input_path.stem}:{task.name}"
 
 
@@ -1021,7 +1022,10 @@ def _check_gate(
         for row in rows:
             if not isinstance(row, dict):
                 continue
-            key = f"{row.get('input', 'unknown')}::{row.get('task', 'unknown')}"
+            # Normalize input path to stem for matching across environments.
+            inp = Path(str(row.get("input", "unknown"))).stem
+            tsk = str(row.get("task", "unknown"))
+            key = f"{inp}:{tsk}"
             out[key] = row
         return out
 
