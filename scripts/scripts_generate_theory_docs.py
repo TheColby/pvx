@@ -1004,8 +1004,14 @@ def generate_window_assets_and_metrics(entries: list[dict[str, str]]) -> dict[st
             y_label="magnitude (dB)",
         )
 
+        # Round metrics to ensure cross-platform deterministic JSON output
+        rounded_metrics = {
+            k: float(round(v, 10)) if isinstance(v, float) else v
+            for k, v in metrics.items()
+        }
+
         metrics_by_name[name] = {
-            **metrics,
+            **rounded_metrics,
             "time_plot": f"assets/windows/{name}_time.svg",
             "freq_plot": f"assets/windows/{name}_freq.svg",
         }

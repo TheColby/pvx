@@ -1021,7 +1021,10 @@ def _check_gate(
         for row in rows:
             if not isinstance(row, dict):
                 continue
-            key = f"{row.get('input', 'unknown')}::{row.get('task', 'unknown')}"
+            input_path = str(row.get("input", "unknown"))
+            # normalize to filename for cross-platform matching
+            input_name = Path(input_path).name
+            key = f"{input_name}::{row.get('task', 'unknown')}"
             out[key] = row
         return out
 

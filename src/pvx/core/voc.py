@@ -2263,7 +2263,7 @@ def build_fourier_sync_plan(
         if frame.size >= 4 and float(np.sqrt(np.mean(frame * frame))) >= 1e-6:
             try:
                 f0_track[frame_idx] = estimate_f0_autocorrelation(frame, sample_rate, f0_min_hz, f0_max_hz)
-            except Exception:
+            except ValueError:
                 pass
         if progress_callback is not None:
             progress_callback(frame_idx + 1, frame_count)

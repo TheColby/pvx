@@ -277,6 +277,42 @@ class TestPhaseVocoderDSP(unittest.TestCase):
         self.assertGreater(features["centroid_hz"], 0.0)
         self.assertGreaterEqual(features["zcr"], 0.0)
 
+    def test_fourier_sync_dc_signal_handling(self) -> None:
+        """
+        Verify that a DC signal (which passes RMS check but fails F0 estimation)
+        is handled gracefully without crashing, falling back to default F0.
+        """
+        sr = 16000
+        # DC offset signal: passes RMS >= 1e-6 check
+        x = np.ones(2048, dtype=np.float64) * 0.5
+
+        f0_min = 50.0
+        f0_max = 1000.0
+
+        # This should not raise an exception
+        plan = build_fourier_sync_plan(
+            signal=x,
+            sample_rate=sr,
+            config=self.cfg_off,
+            f0_min_hz=f0_min,
+            f0_max_hz=f0_max,
+            min_fft=256,
+            max_fft=1024,
+            smooth_span=5,
+        )
+
+        # Check that we got a valid plan
+        # Using cfg_off: n_fft=1024, hop=256. x=2048.
+        # Pad center: +512+512 = 3072.
+        # Frames: 1 + (3072 - 1024) // 256 = 9.
+        expected_frames = 9
+        self.assertEqual(plan.frame_lengths.size, expected_frames)
+
+        # F0 track should be finite and within bounds
+        self.assertTrue(np.all(np.isfinite(plan.f0_track_hz)))
+        self.assertTrue(np.all(plan.f0_track_hz >= f0_min))
+        self.assertTrue(np.all(plan.f0_track_hz <= f0_max))
+
 
 if __name__ == "__main__":
     unittest.main()
