@@ -82,6 +82,18 @@ from pvx.core.stereo import lr_to_ms, ms_to_lr, validate_ref_channel
 from pvx.core.transients import detect_transient_regions, map_mask_to_output, smooth_binary_mask
 from pvx.core.wsola import wsola_time_stretch
 
+_RankWarning: tuple[type[Exception], ...] = ()
+if np is not None:
+    try:
+        from numpy.exceptions import RankWarning as _RW
+        _RankWarning = (_RW,)
+    except ImportError:
+        try:
+            from numpy import RankWarning as _RW  # type: ignore[attr-defined]
+            _RankWarning = (_RW,)
+        except ImportError:
+            pass
+
 WINDOW_CHOICES = (
     "hann",
     "hamming",
@@ -1298,7 +1310,7 @@ def _sample_dynamic_signal(signal: DynamicControlSignal, query_sec: np.ndarray) 
         try:
             coeffs = np.polyfit(x, y, deg=degree)
             return np.polyval(coeffs, query_sec)
-        except Exception:
+        except (np.linalg.LinAlgError, ValueError) + _RankWarning:
             return np.interp(query_sec, x, y)
 
     return np.interp(query_sec, x, y)
