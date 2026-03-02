@@ -1233,7 +1233,9 @@ def main(argv: list[str] | None = None) -> int:
                             deterministic_cpu=bool(args.deterministic_cpu),
                             tag="pvx",
                         )
-                        case = _case_key(path, task)
+                        # Normalize path for cross-platform matching
+                        normalized_path = Path(path.name)
+                        case = _case_key(normalized_path, task)
                         signatures[case] = _sha256_file(stage2)
 
                         if int(args.determinism_runs) > 1:
@@ -1289,7 +1291,7 @@ def main(argv: list[str] | None = None) -> int:
                 metrics = _compute_metrics(ref_cmp, recon_cmp, sample_rate=int(ref_sr))
                 row = {
                     "method": method_name,
-                    "input": str(path),
+                    "input": path.name,  # normalize to just the filename
                     "task": task.name,
                     "kind": task.kind,
                     "value": task.value,

@@ -98,7 +98,7 @@
           "f0_rmse_cents": 0.06565332295654616,
           "hnr_drift_db": 0.03329579283187112,
           "ild_drift_db": NaN,
-          "input": "/Users/cleider/dev/pvx/benchmarks/data/speech_like.wav",
+          "input": "speech_like.wav",
           "integrated_lufs_delta_lu": -0.03223402714639434,
           "itd_drift_ms": NaN,
           "kind": "stretch",

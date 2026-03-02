@@ -101,8 +101,16 @@ def parse_module(path: Path) -> dict:
 
 def cli_help(path: Path) -> str | None:
     try:
+        cmd = ["python3", str(path), "--help"]
+        # Use python -m for files in src/pvx/cli or src/pvx/core to avoid top-level shadowing
+        if path.is_relative_to(ROOT / "src"):
+            rel_parts = path.relative_to(ROOT / "src").parts
+            if rel_parts[0] == "pvx" and rel_parts[1] in ("cli", "core"):
+                mod_name = ".".join(rel_parts)[:-3]  # Strip .py
+                cmd = ["python3", "-m", mod_name, "--help"]
+
         proc = subprocess.run(
-            ["python3", str(path), "--help"],
+            cmd,
             cwd=ROOT,
             text=True,
             capture_output=True,
