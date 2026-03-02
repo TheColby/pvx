@@ -18,6 +18,7 @@ from pvx.core.voc import (
     normalize_transform_name as normalize_core_transform_name,
     stft as core_stft,
 )
+from pvx.algorithms.utils.restoration import simple_declick
 
 
 _ACTIVE_TRANSFORM = "fft"
@@ -363,21 +364,6 @@ def minimum_statistics_denoise(audio: np.ndarray, floor: float = 0.08) -> np.nda
     mask = np.maximum(floor, (mag - noise) / (mag + 1e-12))
     out = mask * mag * np.exp(1j * pha)
     return istft_multi(out, n_fft=2048, hop=512, length=audio.shape[0])
-
-
-def simple_declick(audio: np.ndarray, threshold: float = 6.0) -> np.ndarray:
-    out = audio.copy()
-    for ch in range(out.shape[1]):
-        x = out[:, ch]
-        dx = np.abs(np.diff(x, prepend=x[0]))
-        med = np.median(dx) + 1e-12
-        bad = np.where(dx > threshold * med)[0]
-        for idx in bad:
-            lo = max(0, idx - 2)
-            hi = min(x.size, idx + 3)
-            x[idx] = np.median(x[lo:hi])
-        out[:, ch] = signal.medfilt(x, kernel_size=5)
-    return out
 
 
 def simple_declip(audio: np.ndarray, clip_threshold: float = 0.98) -> np.ndarray:

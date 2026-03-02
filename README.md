@@ -788,9 +788,9 @@ This uses the tuned deterministic profile by default (`--pvx-bench-profile tuned
 Use `--pvx-bench-profile legacy` to compare against the prior pvx benchmark settings.
 
 Stage 2 reproducibility controls:
-- corpus manifest + hash validation: `--dataset-manifest`, `--strict-corpus`, `--refresh-manifest`
-- deterministic CPU checks: `--deterministic-cpu`, `--determinism-runs`
-- stronger gates: `--gate-row-level`, `--gate-signatures`
+- corpus manifest + hash validation: `dataset-manifest`, `strict-corpus`, `refresh-manifest`
+- deterministic CPU checks: `deterministic-cpu`, `determinism-runs`
+- stronger gates: `gate-row-level`, `gate-signatures`
 - automatic quality diagnostics are emitted in [benchmarks/out/report.md](benchmarks/out/report.md) and `report.json`
 
 Interpret benchmark priorities:
