@@ -101,12 +101,17 @@ def parse_module(path: Path) -> dict:
 
 def cli_help(path: Path) -> str | None:
     try:
+        import os
+        env = os.environ.copy()
+        env["PYTHONPATH"] = str(ROOT / "src")
         proc = subprocess.run(
             ["python3", str(path), "--help"],
             cwd=ROOT,
             text=True,
             capture_output=True,
             timeout=25,
+            env=env,
+
             check=False,
         )
     except Exception as exc:  # pragma: no cover
