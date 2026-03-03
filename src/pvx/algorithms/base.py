@@ -615,6 +615,9 @@ def envelope_modulation(audio: np.ndarray, sample_rate: int, depth: float = 0.7)
 
 
 def estimate_f0_track(audio_mono: np.ndarray, sample_rate: int, fmin: float = 50.0, fmax: float = 1200.0, hop: int = 256) -> np.ndarray:
+    if np.max(np.abs(audio_mono)) < 1e-8:
+        return np.zeros(max(1, audio_mono.size // hop + 1), dtype=np.float64)
+
     librosa = maybe_librosa()
     if librosa is not None:
         try:

@@ -19,9 +19,9 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from pvx.core.common import cents_to_ratio, read_segment_csv
-from pvx.cli.pvxretune import nearest_scale_freq
-from pvx.core.voc import choose_pitch_ratio, parse_pitch_ratio_value
+from pvx.core.common import cents_to_ratio, read_segment_csv  # noqa: E402
+from pvx.cli.pvxretune import nearest_scale_freq  # noqa: E402
+from pvx.core.voc import choose_pitch_ratio, parse_pitch_ratio_value  # noqa: E402
 
 
 def write_text(path: Path, text: str) -> None:

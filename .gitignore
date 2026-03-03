@@ -18,3 +18,4 @@ htmlcov/
 .pytest_cache/
 docs/q.md
 docs/.nojekyll
+*.egg-info/
