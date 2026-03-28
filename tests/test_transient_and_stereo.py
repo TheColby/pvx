@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import argparse
+import math
 import sys
 import unittest
 from pathlib import Path
@@ -17,6 +18,7 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
+from pvx.core.stereo import lr_to_ms, ms_to_lr, validate_ref_channel
 from pvx.core.transients import detect_transient_regions, smooth_binary_mask
 from pvx.metrics.coherence import interchannel_coherence_drift
 from pvx.core.voc import VocoderConfig, configure_runtime, process_audio_block
@@ -234,6 +236,46 @@ class TestTransientHybridAndStereo(unittest.TestCase):
         out = process_audio_block(stereo, sr, args, self.cfg, stretch=1.2, pitch_ratio=1.0).audio
         self.assertEqual(out.shape[1], 2)
         self.assertTrue(np.all(np.isfinite(out)))
+
+    def test_validate_ref_channel_logic(self) -> None:
+        self.assertEqual(validate_ref_channel(0, 2), 0)
+        self.assertEqual(validate_ref_channel(1, 2), 1)
+        self.assertEqual(validate_ref_channel("0", 1), 0)
+        with self.assertRaises(ValueError):
+            validate_ref_channel(0, 0)
+        with self.assertRaises(ValueError):
+            validate_ref_channel(-1, 2)
+        with self.assertRaises(ValueError):
+            validate_ref_channel(2, 2)
+
+    def test_lr_to_ms_mathematical_correctness(self) -> None:
+        # L=1, R=1 -> M=sqrt(2), S=0
+        audio = np.array([[1.0, 1.0]], dtype=np.float64)
+        expected_m = 2.0 / math.sqrt(2.0)
+        expected_s = 0.0
+        out = lr_to_ms(audio)
+        self.assertAlmostEqual(out[0, 0], expected_m)
+        self.assertAlmostEqual(out[0, 1], expected_s)
+
+    def test_lr_to_ms_shape_validation(self) -> None:
+        with self.assertRaises(ValueError):
+            lr_to_ms(np.array([1.0, 2.0]))  # 1D
+        with self.assertRaises(ValueError):
+            lr_to_ms(np.array([[1.0, 2.0, 3.0]]))  # 3 channels
+
+    def test_ms_to_lr_mathematical_correctness(self) -> None:
+        # M=sqrt(2), S=0 -> L=1, R=1
+        sqrt2 = math.sqrt(2.0)
+        audio_ms = np.array([[sqrt2, 0.0]], dtype=np.float64)
+        out = ms_to_lr(audio_ms)
+        self.assertAlmostEqual(out[0, 0], 1.0)
+        self.assertAlmostEqual(out[0, 1], 1.0)
+
+    def test_stereo_round_trip(self) -> None:
+        audio = np.random.randn(100, 2).astype(np.float64)
+        ms = lr_to_ms(audio)
+        lr = ms_to_lr(ms)
+        np.testing.assert_allclose(audio, lr, atol=1e-12)
 
 
 if __name__ == "__main__":

@@ -1022,7 +1022,11 @@ def _check_gate(
         for row in rows:
             if not isinstance(row, dict):
                 continue
-            key = f"{row.get('input', 'unknown')}::{row.get('task', 'unknown')}"
+            # Use filename only for case indexing to ensure cross-platform path compatibility.
+            inp = str(row.get("input", "unknown"))
+            if inp != "unknown" and (os.sep in inp or (os.altsep and os.altsep in inp)):
+                inp = Path(inp).name
+            key = f"{inp}::{row.get('task', 'unknown')}"
             out[key] = row
         return out
 
