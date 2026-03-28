@@ -114,6 +114,13 @@ def cli_help(path: Path) -> str | None:
 
     out = (proc.stdout or "") + ("\n" + proc.stderr if proc.stderr else "")
     out = out.strip()
+
+    # Scrub absolute paths to avoid cross-environment CI drift
+    out = out.replace(str(ROOT), "[ROOT]")
+    # Also attempt to scrub common runner paths
+    out = out.replace("/home/runner/work/pvx/pvx", "[ROOT]")
+    out = out.replace("/Users/cleider/dev/pvx", "[ROOT]")
+
     if not out:
         return None
     if len(out) > 5000:
