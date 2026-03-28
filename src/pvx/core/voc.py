@@ -1631,6 +1631,18 @@ def _resize_or_pad_1d(values, size: int, *, xp=np):
     return out
 
 
+def _resize_or_pad_axis0(values, size: int, *, xp=np):
+    if values.shape[0] == size:
+        return values
+    if values.shape[0] > size:
+        return values[:size, ...]
+    pad_shape = list(values.shape)
+    pad_shape[0] = size
+    out = xp.zeros(pad_shape, dtype=values.dtype)
+    out[: values.shape[0], ...] = values
+    return out
+
+
 def _onesided_to_full_spectrum(spectrum, n_fft: int, *, xp=np):
     bins = int(n_fft // 2 + 1)
     spec = _resize_or_pad_1d(spectrum, bins, xp=xp).astype(xp.complex128, copy=False)
@@ -1644,6 +1656,26 @@ def _onesided_to_full_spectrum(spectrum, n_fft: int, *, xp=np):
         if mirror_src.size:
             # Rebuild negative frequencies via Hermitian symmetry for real output.
             full[bins:] = xp.conj(mirror_src[::-1])
+    return full
+
+
+def _onesided_to_full_spectrum_axis0(spectrum, n_fft: int, *, xp=np):
+    bins = int(n_fft // 2 + 1)
+    spec = _resize_or_pad_axis0(spectrum, bins, xp=xp).astype(xp.complex128, copy=False)
+
+    full_shape = list(spec.shape)
+    full_shape[0] = n_fft
+    full = xp.zeros(full_shape, dtype=xp.complex128)
+
+    full[:bins, ...] = spec
+    if n_fft > 1:
+        if n_fft % 2 == 0:
+            mirror_src = spec[1:-1, ...]
+        else:
+            mirror_src = spec[1:, ...]
+        if mirror_src.size:
+            # Rebuild negative frequencies via Hermitian symmetry for real output.
+            full[bins:, ...] = xp.conj(mirror_src[::-1, ...])
     return full
 
 
@@ -1698,6 +1730,30 @@ def _inverse_transform_numpy(spectrum: np.ndarray, n_fft: int, transform: Transf
     raise ValueError(f"Unsupported transform: {transform}")
 
 
+def _inverse_transform_numpy_batched(spectrum: np.ndarray, n_fft: int, transform: TransformMode) -> np.ndarray:
+    if transform == "fft":
+        spec = _resize_or_pad_axis0(spectrum, n_fft // 2 + 1, xp=np)
+        return np.fft.irfft(spec, n=n_fft, axis=0).astype(np.float64, copy=False)
+    if transform in {"dft", "czt"}:
+        full = _onesided_to_full_spectrum_axis0(spectrum, n_fft, xp=np)
+        return np.fft.ifft(full, n=n_fft, axis=0).real.astype(np.float64, copy=False)
+    if transform == "dct":
+        ensure_transform_backend_available(transform)
+        assert scipy_fft is not None
+        coeff = _resize_or_pad_axis0(spectrum.real.astype(np.float64, copy=False), n_fft, xp=np)
+        return scipy_fft.idct(coeff, type=2, n=n_fft, axis=0, norm="ortho").astype(np.float64, copy=False)
+    if transform == "dst":
+        ensure_transform_backend_available(transform)
+        assert scipy_fft is not None
+        coeff = _resize_or_pad_axis0(spectrum.real.astype(np.float64, copy=False), n_fft, xp=np)
+        return scipy_fft.idst(coeff, type=2, n=n_fft, axis=0, norm="ortho").astype(np.float64, copy=False)
+    if transform == "hartley":
+        coeff = _resize_or_pad_axis0(spectrum.real.astype(np.float64, copy=False), n_fft, xp=np)
+        full = np.fft.fft(coeff, n=n_fft, axis=0)
+        return ((full.real - full.imag) / float(n_fft)).astype(np.float64, copy=False)
+    raise ValueError(f"Unsupported transform: {transform}")
+
+
 def _forward_transform(frame, n_fft: int, transform: TransformMode, *, xp=np):
     if xp is np:
         return _forward_transform_numpy(
@@ -1746,6 +1802,33 @@ def _inverse_transform(spectrum, n_fft: int, transform: TransformMode, *, xp=np)
     if transform == "hartley":
         coeff = _resize_or_pad_1d(spectrum.real.astype(xp.float64, copy=False), n_fft, xp=xp)
         full = xp.fft.fft(coeff, n=n_fft)
+        return ((full.real - full.imag) / float(n_fft)).astype(xp.float64, copy=False)
+    raise ValueError(f"Unsupported transform: {transform}")
+
+
+def _inverse_transform_batched(spectrum, n_fft: int, transform: TransformMode, *, xp=np):
+    if xp is np:
+        return _inverse_transform_numpy_batched(
+            np.asarray(spectrum, dtype=np.complex128),
+            n_fft,
+            transform,
+        )
+    if _transform_requires_scipy(transform):
+        out = _inverse_transform_numpy_batched(
+            np.asarray(_to_numpy(spectrum), dtype=np.complex128),
+            n_fft,
+            transform,
+        )
+        return xp.asarray(out)
+    if transform == "fft":
+        spec = _resize_or_pad_axis0(spectrum, n_fft // 2 + 1, xp=xp)
+        return xp.fft.irfft(spec, n=n_fft, axis=0).astype(xp.float64, copy=False)
+    if transform in {"dft", "czt"}:
+        full = _onesided_to_full_spectrum_axis0(spectrum, n_fft, xp=xp)
+        return xp.fft.ifft(full, n=n_fft, axis=0).real.astype(xp.float64, copy=False)
+    if transform == "hartley":
+        coeff = _resize_or_pad_axis0(spectrum.real.astype(xp.float64, copy=False), n_fft, xp=xp)
+        full = xp.fft.fft(coeff, n=n_fft, axis=0)
         return ((full.real - full.imag) / float(n_fft)).astype(xp.float64, copy=False)
     raise ValueError(f"Unsupported transform: {transform}")
 
@@ -2206,11 +2289,16 @@ def istft(
         xp=xp,
     )
 
+    # Batch compute inverse transforms for all frames
+    frames = _inverse_transform_batched(work_spectrum, config.n_fft, transform, xp=xp)
+
+    # Pre-compute squared window for overlap-add weighting
+    window_sq = window * window
+
     for frame_idx in range(n_frames):
         start = frame_idx * config.hop_size
-        frame = _inverse_transform(work_spectrum[:, frame_idx], config.n_fft, transform, xp=xp)
-        output[start : start + config.n_fft] += frame * window
-        weight[start : start + config.n_fft] += window * window
+        output[start : start + config.n_fft] += frames[:, frame_idx] * window
+        weight[start : start + config.n_fft] += window_sq
 
     nz = weight > 1e-12
     # Weighted overlap-add normalization removes window-power bias.

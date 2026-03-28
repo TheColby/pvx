@@ -2,7 +2,7 @@
 
 # pvx Window Reference
 
-_Generated from commit `77bdfde` (commit date: 2026-03-02T01:29:29-05:00)._
+_Generated from commit `0f90deb` (commit date: 2026-03-02T19:16:48Z)._
 
 pvx currently supports **50** analysis windows. This file defines each one mathematically and explains it in plain English.
 

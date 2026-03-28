@@ -2,7 +2,7 @@
 
 # pvx Benchmarks
 
-_Generated from commit `77bdfde` (commit date: 2026-03-02T01:29:29-05:00)._
+_Generated from commit `0f90deb` (commit date: 2026-03-02T19:16:48Z)._
 
 Reproducible benchmark summary for core short-time Fourier transform/inverse short-time Fourier transform (STFT/ISTFT) path across central processing unit/Compute Unified Device Architecture/Apple-Silicon-native contexts.
 

@@ -2,7 +2,7 @@
 
 # pvx Pipeline Cookbook
 
-_Generated from commit `77bdfde` (commit date: 2026-03-02T01:29:29-05:00)._
+_Generated from commit `0f90deb` (commit date: 2026-03-02T19:16:48Z)._
 
 Curated one-line workflows for practical chaining, mastering, microtonal processing, and batch operation.
 
