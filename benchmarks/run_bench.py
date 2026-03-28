@@ -242,7 +242,9 @@ def _write_manifest(manifest_path: Path, data_paths: list[Path]) -> dict[str, An
         "entries": _corpus_manifest_entries(data_paths),
     }
     manifest_path.parent.mkdir(parents=True, exist_ok=True)
-    manifest_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    manifest_path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
     return payload
 
 
@@ -257,7 +259,9 @@ def _manifest_index(payload: dict[str, Any]) -> dict[str, dict[str, Any]]:
     return out
 
 
-def _validate_corpus_against_manifest(data_paths: list[Path], payload: dict[str, Any]) -> list[str]:
+def _validate_corpus_against_manifest(
+    data_paths: list[Path], payload: dict[str, Any]
+) -> list[str]:
     issues: list[str] = []
     index = _manifest_index(payload)
     for path in sorted(data_paths, key=lambda p: p.name):
@@ -268,7 +272,9 @@ def _validate_corpus_against_manifest(data_paths: list[Path], payload: dict[str,
         sha = str(row.get("sha256", ""))
         now_sha = _sha256_file(path)
         if sha != now_sha:
-            issues.append(f"hash mismatch for {path.name}: manifest={sha} current={now_sha}")
+            issues.append(
+                f"hash mismatch for {path.name}: manifest={sha} current={now_sha}"
+            )
     for name in sorted(index):
         if not any(path.name == name for path in data_paths):
             issues.append(f"manifest entry has no file in corpus: {name}")
@@ -356,7 +362,9 @@ def _diagnose_metrics(metrics: dict[str, float]) -> list[str]:
             "Some perceptual metrics used deterministic proxies. Install/reference external tools (`VISQOL_BIN`, `POLQA_BIN`, `PEAQ_BIN`) for standards-grade scoring."
         )
     if not suggestions:
-        suggestions.append("No major artifacts detected under current benchmark thresholds.")
+        suggestions.append(
+            "No major artifacts detected under current benchmark thresholds."
+        )
     return suggestions
 
 
@@ -517,7 +525,8 @@ def _run_pvx_cycle(
 
     base_cmd = [
         py_executable,
-        "-m", "pvx.core.voc",
+        "-m",
+        "pvx.core.voc",
         str(input_path),
         "--device",
         "cpu",
@@ -536,7 +545,8 @@ def _run_pvx_cycle(
         ]
         inverse = [
             py_executable,
-            "-m", "pvx.core.voc",
+            "-m",
+            "pvx.core.voc",
             str(stage1),
             "--device",
             "cpu",
@@ -562,7 +572,8 @@ def _run_pvx_cycle(
         ]
         inverse = [
             py_executable,
-            "-m", "pvx.core.voc",
+            "-m",
+            "pvx.core.voc",
             str(stage1),
             "--device",
             "cpu",
@@ -628,7 +639,9 @@ def _run_rubberband_cycle(
     return recon, sr, float(time.perf_counter() - t0)
 
 
-def _run_librosa_cycle(input_path: Path, task: TaskSpec) -> tuple[np.ndarray, int, float]:
+def _run_librosa_cycle(
+    input_path: Path, task: TaskSpec
+) -> tuple[np.ndarray, int, float]:
     try:
         import librosa  # type: ignore
     except Exception as exc:  # pragma: no cover - optional runtime
@@ -654,7 +667,9 @@ def _run_librosa_cycle(input_path: Path, task: TaskSpec) -> tuple[np.ndarray, in
     return out, sr, float(time.perf_counter() - t0)
 
 
-def _compute_metrics(reference: np.ndarray, candidate: np.ndarray, *, sample_rate: int) -> dict[str, float]:
+def _compute_metrics(
+    reference: np.ndarray, candidate: np.ndarray, *, sample_rate: int
+) -> dict[str, float]:
     ref, cand = _align_pair(reference, candidate)
     ref_mono = _to_mono(ref)
     cand_mono = _to_mono(cand)
@@ -719,7 +734,9 @@ def _compute_metrics(reference: np.ndarray, candidate: np.ndarray, *, sample_rat
         smear=smear,
         env_corr=env_corr,
     )
-    onset_p, onset_r, onset_f1 = onset_precision_recall_f1(ref_mono, cand_mono, sample_rate=sample_rate)
+    onset_p, onset_r, onset_f1 = onset_precision_recall_f1(
+        ref_mono, cand_mono, sample_rate=sample_rate
+    )
     phase_dev = interchannel_phase_deviation_by_band(ref, cand, sample_rate=sample_rate)
     proxy_flags = np.array(
         [
@@ -743,9 +760,15 @@ def _compute_metrics(reference: np.ndarray, candidate: np.ndarray, *, sample_rat
         "spectral_convergence": float(spectral_convergence(ref_mono, cand_mono)),
         "envelope_correlation": env_corr,
         "rms_level_delta_db": float(rms_level_delta_db(ref_mono, cand_mono)),
-        "crest_factor_delta_db": float(crest_factor_delta_db(ref_mono, cand_mono, sample_rate=sample_rate)),
-        "bandwidth_95_delta_hz": float(bandwidth_95_delta_hz(ref_mono, cand_mono, sample_rate=sample_rate)),
-        "zero_crossing_rate_delta": float(zero_crossing_rate_delta(ref_mono, cand_mono)),
+        "crest_factor_delta_db": float(
+            crest_factor_delta_db(ref_mono, cand_mono, sample_rate=sample_rate)
+        ),
+        "bandwidth_95_delta_hz": float(
+            bandwidth_95_delta_hz(ref_mono, cand_mono, sample_rate=sample_rate)
+        ),
+        "zero_crossing_rate_delta": float(
+            zero_crossing_rate_delta(ref_mono, cand_mono)
+        ),
         "dc_offset_delta": float(dc_offset_delta(ref_mono, cand_mono)),
         "clipping_ratio_delta": float(clipping_ratio_delta(ref_mono, cand_mono)),
         "pesq_mos_lqo": float(pesq.value),
@@ -761,17 +784,35 @@ def _compute_metrics(reference: np.ndarray, candidate: np.ndarray, *, sample_rat
         "polqa_proxy_used": float(polqa.proxy_used),
         "peaq_proxy_used": float(peaq.proxy_used),
         "perceptual_proxy_fraction": float(np.mean(proxy_flags)),
-        "integrated_lufs_delta_lu": float(integrated_lufs_delta_lu(ref_mono, cand_mono, sample_rate=sample_rate)),
-        "short_term_lufs_delta_lu": float(short_term_lufs_delta_lu(ref_mono, cand_mono, sample_rate=sample_rate)),
-        "lra_delta_lu": float(loudness_range_delta_lu(ref_mono, cand_mono, sample_rate=sample_rate)),
-        "true_peak_delta_dbtp": float(true_peak_delta_dbtp(ref_mono, cand_mono, sample_rate=sample_rate)),
-        "f0_rmse_cents": float(f0_rmse_cents(ref_mono, cand_mono, sample_rate=sample_rate)),
-        "voicing_f1": float(voicing_f1_score(ref_mono, cand_mono, sample_rate=sample_rate)),
-        "hnr_drift_db": float(harmonic_to_noise_ratio_drift_db(ref_mono, cand_mono, sample_rate=sample_rate)),
+        "integrated_lufs_delta_lu": float(
+            integrated_lufs_delta_lu(ref_mono, cand_mono, sample_rate=sample_rate)
+        ),
+        "short_term_lufs_delta_lu": float(
+            short_term_lufs_delta_lu(ref_mono, cand_mono, sample_rate=sample_rate)
+        ),
+        "lra_delta_lu": float(
+            loudness_range_delta_lu(ref_mono, cand_mono, sample_rate=sample_rate)
+        ),
+        "true_peak_delta_dbtp": float(
+            true_peak_delta_dbtp(ref_mono, cand_mono, sample_rate=sample_rate)
+        ),
+        "f0_rmse_cents": float(
+            f0_rmse_cents(ref_mono, cand_mono, sample_rate=sample_rate)
+        ),
+        "voicing_f1": float(
+            voicing_f1_score(ref_mono, cand_mono, sample_rate=sample_rate)
+        ),
+        "hnr_drift_db": float(
+            harmonic_to_noise_ratio_drift_db(
+                ref_mono, cand_mono, sample_rate=sample_rate
+            )
+        ),
         "onset_precision": float(onset_p),
         "onset_recall": float(onset_r),
         "onset_f1": float(onset_f1),
-        "attack_time_error_ms": float(attack_time_error_ms(ref_mono, cand_mono, sample_rate=sample_rate)),
+        "attack_time_error_ms": float(
+            attack_time_error_ms(ref_mono, cand_mono, sample_rate=sample_rate)
+        ),
         "ild_drift_db": float(ild_drift_db(ref, cand)),
         "itd_drift_ms": float(itd_drift_ms(ref, cand, sample_rate=sample_rate)),
         "phase_deviation_low_rad": float(phase_dev["phase_deviation_low_rad"]),
@@ -780,7 +821,9 @@ def _compute_metrics(reference: np.ndarray, candidate: np.ndarray, *, sample_rat
         "phase_deviation_mean_rad": float(phase_dev["phase_deviation_mean_rad"]),
         "phasiness_index": float(phasiness_index(ref_mono, cand_mono)),
         "musical_noise_index": float(musical_noise_index(ref_mono, cand_mono)),
-        "pre_echo_score": float(pre_echo_score(ref_mono, cand_mono, sample_rate=sample_rate)),
+        "pre_echo_score": float(
+            pre_echo_score(ref_mono, cand_mono, sample_rate=sample_rate)
+        ),
     }
 
 
@@ -818,7 +861,9 @@ def _render_markdown(payload: dict[str, Any]) -> str:
         lines.append(f"- Python: `{env.get('python', 'unknown')}`")
         lines.append(f"- Platform: `{env.get('platform', 'unknown')}`")
         lines.append(f"- Machine: `{env.get('machine', 'unknown')}`")
-        lines.append(f"- Deterministic CPU mode: `{env.get('deterministic_cpu', False)}`")
+        lines.append(
+            f"- Deterministic CPU mode: `{env.get('deterministic_cpu', False)}`"
+        )
         lines.append("")
     corpus = payload.get("corpus", {})
     if isinstance(corpus, dict):
@@ -847,7 +892,9 @@ def _render_markdown(payload: dict[str, Any]) -> str:
                     )
                 )
     lines.append("")
-    lines.append("| Method | Cases | LSD | ModSpec | Transient Smear | Stereo Coherence Drift | Mean Runtime (s) | Status |")
+    lines.append(
+        "| Method | Cases | LSD | ModSpec | Transient Smear | Stereo Coherence Drift | Mean Runtime (s) | Status |"
+    )
     lines.append("| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |")
     for method in payload.get("methods", []):
         agg = method.get("aggregate", {})
@@ -869,7 +916,9 @@ def _render_markdown(payload: dict[str, Any]) -> str:
     lines.append(
         "| Method | SNR (dB) | SI-SDR (dB) | SpecConv | EnvCorr | RMS ΔdB | Crest ΔdB | BW95 ΔHz | ZCR Δ | DC Δ | Clip Δ |"
     )
-    lines.append("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |")
+    lines.append(
+        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |"
+    )
     for method in payload.get("methods", []):
         agg = method.get("aggregate", {})
         lines.append(
@@ -916,7 +965,9 @@ def _render_markdown(payload: dict[str, Any]) -> str:
     lines.append(
         "| Method | LUFS Δ | ST-LUFS Δ | LRA Δ | TruePeak ΔdBTP | F0 RMSE (cents) | Voicing F1 | HNR ΔdB | Onset P | Onset R | Onset F1 | Attack Err (ms) |"
     )
-    lines.append("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |")
+    lines.append(
+        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |"
+    )
     for method in payload.get("methods", []):
         agg = method.get("aggregate", {})
         lines.append(
@@ -941,7 +992,9 @@ def _render_markdown(payload: dict[str, Any]) -> str:
     lines.append(
         "| Method | ILD ΔdB | ITD Δms | PhaseDev Low | PhaseDev Mid | PhaseDev High | PhaseDev Mean | Phasiness | Musical-Noise | Pre-Echo |"
     )
-    lines.append("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |")
+    lines.append(
+        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |"
+    )
     for method in payload.get("methods", []):
         agg = method.get("aggregate", {})
         lines.append(
@@ -960,10 +1013,16 @@ def _render_markdown(payload: dict[str, Any]) -> str:
         )
     lines.append("")
     lines.append("Interpretation:")
-    lines.append("- Lower-is-better: LSD, ModSpec, Transient Smear, Stereo Coherence Drift, SpecConv, absolute deltas, F0 RMSE, attack error, phasiness, musical-noise, pre-echo.")
-    lines.append("- Higher-is-better: SNR, SI-SDR, Envelope Correlation, STOI/ESTOI, voicing F1, MOS-style perceptual metrics.")
+    lines.append(
+        "- Lower-is-better: LSD, ModSpec, Transient Smear, Stereo Coherence Drift, SpecConv, absolute deltas, F0 RMSE, attack error, phasiness, musical-noise, pre-echo."
+    )
+    lines.append(
+        "- Higher-is-better: SNR, SI-SDR, Envelope Correlation, STOI/ESTOI, voicing F1, MOS-style perceptual metrics."
+    )
     lines.append("- PEAQ ODG is best near 0 and worse toward -4.")
-    lines.append("- Proxy Fraction shows how many perceptual metrics used deterministic proxy fallback instead of external reference tooling.")
+    lines.append(
+        "- Proxy Fraction shows how many perceptual metrics used deterministic proxy fallback instead of external reference tooling."
+    )
     lines.append("")
     lines.append("## Quality Diagnostics")
     lines.append("")
@@ -1022,7 +1081,10 @@ def _check_gate(
         for row in rows:
             if not isinstance(row, dict):
                 continue
-            key = f"{row.get('input', 'unknown')}::{row.get('task', 'unknown')}"
+            input_val = str(row.get("input", "unknown"))
+            # normalize the input path to just the filename to match baseline locally/CI
+            input_name = Path(input_val).name
+            key = f"{input_name}::{row.get('task', 'unknown')}"
             out[key] = row
         return out
 
@@ -1030,7 +1092,9 @@ def _check_gate(
     current_methods = _method_maps(payload)
     baseline_methods = _method_maps(baseline_payload)
     if "pvx" not in current_methods or "pvx" not in baseline_methods:
-        failures.append("Baseline gate requires pvx aggregate metrics in both current and baseline reports.")
+        failures.append(
+            "Baseline gate requires pvx aggregate metrics in both current and baseline reports."
+        )
         return failures
 
     current_agg = current_methods["pvx"].get("aggregate", {})
@@ -1068,7 +1132,9 @@ def _check_gate(
             for case_key, base_row in base_idx.items():
                 cur_row = cur_idx.get(case_key)
                 if cur_row is None:
-                    failures.append(f"Missing current row for baseline case: {case_key}")
+                    failures.append(
+                        f"Missing current row for baseline case: {case_key}"
+                    )
                     continue
                 for metric, (direction, tol) in rules.items():
                     base_val = _safe_float(base_row.get(metric, math.nan))
@@ -1100,18 +1166,24 @@ def _check_gate(
                         f"Signature mismatch for {case_key}: current={now_hash} baseline={old_hash}"
                     )
         elif signature_gate:
-            failures.append("Signature gate enabled but signatures are missing in current or baseline report.")
+            failures.append(
+                "Signature gate enabled but signatures are missing in current or baseline report."
+            )
 
     current_determinism = payload.get("determinism", {})
     if isinstance(current_determinism, dict):
         mismatch_count = int(current_determinism.get("mismatch_count", 0) or 0)
         if mismatch_count > 0:
-            failures.append(f"Determinism check failed with {mismatch_count} mismatch case(s).")
+            failures.append(
+                f"Determinism check failed with {mismatch_count} mismatch case(s)."
+            )
     return failures
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Run pvx quality benchmarks against Rubber Band and librosa.")
+    parser = argparse.ArgumentParser(
+        description="Run pvx quality benchmarks against Rubber Band and librosa."
+    )
     parser.add_argument("--out-dir", type=Path, default=ROOT / "benchmarks" / "out")
     parser.add_argument("--data-dir", type=Path, default=ROOT / "benchmarks" / "data")
     parser.add_argument(
@@ -1130,12 +1202,31 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Fail when corpus files do not match --dataset-manifest.",
     )
-    parser.add_argument("--quick", action="store_true", help="Run tiny subset for CI / smoke testing.")
-    parser.add_argument("--plots", action="store_true", help="Save summary plots (requires matplotlib).")
-    parser.add_argument("--python", default=sys.executable, help="Python executable for pvx CLI invocations.")
-    parser.add_argument("--baseline", type=Path, default=None, help="Optional baseline JSON for regression gate.")
-    parser.add_argument("--gate", action="store_true", help="Enable baseline regression gate checks.")
-    parser.add_argument("--gate-row-level", action="store_true", help="Enable per-case row-level gate checks.")
+    parser.add_argument(
+        "--quick", action="store_true", help="Run tiny subset for CI / smoke testing."
+    )
+    parser.add_argument(
+        "--plots", action="store_true", help="Save summary plots (requires matplotlib)."
+    )
+    parser.add_argument(
+        "--python",
+        default=sys.executable,
+        help="Python executable for pvx CLI invocations.",
+    )
+    parser.add_argument(
+        "--baseline",
+        type=Path,
+        default=None,
+        help="Optional baseline JSON for regression gate.",
+    )
+    parser.add_argument(
+        "--gate", action="store_true", help="Enable baseline regression gate checks."
+    )
+    parser.add_argument(
+        "--gate-row-level",
+        action="store_true",
+        help="Enable per-case row-level gate checks.",
+    )
     parser.add_argument(
         "--gate-signatures",
         action="store_true",
@@ -1240,21 +1331,40 @@ def main(argv: list[str] | None = None) -> int:
                             hash_seq = [signatures[case]]
                             max_abs = 0.0
                             for run_idx in range(2, int(args.determinism_runs) + 1):
-                                recon_det, sr_det, _elapsed_det, _stage1_det, stage2_det = _run_pvx_cycle(
+                                (
+                                    recon_det,
+                                    sr_det,
+                                    _elapsed_det,
+                                    _stage1_det,
+                                    stage2_det,
+                                ) = _run_pvx_cycle(
                                     path,
                                     task,
                                     out_dir,
                                     py_executable=args.python,
-                                    tuned_profile=(str(args.pvx_bench_profile) != "legacy"),
+                                    tuned_profile=(
+                                        str(args.pvx_bench_profile) != "legacy"
+                                    ),
                                     deterministic_cpu=bool(args.deterministic_cpu),
                                     tag=f"pvx_det{run_idx}",
                                 )
                                 hash_seq.append(_sha256_file(stage2_det))
-                                recon_ref = _match_channels(np.asarray(recon, dtype=np.float64), ref_audio.shape[1])
-                                recon_cmp = _match_channels(np.asarray(recon_det, dtype=np.float64), ref_audio.shape[1])
-                                min_len_det = min(recon_ref.shape[0], recon_cmp.shape[0])
+                                recon_ref = _match_channels(
+                                    np.asarray(recon, dtype=np.float64),
+                                    ref_audio.shape[1],
+                                )
+                                recon_cmp = _match_channels(
+                                    np.asarray(recon_det, dtype=np.float64),
+                                    ref_audio.shape[1],
+                                )
+                                min_len_det = min(
+                                    recon_ref.shape[0], recon_cmp.shape[0]
+                                )
                                 if min_len_det > 0:
-                                    diff = np.abs(recon_ref[:min_len_det] - recon_cmp[:min_len_det])
+                                    diff = np.abs(
+                                        recon_ref[:min_len_det]
+                                        - recon_cmp[:min_len_det]
+                                    )
                                     max_abs = max(max_abs, float(np.max(diff)))
                             mismatch = any(h != hash_seq[0] for h in hash_seq[1:])
                             determinism_checks.append(
@@ -1269,7 +1379,9 @@ def main(argv: list[str] | None = None) -> int:
                                 determinism_mismatch_cases.append(case)
                     elif method_name == "rubberband":
                         assert rb_exe is not None
-                        recon, sr, elapsed = _run_rubberband_cycle(path, task, out_dir, rb_exe=rb_exe)
+                        recon, sr, elapsed = _run_rubberband_cycle(
+                            path, task, out_dir, rb_exe=rb_exe
+                        )
                     else:
                         recon, sr, elapsed = _run_librosa_cycle(path, task)
                 except Exception as exc:
@@ -1277,7 +1389,9 @@ def main(argv: list[str] | None = None) -> int:
                     note = str(exc)
                     continue
 
-                recon = _match_channels(np.asarray(recon, dtype=np.float64), ref_audio.shape[1])
+                recon = _match_channels(
+                    np.asarray(recon, dtype=np.float64), ref_audio.shape[1]
+                )
                 if sr != ref_sr:
                     # compare in sample domain at matched indices; no extra resample to keep benchmark deterministic.
                     min_len = min(ref_audio.shape[0], recon.shape[0])
@@ -1318,7 +1432,9 @@ def main(argv: list[str] | None = None) -> int:
         "quick": bool(args.quick),
         "inputs": [str(p) for p in data_paths],
         "tasks": [task.__dict__ for task in tasks],
-        "environment": _collect_environment_metadata(deterministic_cpu=bool(args.deterministic_cpu)),
+        "environment": _collect_environment_metadata(
+            deterministic_cpu=bool(args.deterministic_cpu)
+        ),
         "corpus": {
             "data_dir": str(data_dir),
             "manifest_path": str(manifest_path),
@@ -1338,7 +1454,9 @@ def main(argv: list[str] | None = None) -> int:
 
     json_path = out_dir / "report.json"
     md_path = out_dir / "report.md"
-    json_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    json_path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
     md_path.write_text(_render_markdown(payload), encoding="utf-8")
     print(f"Wrote {json_path}")
     print(f"Wrote {md_path}")
@@ -1349,8 +1467,16 @@ def main(argv: list[str] | None = None) -> int:
 
             labels = [m["name"] for m in methods if m["status"] == "active"]
             if labels:
-                lsd = [float(m["aggregate"]["log_spectral_distance"]) for m in methods if m["status"] == "active"]
-                smear = [float(m["aggregate"]["transient_smear_score"]) for m in methods if m["status"] == "active"]
+                lsd = [
+                    float(m["aggregate"]["log_spectral_distance"])
+                    for m in methods
+                    if m["status"] == "active"
+                ]
+                smear = [
+                    float(m["aggregate"]["transient_smear_score"])
+                    for m in methods
+                    if m["status"] == "active"
+                ]
                 x = np.arange(len(labels))
                 width = 0.36
                 fig, ax = plt.subplots(figsize=(8.5, 4.2))

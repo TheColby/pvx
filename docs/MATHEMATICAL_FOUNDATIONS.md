@@ -2,7 +2,7 @@
 
 # pvx Mathematical Foundations
 
-_Generated from commit `77bdfde` (commit date: 2026-03-02T01:29:29-05:00)._
+_Generated from commit `[COMMIT_HASH]` (commit date: [COMMIT_DATE])._
 
 This document explains the core signal-processing equations used by pvx, with plain-English interpretation.
 All equations are written in GitHub-renderable LaTeX and are intended to render directly in normal GitHub Markdown view.

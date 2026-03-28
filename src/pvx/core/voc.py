@@ -4510,7 +4510,7 @@ def resolve_checkpoint_context(
 
 
 def load_checkpoint_chunk(path: Path) -> np.ndarray:
-    values = np.asarray(np.load(path), dtype=np.float64)
+    values = np.asarray(np.load(path, allow_pickle=False), dtype=np.float64)
     if values.ndim == 1:
         values = values[:, None]
     if values.ndim != 2:
