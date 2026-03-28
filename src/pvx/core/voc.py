@@ -4482,7 +4482,7 @@ def _checkpoint_job_id(
         "profile": str(getattr(args, "_active_quality_profile", "neutral")),
     }
     text = json.dumps(payload, sort_keys=True, separators=(",", ":"))
-    return hashlib.sha1(text.encode("utf-8")).hexdigest()[:16]
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
 
 
 def resolve_checkpoint_context(
