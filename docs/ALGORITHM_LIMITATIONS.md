@@ -2,7 +2,7 @@
 
 # pvx Algorithm Limitations and Applicability
 
-_Generated from commit `77bdfde` (commit date: 2026-03-02T01:29:29-05:00)._
+_Generated from commit `cb43a33` (commit date: 2026-03-02T03:32:11-05:00)._
 
 This document summarizes assumptions, likely failure modes, and practical exclusion cases for each algorithm group and algorithm module.
 
