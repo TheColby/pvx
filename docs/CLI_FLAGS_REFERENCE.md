@@ -2,7 +2,7 @@
 
 # pvx Command-Line Interface (CLI) Flags Reference
 
-_Generated from commit `77bdfde` (commit date: 2026-03-02T01:29:29-05:00)._
+_Generated from commit `abf886e` (commit date: 2026-03-02T18:46:54Z)._
 
 This file enumerates long-form CLI flags discovered from argparse declarations in canonical pvx CLI sources.
 

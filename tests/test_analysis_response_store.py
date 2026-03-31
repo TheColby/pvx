@@ -18,21 +18,21 @@ if str(SRC) not in sys.path:
 if str(ROOT) not in sys.path:
     sys.path.insert(1, str(ROOT))
 
-from pvx.core.analysis_store import (
+from pvx.core.analysis_store import (  # noqa: E402
     AnalysisArtifact,
     analysis_digest,
     analyze_audio,
     load_analysis_artifact,
     save_analysis_artifact,
 )
-from pvx.core.response_store import (
+from pvx.core.response_store import (  # noqa: E402
     ResponseArtifact,
     load_response_artifact,
     response_digest,
     response_from_analysis,
     save_response_artifact,
 )
-from pvx.core.voc import VocoderConfig, configure_runtime
+from pvx.core.voc import VocoderConfig, configure_runtime  # noqa: E402
 
 
 class TestAnalysisResponseStore(unittest.TestCase):
