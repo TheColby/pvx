@@ -280,7 +280,7 @@ def generate_envelope_points(
             r *= scale
         s_dur = max(0.0, duration - (a + d + r))
 
-        p0 = 0.0
+        p0 = 0.0  # noqa: F841
         p1 = a
         p2 = p1 + d
         p3 = p2 + s_dur

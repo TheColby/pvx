@@ -93,16 +93,30 @@ def wsola_time_stretch(
         best_score = -math.inf
         if out_norm.size >= 4 and np.any(np.abs(out_norm) > 1e-10):
             ref_norm = np.linalg.norm(out_norm) + 1e-12
-            for cand in range(lo, hi + 1, search_step):
-                seg = x[cand : cand + overlap]
-                if seg.size != overlap:
-                    continue
-                # Correlation in normalized space yields deterministic "best overlap" alignment.
-                denom = (np.linalg.norm(seg) + 1e-12) * ref_norm
-                score = float(np.dot(seg, out_norm) / denom)
-                if score > best_score:
-                    best_score = score
-                    best_pos = cand
+
+            valid_hi = min(hi, x.size - overlap)
+            if valid_hi >= lo:
+                n_cands = (valid_hi - lo) // search_step + 1
+                if n_cands > 0:
+                    shape = (n_cands, overlap)
+                    stride_elem = x.strides[0]
+                    strides = (stride_elem * search_step, stride_elem)
+                    segs = np.lib.stride_tricks.as_strided(x[lo:], shape=shape, strides=strides)
+
+                    # Correlation in normalized space yields deterministic "best overlap" alignment.
+                    segs_sq_sum = np.einsum('ij,ij->i', segs, segs)
+                    segs_norm = np.sqrt(segs_sq_sum)
+                    denoms = (segs_norm + 1e-12) * ref_norm
+
+                    dots = np.dot(segs, out_norm)
+                    scores = dots / denoms
+
+                    best_idx = np.argmax(scores)
+                    best_score_cand = float(scores[best_idx])
+
+                    if best_score_cand > best_score:
+                        best_score = best_score_cand
+                        best_pos = lo + int(best_idx) * search_step
 
         frame = x[best_pos : best_pos + frame_len]
         if frame.size < frame_len:

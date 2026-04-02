@@ -167,7 +167,7 @@ def generate_algorithm_param_doc() -> None:
     lines.append("")
     lines.append("This file lists per-algorithm parameter keys consumed by `pvx.algorithms.base.run_algorithm()` dispatch.")
     lines.append("Legacy import alias `pvxalgorithms.base.run_algorithm()` is still available for compatibility.")
-    lines.append("Use these keys as `**params` when calling module `process(audio, sample_rate, **params)`. ")
+    lines.append("Use these keys as `**params` when calling module `process(audio, sample_rate, **params)`.")
     lines.append("")
     for slug in sorted(params):
         lines.append(f"## `{slug}`")

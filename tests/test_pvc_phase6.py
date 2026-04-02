@@ -18,16 +18,16 @@ if str(SRC) not in sys.path:
 if str(ROOT) not in sys.path:
     sys.path.insert(1, str(ROOT))
 
-from pvx.cli.pvxenvelope import main as envelope_main
-from pvx.cli.pvx import main as pvx_main
-from pvx.cli.pvxreshape import main as reshape_main
-from pvx.core.pvc_functions import (
+from pvx.cli.pvxenvelope import main as envelope_main  # noqa: E402
+from pvx.cli.pvx import main as pvx_main  # noqa: E402
+from pvx.cli.pvxreshape import main as reshape_main  # noqa: E402
+from pvx.core.pvc_functions import (  # noqa: E402
     dump_control_points_csv,
     generate_envelope_points,
     parse_control_points_payload,
     reshape_control_points,
 )
-from pvx.core.pvc_ops import evaluate_scalar_control
+from pvx.core.pvc_ops import evaluate_scalar_control  # noqa: E402
 
 
 class TestPVCPhase6Utilities(unittest.TestCase):
