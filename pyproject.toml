@@ -67,7 +67,7 @@ build = [
 # ML/DL framework integrations (install only what you need)
 torch = [
     "torch>=2.0",
-    "torchaudio>=2.0",
+    "torchaudio>=2.11.0",
 ]
 huggingface = [
     "datasets>=2.14",
@@ -79,7 +79,7 @@ tensorflow = [
 # Install all ML integrations at once
 ml = [
     "torch>=2.0",
-    "torchaudio>=2.0",
+    "torchaudio>=2.11.0",
     "datasets>=2.14",
     "transformers>=4.35",
 ]
