@@ -59,7 +59,7 @@ dev = [
     "coverage>=7.0",
     "mypy>=1.10",
     "pre-commit>=3.0",
-    "ruff>=0.9",
+    "ruff>=0.15.10",
 ]
 build = [
     "pyinstaller>=6.0",
