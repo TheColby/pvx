@@ -71,7 +71,7 @@ torch = [
 ]
 huggingface = [
     "datasets>=2.14",
-    "transformers>=4.35",
+    "transformers>=5.5.3",
 ]
 tensorflow = [
     "tensorflow>=2.13",
@@ -81,7 +81,7 @@ ml = [
     "torch>=2.0",
     "torchaudio>=2.0",
     "datasets>=2.14",
-    "transformers>=4.35",
+    "transformers>=5.5.3",
 ]
 
 [project.scripts]
