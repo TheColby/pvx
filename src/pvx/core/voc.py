@@ -4902,7 +4902,7 @@ def resample_multi(audio: np.ndarray, output_samples: int, mode: ResampleMode) -
     return out
 
 
-def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
+def _validate_dynamic_controls(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     raw_dynamic_values: dict[str, str] = dict(getattr(args, "_dynamic_control_raw_values", {}) or {})
     for attr_name, raw_value in raw_dynamic_values.items():
         if hasattr(args, attr_name):
@@ -5043,6 +5043,8 @@ def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> 
     args._dynamic_control_refs = dynamic_refs
     args._dynamic_control_raw_values = raw_dynamic_values
 
+
+def _validate_hardware_and_routes(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     if args.gpu and args.cpu:
         parser.error("Choose only one of --gpu or --cpu.")
     if args.gpu:
@@ -5061,6 +5063,10 @@ def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> 
     except ValueError as exc:
         parser.error(str(exc))
 
+    if args._control_routes and not (args.pitch_map is not None or args.pitch_map_stdin):
+        parser.error("--route requires --pitch-map, --pitch-map-stdin, or --control-stdin")
+
+def _validate_core_dsp_limits(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     if args.n_fft <= 0:
         parser.error("--n-fft must be > 0")
     if args.win_length <= 0:
@@ -5089,17 +5095,15 @@ def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> 
         parser.error("--pitch-map-smooth-ms must be >= 0")
     if args.pitch_map_crossfade_ms < 0.0:
         parser.error("--pitch-map-crossfade-ms must be >= 0")
-    if dynamic_refs and (args.pitch_map is not None or args.pitch_map_stdin):
+    if args._dynamic_control_refs and (args.pitch_map is not None or args.pitch_map_stdin):
         parser.error("Dynamic per-parameter control files cannot be combined with --pitch-map/--pitch-map-stdin")
-    if "time_stretch" in dynamic_refs and args.target_duration is not None:
+    if "time_stretch" in args._dynamic_control_refs and args.target_duration is not None:
         parser.error("--target-duration cannot be combined with dynamic --time-stretch control files")
-    for ref in dynamic_refs.values():
+    for ref in args._dynamic_control_refs.values():
         if not ref.path.exists():
             parser.error(f"Dynamic control file not found: {ref.path}")
     if args.pitch_map_stdin and args.pitch_map is not None and str(args.pitch_map) != "-":
         parser.error("--pitch-map-stdin cannot be combined with --pitch-map path")
-    if args._control_routes and not (args.pitch_map is not None or args.pitch_map_stdin):
-        parser.error("--route requires --pitch-map, --pitch-map-stdin, or --control-stdin")
     if args.target_f0 is not None and args.target_f0 <= 0:
         parser.error("--target-f0 must be > 0")
     if args.f0_min <= 0 or args.f0_max <= 0 or args.f0_min >= args.f0_max:
@@ -5165,6 +5169,12 @@ def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> 
     if args.multires_weights is not None and not args.multires_fusion:
         parser.error("--multires-weights requires --multires-fusion")
 
+    # Preserve legacy behavior while allowing explicit transient-mode overrides.
+    if str(args.transient_mode) == "reset":
+        args.transient_preserve = True
+
+
+def _validate_multires_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     if args.multires_fusion:
         try:
             ffts = parse_int_list(args.multires_ffts, context="--multires-ffts")
@@ -5194,9 +5204,11 @@ def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> 
         args._multires_ffts = [int(args.n_fft)]
         args._multires_weights = [1.0]
 
-    # Preserve legacy behavior while allowing explicit transient-mode overrides.
-    if str(args.transient_mode) == "reset":
-        args.transient_preserve = True
+def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
+    _validate_dynamic_controls(args, parser)
+    _validate_hardware_and_routes(args, parser)
+    _validate_core_dsp_limits(args, parser)
+    _validate_multires_args(args, parser)
 
     validate_transform_available(args.transform, parser)
     validate_mastering_args(args, parser)
