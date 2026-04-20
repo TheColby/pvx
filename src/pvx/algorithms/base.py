@@ -11,6 +11,7 @@ from typing import Any
 import numpy as np
 from scipy import ndimage, signal
 
+from pvx.core.common import coerce_audio
 from pvx.core.voc import (
     TRANSFORM_CHOICES as CORE_TRANSFORM_CHOICES,
     VocoderConfig as CoreVocoderConfig,
@@ -28,15 +29,6 @@ class AlgorithmResult:
     audio: np.ndarray
     sample_rate: int
     metadata: dict[str, Any]
-
-
-def coerce_audio(audio: np.ndarray) -> np.ndarray:
-    work = np.asarray(audio, dtype=np.float64)
-    if work.ndim == 1:
-        work = work[:, None]
-    if work.ndim != 2:
-        raise ValueError("audio must be shape (samples,) or (samples, channels)")
-    return np.ascontiguousarray(work)
 
 
 def maybe_librosa() -> Any:

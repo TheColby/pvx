@@ -20,6 +20,7 @@ from typing import Literal
 
 import numpy as np
 
+from pvx.core.common import coerce_audio
 from pvx.core.response_store import ResponseArtifact
 from pvx.core.voc import VocoderConfig, istft, stft
 
@@ -78,15 +79,6 @@ def _exp_ease(u: np.ndarray, *, strength: float) -> np.ndarray:
 
 def db_to_amp(db: float) -> float:
     return float(10.0 ** (float(db) / 20.0))
-
-
-def _coerce_audio(audio: np.ndarray) -> np.ndarray:
-    arr = np.asarray(audio, dtype=np.float64)
-    if arr.ndim == 1:
-        arr = arr[:, None]
-    if arr.ndim != 2:
-        raise ValueError("audio must be mono (N,) or multichannel (N,C)")
-    return arr
 
 
 def _resize_curve(values: np.ndarray, target_bins: int) -> np.ndarray:
@@ -323,7 +315,7 @@ def process_response_operator(
     expand_ratio: float = 1.2,
 ) -> np.ndarray:
     """Apply PVC-inspired response operator to mono/multichannel audio."""
-    work = _coerce_audio(audio)
+    work = coerce_audio(audio)
     out = np.zeros_like(work)
     channels = work.shape[1]
 

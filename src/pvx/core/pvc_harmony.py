@@ -14,6 +14,7 @@ from typing import Literal
 
 import numpy as np
 
+from pvx.core.common import coerce_audio
 from pvx.core.voc import VocoderConfig, istft, stft
 
 HarmonyOperatorName = Literal["chordmapper", "inharmonator"]
@@ -30,15 +31,6 @@ CHORD_INTERVALS_SEMITONES: dict[str, tuple[int, ...]] = {
     "min7": (0, 3, 7, 10),
     "dom7": (0, 4, 7, 10),
 }
-
-
-def _coerce_audio(audio: np.ndarray) -> np.ndarray:
-    arr = np.asarray(audio, dtype=np.float64)
-    if arr.ndim == 1:
-        arr = arr[:, None]
-    if arr.ndim != 2:
-        raise ValueError("audio must be mono (N,) or multichannel (N,C)")
-    return arr
 
 
 def chord_mapper_mask(
@@ -128,7 +120,7 @@ def process_harmony_operator(
     dry_mix: float = 0.0,
 ) -> np.ndarray:
     """Apply chord-mapper or inharmonator operator in STFT domain."""
-    work = _coerce_audio(audio)
+    work = coerce_audio(audio)
     out = np.zeros_like(work)
     wet_mix = np.clip(1.0 - float(dry_mix), 0.0, 1.0)
     dry_mix_clamped = np.clip(float(dry_mix), 0.0, 1.0)

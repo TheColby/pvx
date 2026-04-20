@@ -59,6 +59,15 @@ class SegmentSpec:
     pitch_ratio: float = 1.0
 
 
+def coerce_audio(audio: np.ndarray) -> np.ndarray:
+    work = np.asarray(audio, dtype=np.float64)
+    if work.ndim == 1:
+        work = work[:, None]
+    if work.ndim != 2:
+        raise ValueError("audio must be shape (samples,) or (samples, channels)")
+    return np.ascontiguousarray(work)
+
+
 VERBOSITY_LEVELS = ("silent", "quiet", "normal", "verbose", "debug")
 _VERBOSITY_TO_LEVEL = {name: idx for idx, name in enumerate(VERBOSITY_LEVELS)}
 

@@ -16,6 +16,7 @@ from typing import Literal
 
 import numpy as np
 
+from pvx.core.common import coerce_audio
 from pvx.core.pvc_ops import evaluate_scalar_control, load_scalar_control_points
 
 try:
@@ -36,15 +37,6 @@ InterpMode = Literal[
     "s_curve",
     "smootherstep",
 ]
-
-
-def _coerce_audio(audio: np.ndarray) -> np.ndarray:
-    arr = np.asarray(audio, dtype=np.float64)
-    if arr.ndim == 1:
-        arr = arr[:, None]
-    if arr.ndim != 2:
-        raise ValueError("audio must be mono (N,) or multichannel (N,C)")
-    return arr
 
 
 def _sample_times(num_samples: int, sample_rate: int) -> np.ndarray:
@@ -148,7 +140,7 @@ def process_ring_operator(
     tv_order: int = 3,
 ) -> np.ndarray:
     """Apply ring/resonator operator to mono/multichannel audio."""
-    work = _coerce_audio(audio)
+    work = coerce_audio(audio)
     n_samples, channels = work.shape
     times = _sample_times(n_samples, sample_rate)
 

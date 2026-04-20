@@ -1022,7 +1022,8 @@ def _check_gate(
         for row in rows:
             if not isinstance(row, dict):
                 continue
-            key = f"{row.get('input', 'unknown')}::{row.get('task', 'unknown')}"
+            input_name = Path(str(row.get('input', 'unknown'))).name
+            key = f"{input_name}::{row.get('task', 'unknown')}"
             out[key] = row
         return out
 
@@ -1289,7 +1290,7 @@ def main(argv: list[str] | None = None) -> int:
                 metrics = _compute_metrics(ref_cmp, recon_cmp, sample_rate=int(ref_sr))
                 row = {
                     "method": method_name,
-                    "input": str(path),
+                    "input": path.name,
                     "task": task.name,
                     "kind": task.kind,
                     "value": task.value,
