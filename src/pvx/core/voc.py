@@ -5203,45 +5203,25 @@ def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> 
     validate_output_policy_args(args, parser)
 
 
-def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        description=(
-            "Phase-vocoder CLI for multi-file, multi-channel time stretching and pitch shifting."
-        ),
-        formatter_class=argparse.RawTextHelpFormatter,
-        epilog=(
-            "Beginner examples:\n"
-            "  pvx voc input.wav --stretch 1.2 --output output.wav\n"
-            "  pvx voc vocal.wav --preset vocal --pitch -2 --output vocal_tuned.wav\n"
-            "  pvx voc speech.wav --transient-mode hybrid --stretch 1.25 --output speech_hybrid.wav\n"
-            "  pvx voc stereo.wav --stereo-mode mid_side_lock --coherence-strength 0.9 --stretch 1.2 --output stereo_lock.wav\n"
-            "  pvx pitch-track A.wav --emit pitch_to_stretch --output - | pvx voc B.wav --control-stdin --output B_follow.wav\n"
-            "  pvx voc input.wav --stretch controls/stretch.csv --interp linear --output output.wav\n"
-            "  pvx voc input.wav --example all\n"
-        ),
-    )
-
-    parser.add_argument("inputs", nargs="*", help="Input audio files/globs or '-' for stdin")
-
-    io_args_group = parser.add_argument_group("I/O")
-    io_args_group.add_argument(
+def add_io_args(group: argparse._ArgumentGroup) -> None:
+    group.add_argument(
         "-o",
         "--output-dir",
         type=Path,
         default=None,
         help="Directory for output files (default: same directory as each input)",
     )
-    io_args_group.add_argument(
+    group.add_argument(
         "--suffix",
         default="_pv",
         help="Suffix appended to output filename stem (default: _pv)",
     )
-    io_args_group.add_argument(
+    group.add_argument(
         "--output-format",
         default=None,
         help="Output format/extension (e.g. wav, flac, aiff). Default: keep input extension.",
     )
-    io_args_group.add_argument(
+    group.add_argument(
         "--out",
         "--output",
         dest="output",
@@ -5249,19 +5229,26 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Explicit output file path (single-input mode only). Alias: --out",
     )
-    io_args_group.add_argument("--overwrite", action="store_true", help="Overwrite existing outputs")
-    io_args_group.add_argument("--dry-run", action="store_true", help="Resolve settings without writing files")
-    io_args_group.add_argument(
+    group.add_argument("--overwrite", action="store_true", help="Overwrite existing outputs")
+    group.add_argument("--dry-run", action="store_true", help="Resolve settings without writing files")
+    group.add_argument(
         "--stdout",
         action="store_true",
         help="Write processed audio to stdout stream (for piping); requires exactly one input",
     )
 
-    debug_group = parser.add_argument_group("Debug")
-    add_console_args(debug_group, include_no_progress_alias=True)
 
-    beginner_group = parser.add_argument_group("Beginner experience")
-    beginner_group.add_argument(
+def add_debug_args(group: argparse._ArgumentGroup) -> None:
+    add_console_args(group, include_no_progress_alias=True)
+    group.add_argument(
+        "--explain-plan",
+        action="store_true",
+        help="Print resolved processing plan JSON and exit without rendering audio.",
+    )
+
+
+def add_beginner_args(group: argparse._ArgumentGroup) -> None:
+    group.add_argument(
         "--preset",
         choices=list(PRESET_CHOICES),
         default="none",
@@ -5270,89 +5257,92 @@ def build_parser() -> argparse.ArgumentParser:
             "New: default/vocal_studio/drums_safe/extreme_ambient/stereo_coherent."
         ),
     )
-    beginner_group.add_argument(
+    group.add_argument(
         "--example",
         choices=list(EXAMPLE_CHOICES),
         default=None,
         help="Print copy-paste example command(s) and exit.",
     )
-    beginner_group.add_argument(
+    group.add_argument(
         "--guided",
         action="store_true",
         help="Interactive guided mode for first-time users.",
     )
-    beginner_group.add_argument(
+    group.add_argument(
         "--stretch",
         type=str,
         default=None,
         help="Alias for --time-stretch. Accepts scalar or control file (.csv/.json).",
     )
-    beginner_group.add_argument(
+    group.add_argument(
         "--gpu",
         action="store_true",
         help="Alias for --device cuda.",
     )
-    beginner_group.add_argument(
+    group.add_argument(
         "--cpu",
         action="store_true",
         help="Alias for --device cpu.",
     )
 
-    planning_group = parser.add_argument_group("Performance")
-    planning_group.add_argument(
+
+def add_planning_args(group: argparse._ArgumentGroup) -> None:
+    group.add_argument(
         "--quality-profile",
         choices=list(QUALITY_PROFILE_CHOICES),
         default="neutral",
         help="Named tuning profile for vocoder defaults (default: neutral)",
     )
-    planning_group.add_argument(
+    group.add_argument(
         "--auto-profile",
         action="store_true",
         help="Analyze input and choose a profile automatically (speech/music/percussion/ambient/extreme).",
     )
-    planning_group.add_argument(
+    group.add_argument(
         "--auto-profile-lookahead-seconds",
         type=float,
         default=6.0,
         help="Seconds of audio used when estimating --auto-profile (default: 6.0).",
     )
-    planning_group.add_argument(
+    group.add_argument(
         "--auto-transform",
         action="store_true",
         help="Allow automatic transform selection when --transform is not explicitly set.",
     )
-    stft_group = parser.add_argument_group("Quality/Phase")
-    stft_group.add_argument(
+
+
+def add_stft_args(group: argparse._ArgumentGroup) -> None:
+    group.add_argument(
         "--n-fft",
         type=str,
         default=2048,
         help="FFT size (default: 2048). Accepts scalar or control file (.csv/.json).",
     )
-    stft_group.add_argument(
+    group.add_argument(
         "--win-length",
         type=str,
         default=2048,
         help="Window length in samples (default: 2048). Accepts scalar or control file (.csv/.json).",
     )
-    stft_group.add_argument(
+    group.add_argument(
         "--hop-size",
         type=str,
         default=512,
         help="Hop size in samples (default: 512). Accepts scalar or control file (.csv/.json).",
     )
-    stft_group.add_argument(
+    group.add_argument(
         "--window",
         choices=list(WINDOW_CHOICES),
         default="hann",
         help="Window type (default: hann)",
     )
-    stft_group.add_argument(
+    group.add_argument(
         "--kaiser-beta",
         type=str,
         default=14.0,
         help="Kaiser window beta parameter used when --window kaiser (default: 14.0). Accepts scalar or control file (.csv/.json).",
     )
-    stft_group.add_argument(
+    group.add_argument(
         "--transform",
         choices=list(TRANSFORM_CHOICES),
         default="fft",
@@ -5361,18 +5351,18 @@ def build_parser() -> argparse.ArgumentParser:
             "(default: fft; options: fft, dft, czt, dct, dst, hartley)"
         ),
     )
-    stft_group.add_argument(
+    group.add_argument(
         "--no-center",
         action="store_true",
         help="Disable center padding in STFT/ISTFT",
     )
-    stft_group.add_argument(
+    group.add_argument(
         "--phase-locking",
         choices=["off", "identity"],
         default="identity",
         help="Inter-bin phase locking mode for transient fidelity (default: identity)",
     )
-    stft_group.add_argument(
+    group.add_argument(
         "--phase-engine",
         choices=list(PHASE_ENGINE_CHOICES),
         default="propagate",
@@ -5381,7 +5371,7 @@ def build_parser() -> argparse.ArgumentParser:
             "hybrid (propagated + stochastic blend), random (ambient stochastic phase)."
         ),
     )
-    stft_group.add_argument(
+    group.add_argument(
         "--ambient-phase-mix",
         type=str,
         default=0.5,
@@ -5391,24 +5381,24 @@ def build_parser() -> argparse.ArgumentParser:
             "Accepts scalar or control file (.csv/.json)."
         ),
     )
-    stft_group.add_argument(
+    group.add_argument(
         "--phase-random-seed",
         type=int,
         default=None,
         help="Optional deterministic seed for random/hybrid phase generation.",
     )
-    stft_group.add_argument(
+    group.add_argument(
         "--transient-preserve",
         action="store_true",
         help="Enable transient phase resets based on spectral flux",
     )
-    stft_group.add_argument(
+    group.add_argument(
         "--transient-threshold",
         type=str,
         default=2.0,
         help="Spectral-flux multiplier for transient detection (default: 2.0). Accepts scalar or control file (.csv/.json).",
     )
-    stft_group.add_argument(
+    group.add_argument(
         "--fourier-sync",
         action="store_true",
         help=(
@@ -5416,58 +5406,59 @@ def build_parser() -> argparse.ArgumentParser:
             "transforms with per-frame FFT sizes locked to detected F0."
         ),
     )
-    stft_group.add_argument(
+    group.add_argument(
         "--fourier-sync-min-fft",
         type=str,
         default=256,
         help="Minimum frame FFT size for --fourier-sync (default: 256). Accepts scalar or control file (.csv/.json).",
     )
-    stft_group.add_argument(
+    group.add_argument(
         "--fourier-sync-max-fft",
         type=str,
         default=8192,
         help="Maximum frame FFT size for --fourier-sync (default: 8192). Accepts scalar or control file (.csv/.json).",
     )
-    stft_group.add_argument(
+    group.add_argument(
         "--fourier-sync-smooth",
         type=str,
         default=5,
         help="Smoothing span (frames) for prescanned F0 track in --fourier-sync (default: 5). Accepts scalar or control file (.csv/.json).",
     )
-    stft_group.add_argument(
+    group.add_argument(
         "--multires-fusion",
         action="store_true",
         help="Blend multiple FFT resolutions for each channel before pitch resampling.",
     )
-    stft_group.add_argument(
+    group.add_argument(
         "--multires-ffts",
         type=str,
         default="1024,2048,4096",
         help="Comma-separated FFT sizes for --multires-fusion (default: 1024,2048,4096)",
     )
-    stft_group.add_argument(
+    group.add_argument(
         "--multires-weights",
         type=str,
         default=None,
         help="Comma-separated fusion weights for --multires-fusion (defaults to equal weights).",
     )
-    add_runtime_args(stft_group)
+    add_runtime_args(group)
 
-    time_group = parser.add_argument_group("Time/Pitch")
-    time_group.add_argument(
+
+def add_time_args(group: argparse._ArgumentGroup) -> None:
+    group.add_argument(
         "--time-stretch",
         "--time-stretch-factor",
         type=str,
         default=1.0,
         help="Final duration multiplier (1.0=unchanged, 2.0=2x longer). Accepts scalar or control file (.csv/.json).",
     )
-    time_group.add_argument(
+    group.add_argument(
         "--target-duration",
         type=float,
         default=None,
         help="Absolute target duration in seconds (overrides --time-stretch)",
     )
-    time_group.add_argument(
+    group.add_argument(
         "--stretch-mode",
         choices=["auto", "standard", "multistage"],
         default="auto",
@@ -5476,24 +5467,24 @@ def build_parser() -> argparse.ArgumentParser:
             "or auto (multistage only for extreme ratios; default: auto)."
         ),
     )
-    time_group.add_argument(
+    group.add_argument(
         "--extreme-time-stretch",
         action="store_true",
         help="Force multistage strategy even when ratio is moderate.",
     )
-    time_group.add_argument(
+    group.add_argument(
         "--extreme-stretch-threshold",
         type=str,
         default=2.0,
         help="Auto-mode threshold for multistage activation (default: 2.0). Accepts scalar or control file (.csv/.json).",
     )
-    time_group.add_argument(
+    group.add_argument(
         "--max-stage-stretch",
         type=str,
         default=1.8,
         help="Maximum per-stage ratio used in multistage mode (default: 1.8). Accepts scalar or control file (.csv/.json).",
     )
-    time_group.add_argument(
+    group.add_argument(
         "--onset-time-credit",
         action="store_true",
         help=(
@@ -5501,7 +5492,7 @@ def build_parser() -> argparse.ArgumentParser:
             "during extreme stretching."
         ),
     )
-    time_group.add_argument(
+    group.add_argument(
         "--onset-credit-pull",
         type=str,
         default=0.5,
@@ -5510,13 +5501,13 @@ def build_parser() -> argparse.ArgumentParser:
             "(0.0..1.0, default: 0.5). Accepts scalar or control file (.csv/.json)."
         ),
     )
-    time_group.add_argument(
+    group.add_argument(
         "--onset-credit-max",
         type=str,
         default=8.0,
         help="Maximum accumulated onset time credit in analysis-frame units (default: 8.0). Accepts scalar or control file (.csv/.json).",
     )
-    time_group.add_argument(
+    group.add_argument(
         "--no-onset-realign",
         action="store_true",
         help=(
@@ -5524,7 +5515,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--onset-time-credit is enabled."
         ),
     )
-    time_group.add_argument(
+    group.add_argument(
         "--ambient-preset",
         action="store_true",
         help=(
@@ -5532,7 +5523,7 @@ def build_parser() -> argparse.ArgumentParser:
             "(random phase engine, onset-time-credit, transient preserve, conservative staging)."
         ),
     )
-    time_group.add_argument(
+    group.add_argument(
         "--auto-segment-seconds",
         type=float,
         default=0.0,
@@ -5541,24 +5532,24 @@ def build_parser() -> argparse.ArgumentParser:
             "When >0, processing runs per segment with crossfade assembly."
         ),
     )
-    time_group.add_argument(
+    group.add_argument(
         "--checkpoint-dir",
         type=Path,
         default=None,
         help="Directory used to cache per-segment checkpoint chunks for resume workflows.",
     )
-    time_group.add_argument(
+    group.add_argument(
         "--checkpoint-id",
         type=str,
         default=None,
         help="Optional checkpoint run identifier (default: hash of input/settings).",
     )
-    time_group.add_argument(
+    group.add_argument(
         "--resume",
         action="store_true",
         help="Reuse existing checkpoint chunks from --checkpoint-dir when available.",
     )
-    time_group.add_argument(
+    group.add_argument(
         "--interp",
         choices=list(CONTROL_INTERP_CHOICES),
         default="linear",
@@ -5567,7 +5558,7 @@ def build_parser() -> argparse.ArgumentParser:
             "(default: linear)."
         ),
     )
-    time_group.add_argument(
+    group.add_argument(
         "--order",
         type=int,
         default=3,
@@ -5577,8 +5568,9 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
 
-    transient_group = parser.add_argument_group("Transients")
-    transient_group.add_argument(
+
+def add_transient_args(group: argparse._ArgumentGroup) -> None:
+    group.add_argument(
         "--transient-mode",
         choices=["off", "reset", "hybrid", "wsola"],
         default="off",
@@ -5587,27 +5579,28 @@ def build_parser() -> argparse.ArgumentParser:
             "hybrid (PV steady + WSOLA transients), or wsola (time-domain transient-safe path)."
         ),
     )
-    transient_group.add_argument(
+    group.add_argument(
         "--transient-sensitivity",
         type=str,
         default=0.5,
         help="Transient detector sensitivity in [0,1] (higher catches more onsets). Accepts scalar or control file (.csv/.json).",
     )
-    transient_group.add_argument(
+    group.add_argument(
         "--transient-protect-ms",
         type=str,
         default=30.0,
         help="Transient protection width in milliseconds (default: 30). Accepts scalar or control file (.csv/.json).",
     )
-    transient_group.add_argument(
+    group.add_argument(
         "--transient-crossfade-ms",
         type=str,
         default=10.0,
         help="Crossfade duration for transient/steady stitching (default: 10 ms). Accepts scalar or control file (.csv/.json).",
     )
 
-    stereo_group = parser.add_argument_group("Stereo")
-    stereo_group.add_argument(
+
+def add_stereo_args(group: argparse._ArgumentGroup) -> None:
+    group.add_argument(
         "--stereo-mode",
         choices=["independent", "mid_side_lock", "ref_channel_lock"],
         default="independent",
@@ -5616,21 +5609,22 @@ def build_parser() -> argparse.ArgumentParser:
             "mid_side_lock (M/S-coupled), ref_channel_lock (phase-lock to reference channel)."
         ),
     )
-    stereo_group.add_argument(
+    group.add_argument(
         "--ref-channel",
         type=int,
         default=0,
         help="Reference channel index used by --stereo-mode ref_channel_lock (default: 0).",
     )
-    stereo_group.add_argument(
+    group.add_argument(
         "--coherence-strength",
         type=str,
         default=0.0,
         help="Coherence lock strength in [0,1] (0=off, 1=full lock). Accepts scalar or control file (.csv/.json).",
     )
 
-    pitch_group = time_group
-    pitch_mutex = pitch_group.add_mutually_exclusive_group()
+
+def add_pitch_args(group: argparse._ArgumentGroup) -> None:
+    pitch_mutex = group.add_mutually_exclusive_group()
     pitch_mutex.add_argument(
         "--pitch-shift-semitones",
         "--target-pitch-shift-semitones",
@@ -5663,49 +5657,49 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Target fundamental frequency in Hz. Auto-estimates source F0 per file.",
     )
-    pitch_group.add_argument(
+    group.add_argument(
         "--analysis-channel",
         choices=["first", "mix"],
         default="mix",
         help="Channel strategy for F0 estimation with --target-f0 (default: mix)",
     )
-    pitch_group.add_argument(
+    group.add_argument(
         "--f0-min",
         type=float,
         default=50.0,
         help="Minimum F0 search bound in Hz (default: 50)",
     )
-    pitch_group.add_argument(
+    group.add_argument(
         "--f0-max",
         type=float,
         default=1000.0,
         help="Maximum F0 search bound in Hz (default: 1000)",
     )
-    pitch_group.add_argument(
+    group.add_argument(
         "--pitch-mode",
         choices=["standard", "formant-preserving"],
         default="standard",
         help="Pitch mode: standard shift or formant-preserving correction (default: standard)",
     )
-    pitch_group.add_argument(
+    group.add_argument(
         "--formant-lifter",
         type=str,
         default=32,
         help="Cepstral lifter cutoff for formant envelope extraction (default: 32). Accepts scalar or control file (.csv/.json).",
     )
-    pitch_group.add_argument(
+    group.add_argument(
         "--formant-strength",
         type=str,
         default=1.0,
         help="Formant correction blend 0..1 when pitch mode is formant-preserving (default: 1.0). Accepts scalar or control file (.csv/.json).",
     )
-    pitch_group.add_argument(
+    group.add_argument(
         "--formant-max-gain-db",
         type=str,
         default=12.0,
         help="Max per-bin formant correction gain in dB (default: 12). Accepts scalar or control file (.csv/.json).",
     )
-    pitch_group.add_argument(
+    group.add_argument(
         "--pitch-map",
         type=Path,
         default=None,
@@ -5715,17 +5709,17 @@ def build_parser() -> argparse.ArgumentParser:
             "Use '-' to read from stdin."
         ),
     )
-    pitch_group.add_argument(
+    group.add_argument(
         "--pitch-map-stdin",
         action="store_true",
         help="Read control-map CSV from stdin.",
     )
-    pitch_group.add_argument(
+    group.add_argument(
         "--control-stdin",
         action="store_true",
         help="Alias for --pitch-map-stdin (canonical control-bus CSV stdin path).",
     )
-    pitch_group.add_argument(
+    group.add_argument(
         "--route",
         action="append",
         default=[],
@@ -5738,104 +5732,152 @@ def build_parser() -> argparse.ArgumentParser:
             "Sources: any numeric column present in the control-map CSV."
         ),
     )
-    pitch_group.add_argument(
+    group.add_argument(
         "--pitch-follow-stdin",
         action="store_true",
         help="Shortcut for --pitch-map-stdin (sidechain pitch-follow workflows).",
     )
-    pitch_group.add_argument(
+    group.add_argument(
         "--pitch-conf-min",
         type=float,
         default=0.0,
         help="Minimum accepted map confidence (default: 0 disables gating).",
     )
-    pitch_group.add_argument(
+    group.add_argument(
         "--pitch-lowconf-mode",
         choices=["hold", "unity", "interp"],
         default="hold",
         help="Low-confidence map handling mode (default: hold).",
     )
-    pitch_group.add_argument(
+    group.add_argument(
         "--pitch-map-smooth-ms",
         type=float,
         default=0.0,
         help="Moving-average smoothing over map pitch ratios in milliseconds.",
     )
-    pitch_group.add_argument(
+    group.add_argument(
         "--pitch-map-crossfade-ms",
         type=float,
         default=8.0,
         help="Crossfade between processed map segments in milliseconds (default: 8.0).",
     )
 
-    output_group = parser.add_argument_group("Output/Mastering")
-    output_group.add_argument(
+
+def add_output_args(group: argparse._ArgumentGroup) -> None:
+    group.add_argument(
         "--target-sample-rate",
         type=int,
         default=None,
         help="Output sample rate in Hz (default: keep input rate)",
     )
-    output_group.add_argument(
+    group.add_argument(
         "--resample-mode",
         choices=["auto", "fft", "linear"],
         default="auto",
         help="Resampling engine (auto=fft if scipy available, else linear)",
     )
-    add_mastering_args(output_group)
-    output_group.add_argument(
+    add_mastering_args(group)
+    group.add_argument(
         "--manifest-json",
         type=Path,
         default=None,
         help="Write processing manifest JSON with per-file settings and outcomes.",
     )
-    output_group.add_argument(
+    group.add_argument(
         "--manifest-append",
         action="store_true",
         help="Append entries to an existing --manifest-json file instead of replacing it.",
     )
-    output_group.add_argument(
+    group.add_argument(
         "--subtype",
         default=None,
         help="Explicit libsndfile output subtype override (e.g., PCM_16, PCM_24, FLOAT)",
     )
-    output_group.add_argument(
+    group.add_argument(
         "--bit-depth",
         choices=list(BIT_DEPTH_CHOICES),
         default="inherit",
         help="Output bit-depth policy (default: inherit). Ignored when --subtype is set.",
     )
-    output_group.add_argument(
+    group.add_argument(
         "--dither",
         choices=list(DITHER_CHOICES),
         default="none",
         help="Dither policy before quantized writes (default: none)",
     )
-    output_group.add_argument(
+    group.add_argument(
         "--dither-seed",
         type=int,
         default=None,
         help="Deterministic RNG seed for dithering (default: random seed)",
     )
-    output_group.add_argument(
+    group.add_argument(
         "--true-peak-max-dbtp",
         type=float,
         default=None,
         help="Apply output gain trim to enforce max true-peak in dBTP",
     )
-    output_group.add_argument(
+    group.add_argument(
         "--metadata-policy",
         choices=list(METADATA_POLICY_CHOICES),
         default="none",
         help="Output metadata policy: none, sidecar, or copy (sidecar implementation)",
     )
 
-    debug_group.add_argument(
-        "--explain-plan",
-        action="store_true",
-        help="Print resolved processing plan JSON and exit without rendering audio.",
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description=(
+            "Phase-vocoder CLI for multi-file, multi-channel time stretching and pitch shifting."
+        ),
+        formatter_class=argparse.RawTextHelpFormatter,
+        epilog=(
+            "Beginner examples:\n"
+            "  pvx voc input.wav --stretch 1.2 --output output.wav\n"
+            "  pvx voc vocal.wav --preset vocal --pitch -2 --output vocal_tuned.wav\n"
+            "  pvx voc speech.wav --transient-mode hybrid --stretch 1.25 --output speech_hybrid.wav\n"
+            "  pvx voc stereo.wav --stereo-mode mid_side_lock --coherence-strength 0.9 --stretch 1.2 --output stereo_lock.wav\n"
+            "  pvx pitch-track A.wav --emit pitch_to_stretch --output - | pvx voc B.wav --control-stdin --output B_follow.wav\n"
+            "  pvx voc input.wav --stretch controls/stretch.csv --interp linear --output output.wav\n"
+            "  pvx voc input.wav --example all\n"
+        ),
     )
 
+    parser.add_argument("inputs", nargs="*", help="Input audio files/globs or '-' for stdin")
+
+    io_args_group = parser.add_argument_group("I/O")
+    add_io_args(io_args_group)
+
+    debug_group = parser.add_argument_group("Debug")
+    add_debug_args(debug_group)
+
+    beginner_group = parser.add_argument_group("Beginner experience")
+    add_beginner_args(beginner_group)
+
+    planning_group = parser.add_argument_group("Performance")
+    add_planning_args(planning_group)
+
+    stft_group = parser.add_argument_group("Quality/Phase")
+    add_stft_args(stft_group)
+
+    time_group = parser.add_argument_group("Time/Pitch")
+    add_time_args(time_group)
+
+    transient_group = parser.add_argument_group("Transients")
+    add_transient_args(transient_group)
+
+    stereo_group = parser.add_argument_group("Stereo")
+    add_stereo_args(stereo_group)
+
+    pitch_group = time_group
+    add_pitch_args(pitch_group)
+
+    output_group = parser.add_argument_group("Output/Mastering")
+    add_output_args(output_group)
+
     return parser
+
 
 
 def expand_inputs(patterns: Iterable[str]) -> list[Path]:
