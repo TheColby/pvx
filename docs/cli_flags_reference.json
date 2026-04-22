@@ -4375,8 +4375,18 @@
       "action": "store_true",
       "choices": [],
       "default": null,
+      "flag": "--force",
+      "help": "Overwrite existing outputs and other write targets",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc"
+    },
+    {
+      "action": "store_true",
+      "choices": [],
+      "default": null,
       "flag": "--overwrite",
-      "help": "Overwrite existing outputs",
+      "help": "Overwrite existing outputs and other write targets",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc"
