@@ -4,10 +4,18 @@ repos:
     hooks:
       - id: check-merge-conflict
       - id: end-of-file-fixer
+        exclude: '\.json$|docs/html/'
       - id: trailing-whitespace
+        exclude: '\.json$|docs/html/'
+      - id: check-yaml
+      - id: check-toml
+      - id: check-added-large-files
+        args: ["--maxkb=1000"]
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.9.6
+    rev: v0.15.9
     hooks:
       - id: ruff
         args: ["--fix"]
+        files: '^(src|tests|benchmarks)/'
       - id: ruff-format
+        files: '^(src|tests|benchmarks)/'

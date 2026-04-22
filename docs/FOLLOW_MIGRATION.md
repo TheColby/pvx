@@ -56,4 +56,4 @@ pvx pitch-track A.wav --output - \
 
 ## Attribution
 
-Copyright (c) 2026 Colby Leider and contributors. See [ATTRIBUTION.md](../ATTRIBUTION.md).
+

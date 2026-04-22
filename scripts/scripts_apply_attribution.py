@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 """Apply centralized attribution references to Python and Markdown files."""
 
 from __future__ import annotations

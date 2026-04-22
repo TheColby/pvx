@@ -404,4 +404,4 @@ for vocal, drums, bass, other in stems:
 
 ## Attribution
 
-Copyright (c) 2026 Colby Leider and contributors. See [ATTRIBUTION.md](../ATTRIBUTION.md).
+

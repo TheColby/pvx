@@ -586,4 +586,4 @@ pvx follow guide.wav target.wav --feature-set all --emit pitch_map --stretch 1.0
 
 ## Attribution
 
-Copyright (c) 2026 Colby Leider and contributors. See [ATTRIBUTION.md](../ATTRIBUTION.md).
+

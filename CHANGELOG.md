@@ -1,5 +1,46 @@
 # Changelog
 
+## 2026-03-15 (continued)
+
+- Plugin system for custom transforms:
+  - added `register_transform()`, `get_transform()`, `list_transforms()` to `pvx.augment.core`
+  - supports decorator-based registration and auto-snake_case naming
+  - added `_load_entry_point_plugins()` for third-party packages to register transforms via `pvx.augment.transforms` entry points
+  - exported new functions from `pvx.augment.__init__`
+
+- Batch GPU pipeline for multi-file processing:
+  - added `batch_process_files()` to `pvx.augment.gpu`
+  - loads multiple files, pads/truncates to uniform length, stacks into `(B, C, T)` tensor
+  - processes entire batches through `TorchPipeline` on GPU with auto-device selection
+  - writes results back with original-length trimming
+  - exported from `pvx.augment.__init__`
+
+- IRDatabase wired into pvxrir CLI:
+  - added `--ir-database`, `--category`, `--list-databases`, `--cache-dir` flags to `pvxrir`
+  - auto-downloads curated IR databases on first use (echothief, mit_kemar)
+  - supports category filtering (hall, church, outdoor, room, large)
+  - updated `docs/cli_flags_reference.json` with new flags
+
+- Documentation site (mkdocs):
+  - added `mkdocs.yml` with Material theme, search, code-copy, dark mode toggle
+  - created `docs/index.md` landing page
+  - added `docs` optional dependency group (`mkdocs`, `mkdocs-material`, `pymdown-extensions`)
+  - updated `.github/workflows/pages.yml` to build mkdocs site alongside legacy docs
+
+- Expanded ruff configuration:
+  - added `[tool.ruff]` section to `pyproject.toml`
+  - enabled 17 lint rule sets: E, W, F, I, N, UP, B, A, C4, SIM, TCH, RUF, PIE, PT, RET, ISC
+  - configured isort with `pvx` as first-party, format with double quotes
+
+- WER benchmark script validated:
+  - `benchmarks/run_augment_wer_bench.py` confirmed parseable and functional
+  - 5 augmentation conditions (baseline, gain, noise+gain, SpecAugment, full asr_pipeline)
+  - supports --epochs, --max-train-samples, --device, GPU/CPU modes
+
+- Test coverage expanded:
+  - added `TestPluginSystem` class (5 tests): register, get, auto-naming, pipeline integration, error handling
+  - full suite: 210 passed, 3 skipped
+
 ## 2026-03-15
 
 - Alpha release readiness pass (research- and production-oriented):
@@ -257,4 +298,4 @@
 
 ## Attribution
 
-Copyright (c) 2026 Colby Leider and contributors. See [ATTRIBUTION.md](ATTRIBUTION.md).
+
