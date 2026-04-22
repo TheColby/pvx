@@ -31,4 +31,4 @@ confidentiality, or supply-chain trust.
 
 ## Attribution
 
-Copyright (c) 2026 Colby Leider and contributors. See [ATTRIBUTION.md](ATTRIBUTION.md).
+

@@ -28,4 +28,4 @@ Support is best-effort for:
 
 ## Attribution
 
-Copyright (c) 2026 Colby Leider and contributors. See [ATTRIBUTION.md](ATTRIBUTION.md).
+

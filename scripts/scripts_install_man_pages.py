@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """Generate and optionally install pvx man pages."""
 
@@ -61,7 +60,7 @@ def _build_man_page(name: str, summary: str, help_text: str) -> str:
     footer = [
         ".fi",
         ".SH ATTRIBUTION",
-        "Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.",
+
         "",
     ]
     return "\n".join(header + body + footer)

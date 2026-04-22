@@ -22,7 +22,7 @@ For alpha releases, also review [docs/ALPHA_RELEASE.md](docs/ALPHA_RELEASE.md) a
 
 `make alpha-check` remains as a convenience wrapper when local `make` is available.
 
-If the Homebrew formula should track the tagged release instead of `--HEAD`, refresh it after tagging:
+If the Homebrew formula should track the tagged release instead of `--HEAD`, refresh it after tagging and publish the updated formula to [`TheColby/homebrew-pvx`](https://github.com/TheColby/homebrew-pvx):
 
 ```bash
 ./scripts/refresh_homebrew_formula.sh v0.1.0a1

@@ -592,4 +592,4 @@ Run them in order, listen after each step, and resist changing ten parameters at
 
 ## Attribution
 
-Copyright (c) 2026 Colby Leider and contributors. See [ATTRIBUTION.md](../ATTRIBUTION.md).
+

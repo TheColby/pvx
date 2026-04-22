@@ -238,4 +238,4 @@ uv run pvx augment data/*.wav --output-dir aug_out --variants-per-input 4 --inte
 
 ## Attribution
 
-Copyright (c) 2026 Colby Leider and contributors. See [ATTRIBUTION.md](../ATTRIBUTION.md).
+

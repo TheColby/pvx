@@ -1,0 +1,37 @@
+# pvx augmentation recipe — ASR-robust pipeline
+#
+# Load with:
+#   from pvx.augment import load_pipeline
+#   pipeline = load_pipeline("recipes/asr_robust.yaml")
+#
+# Or via the GPU CLI:
+#   pvx batch-gpu data/*.wav --output-dir out/ --pipeline-config recipes/asr_robust.yaml
+
+seed: 1337
+p: 1.0
+transforms:
+  - name: gain_perturber
+    params:
+      gain_db: [-6.0, 6.0]
+      p: 0.8
+  - name: room_simulator
+    params:
+      rt60_range: [0.05, 0.6]
+      wet_range: [0.1, 0.5]
+      p: 0.4
+  - name: add_noise
+    params:
+      snr_db: [15.0, 40.0]
+      noise_type: pink
+      p: 0.6
+  - name: codec_degradation
+    params:
+      codec: random
+      p: 0.2
+  - name: spec_augment
+    params:
+      freq_mask_param: 20
+      time_mask_param: 30
+      num_freq_masks: 1
+      num_time_masks: 1
+      p: 0.5

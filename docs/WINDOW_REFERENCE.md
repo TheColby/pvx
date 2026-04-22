@@ -2,7 +2,7 @@
 
 # pvx Window Reference
 
-_Generated from commit `77bdfde` (commit date: 2026-03-02T01:29:29-05:00)._
+_Generated from commit `bf3dc81` (commit date: 2026-03-15T19:14:21-04:00)._
 
 pvx currently supports **50** analysis windows. This file defines each one mathematically and explains it in plain English.
 
@@ -237,4 +237,4 @@ Each supported pvx window maps to one of the formula families above with the per
 
 ## Attribution
 
-Copyright (c) 2026 Colby Leider and contributors. See [`ATTRIBUTION.md`](../ATTRIBUTION.md).
+ See [`ATTRIBUTION.md`](../ATTRIBUTION.md).

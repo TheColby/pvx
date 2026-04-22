@@ -45,24 +45,18 @@ Release-validation commands live in [RELEASE.md](RELEASE.md) and the alpha check
 
 Homebrew:
 
-From a local checkout:
+Tap the formula repository:
 
 ```bash
-brew install --HEAD ./Formula/pvx.rb
+brew tap TheColby/pvx
+brew install --HEAD TheColby/pvx/pvx
 pvx --help
 ```
 
-Once the formula is available on `main`:
+For a tagged release formula, use the same tap without `--HEAD` after the release formula has been stamped into [`TheColby/homebrew-pvx`](https://github.com/TheColby/homebrew-pvx):
 
 ```bash
-brew install --HEAD https://raw.githubusercontent.com/TheColby/pvx/main/Formula/pvx.rb
-pvx --help
-```
-
-For a tagged release formula, use the same path without `--HEAD` after the release formula has been stamped:
-
-```bash
-brew install https://raw.githubusercontent.com/TheColby/pvx/main/Formula/pvx.rb
+brew install TheColby/pvx/pvx
 pvx --help
 ```
 

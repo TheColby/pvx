@@ -2,7 +2,7 @@
 
 # pvx Mathematical Foundations
 
-_Generated from commit `77bdfde` (commit date: 2026-03-02T01:29:29-05:00)._
+_Generated from commit `bf3dc81` (commit date: 2026-03-15T19:14:21-04:00)._
 
 This document explains the core signal-processing equations used by pvx, with plain-English interpretation.
 All equations are written in GitHub-renderable LaTeX and are intended to render directly in normal GitHub Markdown view.
@@ -219,4 +219,4 @@ The plots below visualize core transfer functions and parameter curves used acro
 
 ## Attribution
 
-Copyright (c) 2026 Colby Leider and contributors. See [`ATTRIBUTION.md`](../ATTRIBUTION.md).
+ See [`ATTRIBUTION.md`](../ATTRIBUTION.md).

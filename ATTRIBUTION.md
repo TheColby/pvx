@@ -1,6 +1,5 @@
 # Attribution
 
-Copyright (c) 2026 Colby Leider and contributors.
 
 This repository uses a centralized attribution source so copyright wording is
 consistent across code and documentation.

@@ -193,4 +193,4 @@ Implemented after this Phase 0 note:
 
 ## Attribution
 
-Copyright (c) 2026 Colby Leider and contributors. See [ATTRIBUTION.md](../ATTRIBUTION.md).
+
