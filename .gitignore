@@ -3,8 +3,10 @@ __pycache__/
 *.pyc
 benchmarks/out/
 benchmarks/out_pvc_parity/
+benchmarks/out_augment_profiles_release/
 examples/*.wav
 examples/*.aiff
+*.wav
 test_pv.wav
 .DS_Store
 *.swp
