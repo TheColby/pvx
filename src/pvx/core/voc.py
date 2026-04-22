@@ -4599,13 +4599,21 @@ def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> 
         parser.error("--auto-segment-seconds must be >= 0")
     if args.resume and args.checkpoint_dir is None:
         parser.error("--resume requires --checkpoint-dir")
-    uses_segment_writes = bool(dynamic_refs) or bool(args.pitch_map is not None) or bool(args.pitch_map_stdin) or float(args.auto_segment_seconds) > 0.0
+    uses_segment_writes = (
+        bool(dynamic_refs)
+        or bool(args.pitch_map is not None)
+        or bool(args.pitch_map_stdin)
+        or float(args.auto_segment_seconds) > 0.0
+    )
     if args.checkpoint_dir is not None and args.checkpoint_id is None and uses_segment_writes:
         if "-" in set(getattr(args, "inputs", []) or []):
             parser.error(
                 "--checkpoint-dir with stdin audio input requires an explicit --checkpoint-id"
             )
-        if bool(getattr(args, "pitch_map_stdin", False)) or str(getattr(args, "pitch_map", "")) == "-":
+        if (
+            bool(getattr(args, "pitch_map_stdin", False))
+            or str(getattr(args, "pitch_map", "")) == "-"
+        ):
             parser.error(
                 "--checkpoint-dir with stdin control maps requires an explicit --checkpoint-id"
             )

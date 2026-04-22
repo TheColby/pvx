@@ -1,4 +1,3 @@
-
 """Preset definitions for pvx processing intent modes."""
 
 from __future__ import annotations

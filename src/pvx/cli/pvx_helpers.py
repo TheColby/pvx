@@ -135,10 +135,7 @@ def run_quickstart_mode(forwarded_args: list[str]) -> int:
     print("pvx doctor")
     print("")
     print("2) Run quality-safe first render")
-    print(
-        f"pvx safe {args.input!s} --material {args.material} "
-        f"--output {args.output!s}"
-    )
+    print(f"pvx safe {args.input!s} --material {args.material} --output {args.output!s}")
     print("")
     print("3) Inspect transform options")
     print("pvx transforms")

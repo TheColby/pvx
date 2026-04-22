@@ -32,5 +32,3 @@ To report issues, contact:
 - colbyleider at gmail dot com
 
 ## Attribution
-
-

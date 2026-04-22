@@ -4,7 +4,7 @@
 
 This file lists per-algorithm parameter keys consumed by `pvx.algorithms.base.run_algorithm()` dispatch.
 Deprecated compatibility alias `pvxalgorithms.base.run_algorithm()` still resolves to the canonical dispatcher.
-Use these keys as `**params` when calling module `process(audio, sample_rate, **params)`. 
+Use these keys as `**params` when calling module `process(audio, sample_rate, **params)`.
 
 ## Attribution
 

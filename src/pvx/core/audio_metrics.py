@@ -1,4 +1,3 @@
-
 """Shared audio metric summaries and ASCII table rendering."""
 
 from __future__ import annotations

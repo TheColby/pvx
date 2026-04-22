@@ -39,7 +39,7 @@ class TestHuggingFaceIntegration(unittest.TestCase):
         pipeline = self._make_pipeline()
         fn = make_augment_map_fn(pipeline, audio_column="audio", default_sr=16000)
 
-        audio, sr = _mono()
+        audio, _sr = _mono()
         row = {"audio": audio, "label": 0}
         result = fn(row, idx=0)
 
@@ -177,7 +177,7 @@ class TestPyTorchIntegrationImport(unittest.TestCase):
 
             importlib.reload(pt_mod)
             with self.assertRaises(ImportError) as ctx:
-                ds = pt_mod.PvxAugmentDataset(["fake.wav"])
+                pt_mod.PvxAugmentDataset(["fake.wav"])
             self.assertIn("pytorch", str(ctx.exception).lower())
         except ImportError:
             pass  # If torch is not installed at all, that's fine

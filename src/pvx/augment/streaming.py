@@ -1,4 +1,3 @@
-
 """Streaming / chunked augmentation for long-form audio.
 
 Processes audio files in overlapping chunks to keep memory usage bounded,
@@ -107,7 +106,7 @@ def stream_augment(
     else:
         arr = audio
 
-    n_ch, total_samples = arr.shape
+    _n_ch, total_samples = arr.shape
     chunk_samples = max(int(chunk_duration_s * sr), sr)  # at least 1 second
     overlap_samples = min(int(overlap_s * sr), chunk_samples // 4)
 
@@ -115,7 +114,7 @@ def stream_augment(
     if step <= 0:
         step = chunk_samples
 
-    fade_in, fade_out = _hann_fade(overlap_samples, dtype=arr.dtype)
+    _fade_in, _fade_out = _hann_fade(overlap_samples, dtype=arr.dtype)
 
     # Previous chunk's trailing overlap region (for crossfading)
     prev_tail: np.ndarray | None = None
@@ -233,14 +232,13 @@ def stream_augment_file(
 
     # Read full file (for now — future: use sf.blocks for truly streaming I/O)
     audio, sr = sf.read(str(input_path), dtype="float32", always_2d=False)
-    mono = audio.ndim == 1
 
     chunks_written = 0
     total_samples_written = 0
 
     # Collect all chunks (we need to know total length for the output file)
     output_chunks: list[np.ndarray] = []
-    for chunk_out, chunk_sr in stream_augment(
+    for chunk_out, _chunk_sr in stream_augment(
         audio,
         sr,
         pipeline,

@@ -1,4 +1,3 @@
-
 """Room acoustics augmentation transforms.
 
 Provides synthetic room impulse response (RIR) approximation via an
@@ -246,7 +245,7 @@ class ImpulseResponseConvolver(Transform):
         n_ch, n_samp = arr.shape
 
         ir_path = self.ir_files[int(rng.integers(len(self.ir_files)))]
-        ir_audio, ir_sr = load_audio(ir_path, target_sr=sr, mono=True)
+        ir_audio, _ir_sr = load_audio(ir_path, target_sr=sr, mono=True)
         ir = ir_audio if ir_audio.ndim == 1 else ir_audio[0]
 
         if self.normalize_ir:

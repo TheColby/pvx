@@ -1,4 +1,3 @@
-
 """Unit tests for benchmark metric primitives."""
 
 from __future__ import annotations

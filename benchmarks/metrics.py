@@ -1,4 +1,3 @@
-
 """Objective metrics for pvx benchmark comparisons."""
 
 from __future__ import annotations

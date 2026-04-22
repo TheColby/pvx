@@ -1,4 +1,3 @@
-
 """Transient analysis and segmentation helpers for hybrid pvx modes."""
 
 from __future__ import annotations

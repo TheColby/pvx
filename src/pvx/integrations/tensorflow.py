@@ -1,4 +1,3 @@
-
 """TensorFlow / tf.data integration for pvx augmentation pipelines.
 
 Provides helpers to wrap pvx augmentation pipelines inside ``tf.data``
@@ -162,11 +161,14 @@ def make_tf_augment_map_fn(
         audio = features[audio_key]
         if sr_key and sr_key in features:
             sr_tensor = tf.cast(features[sr_key], tf.int32)
-            sr_np_fn = lambda: tf.py_function(
-                func=_augment_py,
-                inp=[audio, sr_tensor],
-                Tout=tf.float32,
-            )
+
+            def sr_np_fn():
+                return tf.py_function(
+                    func=_augment_py,
+                    inp=[audio, sr_tensor],
+                    Tout=tf.float32,
+                )
+
             result = sr_np_fn()
         else:
             sr_val = tf.constant(default_sr, dtype=tf.int32)

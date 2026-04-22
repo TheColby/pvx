@@ -1,4 +1,3 @@
-
 """Unit tests for PVC-inspired Phase 3-5 core operators."""
 
 from __future__ import annotations

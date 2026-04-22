@@ -306,6 +306,12 @@ def _case_key(input_path: Path, task: TaskSpec) -> str:
     return f"{input_path.stem}:{task.name}"
 
 
+def _row_case_key(row: dict[str, Any]) -> str:
+    input_token = str(row.get("input", "unknown"))
+    input_name = Path(input_token).stem if input_token not in {"", "unknown"} else "unknown"
+    return f"{input_name}::{row.get('task', 'unknown')}"
+
+
 def _diagnose_metrics(metrics: dict[str, float]) -> list[str]:
     suggestions: list[str] = []
     transient_smear = float(metrics.get("transient_smear_score", math.nan))
@@ -812,7 +818,7 @@ def _aggregate(rows: list[dict[str, Any]]) -> dict[str, float]:
         out["runtime_seconds"] = math.nan
         return out
     excluded = {"method", "input", "task", "kind", "value"}
-    keys = [key for key in rows[0].keys() if key not in excluded]
+    keys = [key for key in rows[0] if key not in excluded]
     out: dict[str, float] = {}
     for key in keys:
         vals: list[float] = []
@@ -1054,8 +1060,7 @@ def _check_gate(
         for row in rows:
             if not isinstance(row, dict):
                 continue
-            key = f"{row.get('input', 'unknown')}::{row.get('task', 'unknown')}"
-            out[key] = row
+            out[_row_case_key(row)] = row
         return out
 
     failures: list[str] = []
@@ -1290,7 +1295,7 @@ def main(argv: list[str] | None = None) -> int:
                             hash_seq = [signatures[case]]
                             max_abs = 0.0
                             for run_idx in range(2, int(args.determinism_runs) + 1):
-                                recon_det, sr_det, _elapsed_det, _stage1_det, stage2_det = (
+                                recon_det, _sr_det, _elapsed_det, _stage1_det, stage2_det = (
                                     _run_pvx_cycle(
                                         path,
                                         task,

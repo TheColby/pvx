@@ -30,5 +30,3 @@ and observed behavior and whether the issue affects integrity, availability,
 confidentiality, or supply-chain trust.
 
 ## Attribution
-
-

@@ -137,7 +137,7 @@ def _read_rows_from_map(path: Path) -> list[dict[str, object]]:
     with path.open("r", encoding="utf-8", newline="") as handle:
         reader = csv.DictReader(handle)
         for row in reader:
-            rows.append({k: v for k, v in row.items()})
+            rows.append(dict(row.items()))
     return rows
 
 

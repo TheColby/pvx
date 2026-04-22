@@ -1,4 +1,3 @@
-
 """Codec and transmission degradation transforms.
 
 Simulates lossy audio compression (mp3-like, telephone, VoIP), bit-depth
@@ -120,7 +119,7 @@ class CodecDegradation(Transform):
     >>> audio_out, sr = aug(audio, sr=16000, seed=0)
     """
 
-    CODEC_NAMES = list(_CODEC_PRESETS.keys()) + ["random"]
+    CODEC_NAMES = (*_CODEC_PRESETS.keys(), "random")
 
     def __init__(self, codec: str = "random", p: float = 1.0) -> None:
         super().__init__(p=p)
@@ -135,7 +134,7 @@ class CodecDegradation(Transform):
         rng: np.random.Generator,
     ) -> tuple[np.ndarray, int]:
         arr, was_mono = _to_2d(audio)
-        n_ch, n_samp = arr.shape
+        n_ch, _n_samp = arr.shape
 
         codec_name = self.codec
         if codec_name == "random":

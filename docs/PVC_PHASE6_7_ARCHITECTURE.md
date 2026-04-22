@@ -91,5 +91,3 @@ Validation intent:
 3. Benchmark report generation and baseline gate behavior.
 
 ## Attribution
-
-

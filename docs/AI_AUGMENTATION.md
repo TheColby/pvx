@@ -237,5 +237,3 @@ uv run pvx augment data/*.wav --output-dir aug_out --variants-per-input 4 --inte
 - Use `--dry-run` before large jobs to validate output counts and manifest content.
 
 ## Attribution
-
-

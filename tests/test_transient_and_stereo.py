@@ -1,4 +1,3 @@
-
 """Tests for hybrid transient processing and stereo coherence modes."""
 
 from __future__ import annotations

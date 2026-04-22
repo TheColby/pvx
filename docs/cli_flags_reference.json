@@ -1,6 +1,6 @@
 {
-  "commit": "bf3dc81",
-  "commit_date": "2026-03-15T19:14:21-04:00",
+  "commit": "dff2a4f",
+  "commit_date": "2026-04-21T21:20:38-04:00",
   "entries": [
     {
       "action": "",
@@ -4028,6 +4028,16 @@
       "tool": "pvxvoc"
     },
     {
+      "action": "store_true",
+      "choices": [],
+      "default": null,
+      "flag": "--force",
+      "help": "Overwrite existing outputs and other write targets",
+      "required": false,
+      "source": "src/pvx/core/voc.py",
+      "tool": "pvxvoc"
+    },
+    {
       "action": "",
       "choices": [],
       "default": 32,
@@ -4367,16 +4377,6 @@
       "default": null,
       "flag": "--output-format",
       "help": "Output format/extension (e.g. wav, flac, aiff). Default: keep input extension.",
-      "required": false,
-      "source": "src/pvx/core/voc.py",
-      "tool": "pvxvoc"
-    },
-    {
-      "action": "store_true",
-      "choices": [],
-      "default": null,
-      "flag": "--force",
-      "help": "Overwrite existing outputs and other write targets",
       "required": false,
       "source": "src/pvx/core/voc.py",
       "tool": "pvxvoc"
@@ -5107,6 +5107,7 @@
     "--floor",
     "--fmax",
     "--fmin",
+    "--force",
     "--force-stereo",
     "--formant-lifter",
     "--formant-max-gain-db",

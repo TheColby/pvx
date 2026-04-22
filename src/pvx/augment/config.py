@@ -1,4 +1,3 @@
-
 """Declarative pipeline configuration for ``pvx.augment``.
 
 Lets users describe an augmentation pipeline in YAML or JSON instead of
@@ -70,8 +69,7 @@ def _load_manifest(path: str | Path) -> dict[str, Any]:
             import yaml
         except ImportError as exc:
             raise ImportError(
-                "PyYAML is required to load .yaml manifests. "
-                "Install with: pip install pyyaml"
+                "PyYAML is required to load .yaml manifests. Install with: pip install pyyaml"
             ) from exc
         manifest = yaml.safe_load(text)
     elif suffix == ".json":
@@ -221,10 +219,10 @@ def _resolve_transform_class(name: str, *, gpu: bool) -> type:
     if name in cpu_index:
         return cpu_index[name]
 
-    available = sorted(set(cpu_index) | set(_torch_transform_index() if gpu else {}) | set(list_transforms()))
-    raise KeyError(
-        f"Unknown transform: {name!r}. Available: {', '.join(available) or '(none)'}"
+    available = sorted(
+        set(cpu_index) | set(_torch_transform_index() if gpu else {}) | set(list_transforms())
     )
+    raise KeyError(f"Unknown transform: {name!r}. Available: {', '.join(available) or '(none)'}")
 
 
 def _build_transform(spec: dict[str, Any], *, gpu: bool):
@@ -240,8 +238,10 @@ def _build_transform(spec: dict[str, Any], *, gpu: bool):
     # Convert top-level lists of length 2 to tuples for parameters that look like ranges.
     converted: dict[str, Any] = {}
     for key, value in params.items():
-        if isinstance(value, list) and len(value) == 2 and all(
-            isinstance(v, (int, float)) for v in value
+        if (
+            isinstance(value, list)
+            and len(value) == 2
+            and all(isinstance(v, (int, float)) for v in value)
         ):
             converted[key] = tuple(value)
         else:
@@ -290,8 +290,7 @@ def load_torch_pipeline(path: str | Path):
         from .gpu import TorchPipeline
     except ImportError as exc:
         raise ImportError(
-            "PyTorch is required for load_torch_pipeline. "
-            "Install with: pip install 'pvx[torch]'"
+            "PyTorch is required for load_torch_pipeline. Install with: pip install 'pvx[torch]'"
         ) from exc
 
     manifest = _load_manifest(path)

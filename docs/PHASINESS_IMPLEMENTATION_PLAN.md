@@ -123,5 +123,3 @@ Work:
 - M. S. Puckette (1995), *Phase-locked vocoder*.
 
 ## Attribution
-
-

@@ -127,12 +127,26 @@ class TestVocJobs(unittest.TestCase):
             output = Path(tmp) / "out.wav"
             args.output = output
             with (
-                patch("pvx.core.voc_jobs._read_audio_input", return_value=(np.ones((1000, 1)), 1000)),
-                patch("pvx.core.voc_jobs.voc_core.choose_pitch_ratio", return_value=voc.PitchConfig(ratio=1.0)),
+                patch(
+                    "pvx.core.voc_jobs._read_audio_input", return_value=(np.ones((1000, 1)), 1000)
+                ),
+                patch(
+                    "pvx.core.voc_jobs.voc_core.choose_pitch_ratio",
+                    return_value=voc.PitchConfig(ratio=1.0),
+                ),
                 patch("pvx.core.voc_jobs.voc_core.resolve_base_stretch", return_value=1.0),
-                patch("pvx.core.voc_jobs.voc_core.process_audio_block", side_effect=fake_process_audio_block),
-                patch("pvx.core.voc_jobs.voc_core.apply_mastering_chain", side_effect=lambda audio, *_: audio),
-                patch("pvx.core.voc_jobs.prepare_output_audio", side_effect=lambda audio, *_args, **_kwargs: (audio, None)),
+                patch(
+                    "pvx.core.voc_jobs.voc_core.process_audio_block",
+                    side_effect=fake_process_audio_block,
+                ),
+                patch(
+                    "pvx.core.voc_jobs.voc_core.apply_mastering_chain",
+                    side_effect=lambda audio, *_: audio,
+                ),
+                patch(
+                    "pvx.core.voc_jobs.prepare_output_audio",
+                    side_effect=lambda audio, *_args, **_kwargs: (audio, None),
+                ),
                 patch("pvx.core.voc_jobs.render_audio_metrics_table", return_value=""),
                 patch("pvx.core.voc_jobs.render_audio_comparison_table", return_value=""),
                 patch("pvx.core.voc_jobs.summarize_audio_metrics", return_value={}),
@@ -142,7 +156,9 @@ class TestVocJobs(unittest.TestCase):
         self.assertGreaterEqual(len(callback_invocations), 2)
         self.assertEqual(result.control_map_segments, 2)
 
-    def test_process_file_fails_before_processing_when_output_exists_without_overwrite(self) -> None:
+    def test_process_file_fails_before_processing_when_output_exists_without_overwrite(
+        self,
+    ) -> None:
         args = argparse.Namespace(
             stdout=False,
             pitch_map=None,
@@ -231,13 +247,22 @@ class TestVocJobs(unittest.TestCase):
             output.write_bytes(b"existing")
             args.output = output
             with (
-                patch("pvx.core.voc_jobs._read_audio_input", side_effect=AssertionError("should not read input")),
-                patch("pvx.core.voc_jobs.voc_core.choose_pitch_ratio", return_value=voc.PitchConfig(ratio=1.0)),
+                patch(
+                    "pvx.core.voc_jobs._read_audio_input",
+                    side_effect=AssertionError("should not read input"),
+                ),
+                patch(
+                    "pvx.core.voc_jobs.voc_core.choose_pitch_ratio",
+                    return_value=voc.PitchConfig(ratio=1.0),
+                ),
                 patch("pvx.core.voc_jobs.voc_core.resolve_base_stretch", return_value=1.0),
-                patch("pvx.core.voc_jobs.voc_core.process_audio_block", side_effect=AssertionError("should not process")),
+                patch(
+                    "pvx.core.voc_jobs.voc_core.process_audio_block",
+                    side_effect=AssertionError("should not process"),
+                ),
+                self.assertRaises(FileExistsError),
             ):
-                with self.assertRaises(FileExistsError):
-                    process_file(Path("input.wav"), args, config)
+                process_file(Path("input.wav"), args, config)
 
     def test_process_file_uses_prefetched_audio_cache(self) -> None:
         args = argparse.Namespace(
@@ -325,17 +350,32 @@ class TestVocJobs(unittest.TestCase):
             transient_threshold=2.0,
         )
         with (
-            patch("pvx.core.voc_jobs._read_audio_input", side_effect=AssertionError("should not read input")),
-            patch("pvx.core.voc_jobs.voc_core.choose_pitch_ratio", return_value=voc.PitchConfig(ratio=1.0)),
+            patch(
+                "pvx.core.voc_jobs._read_audio_input",
+                side_effect=AssertionError("should not read input"),
+            ),
+            patch(
+                "pvx.core.voc_jobs.voc_core.choose_pitch_ratio",
+                return_value=voc.PitchConfig(ratio=1.0),
+            ),
             patch("pvx.core.voc_jobs.voc_core.resolve_base_stretch", return_value=1.0),
-            patch("pvx.core.voc_jobs.voc_core.process_audio_block", return_value=voc.AudioBlockResult(
-                audio=np.ones((1000, 1)),
-                internal_stretch=1.0,
-                sync_plan=None,
-                stage_count=1,
-            )),
-            patch("pvx.core.voc_jobs.voc_core.apply_mastering_chain", side_effect=lambda audio, *_: audio),
-            patch("pvx.core.voc_jobs.prepare_output_audio", side_effect=lambda audio, *_args, **_kwargs: (audio, None)),
+            patch(
+                "pvx.core.voc_jobs.voc_core.process_audio_block",
+                return_value=voc.AudioBlockResult(
+                    audio=np.ones((1000, 1)),
+                    internal_stretch=1.0,
+                    sync_plan=None,
+                    stage_count=1,
+                ),
+            ),
+            patch(
+                "pvx.core.voc_jobs.voc_core.apply_mastering_chain",
+                side_effect=lambda audio, *_: audio,
+            ),
+            patch(
+                "pvx.core.voc_jobs.prepare_output_audio",
+                side_effect=lambda audio, *_args, **_kwargs: (audio, None),
+            ),
             patch("pvx.core.voc_jobs.render_audio_metrics_table", return_value=""),
             patch("pvx.core.voc_jobs.render_audio_comparison_table", return_value=""),
             patch("pvx.core.voc_jobs.summarize_audio_metrics", return_value={}),
@@ -353,13 +393,13 @@ class TestVocJobs(unittest.TestCase):
                 metadata={
                     "segment_index": 0,
                     "input_start": 0,
-                        "input_end": 4,
-                        "sample_rate": 1000,
-                        "stretch": 1.0,
-                        "pitch_ratio": 1.0,
-                        "render_fingerprint": "abc",
-                    },
-                )
+                    "input_end": 4,
+                    "sample_rate": 1000,
+                    "stretch": 1.0,
+                    "pitch_ratio": 1.0,
+                    "render_fingerprint": "abc",
+                },
+            )
             with self.assertRaises(ValueError):
                 load_checkpoint_chunk(
                     chunk,

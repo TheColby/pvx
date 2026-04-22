@@ -1,4 +1,3 @@
-
 """GPU-accelerated augmentation transforms using PyTorch.
 
 These transforms operate directly on ``torch.Tensor`` objects and can run
@@ -764,7 +763,7 @@ class TorchTimeStretch(TorchTransform):
 
     def apply(self, audio, sr: int, generator=None):
         torch = _require_torch()
-        B, C, T = audio.shape
+        B, C, _T = audio.shape
         window = torch.hann_window(self.n_fft, device=audio.device)
 
         # Sample one rate per batch element
@@ -786,7 +785,7 @@ class TorchTimeStretch(TorchTransform):
                 )
                 channels.append(stretched)
             # All channels have the same output length from same rate
-            out_len = channels[0].shape[0]
+            channels[0].shape[0]
             results.append(torch.stack(channels, dim=0))  # (C, T')
 
         # Pad/crop to uniform length (longest in batch)
@@ -1004,7 +1003,7 @@ class TorchMixup(TorchTransform):
 
     def apply(self, audio, sr: int, generator=None):
         torch = _require_torch()
-        B, C, T = audio.shape
+        B, _C, _T = audio.shape
         if B < 2:
             return audio
 
@@ -1053,7 +1052,7 @@ class NumpyTransformAdapter(TorchTransform):
         import numpy as np
 
         device = audio.device
-        B, C, T = audio.shape
+        B, _C, _T = audio.shape
         results = []
         for b in range(B):
             np_audio = audio[b].cpu().numpy()
@@ -1144,7 +1143,7 @@ def batch_process_files(
     # Process in batches
     for batch_start in range(0, len(file_paths), batch_size):
         batch_paths = file_paths[batch_start : batch_start + batch_size]
-        B = len(batch_paths)
+        len(batch_paths)
 
         if progress:
             end = min(batch_start + batch_size, len(file_paths))
@@ -1158,7 +1157,7 @@ def batch_process_files(
             try:
                 from pvx.augment.core import load_audio
 
-                audio_np, file_sr = load_audio(fpath, target_sr=sr, mono=False)
+                audio_np, _file_sr = load_audio(fpath, target_sr=sr, mono=False)
                 # Ensure (C, T) shape
                 if audio_np.ndim == 1:
                     audio_np = audio_np[np.newaxis, :]

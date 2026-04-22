@@ -266,7 +266,9 @@ class TestVocCompatibilitySeams(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="pvx-alpha-checkpoint-") as tmp:
             root = Path(tmp)
             control = root / "map.csv"
-            control.write_text("start_sec,end_sec,stretch,confidence\n0,1,1.0,0.5\n", encoding="utf-8")
+            control.write_text(
+                "start_sec,end_sec,stretch,confidence\n0,1,1.0,0.5\n", encoding="utf-8"
+            )
             args = argparse.Namespace(
                 pitch_map=control,
                 route=[],
@@ -302,20 +304,28 @@ class TestVocCompatibilitySeams(unittest.TestCase):
                 pitch_map_smooth_ms=0.0,
                 pitch_map_crossfade_ms=0.0,
             )
-            before = _checkpoint_job_id(input_path=root / "input.wav", args=args, base_stretch=1.0, pitch_ratio=1.0)
+            before = _checkpoint_job_id(
+                input_path=root / "input.wav", args=args, base_stretch=1.0, pitch_ratio=1.0
+            )
             args.pitch_conf_min = 0.7
-            after = _checkpoint_job_id(input_path=root / "input.wav", args=args, base_stretch=1.0, pitch_ratio=1.0)
+            after = _checkpoint_job_id(
+                input_path=root / "input.wav", args=args, base_stretch=1.0, pitch_ratio=1.0
+            )
             self.assertNotEqual(before, after)
 
     def test_validate_args_rejects_implicit_checkpoint_id_with_stdin_sources(self) -> None:
         parser = voc.build_parser()
-        args = parser.parse_args(["-", "--checkpoint-dir", "/tmp/checkpoints", "--auto-segment-seconds", "1.0"])
+        args = parser.parse_args(
+            ["-", "--checkpoint-dir", "/tmp/checkpoints", "--auto-segment-seconds", "1.0"]
+        )
         with self.assertRaises(SystemExit):
             voc.validate_args(args, parser)
 
     def test_validate_args_allows_checkpoint_dir_without_segment_writes_for_stdin(self) -> None:
         parser = voc.build_parser()
-        args = parser.parse_args(["-", "--checkpoint-dir", "/tmp/checkpoints", "--time-stretch", "1.1"])
+        args = parser.parse_args(
+            ["-", "--checkpoint-dir", "/tmp/checkpoints", "--time-stretch", "1.1"]
+        )
         with patch.object(parser, "error", side_effect=AssertionError("unexpected parser.error")):
             voc.validate_args(args, parser)
 
@@ -348,26 +358,36 @@ class TestVocCompatibilitySeams(unittest.TestCase):
             manifest.write_text(json.dumps({"entries": []}), encoding="utf-8")
             with (
                 patch("pvx.voc_cli.ensure_runtime_dependencies"),
-                patch("pvx.voc_cli.read_audio_input", return_value=(__import__("numpy").ones((16, 1)), 16000)),
+                patch(
+                    "pvx.voc_cli.read_audio_input",
+                    return_value=(__import__("numpy").ones((16, 1)), 16000),
+                ),
                 patch("pvx.voc_cli.resolve_base_stretch", return_value=1.0),
-                patch("pvx.voc_cli.estimate_content_features", return_value={"spectral_flatness": 0.1}),
+                patch(
+                    "pvx.voc_cli.estimate_content_features", return_value={"spectral_flatness": 0.1}
+                ),
                 patch("pvx.voc_cli.suggest_quality_profile", return_value="neutral"),
                 patch("pvx.voc_cli.apply_quality_profile_overrides", return_value=[]),
                 patch("pvx.voc_cli.build_vocoder_config_from_args"),
-                patch("pvx.voc_cli.process_file", return_value=voc.JobResult(
-                    input_path=input_path,
-                    output_path=root / "out.wav",
-                    in_sr=16000,
-                    out_sr=16000,
-                    in_samples=16,
-                    out_samples=16,
-                    channels=1,
-                    stretch=1.0,
-                    pitch_ratio=1.0,
-                )),
+                patch(
+                    "pvx.voc_cli.process_file",
+                    return_value=voc.JobResult(
+                        input_path=input_path,
+                        output_path=root / "out.wav",
+                        in_sr=16000,
+                        out_sr=16000,
+                        in_samples=16,
+                        out_samples=16,
+                        channels=1,
+                        stretch=1.0,
+                        pitch_ratio=1.0,
+                    ),
+                ),
                 patch("pvx.voc_cli.write_manifest"),
             ):
-                result = voc_cli.main([str(input_path), "--manifest-json", str(manifest), "--manifest-append"])
+                result = voc_cli.main(
+                    [str(input_path), "--manifest-json", str(manifest), "--manifest-append"]
+                )
             self.assertEqual(result, 0)
 
     def test_voc_cli_auto_profile_prefetches_first_input_audio(self) -> None:
@@ -396,7 +416,9 @@ class TestVocCompatibilitySeams(unittest.TestCase):
                 patch("pvx.voc_cli.ensure_runtime_dependencies"),
                 patch("pvx.voc_cli.read_audio_input", return_value=(fake_audio, 16000)),
                 patch("pvx.voc_cli.resolve_base_stretch", return_value=1.0),
-                patch("pvx.voc_cli.estimate_content_features", return_value={"spectral_flatness": 0.1}),
+                patch(
+                    "pvx.voc_cli.estimate_content_features", return_value={"spectral_flatness": 0.1}
+                ),
                 patch("pvx.voc_cli.suggest_quality_profile", return_value="neutral"),
                 patch("pvx.voc_cli.apply_quality_profile_overrides", return_value=[]),
                 patch("pvx.voc_cli.build_vocoder_config_from_args"),

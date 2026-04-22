@@ -38,5 +38,3 @@ If any step was skipped, explain why.
 - [ ] Risks and limitations documented
 
 ## Attribution
-
-

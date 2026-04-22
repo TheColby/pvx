@@ -27,5 +27,3 @@ Support is best-effort for:
 - Documentation clarifications
 
 ## Attribution
-
-

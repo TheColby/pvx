@@ -64,7 +64,7 @@ def _stream_format_name(output_format: str | None, output_path: Path | None = No
 
 
 def _hash_file_contents(path: Path) -> str:
-    digest = hashlib.sha1()
+    digest = hashlib.sha256()
     with path.open("rb") as handle:
         while True:
             chunk = handle.read(65536)
@@ -207,7 +207,7 @@ def _render_fingerprint(
         pitch_map_path = Path(pitch_map)
         checkpoint_inputs["pitch_map"] = str(pitch_map_path.resolve())
         if control_payload is not None:
-            checkpoint_inputs["pitch_map_hash"] = hashlib.sha1(
+            checkpoint_inputs["pitch_map_hash"] = hashlib.sha256(
                 control_payload.encode("utf-8")
             ).hexdigest()
         elif pitch_map_path.exists():
@@ -217,7 +217,7 @@ def _render_fingerprint(
             "parameter": ref.parameter,
             "path": str(ref.path.resolve()),
             "hash": (
-                hashlib.sha1(dynamic_payloads[ref.parameter].encode("utf-8")).hexdigest()
+                hashlib.sha256(dynamic_payloads[ref.parameter].encode("utf-8")).hexdigest()
                 if dynamic_payloads is not None and ref.parameter in dynamic_payloads
                 else _hash_file_contents(ref.path)
             ),
@@ -267,13 +267,13 @@ def _render_fingerprint(
         "control_inputs": checkpoint_inputs,
     }
     if audio is not None:
-        payload["input_hash"] = hashlib.sha1(
+        payload["input_hash"] = hashlib.sha256(
             np.ascontiguousarray(audio).view(np.uint8).tobytes()
         ).hexdigest()
     elif str(input_path) != "-" and input_path.exists():
         payload["input_hash"] = _hash_file_contents(input_path)
     text = json.dumps(payload, sort_keys=True, separators=(",", ":"))
-    return hashlib.sha1(text.encode("utf-8")).hexdigest()
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
 def resolve_checkpoint_context(
@@ -405,7 +405,11 @@ def _preflight_file_writes(
     if str(getattr(args, "metadata_policy", "none")).lower() != "none" and str(output_path) != "-":
         _ensure_writable_target(_metadata_sidecar_path(output_path), args, label="Metadata sidecar")
 
-    if checkpoint_dir is not None and checkpoint_id is not None and not bool(getattr(args, "resume", False)):
+    if (
+        checkpoint_dir is not None
+        and checkpoint_id is not None
+        and not bool(getattr(args, "resume", False))
+    ):
         _ensure_writable_target(checkpoint_dir / "state.json", args, label="Checkpoint state")
         for seg_idx in range(segment_count):
             chunk_path = checkpoint_dir / f"segment_{seg_idx:05d}.npy"
@@ -434,12 +438,19 @@ def _consume_prefetched_audio(
 
 def _preflight_checkpoint_targets(args: argparse.Namespace) -> None:
     checkpoint_dir = getattr(args, "checkpoint_dir", None)
-    if checkpoint_dir is None or bool(getattr(args, "resume", False)) or bool(getattr(args, "dry_run", False)):
+    if (
+        checkpoint_dir is None
+        or bool(getattr(args, "resume", False))
+        or bool(getattr(args, "dry_run", False))
+    ):
         return
     cp_root = Path(checkpoint_dir)
     state_path = cp_root / "state.json"
     _ensure_writable_target(state_path, args, label="Checkpoint state")
-    for pattern, label in (("segment_*.npy", "Checkpoint chunk"), ("segment_*.json", "Checkpoint metadata")):
+    for pattern, label in (
+        ("segment_*.npy", "Checkpoint chunk"),
+        ("segment_*.json", "Checkpoint metadata"),
+    ):
         for path in cp_root.glob(pattern):
             _ensure_writable_target(path, args, label=label)
 
@@ -620,15 +631,12 @@ def process_file(
                     stretch=seg.stretch,
                     pitch_ratio=seg.pitch_ratio,
                     progress_callback_factory=(
-                        lambda _start,
-                        _end,
-                        _detail,
-                        start_fraction=progress_fraction,
-                        end_fraction=progress_next_fraction,
-                        detail=segment_detail: make_progress_callback(
-                            start_fraction,
-                            end_fraction,
-                            detail,
+                        lambda _start, _end, _detail, start_fraction=progress_fraction, end_fraction=progress_next_fraction, detail=segment_detail: (
+                            make_progress_callback(
+                                start_fraction,
+                                end_fraction,
+                                detail,
+                            )
                         )
                     ),
                 )
