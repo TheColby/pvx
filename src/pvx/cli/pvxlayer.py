@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """Layered harmonic/percussive processing with independent controls."""
 
@@ -21,19 +20,19 @@ from pvx.core.common import (
     finalize_audio,
     log_error,
     log_message,
+    print_input_output_metrics_table,
     read_audio,
     resolve_inputs,
     semitone_to_ratio,
     time_pitch_shift_audio,
     validate_vocoder_args,
     write_output,
-    print_input_output_metrics_table,
 )
 from pvx.core.voc import istft, stft
 
 try:
     from scipy.ndimage import median_filter
-except Exception:  # pragma: no cover
+except (ImportError, ModuleNotFoundError):  # pragma: no cover
     median_filter = None
 
 
@@ -107,11 +106,17 @@ def main(argv: list[str] | None = None) -> int:
     if args.harmonic_kernel <= 0 or args.percussive_kernel <= 0:
         parser.error("kernel sizes must be > 0")
 
-    config = build_vocoder_config(args, phase_locking="identity", transient_preserve=True, transient_threshold=1.7)
+    config = build_vocoder_config(
+        args, phase_locking="identity", transient_preserve=True, transient_threshold=1.7
+    )
     paths = resolve_inputs(args.inputs, parser, args)
 
-    harm_ratio = semitone_to_ratio(args.harmonic_pitch_semitones) * cents_to_ratio(args.harmonic_pitch_cents)
-    perc_ratio = semitone_to_ratio(args.percussive_pitch_semitones) * cents_to_ratio(args.percussive_pitch_cents)
+    harm_ratio = semitone_to_ratio(args.harmonic_pitch_semitones) * cents_to_ratio(
+        args.harmonic_pitch_cents
+    )
+    perc_ratio = semitone_to_ratio(args.percussive_pitch_semitones) * cents_to_ratio(
+        args.percussive_pitch_cents
+    )
     status = build_status_bar(args, "pvxlayer", len(paths))
 
     failures = 0
@@ -121,27 +126,35 @@ def main(argv: list[str] | None = None) -> int:
             harm_channels: list[np.ndarray] = []
             perc_channels: list[np.ndarray] = []
             for ch in range(audio.shape[1]):
-                h, p = split_hpss(audio[:, ch], config, args.harmonic_kernel, args.percussive_kernel)
+                h, p = split_hpss(
+                    audio[:, ch], config, args.harmonic_kernel, args.percussive_kernel
+                )
                 harm_channels.append(h)
                 perc_channels.append(p)
 
             hsig = np.stack(harm_channels, axis=1)
             psig = np.stack(perc_channels, axis=1)
 
-            hproc = time_pitch_shift_audio(
-                hsig,
-                stretch=args.harmonic_stretch,
-                pitch_ratio=harm_ratio,
-                config=config,
-                resample_mode=args.resample_mode,
-            ) * args.harmonic_gain
-            pproc = time_pitch_shift_audio(
-                psig,
-                stretch=args.percussive_stretch,
-                pitch_ratio=perc_ratio,
-                config=config,
-                resample_mode=args.resample_mode,
-            ) * args.percussive_gain
+            hproc = (
+                time_pitch_shift_audio(
+                    hsig,
+                    stretch=args.harmonic_stretch,
+                    pitch_ratio=harm_ratio,
+                    config=config,
+                    resample_mode=args.resample_mode,
+                )
+                * args.harmonic_gain
+            )
+            pproc = (
+                time_pitch_shift_audio(
+                    psig,
+                    stretch=args.percussive_stretch,
+                    pitch_ratio=perc_ratio,
+                    config=config,
+                    resample_mode=args.resample_mode,
+                )
+                * args.percussive_gain
+            )
 
             out_len = max(hproc.shape[0], pproc.shape[0])
             out = np.zeros((out_len, audio.shape[1]), dtype=np.float64)
@@ -160,13 +173,19 @@ def main(argv: list[str] | None = None) -> int:
                 output_sr=sr,
             )
             write_output(out_path, out, sr, args, input_path=path)
-            log_message(args, f"[ok] {path} -> {out_path} | out_dur={out.shape[0]/sr:.3f}s", min_level="verbose")
-        except Exception as exc:
+            log_message(
+                args,
+                f"[ok] {path} -> {out_path} | out_dur={out.shape[0] / sr:.3f}s",
+                min_level="verbose",
+            )
+        except (OSError, ValueError, RuntimeError) as exc:
             failures += 1
             log_error(args, f"[error] {path}: {exc}")
         status.step(idx, path.name)
     status.finish("done" if failures == 0 else f"errors={failures}")
-    log_message(args, f"[done] pvxlayer processed={len(paths)} failed={failures}", min_level="normal")
+    log_message(
+        args, f"[done] pvxlayer processed={len(paths)} failed={failures}", min_level="normal"
+    )
     return 1 if failures else 0
 
 

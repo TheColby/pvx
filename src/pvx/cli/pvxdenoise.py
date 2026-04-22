@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """Phase-consistent spectral denoiser."""
 
@@ -21,11 +20,11 @@ from pvx.core.common import (
     finalize_audio,
     log_error,
     log_message,
+    print_input_output_metrics_table,
     read_audio,
     resolve_inputs,
     validate_vocoder_args,
     write_output,
-    print_input_output_metrics_table,
 )
 from pvx.core.voc import db_to_amplitude, istft, stft
 
@@ -89,8 +88,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     add_common_io_args(parser, default_suffix="_denoise")
     add_vocoder_args(parser, default_n_fft=2048, default_win_length=2048, default_hop_size=512)
-    parser.add_argument("--noise-seconds", type=float, default=0.35, help="Noise profile duration from start")
-    parser.add_argument("--noise-file", type=Path, default=None, help="Optional external noise reference")
+    parser.add_argument(
+        "--noise-seconds", type=float, default=0.35, help="Noise profile duration from start"
+    )
+    parser.add_argument(
+        "--noise-file", type=Path, default=None, help="Optional external noise reference"
+    )
     parser.add_argument("--reduction-db", type=float, default=12.0, help="Reduction strength in dB")
     parser.add_argument("--floor", type=float, default=0.1, help="Noise floor multiplier")
     parser.add_argument("--smooth", type=int, default=5, help="Temporal smoothing frames")
@@ -152,12 +155,14 @@ def main(argv: list[str] | None = None) -> int:
             )
             write_output(out_path, out, sr, args, input_path=path)
             log_message(args, f"[ok] {path} -> {out_path}", min_level="verbose")
-        except Exception as exc:
+        except (OSError, ValueError, RuntimeError) as exc:
             failures += 1
             log_error(args, f"[error] {path}: {exc}")
         status.step(idx, path.name)
     status.finish("done" if failures == 0 else f"errors={failures}")
-    log_message(args, f"[done] pvxdenoise processed={len(paths)} failed={failures}", min_level="normal")
+    log_message(
+        args, f"[done] pvxdenoise processed={len(paths)} failed={failures}", min_level="normal"
+    )
     return 1 if failures else 0
 
 

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """Persist and inspect reusable phase-vocoder analysis artifacts (PVXAN)."""
 
@@ -7,8 +6,8 @@ from __future__ import annotations
 
 import argparse
 import json
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import numpy as np
 
@@ -28,7 +27,12 @@ from pvx.core.common import (
     log_message,
     read_audio,
 )
-from pvx.core.voc import TRANSFORM_CHOICES, WINDOW_CHOICES, VocoderConfig, validate_transform_available
+from pvx.core.voc import (
+    TRANSFORM_CHOICES,
+    WINDOW_CHOICES,
+    VocoderConfig,
+    validate_transform_available,
+)
 
 
 def _normalize_argv(argv: list[str] | None) -> list[str]:
@@ -93,10 +97,16 @@ def build_parser() -> argparse.ArgumentParser:
         default=-1,
         help="Channel index to analyze; -1 means all channels (default: -1)",
     )
-    create_parser.add_argument("--n-fft", type=int, default=2048, help="STFT FFT size (default: 2048)")
-    create_parser.add_argument("--win-length", type=int, default=2048, help="Window length (default: 2048)")
+    create_parser.add_argument(
+        "--n-fft", type=int, default=2048, help="STFT FFT size (default: 2048)"
+    )
+    create_parser.add_argument(
+        "--win-length", type=int, default=2048, help="Window length (default: 2048)"
+    )
     create_parser.add_argument("--hop-size", type=int, default=512, help="Hop size (default: 512)")
-    create_parser.add_argument("--window", choices=list(WINDOW_CHOICES), default="hann", help="Window type")
+    create_parser.add_argument(
+        "--window", choices=list(WINDOW_CHOICES), default="hann", help="Window type"
+    )
     create_parser.add_argument(
         "--kaiser-beta",
         type=float,
@@ -207,7 +217,11 @@ def _run_create(args: argparse.Namespace, parser: argparse.ArgumentParser) -> in
     )
     status.step(3, "analyze")
 
-    output_path = Path(args.output).expanduser().resolve() if args.output is not None else _default_output_path(input_path)
+    output_path = (
+        Path(args.output).expanduser().resolve()
+        if args.output is not None
+        else _default_output_path(input_path)
+    )
     output_path = save_analysis_artifact(output_path, artifact)
     summary = summarize_analysis_artifact(artifact)
     status.step(4, "save")
@@ -215,7 +229,11 @@ def _run_create(args: argparse.Namespace, parser: argparse.ArgumentParser) -> in
 
     if args.summary_json is not None:
         _write_json(Path(args.summary_json).expanduser().resolve(), summary)
-        log_message(args, f"[ok] wrote summary JSON -> {Path(args.summary_json).expanduser().resolve()}", min_level="normal")
+        log_message(
+            args,
+            f"[ok] wrote summary JSON -> {Path(args.summary_json).expanduser().resolve()}",
+            min_level="normal",
+        )
     if not is_silent(args):
         if bool(getattr(args, "json", False)):
             print(json.dumps(summary, indent=2, sort_keys=True))
@@ -235,7 +253,11 @@ def _run_inspect(args: argparse.Namespace) -> int:
     status.finish("done")
     if args.summary_json is not None:
         _write_json(Path(args.summary_json).expanduser().resolve(), summary)
-        log_message(args, f"[ok] wrote summary JSON -> {Path(args.summary_json).expanduser().resolve()}", min_level="normal")
+        log_message(
+            args,
+            f"[ok] wrote summary JSON -> {Path(args.summary_json).expanduser().resolve()}",
+            min_level="normal",
+        )
     if not is_silent(args):
         if bool(args.json):
             print(json.dumps(summary, indent=2, sort_keys=True))
@@ -254,7 +276,7 @@ def main(argv: list[str] | None = None) -> int:
             return _run_create(args, parser)
         if args.command == "inspect":
             return _run_inspect(args)
-    except Exception as exc:
+    except (OSError, ValueError, RuntimeError) as exc:
         log_error(args, f"[error] pvxanalysis: {exc}")
         return 1
     parser.error(f"Unsupported command: {args.command}")

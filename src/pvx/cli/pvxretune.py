@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """Monophonic retuning with phase-vocoder segment processing."""
 
@@ -22,15 +21,14 @@ from pvx.core.common import (
     log_error,
     log_message,
     parse_float_list,
+    print_input_output_metrics_table,
     read_audio,
     resolve_inputs,
     time_pitch_shift_audio,
     validate_vocoder_args,
     write_output,
-    print_input_output_metrics_table,
 )
 from pvx.core.voc import estimate_f0_autocorrelation
-
 
 NOTE_TO_CLASS = {
     "C": 0,
@@ -160,17 +158,22 @@ def collect_f0_values(
             continue
         try:
             f0 = float(estimate_f0_autocorrelation(piece, sr, f0_min, f0_max))
-        except Exception:
+        except (ValueError, ArithmeticError, RuntimeError):
             continue
         if np.isfinite(f0) and f0 > 0.0:
             values.append(f0)
     return values
 
 
-def recommend_root_hz(f0_values: list[float], *, a4_reference_hz: float = 440.0) -> tuple[float, str] | None:
+def recommend_root_hz(
+    f0_values: list[float], *, a4_reference_hz: float = 440.0
+) -> tuple[float, str] | None:
     if not f0_values:
         return None
-    midi_values = np.array([freq_to_midi(v, a4_reference_hz=float(a4_reference_hz)) for v in f0_values], dtype=np.float64)
+    midi_values = np.array(
+        [freq_to_midi(v, a4_reference_hz=float(a4_reference_hz)) for v in f0_values],
+        dtype=np.float64,
+    )
     pitch_classes = np.mod(np.rint(midi_values).astype(np.int64), 12)
     pitch_class_counts = np.bincount(pitch_classes, minlength=12)
     root_class = int(np.argmax(pitch_class_counts))
@@ -217,7 +220,12 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Estimate and use a per-file root fundamental from tracked F0.",
     )
-    parser.add_argument("--scale", choices=sorted(SCALES.keys()), default="chromatic", help="Named scale for 12-TET quantization")
+    parser.add_argument(
+        "--scale",
+        choices=sorted(SCALES.keys()),
+        default="chromatic",
+        help="Named scale for 12-TET quantization",
+    )
     parser.add_argument(
         "--scale-cents",
         default=None,
@@ -227,7 +235,9 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument("--strength", type=float, default=0.85, help="Correction strength 0..1")
-    parser.add_argument("--chunk-ms", type=float, default=80.0, help="Analysis/process chunk duration in ms")
+    parser.add_argument(
+        "--chunk-ms", type=float, default=80.0, help="Analysis/process chunk duration in ms"
+    )
     parser.add_argument("--overlap-ms", type=float, default=20.0, help="Chunk overlap in ms")
     parser.add_argument(
         "--a4-reference-hz",
@@ -264,14 +274,18 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--overlap-ms must be >= 0")
     if not np.isfinite(float(args.a4_reference_hz)) or float(args.a4_reference_hz) <= 0.0:
         parser.error("--a4-reference-hz must be a finite value > 0")
-    if args.root_hz is not None and (not np.isfinite(float(args.root_hz)) or float(args.root_hz) <= 0.0):
+    if args.root_hz is not None and (
+        not np.isfinite(float(args.root_hz)) or float(args.root_hz) <= 0.0
+    ):
         parser.error("--root-hz must be a finite value > 0")
     if args.recommend_root and args.root_hz is not None:
         parser.error("--recommend-root and --root-hz are mutually exclusive")
     if args.f0_min <= 0 or args.f0_max <= 0 or args.f0_min >= args.f0_max:
         parser.error("0 < --f0-min < --f0-max required")
 
-    config = build_vocoder_config(args, phase_locking="identity", transient_preserve=True, transient_threshold=1.8)
+    config = build_vocoder_config(
+        args, phase_locking="identity", transient_preserve=True, transient_threshold=1.8
+    )
     paths = resolve_inputs(args.inputs, parser, args)
     status = build_status_bar(args, "pvxretune", len(paths))
 
@@ -332,7 +346,7 @@ def main(argv: list[str] | None = None) -> int:
                         root_hz=root_hz,
                     )
                     ratio = target / f0
-                except Exception:
+                except (ValueError, ArithmeticError, RuntimeError):
                     ratio = 1.0
                 ratio = 1.0 + (ratio - 1.0) * args.strength
                 shifted = time_pitch_shift_audio(
@@ -364,15 +378,21 @@ def main(argv: list[str] | None = None) -> int:
             )
             write_output(out_path, out, sr, args, input_path=path)
             if ratios:
-                log_message(args, f"[ok] {path} -> {out_path} | median_ratio={float(np.median(ratios)):.4f}", min_level="verbose")
+                log_message(
+                    args,
+                    f"[ok] {path} -> {out_path} | median_ratio={float(np.median(ratios)):.4f}",
+                    min_level="verbose",
+                )
             else:
                 log_message(args, f"[ok] {path} -> {out_path}", min_level="verbose")
-        except Exception as exc:
+        except (OSError, ValueError, RuntimeError) as exc:
             failures += 1
             log_error(args, f"[error] {path}: {exc}")
         status.step(idx, path.name)
     status.finish("done" if failures == 0 else f"errors={failures}")
-    log_message(args, f"[done] pvxretune processed={len(paths)} failed={failures}", min_level="normal")
+    log_message(
+        args, f"[done] pvxretune processed={len(paths)} failed={failures}", min_level="normal"
+    )
     return 1 if failures else 0
 
 

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """Track F0 and emit a pvx control-map CSV for pitch-follow pipelines."""
 
@@ -15,7 +14,11 @@ import numpy as np
 import soundfile as sf
 
 from pvx.core.common import add_console_args, build_examples_epilog, build_status_bar, log_message
-from pvx.core.feature_tracking import as_serializable_columns, extract_feature_tracks, feature_subset
+from pvx.core.feature_tracking import (
+    as_serializable_columns,
+    extract_feature_tracks,
+    feature_subset,
+)
 
 EMIT_CHOICES: tuple[str, ...] = ("pitch_map", "stretch_map", "pitch_to_stretch")
 STRETCH_FROM_CHOICES: tuple[str, ...] = ("pitch_ratio", "inv_pitch_ratio", "f0_hz")
@@ -32,7 +35,9 @@ def _read_audio(path: Path) -> tuple[np.ndarray, int]:
     return audio.astype(np.float64, copy=False), int(sr)
 
 
-def _acf_pitch_and_confidence(frame: np.ndarray, sr: int, fmin: float, fmax: float) -> tuple[float, float]:
+def _acf_pitch_and_confidence(
+    frame: np.ndarray, sr: int, fmin: float, fmax: float
+) -> tuple[float, float]:
     work = np.asarray(frame, dtype=np.float64)
     work = work - np.mean(work)
     if work.size < 8:
@@ -60,7 +65,9 @@ def _acf_pitch_and_confidence(frame: np.ndarray, sr: int, fmin: float, fmax: flo
     return f0, confidence
 
 
-def _estimate_reference_hz(f0_hz: np.ndarray, confidence: np.ndarray, mode: str, reference_hz: float | None) -> float:
+def _estimate_reference_hz(
+    f0_hz: np.ndarray, confidence: np.ndarray, mode: str, reference_hz: float | None
+) -> float:
     voiced = (f0_hz > 0.0) & np.isfinite(f0_hz)
     if confidence.size == voiced.size:
         voiced &= np.isfinite(confidence)
@@ -104,7 +111,7 @@ def _track_pyin(
 ) -> tuple[np.ndarray, np.ndarray]:
     try:
         import librosa  # type: ignore
-    except Exception as exc:
+    except (OSError, ValueError, RuntimeError) as exc:
         raise RuntimeError("librosa is required for backend=pyin") from exc
 
     f0_hz, voiced_flag, voiced_prob = librosa.pyin(
@@ -183,9 +190,15 @@ def build_parser() -> argparse.ArgumentParser:
         help="Pitch backend (default: auto -> pyin if available, else acf)",
     )
     parser.add_argument("--fmin", type=float, default=50.0, help="Minimum F0 in Hz (default: 50)")
-    parser.add_argument("--fmax", type=float, default=1200.0, help="Maximum F0 in Hz (default: 1200)")
-    parser.add_argument("--frame-length", type=int, default=2048, help="Frame length in samples (default: 2048)")
-    parser.add_argument("--hop-size", type=int, default=256, help="Hop size in samples (default: 256)")
+    parser.add_argument(
+        "--fmax", type=float, default=1200.0, help="Maximum F0 in Hz (default: 1200)"
+    )
+    parser.add_argument(
+        "--frame-length", type=int, default=2048, help="Frame length in samples (default: 2048)"
+    )
+    parser.add_argument(
+        "--hop-size", type=int, default=256, help="Hop size in samples (default: 256)"
+    )
     parser.add_argument(
         "--ratio-reference",
         choices=["median", "mean", "first", "hz"],
@@ -331,7 +344,9 @@ def _emit_csv(
     extra_columns = dict(extra_columns or {})
     ordered_extra = [name for name in extra_columns.keys() if str(name).strip()]
     writer = csv.writer(stream)
-    writer.writerow(["start_sec", "end_sec", "stretch", "pitch_ratio", "confidence", "f0_hz", *ordered_extra])
+    writer.writerow(
+        ["start_sec", "end_sec", "stretch", "pitch_ratio", "confidence", "f0_hz", *ordered_extra]
+    )
     frame_dur = hop_size / float(sample_rate)
     total_dur = input_samples / float(sample_rate)
     for idx in range(f0_hz.size):
@@ -389,7 +404,9 @@ def _derive_stretch_track(
             voiced &= np.asarray(confidence, dtype=np.float64) > 0.0
         base = np.ones_like(f0_hz, dtype=np.float64)
         if np.any(voiced):
-            base[voiced] = np.asarray(f0_hz, dtype=np.float64)[voiced] / max(1e-9, float(reference_hz))
+            base[voiced] = np.asarray(f0_hz, dtype=np.float64)[voiced] / max(
+                1e-9, float(reference_hz)
+            )
 
     stretch = np.asarray(base, dtype=np.float64) * float(stretch_scale)
     stretch = np.clip(stretch, float(stretch_min), float(stretch_max))
@@ -402,7 +419,7 @@ def main(argv: list[str] | None = None) -> int:
     validate_args(args, parser)
 
     stream_mode = str(args.output) == "-"
-    setattr(args, "stdout", stream_mode)
+    args.stdout = stream_mode
 
     audio, sr = _read_audio(args.input)
     if audio.shape[0] == 0:
@@ -428,11 +445,13 @@ def main(argv: list[str] | None = None) -> int:
                 hop_size=args.hop_size,
             )
             used_backend = "pyin"
-        except Exception:
+        except (ImportError, ModuleNotFoundError, ValueError, RuntimeError):
             if backend == "pyin":
                 raise
             used_backend = "acf"
-            status = build_status_bar(args, "hps-pitch-track", max(1, int(np.ceil(mono.size / args.hop_size))))
+            status = build_status_bar(
+                args, "hps-pitch-track", max(1, int(np.ceil(mono.size / args.hop_size)))
+            )
             f0_hz, confidence = _track_acf(
                 mono,
                 sr,
@@ -444,7 +463,9 @@ def main(argv: list[str] | None = None) -> int:
             )
     else:
         used_backend = "acf"
-        status = build_status_bar(args, "hps-pitch-track", max(1, int(np.ceil(mono.size / args.hop_size))))
+        status = build_status_bar(
+            args, "hps-pitch-track", max(1, int(np.ceil(mono.size / args.hop_size)))
+        )
         f0_hz, confidence = _track_acf(
             mono,
             sr,
@@ -532,6 +553,6 @@ def main(argv: list[str] | None = None) -> int:
 if __name__ == "__main__":
     try:
         raise SystemExit(main())
-    except Exception as exc:
+    except (OSError, ValueError, RuntimeError) as exc:
         print(f"[error] {exc}", file=sys.stderr)
         raise SystemExit(1)

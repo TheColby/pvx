@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """Time-warp an input according to a user-provided stretch map."""
 
@@ -23,13 +22,13 @@ from pvx.core.common import (
     finalize_audio,
     log_error,
     log_message,
+    print_input_output_metrics_table,
     read_audio,
     read_segment_csv,
     resolve_inputs,
     time_pitch_shift_audio,
     validate_vocoder_args,
     write_output,
-    print_input_output_metrics_table,
 )
 
 
@@ -68,7 +67,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     add_common_io_args(parser, default_suffix="_warp")
     add_vocoder_args(parser, default_n_fft=2048, default_win_length=2048, default_hop_size=512)
-    parser.add_argument("--map", required=True, type=Path, help="CSV map with start_sec,end_sec,stretch")
+    parser.add_argument(
+        "--map", required=True, type=Path, help="CSV map with start_sec,end_sec,stretch"
+    )
     parser.add_argument("--crossfade-ms", type=float, default=8.0)
     parser.add_argument("--resample-mode", choices=["auto", "fft", "linear"], default="auto")
     return parser
@@ -86,7 +87,9 @@ def main(argv: list[str] | None = None) -> int:
     if not segments:
         parser.error("Map has no valid rows")
 
-    config = build_vocoder_config(args, phase_locking="identity", transient_preserve=True, transient_threshold=2.0)
+    config = build_vocoder_config(
+        args, phase_locking="identity", transient_preserve=True, transient_threshold=2.0
+    )
     paths = resolve_inputs(args.inputs, parser, args)
     status = build_status_bar(args, "pvxwarp", len(paths))
 
@@ -104,7 +107,9 @@ def main(argv: list[str] | None = None) -> int:
                     continue
                 part = audio[s:e, :]
                 pieces.append(
-                    time_pitch_shift_audio(part, seg.stretch, 1.0, config, resample_mode=args.resample_mode)
+                    time_pitch_shift_audio(
+                        part, seg.stretch, 1.0, config, resample_mode=args.resample_mode
+                    )
                 )
 
             out = concat_with_crossfade(pieces, sr, crossfade_ms=args.crossfade_ms)
@@ -120,14 +125,20 @@ def main(argv: list[str] | None = None) -> int:
                 output_sr=sr,
             )
             write_output(out_path, out, sr, args, input_path=path)
-            log_message(args, f"[ok] {path} -> {out_path} | segs={len(full)} dur={out.shape[0]/sr:.3f}s", min_level="verbose")
-        except Exception as exc:
+            log_message(
+                args,
+                f"[ok] {path} -> {out_path} | segs={len(full)} dur={out.shape[0] / sr:.3f}s",
+                min_level="verbose",
+            )
+        except (OSError, ValueError, RuntimeError) as exc:
             failures += 1
             log_error(args, f"[error] {path}: {exc}")
         status.step(idx, path.name)
 
     status.finish("done" if failures == 0 else f"errors={failures}")
-    log_message(args, f"[done] pvxwarp processed={len(paths)} failed={failures}", min_level="normal")
+    log_message(
+        args, f"[done] pvxwarp processed={len(paths)} failed={failures}", min_level="normal"
+    )
     return 1 if failures else 0
 
 

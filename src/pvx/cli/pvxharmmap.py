@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """PVC-inspired harmonic/chord spectral mapping CLI."""
 
@@ -24,12 +23,18 @@ from pvx.core.common import (
     validate_vocoder_args,
     write_output,
 )
-from pvx.core.pvc_harmony import CHORD_INTERVALS_SEMITONES, HarmonyOperatorName, process_harmony_operator
+from pvx.core.pvc_harmony import (
+    CHORD_INTERVALS_SEMITONES,
+    HarmonyOperatorName,
+    process_harmony_operator,
+)
 
 OPERATOR_CHOICES: tuple[HarmonyOperatorName, ...] = ("chordmapper", "inharmonator")
 
 
-def build_parser(default_operator: HarmonyOperatorName = "chordmapper", prog: str = "pvx chordmapper") -> argparse.ArgumentParser:
+def build_parser(
+    default_operator: HarmonyOperatorName = "chordmapper", prog: str = "pvx chordmapper"
+) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog=prog,
         description="Harmonic/chord mapping and inharmonic spectral warping.",
@@ -57,14 +62,31 @@ def build_parser(default_operator: HarmonyOperatorName = "chordmapper", prog: st
         default="major",
         help="Chord quality for chordmapper",
     )
-    parser.add_argument("--strength", type=float, default=0.75, help="Chordmapper emphasis strength in [0,1]")
-    parser.add_argument("--tolerance-cents", type=float, default=35.0, help="Chordmapper tolerance in cents")
-    parser.add_argument("--boost-db", type=float, default=6.0, help="Chordmapper in-chord boost in dB")
-    parser.add_argument("--attenuation", type=float, default=0.45, help="Chordmapper out-of-chord attenuation in [0,1]")
+    parser.add_argument(
+        "--strength", type=float, default=0.75, help="Chordmapper emphasis strength in [0,1]"
+    )
+    parser.add_argument(
+        "--tolerance-cents", type=float, default=35.0, help="Chordmapper tolerance in cents"
+    )
+    parser.add_argument(
+        "--boost-db", type=float, default=6.0, help="Chordmapper in-chord boost in dB"
+    )
+    parser.add_argument(
+        "--attenuation",
+        type=float,
+        default=0.45,
+        help="Chordmapper out-of-chord attenuation in [0,1]",
+    )
 
-    parser.add_argument("--inharmonic-f0-hz", type=float, default=220.0, help="Reference f0 for inharmonator")
-    parser.add_argument("--inharmonicity", type=float, default=1e-4, help="Inharmonicity coefficient B")
-    parser.add_argument("--inharmonic-mix", type=float, default=1.0, help="Inharmonator mix in [0,1]")
+    parser.add_argument(
+        "--inharmonic-f0-hz", type=float, default=220.0, help="Reference f0 for inharmonator"
+    )
+    parser.add_argument(
+        "--inharmonicity", type=float, default=1e-4, help="Inharmonicity coefficient B"
+    )
+    parser.add_argument(
+        "--inharmonic-mix", type=float, default=1.0, help="Inharmonator mix in [0,1]"
+    )
     parser.add_argument("--dry-mix", type=float, default=0.0, help="Dry signal mix in [0,1]")
     return parser
 
@@ -99,7 +121,7 @@ def run_harmmap_cli(
 
     config = build_vocoder_config(args, phase_locking="identity", transient_preserve=False)
     paths = resolve_inputs(args.inputs, parser, args)
-    status = build_status_bar(args, f"pvx{str(args.operator)}", len(paths))
+    status = build_status_bar(args, f"pvx{args.operator!s}", len(paths))
     failures = 0
 
     for idx, path in enumerate(paths, start=1):
@@ -134,13 +156,15 @@ def run_harmmap_cli(
             )
             write_output(out_path, out, sr, args, input_path=path)
             log_message(args, f"[ok] {path} -> {out_path}", min_level="verbose")
-        except Exception as exc:
+        except (OSError, ValueError, RuntimeError) as exc:
             failures += 1
             log_error(args, f"[error] {path}: {exc}")
         status.step(idx, path.name)
 
     status.finish("done" if failures == 0 else f"errors={failures}")
-    log_message(args, f"[done] pvxharmmap processed={len(paths)} failed={failures}", min_level="normal")
+    log_message(
+        args, f"[done] pvxharmmap processed={len(paths)} failed={failures}", min_level="normal"
+    )
     return 1 if failures else 0
 
 

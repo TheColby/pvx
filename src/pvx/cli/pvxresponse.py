@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """Create and inspect reusable frequency-response artifacts (PVXRF)."""
 
@@ -7,8 +6,8 @@ from __future__ import annotations
 
 import argparse
 import json
-from pathlib import Path
 import sys
+from pathlib import Path
 
 from pvx.core.analysis_store import load_analysis_artifact
 from pvx.core.common import (
@@ -216,7 +215,7 @@ def main(argv: list[str] | None = None) -> int:
             return _run_create(args, parser)
         if args.command == "inspect":
             return _run_inspect(args)
-    except Exception as exc:
+    except (OSError, ValueError, RuntimeError) as exc:
         log_error(args, f"[error] pvxresponse: {exc}")
         return 1
     parser.error(f"Unsupported command: {args.command}")

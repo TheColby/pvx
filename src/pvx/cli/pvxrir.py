@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """pvxrir — simulate room acoustics via room impulse response convolution.
 
@@ -21,6 +20,15 @@ pvxrir speech.wav --ir-file concert_hall.wav --wet 0.5 --output out.wav
 
 # Convolve with a random IR from a directory:
 pvxrir speech.wav --ir-dir irs/ --wet 0.3,0.8 --output out.wav
+
+# Use a curated IR database (auto-downloads on first use):
+pvxrir speech.wav --ir-database echothief --wet 0.5 --output out.wav
+
+# Filter by room category:
+pvxrir speech.wav --ir-database echothief --category hall --wet 0.6 --output out.wav
+
+# List available databases:
+pvxrir input.wav --list-databases --output /dev/null
 """
 
 from __future__ import annotations
@@ -41,15 +49,12 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--rt60",
         default="0.2,1.5",
-        help=(
-            "Reverberation time in seconds. "
-            "Single value or 'min,max' range (default: 0.2,1.5)"
-        ),
+        help=("Reverberation time in seconds. Single value or 'min,max' range (default: 0.2,1.5)"),
     )
     p.add_argument(
         "--wet",
         default="0.3,0.7",
-        help="Wet/dry mix 0–1. Single value or 'min,max' range (default: 0.3,0.7)",
+        help="Wet/dry mix 0-1. Single value or 'min,max' range (default: 0.3,0.7)",
     )
     p.add_argument(
         "--drr",
@@ -71,6 +76,34 @@ def build_parser() -> argparse.ArgumentParser:
         "--ir-dir",
         default=None,
         help="Directory of impulse response files (one is chosen randomly)",
+    )
+    p.add_argument(
+        "--ir-database",
+        default=None,
+        metavar="ID",
+        help=(
+            "Use IRs from a curated database (auto-downloads on first use). "
+            "Available: echothief, mit_kemar"
+        ),
+    )
+    p.add_argument(
+        "--category",
+        default=None,
+        help=(
+            "Filter IRs by category when using --ir-database "
+            "(e.g., hall, church, outdoor, room, large)"
+        ),
+    )
+    p.add_argument(
+        "--list-databases",
+        action="store_true",
+        default=False,
+        help="List available IR databases and exit",
+    )
+    p.add_argument(
+        "--cache-dir",
+        default=None,
+        help="Cache directory for downloaded IR databases (default: ~/.pvx/ir_cache)",
     )
     p.add_argument(
         "--no-trim",
@@ -97,11 +130,63 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     from pvx.augment.core import load_audio, save_audio
-    from pvx.augment.room import RoomSimulator, ImpulseResponseConvolver
+    from pvx.augment.ir_database import IRDatabase
+    from pvx.augment.room import ImpulseResponseConvolver, RoomSimulator
+
+    # --list-databases: print available databases and exit
+    if args.list_databases:
+        db = IRDatabase(cache_dir=args.cache_dir)
+        for info in db.list_databases():
+            status = "downloaded" if info["downloaded"] else "not downloaded"
+            n = f" ({info['n_files']} IRs)" if info["downloaded"] else ""
+            print(
+                f"  {info['id']:15s}  {info['name']:25s}  "
+                f"{info['size_mb']:>4d} MB  {info['license']:8s}  "
+                f"[{status}{n}]"
+            )
+        return 0
 
     audio, sr = load_audio(args.input)
 
-    if args.ir_file or args.ir_dir:
+    if args.ir_database:
+        # Use curated IR database
+        db = IRDatabase(cache_dir=args.cache_dir)
+        db.download(args.ir_database, progress=True)
+
+        if args.category:
+            ir_files = db.filter(args.ir_database, category=args.category)
+            if not ir_files:
+                print(
+                    f"[pvxrir] WARNING: no IRs found for category "
+                    f"'{args.category}' in '{args.ir_database}'. "
+                    f"Using all IRs.",
+                    file=sys.stderr,
+                )
+                ir_files = db.list_irs(args.ir_database)
+        else:
+            ir_files = db.list_irs(args.ir_database)
+
+        if not ir_files:
+            print(
+                f"[pvxrir] ERROR: no IR files found in database '{args.ir_database}'.",
+                file=sys.stderr,
+            )
+            return 1
+
+        # Pick a random IR from the filtered list
+        import numpy as np
+
+        rng = np.random.default_rng(args.seed)
+        chosen_ir = ir_files[int(rng.integers(0, len(ir_files)))]
+        print(f"[pvxrir] using IR: {chosen_ir.name}")
+
+        wet_range = _parse_range(args.wet)
+        aug = ImpulseResponseConvolver(
+            str(chosen_ir),
+            wet_range=wet_range,
+            preserve_length=not args.no_trim,
+        )
+    elif args.ir_file or args.ir_dir:
         src = args.ir_file or args.ir_dir
         wet_range = _parse_range(args.wet)
         aug = ImpulseResponseConvolver(

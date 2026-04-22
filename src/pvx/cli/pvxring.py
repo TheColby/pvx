@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """PVC-inspired ring and resonator operators."""
 
@@ -40,7 +39,9 @@ INTERP_CHOICES: tuple[InterpMode, ...] = (
 )
 
 
-def build_parser(default_operator: RingOperatorName = "ring", prog: str = "pvx ring") -> argparse.ArgumentParser:
+def build_parser(
+    default_operator: RingOperatorName = "ring", prog: str = "pvx ring"
+) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog=prog,
         description="Ring modulation and resonator filtering with PVC-style controls.",
@@ -65,13 +66,25 @@ def build_parser(default_operator: RingOperatorName = "ring", prog: str = "pvx r
     parser.add_argument("--depth", type=float, default=1.0, help="Ring modulation depth in [0,1]")
     parser.add_argument("--mix", type=float, default=1.0, help="Ring wet mix in [0,1]")
     parser.add_argument("--feedback", type=float, default=0.0, help="Feedback amount in [0,1)")
-    parser.add_argument("--resonance-hz", type=float, default=1200.0, help="Resonance center frequency (Hz)")
+    parser.add_argument(
+        "--resonance-hz", type=float, default=1200.0, help="Resonance center frequency (Hz)"
+    )
     parser.add_argument("--resonance-q", type=float, default=8.0, help="Resonance quality factor Q")
-    parser.add_argument("--resonance-mix", type=float, default=0.35, help="Resonator wet mix in [0,1]")
-    parser.add_argument("--resonance-decay", type=float, default=0.2, help="Resonator feedback/decay in [0,1)")
-    parser.add_argument("--tv-map", type=Path, default=None, help="CSV/JSON time-varying map for ringtvfilter")
-    parser.add_argument("--tv-interp", choices=list(INTERP_CHOICES), default="linear", help="TV interpolation mode")
-    parser.add_argument("--tv-order", type=int, default=3, help="Polynomial order for --tv-interp polynomial")
+    parser.add_argument(
+        "--resonance-mix", type=float, default=0.35, help="Resonator wet mix in [0,1]"
+    )
+    parser.add_argument(
+        "--resonance-decay", type=float, default=0.2, help="Resonator feedback/decay in [0,1)"
+    )
+    parser.add_argument(
+        "--tv-map", type=Path, default=None, help="CSV/JSON time-varying map for ringtvfilter"
+    )
+    parser.add_argument(
+        "--tv-interp", choices=list(INTERP_CHOICES), default="linear", help="TV interpolation mode"
+    )
+    parser.add_argument(
+        "--tv-order", type=int, default=3, help="Polynomial order for --tv-interp polynomial"
+    )
     return parser
 
 
@@ -102,7 +115,7 @@ def run_ring_cli(
         parser.error("--tv-order must be >= 1")
 
     paths = resolve_inputs(args.inputs, parser, args)
-    status = build_status_bar(args, f"pvx{str(args.operator)}", len(paths))
+    status = build_status_bar(args, f"pvx{args.operator!s}", len(paths))
     failures = 0
 
     for idx, path in enumerate(paths, start=1):
@@ -120,7 +133,9 @@ def run_ring_cli(
                 resonance_q=float(args.resonance_q),
                 resonance_mix=float(args.resonance_mix),
                 resonance_decay=float(args.resonance_decay),
-                tv_map_path=Path(args.tv_map).expanduser().resolve() if args.tv_map is not None else None,
+                tv_map_path=Path(args.tv_map).expanduser().resolve()
+                if args.tv_map is not None
+                else None,
                 tv_interp=str(args.tv_interp),  # type: ignore[arg-type]
                 tv_order=int(args.tv_order),
             )
@@ -137,13 +152,15 @@ def run_ring_cli(
             )
             write_output(out_path, out, sr, args, input_path=path)
             log_message(args, f"[ok] {path} -> {out_path}", min_level="verbose")
-        except Exception as exc:
+        except (OSError, ValueError, RuntimeError) as exc:
             failures += 1
             log_error(args, f"[error] {path}: {exc}")
         status.step(idx, path.name)
 
     status.finish("done" if failures == 0 else f"errors={failures}")
-    log_message(args, f"[done] pvxring processed={len(paths)} failed={failures}", min_level="normal")
+    log_message(
+        args, f"[done] pvxring processed={len(paths)} failed={failures}", min_level="normal"
+    )
     return 1 if failures else 0
 
 
