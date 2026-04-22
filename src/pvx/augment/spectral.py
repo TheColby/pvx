@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """Spectral-domain augmentation transforms.
 
@@ -11,12 +10,12 @@ from __future__ import annotations
 
 import numpy as np
 
-from .core import Transform, _to_2d, _from_2d
-
+from .core import Transform, _from_2d, _to_2d
 
 # ---------------------------------------------------------------------------
 # STFT helpers
 # ---------------------------------------------------------------------------
+
 
 def _stft(
     audio: np.ndarray,
@@ -62,18 +61,18 @@ def _istft(
     out_len = (n_frames - 1) * hop + n_fft
     output = np.zeros(out_len, dtype=np.float32)
     norm = np.zeros(out_len, dtype=np.float32)
-    win2 = window ** 2
+    win2 = window**2
 
     for i in range(n_frames):
         start = i * hop
-        output[start: start + n_fft] += frames[i]
-        norm[start: start + n_fft] += win2
+        output[start : start + n_fft] += frames[i]
+        norm[start : start + n_fft] += win2
 
     # Avoid divide-by-zero
     norm = np.where(norm < 1e-8, 1.0, norm)
     output /= norm
     # Remove padding
-    output = output[pad: pad + (n_frames * hop)]
+    output = output[pad : pad + (n_frames * hop)]
     if length is not None:
         if len(output) >= length:
             output = output[:length]
@@ -85,6 +84,7 @@ def _istft(
 # ---------------------------------------------------------------------------
 # SpecAugment
 # ---------------------------------------------------------------------------
+
 
 class SpecAugment(Transform):
     """SpecAugment: frequency and time masking in the STFT domain.
@@ -168,13 +168,13 @@ class SpecAugment(Transform):
             for _ in range(self.num_freq_masks):
                 f = int(rng.integers(0, self.freq_mask_param + 1))
                 f0 = int(rng.integers(0, max(1, n_bins - f + 1)))
-                spec[f0: f0 + f, :] = fill
+                spec[f0 : f0 + f, :] = fill
 
             # Time masks
             for _ in range(self.num_time_masks):
                 t = int(rng.integers(0, self.time_mask_param + 1))
                 t0 = int(rng.integers(0, max(1, n_frames - t + 1)))
-                spec[:, t0: t0 + t] = fill
+                spec[:, t0 : t0 + t] = fill
 
             reconstructed = _istft(spec, hop=self.hop_length, n_fft=self.n_fft, length=n_samp)
             out_channels.append(reconstructed.astype(arr.dtype))
@@ -186,6 +186,7 @@ class SpecAugment(Transform):
 # ---------------------------------------------------------------------------
 # EQPerturber
 # ---------------------------------------------------------------------------
+
 
 class EQPerturber(Transform):
     """Randomly perturb audio EQ with parametric peaking filters.
@@ -257,8 +258,8 @@ class EQPerturber(Transform):
         sr: int,
         rng: np.random.Generator,
     ) -> tuple[np.ndarray, int]:
-        from scipy.signal import sosfiltfilt
         import numpy as np
+        from scipy.signal import sosfiltfilt
 
         arr, was_mono = _to_2d(audio)
         n_ch, n_samp = arr.shape
@@ -282,6 +283,7 @@ class EQPerturber(Transform):
 # ---------------------------------------------------------------------------
 # SpectralNoise
 # ---------------------------------------------------------------------------
+
 
 class SpectralNoise(Transform):
     """Add noise directly to STFT magnitude bins.
@@ -343,11 +345,12 @@ class SpectralNoise(Transform):
 # PitchShiftSimple
 # ---------------------------------------------------------------------------
 
+
 class PitchShiftSimple(Transform):
     """Lightweight pitch shift via frequency-bin interpolation in the STFT.
 
     This is a simple phase-vocoder-free approximation suitable for small
-    shifts (±1–3 semitones) where computational cost matters more than
+    shifts (±1-3 semitones) where computational cost matters more than
     artifact quality.  For production-quality pitch shifting use
     :class:`pvx.augment.time_domain.PitchShift` which calls ``pvx voc``.
 

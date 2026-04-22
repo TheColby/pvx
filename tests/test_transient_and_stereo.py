@@ -1,5 +1,3 @@
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
-# ruff: noqa: E402
 
 """Tests for hybrid transient processing and stereo coherence modes."""
 
@@ -18,8 +16,8 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from pvx.core.transients import detect_transient_regions, smooth_binary_mask
-from pvx.metrics.coherence import interchannel_coherence_drift
 from pvx.core.voc import VocoderConfig, configure_runtime, process_audio_block
+from pvx.metrics.coherence import interchannel_coherence_drift
 
 
 def _build_args(**overrides: object) -> argparse.Namespace:
@@ -206,21 +204,29 @@ class TestTransientHybridAndStereo(unittest.TestCase):
             ref_channel=0,
             coherence_strength=0.9,
         )
-        out_ind = process_audio_block(stereo, sr, args_ind, self.cfg, stretch=1.4, pitch_ratio=1.0).audio
-        out_lock = process_audio_block(stereo, sr, args_lock, self.cfg, stretch=1.4, pitch_ratio=1.0).audio
+        out_ind = process_audio_block(
+            stereo, sr, args_ind, self.cfg, stretch=1.4, pitch_ratio=1.0
+        ).audio
+        out_lock = process_audio_block(
+            stereo, sr, args_lock, self.cfg, stretch=1.4, pitch_ratio=1.0
+        ).audio
 
         drift_ind = _phase_drift_internal(out_ind)
         drift_lock = _phase_drift_internal(out_lock)
         self.assertLess(drift_lock, drift_ind)
 
-        report = interchannel_coherence_drift(stereo, out_lock[: stereo.shape[0], :], n_fft=1024, hop_size=256)
+        report = interchannel_coherence_drift(
+            stereo, out_lock[: stereo.shape[0], :], n_fft=1024, hop_size=256
+        )
         self.assertIn("overall_drift_rad", report)
 
     def test_mid_side_lock_mode_runs_and_preserves_stereo_shape(self) -> None:
         sr = 22050
         t = np.arange(int(sr * 0.5)) / sr
         left = 0.3 * np.sin(2 * np.pi * 220.0 * t) + 0.08 * np.sin(2 * np.pi * 880.0 * t)
-        right = 0.3 * np.sin(2 * np.pi * 220.0 * t + 0.4) + 0.06 * np.sin(2 * np.pi * 880.0 * t + 0.3)
+        right = 0.3 * np.sin(2 * np.pi * 220.0 * t + 0.4) + 0.06 * np.sin(
+            2 * np.pi * 880.0 * t + 0.3
+        )
         stereo = np.stack([left, right], axis=1)
 
         args = _build_args(

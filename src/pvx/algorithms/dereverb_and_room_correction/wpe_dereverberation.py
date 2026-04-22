@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """WPE dereverberation.
 
@@ -28,9 +27,9 @@ if __package__ is None or __package__ == "":
 
 from pvx.algorithms.base import AlgorithmResult, run_algorithm
 
-ALGORITHM_ID = 'dereverb_and_room_correction.wpe_dereverberation'
-ALGORITHM_NAME = 'WPE dereverberation'
-THEME = 'Dereverb and Room Correction'
+ALGORITHM_ID = "dereverb_and_room_correction.wpe_dereverberation"
+ALGORITHM_NAME = "WPE dereverberation"
+THEME = "Dereverb and Room Correction"
 
 
 def process(audio: np.ndarray, sample_rate: int, **params: Any) -> AlgorithmResult:

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """Declip via sparse reconstruction.
 
@@ -28,9 +27,9 @@ if __package__ is None or __package__ == "":
 
 from pvx.algorithms.base import AlgorithmResult, run_algorithm
 
-ALGORITHM_ID = 'denoise_and_restoration.declip_via_sparse_reconstruction'
-ALGORITHM_NAME = 'Declip via sparse reconstruction'
-THEME = 'Denoise and Restoration'
+ALGORITHM_ID = "denoise_and_restoration.declip_via_sparse_reconstruction"
+ALGORITHM_NAME = "Declip via sparse reconstruction"
+THEME = "Denoise and Restoration"
 
 
 def process(audio: np.ndarray, sample_rate: int, **params: Any) -> AlgorithmResult:

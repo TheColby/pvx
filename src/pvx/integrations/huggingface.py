@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """HuggingFace datasets integration for pvx augmentation pipelines.
 
@@ -36,14 +35,15 @@ Usage
 
 from __future__ import annotations
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 import numpy as np
-
 
 # ---------------------------------------------------------------------------
 # make_augment_map_fn
 # ---------------------------------------------------------------------------
+
 
 def make_augment_map_fn(
     pipeline,
@@ -142,13 +142,16 @@ def make_augment_map_fn(
 
         if return_metadata:
             import json
-            row["augment_params"] = json.dumps({
-                "seed": seed,
-                "sr_in": sr,
-                "sr_out": sr_out,
-                "shape_in": list(array.shape),
-                "shape_out": list(audio_aug.shape),
-            })
+
+            row["augment_params"] = json.dumps(
+                {
+                    "seed": seed,
+                    "sr_in": sr,
+                    "sr_out": sr_out,
+                    "shape_in": list(array.shape),
+                    "shape_out": list(audio_aug.shape),
+                }
+            )
 
         return row
 
@@ -158,6 +161,7 @@ def make_augment_map_fn(
 # ---------------------------------------------------------------------------
 # HFAugmentMapper — stateful class with full configuration
 # ---------------------------------------------------------------------------
+
 
 class HFAugmentMapper:
     """Stateful HuggingFace datasets mapper with advanced configuration.
@@ -250,6 +254,7 @@ class HFAugmentMapper:
 # ---------------------------------------------------------------------------
 # Batch augmentation helper
 # ---------------------------------------------------------------------------
+
 
 def augment_dataset(
     dataset,

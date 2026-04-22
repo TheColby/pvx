@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """Chord-aware retuning.
 
@@ -28,9 +27,9 @@ if __package__ is None or __package__ == "":
 
 from pvx.algorithms.base import AlgorithmResult, run_algorithm
 
-ALGORITHM_ID = 'retune_and_intonation.chord_aware_retuning'
-ALGORITHM_NAME = 'Chord-aware retuning'
-THEME = 'Retune and Intonation'
+ALGORITHM_ID = "retune_and_intonation.chord_aware_retuning"
+ALGORITHM_NAME = "Chord-aware retuning"
+THEME = "Retune and Intonation"
 
 
 def process(audio: np.ndarray, sample_rate: int, **params: Any) -> AlgorithmResult:

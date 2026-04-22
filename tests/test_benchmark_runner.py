@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """Tests for benchmark runner profile selection."""
 
@@ -11,7 +10,6 @@ from pathlib import Path
 
 import numpy as np
 import soundfile as sf
-
 from benchmarks.run_bench import (
     TaskSpec,
     _check_gate,
@@ -152,7 +150,12 @@ class TestBenchmarkRunnerProfiles(unittest.TestCase):
             row_level=True,
             signature_gate=False,
         )
-        self.assertTrue(any("row a.wav::stretch metric log_spectral_distance regressed" in msg for msg in failures))
+        self.assertTrue(
+            any(
+                "row a.wav::stretch metric log_spectral_distance regressed" in msg
+                for msg in failures
+            )
+        )
 
     def test_diagnostics_emit_actionable_hints(self) -> None:
         diagnostics = _diagnose_metrics(

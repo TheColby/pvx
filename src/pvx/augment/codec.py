@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """Codec and transmission degradation transforms.
 
@@ -11,8 +10,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from .core import Transform, _to_2d, _from_2d
-
+from .core import Transform, _from_2d, _to_2d
 
 # ---------------------------------------------------------------------------
 # Codec presets
@@ -23,13 +21,13 @@ _CODEC_PRESETS: dict[str, dict[str, object]] = {
     "mp3_low": {"bandwidth_hz": 11000, "bit_depth": 12, "resample_ratio": None},
     # Simulate a ~128 kbps MP3: 16 kHz bandwidth, light quantization
     "mp3_medium": {"bandwidth_hz": 16000, "bit_depth": 14, "resample_ratio": None},
-    # Telephone: 300–3400 Hz bandpass, 8 kHz effective sample rate
+    # Telephone: 300-3400 Hz bandpass, 8 kHz effective sample rate
     "telephone": {"bandwidth_hz": (300.0, 3400.0), "bit_depth": 8, "resample_ratio": 8000},
-    # VoIP (narrow band): 50–4000 Hz, 8-kHz resample
+    # VoIP (narrow band): 50-4000 Hz, 8-kHz resample
     "voip_narrow": {"bandwidth_hz": (50.0, 4000.0), "bit_depth": 8, "resample_ratio": 8000},
     # VoIP (wide band): up to 7 kHz, 16-kHz resample
     "voip_wide": {"bandwidth_hz": (50.0, 7000.0), "bit_depth": 12, "resample_ratio": 16000},
-    # AM radio: ~200 Hz–5 kHz bandpass
+    # AM radio: ~200 Hz-5 kHz bandpass
     "am_radio": {"bandwidth_hz": (200.0, 5000.0), "bit_depth": 8, "resample_ratio": None},
     # Lo-fi: heavy bit-crush + low-pass
     "lo_fi": {"bandwidth_hz": 8000, "bit_depth": 6, "resample_ratio": None},
@@ -40,8 +38,10 @@ _CODEC_PRESETS: dict[str, dict[str, object]] = {
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _lowpass(audio: np.ndarray, cutoff_hz: float, sr: int, order: int = 6) -> np.ndarray:
     from scipy.signal import butter, sosfiltfilt
+
     nyq = sr / 2.0
     wn = min(cutoff_hz / nyq, 1.0 - 1e-6)
     sos = butter(order, wn, btype="low", output="sos")
@@ -56,6 +56,7 @@ def _bandpass(
     order: int = 4,
 ) -> np.ndarray:
     from scipy.signal import butter, sosfiltfilt
+
     nyq = sr / 2.0
     lo = max(low_hz / nyq, 1e-4)
     hi = min(high_hz / nyq, 1.0 - 1e-4)
@@ -67,7 +68,7 @@ def _bandpass(
 
 def _quantize(audio: np.ndarray, bits: int) -> np.ndarray:
     """Simulate bit-depth reduction by quantizing to *bits* bits."""
-    levels = 2 ** bits
+    levels = 2**bits
     # Quantize in [-1, 1] space
     clipped = np.clip(audio, -1.0, 1.0 - 1e-6)
     quantized = np.round(clipped * (levels / 2)) / (levels / 2)
@@ -76,8 +77,10 @@ def _quantize(audio: np.ndarray, bits: int) -> np.ndarray:
 
 def _resample_simulate(audio: np.ndarray, sr: int, target_sr: int) -> np.ndarray:
     """Downsample then upsample to simulate codec sample-rate reduction."""
-    from scipy.signal import resample_poly
     from math import gcd
+
+    from scipy.signal import resample_poly
+
     g = gcd(target_sr, sr)
     down_up = target_sr // g, sr // g
     up_down = sr // g, target_sr // g
@@ -92,6 +95,7 @@ def _resample_simulate(audio: np.ndarray, sr: int, target_sr: int) -> np.ndarray
 # ---------------------------------------------------------------------------
 # CodecDegradation
 # ---------------------------------------------------------------------------
+
 
 class CodecDegradation(Transform):
     """Simulate lossy codec artifacts without external codec binaries.
@@ -135,9 +139,7 @@ class CodecDegradation(Transform):
 
         codec_name = self.codec
         if codec_name == "random":
-            codec_name = list(_CODEC_PRESETS.keys())[
-                int(rng.integers(len(_CODEC_PRESETS)))
-            ]
+            codec_name = list(_CODEC_PRESETS.keys())[int(rng.integers(len(_CODEC_PRESETS)))]
         preset = _CODEC_PRESETS[codec_name]
         bandwidth = preset["bandwidth_hz"]
         bit_depth = int(preset["bit_depth"])
@@ -170,6 +172,7 @@ class CodecDegradation(Transform):
 # BitCrusher
 # ---------------------------------------------------------------------------
 
+
 class BitCrusher(Transform):
     """Reduce effective bit depth to simulate lo-fi / ADC artifacts.
 
@@ -177,7 +180,7 @@ class BitCrusher(Transform):
     ----------
     bits:
         Fixed bit depth or ``(min, max)`` range sampled uniformly.
-        Range 4–16 covers everything from extreme lo-fi to near-lossless.
+        Range 4-16 covers everything from extreme lo-fi to near-lossless.
     p:
         Probability of applying this transform.
 
@@ -214,6 +217,7 @@ class BitCrusher(Transform):
 # ---------------------------------------------------------------------------
 # BandwidthLimiter
 # ---------------------------------------------------------------------------
+
 
 class BandwidthLimiter(Transform):
     """Randomly limit the audio bandwidth with a low-pass filter.

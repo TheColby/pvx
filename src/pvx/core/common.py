@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """Shared helpers for pvx DSP command-line tools."""
 
@@ -8,11 +7,14 @@ from __future__ import annotations
 import argparse
 import csv
 import io
+import logging
 import sys
 import time
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable
+
+logger = logging.getLogger("pvx")
 
 import numpy as np
 import soundfile as sf
@@ -33,21 +35,21 @@ from pvx.core.output_policy import (
 from pvx.core.voc import (
     PHASE_ENGINE_CHOICES,
     TRANSFORM_CHOICES,
-    VocoderConfig,
     WINDOW_CHOICES,
+    VocoderConfig,
     add_mastering_args,
     add_runtime_args,
     apply_mastering_chain,
-    configure_runtime_from_args,
     compute_output_path,
+    configure_runtime_from_args,
     ensure_runtime_dependencies,
     expand_inputs,
     force_length,
     parse_pitch_ratio_value,
     phase_vocoder_time_stretch,
     resample_1d,
-    validate_transform_available,
     validate_mastering_args,
+    validate_transform_available,
 )
 
 
@@ -112,11 +114,9 @@ def build_examples_epilog(
 
 
 def console_level(args: argparse.Namespace) -> int:
-    cached = getattr(args, "_console_level_cache", None)
-    if cached is not None:
-        return int(cached)
-
-    base_level = _VERBOSITY_TO_LEVEL.get(str(getattr(args, "verbosity", "normal")), _VERBOSITY_TO_LEVEL["normal"])
+    base_level = _VERBOSITY_TO_LEVEL.get(
+        str(getattr(args, "verbosity", "normal")), _VERBOSITY_TO_LEVEL["normal"]
+    )
     verbose_count = int(getattr(args, "verbose", 0) or 0)
     level = min(_VERBOSITY_TO_LEVEL["debug"], base_level + verbose_count)
     if bool(getattr(args, "no_progress", False)):
@@ -125,8 +125,6 @@ def console_level(args: argparse.Namespace) -> int:
         level = min(level, _VERBOSITY_TO_LEVEL["quiet"])
     if bool(getattr(args, "silent", False)):
         level = _VERBOSITY_TO_LEVEL["silent"]
-
-    setattr(args, "_console_level_cache", level)
     return level
 
 
@@ -146,17 +144,29 @@ def log_message(
     error: bool = False,
 ) -> None:
     required = _VERBOSITY_TO_LEVEL[min_level]
-    if console_level(args) < required:
-        return
-    stream_to_stdout = bool(getattr(args, "stdout", False))
-    stream = sys.stderr if error or stream_to_stdout else sys.stdout
-    print(message, file=stream)
+    level = console_level(args)
+    if level >= required:
+        stream_to_stdout = bool(getattr(args, "stdout", False))
+        stream = sys.stderr if error or stream_to_stdout else sys.stdout
+        print(message, file=stream)
+    # Always emit to the logging system so callers can capture via handlers.
+    log_level = logging.ERROR if error else _VERBOSITY_LOG_LEVEL.get(min_level, logging.INFO)
+    logger.log(log_level, message)
 
 
 def log_error(args: argparse.Namespace, message: str) -> None:
-    if is_silent(args):
-        return
-    print(message, file=sys.stderr)
+    if not is_silent(args):
+        print(message, file=sys.stderr)
+    logger.error(message)
+
+
+_VERBOSITY_LOG_LEVEL: dict[str, int] = {
+    "silent": logging.CRITICAL,
+    "quiet": logging.WARNING,
+    "normal": logging.INFO,
+    "verbose": logging.DEBUG,
+    "debug": logging.DEBUG,
+}
 
 
 class StatusBar:
@@ -223,7 +233,11 @@ def add_common_io_args(parser: argparse.ArgumentParser, default_suffix: str) -> 
         default=None,
         help="Explicit output file path (single-input mode only). Alias: --out",
     )
-    parser.add_argument("--suffix", default=default_suffix, help=f"Output filename suffix (default: {default_suffix})")
+    parser.add_argument(
+        "--suffix",
+        default=default_suffix,
+        help=f"Output filename suffix (default: {default_suffix})",
+    )
     parser.add_argument("--output-format", default=None, help="Output extension/format")
     parser.add_argument(
         "--stdout",
@@ -231,7 +245,9 @@ def add_common_io_args(parser: argparse.ArgumentParser, default_suffix: str) -> 
         help="Write processed audio to stdout stream (for piping); requires exactly one input",
     )
     parser.add_argument("--overwrite", action="store_true", help="Overwrite existing outputs")
-    parser.add_argument("--dry-run", action="store_true", help="Resolve and print, but do not write files")
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Resolve and print, but do not write files"
+    )
     add_console_args(parser)
     add_mastering_args(parser)
     add_output_policy_args(parser)
@@ -282,7 +298,9 @@ def add_vocoder_args(
     default_win_length: int = 2048,
     default_hop_size: int = 512,
 ) -> None:
-    parser.add_argument("--n-fft", type=int, default=default_n_fft, help=f"FFT size (default: {default_n_fft})")
+    parser.add_argument(
+        "--n-fft", type=int, default=default_n_fft, help=f"FFT size (default: {default_n_fft})"
+    )
     parser.add_argument(
         "--win-length",
         type=int,
@@ -295,7 +313,9 @@ def add_vocoder_args(
         default=default_hop_size,
         help=f"Hop size in samples (default: {default_hop_size})",
     )
-    parser.add_argument("--window", choices=list(WINDOW_CHOICES), default="hann", help="Window type")
+    parser.add_argument(
+        "--window", choices=list(WINDOW_CHOICES), default="hann", help="Window type"
+    )
     parser.add_argument(
         "--kaiser-beta",
         type=float,
@@ -519,7 +539,9 @@ def print_input_output_metrics_table(
         (f"in:{input_label}", summarize_audio_metrics(input_audio, int(input_sr))),
         (f"out:{output_label}", summarize_audio_metrics(output_audio, int(output_sr))),
     ]
-    summary_table = render_audio_metrics_table(rows, title="Audio Metrics", include_delta_from_first=True)
+    summary_table = render_audio_metrics_table(
+        rows, title="Audio Metrics", include_delta_from_first=True
+    )
     compare_table = render_audio_comparison_table(
         reference_label=f"in:{input_label}",
         reference_audio=input_audio,
@@ -617,7 +639,11 @@ def time_pitch_shift_audio(
 ) -> np.ndarray:
     channels: list[np.ndarray] = []
     for idx in range(audio.shape[1]):
-        channels.append(time_pitch_shift_channel(audio[:, idx], stretch, pitch_ratio, config, resample_mode=resample_mode))
+        channels.append(
+            time_pitch_shift_channel(
+                audio[:, idx], stretch, pitch_ratio, config, resample_mode=resample_mode
+            )
+        )
     # Per-channel processing can differ by a sample after rounding; pad to the longest.
     out_len = max(ch.size for ch in channels)
     out = np.zeros((out_len, len(channels)), dtype=np.float64)
@@ -653,7 +679,9 @@ def read_segment_csv(path: Path, *, has_pitch: bool) -> list[SegmentSpec]:
                 ratio_text = str(row.get("pitch_ratio", "")).strip()
                 cents_text = str(row.get("pitch_cents", "")).strip()
                 semitones_text = str(row.get("pitch_semitones", "")).strip()
-                populated = int(bool(ratio_text)) + int(bool(cents_text)) + int(bool(semitones_text))
+                populated = (
+                    int(bool(ratio_text)) + int(bool(cents_text)) + int(bool(semitones_text))
+                )
                 if populated == 0:
                     raise ValueError(
                         f"CSV row {row_idx}: missing pitch value. Provide pitch_ratio, pitch_cents, or pitch_semitones."
@@ -671,13 +699,17 @@ def read_segment_csv(path: Path, *, has_pitch: bool) -> list[SegmentSpec]:
                     pitch_ratio = cents_to_ratio(float(cents_text))
                 else:
                     pitch_ratio = semitone_to_ratio(float(semitones_text))
-            segments.append(SegmentSpec(start_s=start_s, end_s=end_s, stretch=stretch, pitch_ratio=pitch_ratio))
+            segments.append(
+                SegmentSpec(start_s=start_s, end_s=end_s, stretch=stretch, pitch_ratio=pitch_ratio)
+            )
 
     segments.sort(key=lambda seg: seg.start_s)
     return segments
 
 
-def concat_with_crossfade(chunks: list[np.ndarray], sr: int, crossfade_ms: float = 8.0) -> np.ndarray:
+def concat_with_crossfade(
+    chunks: list[np.ndarray], sr: int, crossfade_ms: float = 8.0
+) -> np.ndarray:
     if not chunks:
         return np.zeros((0, 1), dtype=np.float64)
     if len(chunks) == 1:

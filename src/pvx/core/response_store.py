@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """Persistent frequency-response artifact storage.
 
@@ -14,9 +13,9 @@ PVXRF schema:
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import hashlib
 import json
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
 
@@ -174,7 +173,9 @@ def response_from_analysis(
         mag_agg = smooth
     mag_agg = _normalize_magnitude(mag_agg, normalize=normalize)
     phase_agg = _aggregate_phase(phase, mode=phase_mode)
-    freqs = np.linspace(0.0, float(analysis.sample_rate) * 0.5, int(analysis.bins), dtype=np.float64)
+    freqs = np.linspace(
+        0.0, float(analysis.sample_rate) * 0.5, int(analysis.bins), dtype=np.float64
+    )
     return ResponseArtifact(
         sample_rate=int(analysis.sample_rate),
         bins=int(analysis.bins),

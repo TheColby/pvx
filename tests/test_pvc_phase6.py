@@ -1,13 +1,12 @@
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """Unit tests for PVC-inspired Phase 6 function-stream utilities."""
 
 from __future__ import annotations
 
+import sys
 import tempfile
 import unittest
 from pathlib import Path
-import sys
 
 import numpy as np
 
@@ -18,8 +17,8 @@ if str(SRC) not in sys.path:
 if str(ROOT) not in sys.path:
     sys.path.insert(1, str(ROOT))
 
-from pvx.cli.pvxenvelope import main as envelope_main
 from pvx.cli.pvx import main as pvx_main
+from pvx.cli.pvxenvelope import main as envelope_main
 from pvx.cli.pvxreshape import main as reshape_main
 from pvx.core.pvc_functions import (
     dump_control_points_csv,

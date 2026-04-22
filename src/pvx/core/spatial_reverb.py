@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """Trajectory-aware multichannel convolution reverb helpers."""
 
@@ -10,7 +9,7 @@ import numpy as np
 
 try:
     from scipy.signal import fftconvolve  # type: ignore
-except Exception:  # pragma: no cover - fallback when scipy is unavailable
+except (ImportError, ModuleNotFoundError):  # pragma: no cover - fallback when scipy is unavailable
     fftconvolve = None  # type: ignore[assignment]
 
 
@@ -64,7 +63,9 @@ def default_speaker_angles(channels: int) -> np.ndarray:
     if channels == 2:
         return np.asarray([(-30.0, 0.0), (30.0, 0.0)], dtype=np.float64)
     if channels == 4:
-        return np.asarray([(-45.0, 0.0), (45.0, 0.0), (135.0, 0.0), (-135.0, 0.0)], dtype=np.float64)
+        return np.asarray(
+            [(-45.0, 0.0), (45.0, 0.0), (135.0, 0.0), (-135.0, 0.0)], dtype=np.float64
+        )
     az = np.linspace(0.0, 360.0, num=channels, endpoint=False, dtype=np.float64)
     el = np.zeros_like(az)
     return np.stack([az, el], axis=1)
