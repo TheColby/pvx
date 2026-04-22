@@ -1,13 +1,12 @@
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """Unit tests for PVXAN/PVXRF artifact storage and determinism."""
 
 from __future__ import annotations
 
+import sys
 import tempfile
 import unittest
 from pathlib import Path
-import sys
 
 import numpy as np
 

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """Rhythmic gate/stutter quantizer.
 
@@ -28,9 +27,9 @@ if __package__ is None or __package__ == "":
 
 from pvx.algorithms.base import AlgorithmResult, run_algorithm
 
-ALGORITHM_ID = 'granular_and_modulation.rhythmic_gate_stutter_quantizer'
-ALGORITHM_NAME = 'Rhythmic gate/stutter quantizer'
-THEME = 'Granular and Modulation'
+ALGORITHM_ID = "granular_and_modulation.rhythmic_gate_stutter_quantizer"
+ALGORITHM_NAME = "Rhythmic gate/stutter quantizer"
+THEME = "Granular and Modulation"
 
 
 def process(audio: np.ndarray, sample_rate: int, **params: Any) -> AlgorithmResult:

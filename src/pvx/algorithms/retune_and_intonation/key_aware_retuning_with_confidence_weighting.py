@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """Key-aware retuning with confidence weighting.
 
@@ -28,9 +27,9 @@ if __package__ is None or __package__ == "":
 
 from pvx.algorithms.base import AlgorithmResult, run_algorithm
 
-ALGORITHM_ID = 'retune_and_intonation.key_aware_retuning_with_confidence_weighting'
-ALGORITHM_NAME = 'Key-aware retuning with confidence weighting'
-THEME = 'Retune and Intonation'
+ALGORITHM_ID = "retune_and_intonation.key_aware_retuning_with_confidence_weighting"
+ALGORITHM_NAME = "Key-aware retuning with confidence weighting"
+THEME = "Retune and Intonation"
 
 
 def process(audio: np.ndarray, sample_rate: int, **params: Any) -> AlgorithmResult:

@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """Unit tests for benchmark metric primitives."""
 
@@ -17,7 +16,7 @@ if str(ROOT) not in sys.path:
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from benchmarks.metrics import (  # noqa: E402
+from benchmarks.metrics import (
     attack_time_error_ms,
     bandwidth_95_delta_hz,
     clipping_ratio_delta,
@@ -40,14 +39,14 @@ from benchmarks.metrics import (  # noqa: E402
     phasiness_index,
     polqa_mos_lqo,
     rms_level_delta_db,
-    signal_to_noise_ratio_db,
-    si_sdr_db,
     short_term_lufs_delta_lu,
+    si_sdr_db,
+    signal_to_noise_ratio_db,
     spectral_convergence,
     stereo_coherence_drift,
     stoi_score,
-    true_peak_delta_dbtp,
     transient_smear_score,
+    true_peak_delta_dbtp,
     visqol_mos_lqo,
     voicing_f1_score,
     zero_crossing_rate_delta,

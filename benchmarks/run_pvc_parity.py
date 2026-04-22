@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """PVC-style parity benchmark suite for phase 3-7 operators."""
 
@@ -10,9 +9,10 @@ import json
 import math
 import sys
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 import numpy as np
 
@@ -395,9 +395,13 @@ def _render_markdown(payload: dict[str, Any]) -> str:
     lines: list[str] = []
     lines.append("# pvx PVC Parity Benchmark Report")
     lines.append("")
-    lines.append("Deterministic parity scenarios for PVC-inspired operators and control-stream utilities.")
+    lines.append(
+        "Deterministic parity scenarios for PVC-inspired operators and control-stream utilities."
+    )
     lines.append("")
-    lines.append("| Case | Identity Expected | SNR (dB) | LSD | ModSpec | EnvCorr | Peak | RMS Out | Runtime (s) |")
+    lines.append(
+        "| Case | Identity Expected | SNR (dB) | LSD | ModSpec | EnvCorr | Peak | RMS Out | Runtime (s) |"
+    )
     lines.append("| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |")
     for row in payload.get("rows", []):
         lines.append(
@@ -419,8 +423,16 @@ def _render_markdown(payload: dict[str, Any]) -> str:
     lines.append("")
     lines.append("- Mean SNR (dB): `{:.3f}`".format(float(agg.get("snr_db", math.nan))))
     lines.append("- Mean LSD: `{:.4f}`".format(float(agg.get("log_spectral_distance", math.nan))))
-    lines.append("- Mean modulation distance: `{:.4f}`".format(float(agg.get("modulation_spectrum_distance", math.nan))))
-    lines.append("- Mean envelope correlation: `{:.4f}`".format(float(agg.get("envelope_correlation", math.nan))))
+    lines.append(
+        "- Mean modulation distance: `{:.4f}`".format(
+            float(agg.get("modulation_spectrum_distance", math.nan))
+        )
+    )
+    lines.append(
+        "- Mean envelope correlation: `{:.4f}`".format(
+            float(agg.get("envelope_correlation", math.nan))
+        )
+    )
     lines.append("")
     return "\n".join(lines) + "\n"
 
@@ -432,12 +444,23 @@ def _gate_failures(
     tolerance: float,
 ) -> list[str]:
     failures: list[str] = []
-    cur_rows = {str(row.get("name", "")): row for row in payload.get("rows", []) if isinstance(row, dict)}
-    base_rows = {str(row.get("name", "")): row for row in baseline.get("rows", []) if isinstance(row, dict)}
+    cur_rows = {
+        str(row.get("name", "")): row for row in payload.get("rows", []) if isinstance(row, dict)
+    }
+    base_rows = {
+        str(row.get("name", "")): row for row in baseline.get("rows", []) if isinstance(row, dict)
+    }
     if not base_rows:
         return ["Baseline has no rows for parity gate."]
 
-    metrics = ("snr_db", "log_spectral_distance", "modulation_spectrum_distance", "envelope_correlation", "peak_abs", "rms_out")
+    metrics = (
+        "snr_db",
+        "log_spectral_distance",
+        "modulation_spectrum_distance",
+        "envelope_correlation",
+        "peak_abs",
+        "rms_out",
+    )
     for case_name, base_row in sorted(base_rows.items()):
         cur_row = cur_rows.get(case_name)
         if cur_row is None:
@@ -458,11 +481,20 @@ def _gate_failures(
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Run PVC-inspired parity benchmark scenarios.")
     parser.add_argument("--out-dir", type=Path, default=ROOT / "benchmarks" / "out_pvc_parity")
-    parser.add_argument("--baseline", type=Path, default=None, help="Optional baseline JSON for gate checks")
+    parser.add_argument(
+        "--baseline", type=Path, default=None, help="Optional baseline JSON for gate checks"
+    )
     parser.add_argument("--gate", action="store_true", help="Enable baseline regression gate")
-    parser.add_argument("--gate-tolerance", type=float, default=0.12, help="Absolute metric drift tolerance")
+    parser.add_argument(
+        "--gate-tolerance", type=float, default=0.12, help="Absolute metric drift tolerance"
+    )
     parser.add_argument("--quick", action="store_true", help="Run identity-only subset")
-    parser.add_argument("--refresh-baseline", type=Path, default=None, help="Write current report JSON as a baseline")
+    parser.add_argument(
+        "--refresh-baseline",
+        type=Path,
+        default=None,
+        help="Write current report JSON as a baseline",
+    )
     args = parser.parse_args(argv)
 
     out_dir = Path(args.out_dir).expanduser().resolve()
@@ -523,13 +555,17 @@ def main(argv: list[str] | None = None) -> int:
     if args.refresh_baseline is not None:
         baseline_out = Path(args.refresh_baseline).expanduser().resolve()
         baseline_out.parent.mkdir(parents=True, exist_ok=True)
-        baseline_out.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        baseline_out.write_text(
+            json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
         print(f"Wrote baseline {baseline_out}")
 
     if bool(args.gate):
         if args.baseline is None:
             parser.error("--gate requires --baseline")
-        baseline_payload = json.loads(Path(args.baseline).expanduser().resolve().read_text(encoding="utf-8"))
+        baseline_payload = json.loads(
+            Path(args.baseline).expanduser().resolve().read_text(encoding="utf-8")
+        )
         failures = _gate_failures(payload, baseline_payload, tolerance=float(args.gate_tolerance))
         if failures:
             for row in failures:

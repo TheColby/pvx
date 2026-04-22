@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """Control-bus routing helpers for time-varying CSV maps."""
 
@@ -9,8 +8,9 @@ import csv
 import io
 import math
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable, Literal
+from typing import Literal
 
 RouteOp = Literal["source", "const", "inv", "pow", "mul", "add", "affine", "clip"]
 
@@ -110,7 +110,7 @@ def _parse_finite_float(value: str, *, context: str) -> float:
         raise ValueError(f"{context} must not be empty")
     try:
         out = float(text)
-    except Exception as exc:
+    except (ValueError, TypeError) as exc:
         raise ValueError(f"{context} must be numeric: {value!r}") from exc
     if not math.isfinite(out):
         raise ValueError(f"{context} must be finite")
@@ -181,9 +181,7 @@ def parse_control_route(expression: str) -> ControlRoute:
         inner = rhs_text[4:-1]
         parts = [chunk.strip() for chunk in inner.split(",", 1)]
         if len(parts) != 2:
-            raise ValueError(
-                f"route '{raw}' pow() must be in the form pow(source, exponent)"
-            )
+            raise ValueError(f"route '{raw}' pow() must be in the form pow(source, exponent)")
         source = _parse_signal_name(parts[0], context=f"route '{raw}' pow() source", allowed=None)
         exponent = _parse_finite_float(parts[1], context=f"route '{raw}' pow() exponent")
         return ControlRoute(
@@ -235,7 +233,9 @@ def parse_control_route(expression: str) -> ControlRoute:
         parts = [chunk.strip() for chunk in inner.split(",")]
         if len(parts) != 3:
             raise ValueError(f"route '{raw}' affine() must be affine(source, scale, bias)")
-        source = _parse_signal_name(parts[0], context=f"route '{raw}' affine() source", allowed=None)
+        source = _parse_signal_name(
+            parts[0], context=f"route '{raw}' affine() source", allowed=None
+        )
         scale = _parse_finite_float(parts[1], context=f"route '{raw}' affine() scale")
         bias = _parse_finite_float(parts[2], context=f"route '{raw}' affine() bias")
         return ControlRoute(
@@ -306,7 +306,13 @@ def parse_control_routes(expressions: Iterable[str]) -> list[ControlRoute]:
 
 def _source_column_candidates(source: str) -> tuple[str, ...]:
     if source == "stretch":
-        return ("stretch", "time_stretch", "time-stretch", "time_stretch_factor", "time-stretch-factor")
+        return (
+            "stretch",
+            "time_stretch",
+            "time-stretch",
+            "time_stretch_factor",
+            "time-stretch-factor",
+        )
     if source == "pitch_ratio":
         return ("pitch_ratio", "ratio")
     if source == "confidence":
@@ -363,7 +369,7 @@ def _parse_row_float(
             continue
         try:
             value = float(value_text)
-        except Exception as exc:
+        except (ValueError, TypeError) as exc:
             raise ValueError(f"{context}: value for '{key}' must be numeric") from exc
         if not math.isfinite(value):
             raise ValueError(f"{context}: value for '{key}' must be finite")
@@ -404,10 +410,14 @@ def _read_source_value(row: dict[str, str], source: str, *, row_index: int) -> f
 
 def _eval_route(route: ControlRoute, row: dict[str, str], *, row_index: int) -> float:
     if route.op == "const":
-        assert route.value is not None
+        if route.value is None:
+            raise ValueError(f"control-map row {row_index}: 'const' route is missing a value")
         return float(route.value)
 
-    assert route.source is not None
+    if route.source is None:
+        raise ValueError(
+            f"control-map row {row_index}: route '{route.expression}' is missing a source column"
+        )
     src = _read_source_value(row, route.source, row_index=row_index)
 
     if route.op == "source":
@@ -418,26 +428,42 @@ def _eval_route(route: ControlRoute, row: dict[str, str], *, row_index: int) -> 
         out = 1.0 / src
     elif route.op == "mul":
         params = tuple(route.params or ())
-        assert len(params) == 1
+        if len(params) != 1:
+            raise ValueError(
+                f"control-map row {row_index}: 'mul' route requires exactly 1 parameter, got {len(params)}"
+            )
         out = src * params[0]
     elif route.op == "add":
         params = tuple(route.params or ())
-        assert len(params) == 1
+        if len(params) != 1:
+            raise ValueError(
+                f"control-map row {row_index}: 'add' route requires exactly 1 parameter, got {len(params)}"
+            )
         out = src + params[0]
     elif route.op == "affine":
         params = tuple(route.params or ())
-        assert len(params) == 2
+        if len(params) != 2:
+            raise ValueError(
+                f"control-map row {row_index}: 'affine' route requires exactly 2 parameters, got {len(params)}"
+            )
         out = src * params[0] + params[1]
     elif route.op == "clip":
         params = tuple(route.params or ())
-        assert len(params) == 2
+        if len(params) != 2:
+            raise ValueError(
+                f"control-map row {row_index}: 'clip' route requires exactly 2 parameters, got {len(params)}"
+            )
         out = min(max(src, params[0]), params[1])
+    elif route.op == "pow":
+        if route.exponent is None:
+            raise ValueError(f"control-map row {row_index}: 'pow' route is missing an exponent")
+        out = float(src**route.exponent)
     else:
-        assert route.op == "pow"
-        assert route.exponent is not None
-        out = float(src ** route.exponent)
+        raise ValueError(f"control-map row {row_index}: unknown route op '{route.op}'")
     if not math.isfinite(out):
-        raise ValueError(f"control-map row {row_index}: route '{route.expression}' produced a non-finite value")
+        raise ValueError(
+            f"control-map row {row_index}: route '{route.expression}' produced a non-finite value"
+        )
     return float(out)
 
 

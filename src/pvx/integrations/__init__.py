@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """pvx.integrations — Framework adapters for pvx augmentation pipelines.
 

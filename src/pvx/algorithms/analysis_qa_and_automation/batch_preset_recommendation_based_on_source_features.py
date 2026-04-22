@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """Batch preset recommendation based on source features.
 
@@ -28,9 +27,9 @@ if __package__ is None or __package__ == "":
 
 from pvx.algorithms.base import AlgorithmResult, run_algorithm
 
-ALGORITHM_ID = 'analysis_qa_and_automation.batch_preset_recommendation_based_on_source_features'
-ALGORITHM_NAME = 'Batch preset recommendation based on source features'
-THEME = 'Analysis, QA, and Automation'
+ALGORITHM_ID = "analysis_qa_and_automation.batch_preset_recommendation_based_on_source_features"
+ALGORITHM_NAME = "Batch preset recommendation based on source features"
+THEME = "Analysis, QA, and Automation"
 
 
 def process(audio: np.ndarray, sample_rate: int, **params: Any) -> AlgorithmResult:

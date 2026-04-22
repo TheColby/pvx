@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """Benchmark: WER impact of pvx augmentation on a speech recognition task.
 
@@ -37,28 +36,37 @@ import numpy as np
 
 
 def parse_args():
-    p = argparse.ArgumentParser(
-        description="Benchmark pvx augmentation WER impact on LibriSpeech"
+    p = argparse.ArgumentParser(description="Benchmark pvx augmentation WER impact on LibriSpeech")
+    p.add_argument(
+        "--epochs", type=int, default=5, help="Training epochs per condition (default: 5)"
     )
-    p.add_argument("--epochs", type=int, default=5, help="Training epochs per condition (default: 5)")
     p.add_argument("--batch-size", type=int, default=8, help="Batch size (default: 8)")
     p.add_argument("--lr", type=float, default=3e-5, help="Learning rate (default: 3e-5)")
-    p.add_argument("--max-train-samples", type=int, default=None, help="Cap training set size for quick runs")
-    p.add_argument("--max-eval-samples", type=int, default=500, help="Cap eval set size (default: 500)")
+    p.add_argument(
+        "--max-train-samples", type=int, default=None, help="Cap training set size for quick runs"
+    )
+    p.add_argument(
+        "--max-eval-samples", type=int, default=500, help="Cap eval set size (default: 500)"
+    )
     p.add_argument("--device", type=str, default="auto", choices=["auto", "cpu", "cuda", "mps"])
     p.add_argument("--seed", type=int, default=42, help="Random seed")
     p.add_argument("--out-dir", type=str, default="benchmarks/out_augment")
-    p.add_argument("--model-name", type=str, default="facebook/wav2vec2-base",
-                    help="HuggingFace model ID (default: facebook/wav2vec2-base)")
+    p.add_argument(
+        "--model-name",
+        type=str,
+        default="facebook/wav2vec2-base",
+        help="HuggingFace model ID (default: facebook/wav2vec2-base)",
+    )
     return p.parse_args()
 
 
 def get_device(requested: str):
     import torch
+
     if requested == "auto":
         if torch.cuda.is_available():
             return "cuda"
-        elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+        if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
             return "mps"
         return "cpu"
     return requested
@@ -67,46 +75,68 @@ def get_device(requested: str):
 def build_pipelines():
     """Return a dict of {name: pipeline_or_None} for benchmark conditions."""
     from pvx.augment import (
-        Pipeline, GainPerturber, AddNoise, RoomSimulator,
-        CodecDegradation, SpecAugment, EQPerturber, OneOf, Identity,
+        AddNoise,
+        CodecDegradation,
+        GainPerturber,
+        Pipeline,
+        RoomSimulator,
+        SpecAugment,
     )
 
     conditions = {
         "baseline (no augmentation)": None,
-        "gain only": Pipeline([
-            GainPerturber(gain_db=(-6, 6), p=0.9),
-        ], seed=42),
-        "noise + gain": Pipeline([
-            GainPerturber(gain_db=(-6, 6), p=0.9),
-            AddNoise(snr_db=(10, 35), noise_type="pink", p=0.6),
-        ], seed=42),
-        "SpecAugment only": Pipeline([
-            SpecAugment(freq_mask_param=27, time_mask_param=100,
-                        num_freq_masks=2, num_time_masks=2, p=0.8),
-        ], seed=42),
-        "full asr_pipeline": Pipeline([
-            GainPerturber(gain_db=(-3, 3), p=0.8),
-            RoomSimulator(rt60_range=(0.05, 0.6), wet_range=(0.1, 0.5), p=0.4),
-            AddNoise(snr_db=(15, 40), noise_type="pink", p=0.5),
-            CodecDegradation(codec="random", p=0.2),
-            SpecAugment(freq_mask_param=20, time_mask_param=30,
-                        num_freq_masks=1, num_time_masks=1, p=0.5),
-        ], seed=42),
+        "gain only": Pipeline(
+            [
+                GainPerturber(gain_db=(-6, 6), p=0.9),
+            ],
+            seed=42,
+        ),
+        "noise + gain": Pipeline(
+            [
+                GainPerturber(gain_db=(-6, 6), p=0.9),
+                AddNoise(snr_db=(10, 35), noise_type="pink", p=0.6),
+            ],
+            seed=42,
+        ),
+        "SpecAugment only": Pipeline(
+            [
+                SpecAugment(
+                    freq_mask_param=27,
+                    time_mask_param=100,
+                    num_freq_masks=2,
+                    num_time_masks=2,
+                    p=0.8,
+                ),
+            ],
+            seed=42,
+        ),
+        "full asr_pipeline": Pipeline(
+            [
+                GainPerturber(gain_db=(-3, 3), p=0.8),
+                RoomSimulator(rt60_range=(0.05, 0.6), wet_range=(0.1, 0.5), p=0.4),
+                AddNoise(snr_db=(15, 40), noise_type="pink", p=0.5),
+                CodecDegradation(codec="random", p=0.2),
+                SpecAugment(
+                    freq_mask_param=20,
+                    time_mask_param=30,
+                    num_freq_masks=1,
+                    num_time_masks=1,
+                    p=0.5,
+                ),
+            ],
+            seed=42,
+        ),
     }
     return conditions
 
 
 def prepare_dataset(max_train: int | None, max_eval: int):
     """Load LibriSpeech train-clean-100 and test-clean via HuggingFace."""
-    from datasets import load_dataset, Audio
+    from datasets import Audio, load_dataset
 
     print("Loading LibriSpeech train-clean-100 and test-clean...")
-    ds_train = load_dataset(
-        "librispeech_asr", "clean", split="train.100", trust_remote_code=True
-    )
-    ds_eval = load_dataset(
-        "librispeech_asr", "clean", split="test", trust_remote_code=True
-    )
+    ds_train = load_dataset("librispeech_asr", "clean", split="train.100", trust_remote_code=True)
+    ds_eval = load_dataset("librispeech_asr", "clean", split="test", trust_remote_code=True)
 
     if max_train is not None:
         ds_train = ds_train.select(range(min(max_train, len(ds_train))))
@@ -131,17 +161,16 @@ def train_and_evaluate(
     device: str,
 ):
     """Train Wav2Vec2 with one augmentation condition and return WER."""
-    import torch
     import evaluate
     from transformers import (
-        Wav2Vec2ForCTC,
-        TrainingArguments,
         Trainer,
+        TrainingArguments,
+        Wav2Vec2ForCTC,
     )
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Condition: {condition_name}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     # Preprocess function: apply augmentation then extract features
     def preprocess(examples, indices=None):
@@ -224,7 +253,9 @@ def train_and_evaluate(
         wer = wer_metric.compute(predictions=pred_str, references=label_str)
         return {"wer": wer}
 
-    out_dir = Path(args.out_dir) / condition_name.replace(" ", "_").replace("(", "").replace(")", "")
+    out_dir = Path(args.out_dir) / condition_name.replace(" ", "_").replace("(", "").replace(
+        ")", ""
+    )
     training_args = TrainingArguments(
         output_dir=str(out_dir),
         num_train_epochs=args.epochs,
@@ -260,7 +291,7 @@ def train_and_evaluate(
     eval_time = time.time() - t0
 
     wer = metrics["eval_wer"]
-    print(f"  WER: {wer:.4f} ({wer*100:.2f}%)")
+    print(f"  WER: {wer:.4f} ({wer * 100:.2f}%)")
     print(f"  Train time: {train_time:.1f}s, Eval time: {eval_time:.1f}s")
 
     return {
@@ -282,14 +313,16 @@ def main():
 
     # Check dependencies
     try:
-        import torch
         import datasets
-        import transformers
         import evaluate
         import jiwer
+        import torch
+        import transformers
     except ImportError as e:
         print(f"Missing dependency: {e}")
-        print("Install with: pip install 'pvx[torch]' datasets transformers evaluate jiwer torchaudio")
+        print(
+            "Install with: pip install 'pvx[torch]' datasets transformers evaluate jiwer torchaudio"
+        )
         sys.exit(1)
 
     from transformers import Wav2Vec2Processor
@@ -315,14 +348,18 @@ def main():
         results.append(result)
 
     # Summary
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("BENCHMARK RESULTS")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     baseline_wer = results[0]["wer_pct"]
     for r in results:
         delta = r["wer_pct"] - baseline_wer
         sign = "+" if delta > 0 else ""
-        marker = " (baseline)" if r["condition"] == "baseline (no augmentation)" else f" ({sign}{delta:.2f}pp)"
+        marker = (
+            " (baseline)"
+            if r["condition"] == "baseline (no augmentation)"
+            else f" ({sign}{delta:.2f}pp)"
+        )
         print(f"  {r['condition']:35s} WER: {r['wer_pct']:6.2f}%{marker}")
 
     # Save

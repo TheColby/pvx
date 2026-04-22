@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """PVC-style function-stream utilities for control-rate map authoring.
 
@@ -157,7 +156,7 @@ def parse_control_points_payload(
             try:
                 t_val = float(str(t_raw).strip())
                 v_val = float(str(v_raw).strip())
-            except Exception as exc:
+            except (ValueError, TypeError) as exc:
                 raise ValueError(f"{source_label}: invalid numeric value at CSV row {idx}") from exc
             points_t.append(t_val)
             points_v.append(v_val)
@@ -182,8 +181,10 @@ def parse_control_points_payload(
             try:
                 t_val = float(t_raw)
                 v_val = float(v_raw)
-            except Exception as exc:
-                raise ValueError(f"{source_label}: invalid numeric value at JSON point {idx}") from exc
+            except (ValueError, TypeError) as exc:
+                raise ValueError(
+                    f"{source_label}: invalid numeric value at JSON point {idx}"
+                ) from exc
             points_t.append(t_val)
             points_v.append(v_val)
 
@@ -231,7 +232,9 @@ def dump_control_points_json(
     payload = {
         "format": "pvx-control-v1",
         "key": str(key),
-        "points": [{"time_sec": float(tt), str(key): float(vv)} for tt, vv in zip(t.tolist(), v.tolist())],
+        "points": [
+            {"time_sec": float(tt), str(key): float(vv)} for tt, vv in zip(t.tolist(), v.tolist())
+        ],
     }
     return json.dumps(payload, indent=2, sort_keys=True) + "\n"
 

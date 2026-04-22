@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """PVC-inspired harmonic/chord spectral mapping for pvx.
 
@@ -75,7 +74,9 @@ def chord_mapper_mask(
     return np.clip(out, 0.0, 1.0)
 
 
-def _inharmonic_inverse_map(freqs_hz: np.ndarray, *, f0_hz: float, inharmonicity: float) -> np.ndarray:
+def _inharmonic_inverse_map(
+    freqs_hz: np.ndarray, *, f0_hz: float, inharmonicity: float
+) -> np.ndarray:
     f_out = np.asarray(freqs_hz, dtype=np.float64).reshape(-1)
     f0 = max(1e-6, float(f0_hz))
     b = max(0.0, float(inharmonicity))

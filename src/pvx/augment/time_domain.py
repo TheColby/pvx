@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """Time-domain audio augmentation transforms.
 
@@ -17,12 +16,12 @@ from pathlib import Path
 
 import numpy as np
 
-from .core import Transform, _to_2d, _from_2d, load_audio, save_audio
-
+from .core import Transform, _from_2d, _to_2d, load_audio, save_audio
 
 # ---------------------------------------------------------------------------
 # GainPerturber
 # ---------------------------------------------------------------------------
+
 
 class GainPerturber(Transform):
     """Randomly adjust the gain of audio.
@@ -68,6 +67,7 @@ class GainPerturber(Transform):
 # Normalizer
 # ---------------------------------------------------------------------------
 
+
 class Normalizer(Transform):
     """Normalize audio to a target peak or RMS level.
 
@@ -102,7 +102,7 @@ class Normalizer(Transform):
         if self.mode == "peak":
             current = float(np.max(np.abs(audio)) + 1e-12)
         else:
-            current = float(np.sqrt(np.mean(audio ** 2)) + 1e-12)
+            current = float(np.sqrt(np.mean(audio**2)) + 1e-12)
         target = 10.0 ** (self.target_db / 20.0)
         scale = target / current
         return (audio * scale).astype(audio.dtype), sr
@@ -111,6 +111,7 @@ class Normalizer(Transform):
 # ---------------------------------------------------------------------------
 # ClippingSimulator
 # ---------------------------------------------------------------------------
+
 
 class ClippingSimulator(Transform):
     """Simulate ADC clipping or amplifier saturation.
@@ -168,6 +169,7 @@ class ClippingSimulator(Transform):
 # ---------------------------------------------------------------------------
 # TimeShift
 # ---------------------------------------------------------------------------
+
 
 class TimeShift(Transform):
     """Randomly shift audio in time with zero-padding or wrap-around.
@@ -234,6 +236,7 @@ class TimeShift(Transform):
 # Reverse
 # ---------------------------------------------------------------------------
 
+
 class Reverse(Transform):
     """Reverse the audio waveform.
 
@@ -255,6 +258,7 @@ class Reverse(Transform):
 # ---------------------------------------------------------------------------
 # Fade
 # ---------------------------------------------------------------------------
+
 
 class Fade(Transform):
     """Apply fade-in and/or fade-out to audio.
@@ -302,10 +306,10 @@ class Fade(Transform):
         t = np.linspace(0.0, 1.0, n)
         if curve == "linear":
             return t.astype(np.float32)
-        elif curve == "logarithmic":
+        if curve == "logarithmic":
             return (np.log1p(t * (np.e - 1))).astype(np.float32)
-        else:  # exponential
-            return ((np.exp(t) - 1.0) / (np.e - 1.0)).astype(np.float32)
+        # exponential
+        return ((np.exp(t) - 1.0) / (np.e - 1.0)).astype(np.float32)
 
     def apply(
         self,
@@ -329,7 +333,7 @@ class Fade(Transform):
 
         if fo_samp > 0:
             env = self._make_envelope(fo_samp, self.curve)[::-1]
-            result[:, n_samp - fo_samp:] *= env
+            result[:, n_samp - fo_samp :] *= env
 
         return _from_2d(result, was_mono), sr
 
@@ -337,6 +341,7 @@ class Fade(Transform):
 # ---------------------------------------------------------------------------
 # TrimSilence
 # ---------------------------------------------------------------------------
+
 
 class TrimSilence(Transform):
     """Trim leading and/or trailing silence.
@@ -395,6 +400,7 @@ class TrimSilence(Transform):
 # FixedLengthCrop
 # ---------------------------------------------------------------------------
 
+
 class FixedLengthCrop(Transform):
     """Crop or pad audio to a fixed duration.
 
@@ -451,7 +457,7 @@ class FixedLengthCrop(Transform):
                 start = 0
             else:
                 start = n_samp - target
-            result = arr[:, start: start + target]
+            result = arr[:, start : start + target]
         else:
             if self.pad_mode == "zero":
                 result = np.zeros((n_ch, target), dtype=arr.dtype)
@@ -467,10 +473,12 @@ class FixedLengthCrop(Transform):
 # Engine detection helper
 # ---------------------------------------------------------------------------
 
+
 def _has_torch() -> bool:
     """Return True if PyTorch is importable."""
     try:
         import torch  # noqa: F401
+
         return True
     except ImportError:
         return False
@@ -480,6 +488,7 @@ def _has_torchaudio() -> bool:
     """Return True if torchaudio is importable."""
     try:
         import torchaudio  # noqa: F401
+
         return True
     except ImportError:
         return False
@@ -542,8 +551,11 @@ def _torchaudio_time_stretch(audio: np.ndarray, sr: int, rate: float) -> tuple[n
     channels = []
     for ch in range(tensor.shape[0]):
         spec = torch.stft(
-            tensor[ch], n_fft=n_fft, hop_length=hop_length,
-            window=window, return_complex=True,
+            tensor[ch],
+            n_fft=n_fft,
+            hop_length=hop_length,
+            window=window,
+            return_complex=True,
         )  # (n_bins, n_frames)
         # Use torchaudio's phase_vocoder
         stretched_spec = torchaudio.functional.phase_vocoder(
@@ -555,7 +567,10 @@ def _torchaudio_time_stretch(audio: np.ndarray, sr: int, rate: float) -> tuple[n
         ).squeeze(0)  # (n_bins, n_out_frames)
         # iSTFT
         stretched = torch.istft(
-            stretched_spec, n_fft=n_fft, hop_length=hop_length, window=window,
+            stretched_spec,
+            n_fft=n_fft,
+            hop_length=hop_length,
+            window=window,
         )
         channels.append(stretched.numpy())
 
@@ -588,6 +603,7 @@ def _torchaudio_pitch_shift(audio: np.ndarray, sr: int, semitones: float) -> tup
 def _pytorch_time_stretch(audio: np.ndarray, sr: int, rate: float) -> tuple[np.ndarray, int]:
     """Time-stretch using the native PyTorch phase vocoder."""
     import torch
+
     from .gpu import _torch_phase_vocoder
 
     was_mono = audio.ndim == 1
@@ -610,7 +626,6 @@ def _pytorch_time_stretch(audio: np.ndarray, sr: int, rate: float) -> tuple[np.n
 
 def _pytorch_pitch_shift(audio: np.ndarray, sr: int, semitones: float) -> tuple[np.ndarray, int]:
     """Pitch-shift using the native PyTorch phase vocoder + resampling."""
-    import torch
     from scipy.signal import resample
 
     pitch_ratio = 2.0 ** (semitones / 12.0)
@@ -634,6 +649,7 @@ def _pytorch_pitch_shift(audio: np.ndarray, sr: int, semitones: float) -> tuple[
 # ---------------------------------------------------------------------------
 # TimeStretch — phase-vocoder time stretching
 # ---------------------------------------------------------------------------
+
 
 class TimeStretch(Transform):
     """High-quality time-stretch via a phase-vocoder engine.
@@ -704,19 +720,22 @@ class TimeStretch(Transform):
 
         if engine == "torchaudio":
             return _torchaudio_time_stretch(audio, sr, rate)
-        elif engine == "pytorch":
+        if engine == "pytorch":
             return _pytorch_time_stretch(audio, sr, rate)
-        else:
-            return _call_pvx_voc(
-                audio, sr, rng, stretch=rate,
-                pitch=0.0 if self.preserve_pitch else None,
-                preset=self.preset,
-            )
+        return _call_pvx_voc(
+            audio,
+            sr,
+            rng,
+            stretch=rate,
+            pitch=0.0 if self.preserve_pitch else None,
+            preset=self.preset,
+        )
 
 
 # ---------------------------------------------------------------------------
 # PitchShift — phase-vocoder pitch shifting
 # ---------------------------------------------------------------------------
+
 
 class PitchShift(Transform):
     """High-quality pitch shift via a phase-vocoder engine.
@@ -788,19 +807,24 @@ class PitchShift(Transform):
 
         if engine == "torchaudio":
             return _torchaudio_pitch_shift(audio, sr, semitones)
-        elif engine == "pytorch":
+        if engine == "pytorch":
             return _pytorch_pitch_shift(audio, sr, semitones)
-        else:
-            stretch = 1.0 if self.preserve_duration else None
-            return _call_pvx_voc(
-                audio, sr, rng, stretch=stretch, pitch=semitones,
-                preset=self.preset, formant_mode=self.formant_mode,
-            )
+        stretch = 1.0 if self.preserve_duration else None
+        return _call_pvx_voc(
+            audio,
+            sr,
+            rng,
+            stretch=stretch,
+            pitch=semitones,
+            preset=self.preset,
+            formant_mode=self.formant_mode,
+        )
 
 
 # ---------------------------------------------------------------------------
 # Internal helper: call pvx voc as subprocess
 # ---------------------------------------------------------------------------
+
 
 def _call_pvx_voc(
     audio: np.ndarray,

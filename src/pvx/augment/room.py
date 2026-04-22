@@ -1,4 +1,3 @@
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """Room acoustics augmentation transforms.
 
@@ -17,17 +16,17 @@ No external neural-network dependencies required.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence
 
 import numpy as np
 
-from .core import Transform, _to_2d, _from_2d, load_audio
-
+from .core import Transform, _from_2d, _to_2d, load_audio
 
 # ---------------------------------------------------------------------------
 # Synthetic RIR generation
 # ---------------------------------------------------------------------------
+
 
 def _generate_synthetic_rir(
     rt60_s: float,
@@ -96,6 +95,7 @@ def _generate_synthetic_rir(
 # RoomSimulator
 # ---------------------------------------------------------------------------
 
+
 class RoomSimulator(Transform):
     """Approximate room acoustics by convolving audio with a synthetic RIR.
 
@@ -108,7 +108,7 @@ class RoomSimulator(Transform):
     ----------
     rt60_range:
         ``(min_s, max_s)`` reverberation time.  Typical values:
-        small room ≈ 0.2–0.4 s, large room ≈ 0.6–1.5 s, hall ≈ 1.5–4 s.
+        small room ≈ 0.2-0.4 s, large room ≈ 0.6-1.5 s, hall ≈ 1.5-4 s.
     drr_db_range:
         ``(min, max)`` direct-to-reverb ratio in dB.
     wet_range:
@@ -174,7 +174,7 @@ class RoomSimulator(Transform):
             wet_sig = fftconvolve(arr[ch], rir).astype(arr.dtype)
             if self.preserve_length:
                 wet_sig = wet_sig[:n_samp]
-            mixed = (1.0 - wet) * arr[ch] + wet * wet_sig[:len(arr[ch])]
+            mixed = (1.0 - wet) * arr[ch] + wet * wet_sig[: len(arr[ch])]
             out_channels.append(mixed.astype(arr.dtype))
 
         result = np.stack(out_channels, axis=0)
@@ -184,6 +184,7 @@ class RoomSimulator(Transform):
 # ---------------------------------------------------------------------------
 # ImpulseResponseConvolver
 # ---------------------------------------------------------------------------
+
 
 class ImpulseResponseConvolver(Transform):
     """Convolve audio with a user-provided impulse response file.
@@ -249,7 +250,7 @@ class ImpulseResponseConvolver(Transform):
         ir = ir_audio if ir_audio.ndim == 1 else ir_audio[0]
 
         if self.normalize_ir:
-            rms = float(np.sqrt(np.mean(ir ** 2)) + 1e-12)
+            rms = float(np.sqrt(np.mean(ir**2)) + 1e-12)
             ir = ir / rms
 
         wet = float(rng.uniform(self.wet_range[0], self.wet_range[1]))

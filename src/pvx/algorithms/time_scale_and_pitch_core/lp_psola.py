@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """LP-PSOLA.
 
@@ -28,9 +27,9 @@ if __package__ is None or __package__ == "":
 
 from pvx.algorithms.base import AlgorithmResult, run_algorithm
 
-ALGORITHM_ID = 'time_scale_and_pitch_core.lp_psola'
-ALGORITHM_NAME = 'LP-PSOLA'
-THEME = 'Time-Scale and Pitch Core'
+ALGORITHM_ID = "time_scale_and_pitch_core.lp_psola"
+ALGORITHM_NAME = "LP-PSOLA"
+THEME = "Time-Scale and Pitch Core"
 
 
 def process(audio: np.ndarray, sample_rate: int, **params: Any) -> AlgorithmResult:

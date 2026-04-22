@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """PVC-inspired response-driven spectral operators for pvx.
 
@@ -103,7 +102,9 @@ def _resize_curve(values: np.ndarray, target_bins: int) -> np.ndarray:
     return np.interp(x_new, x_old, src)
 
 
-def _shift_response_curve(curve: np.ndarray, *, shift_bins: int, transpose_semitones: float) -> np.ndarray:
+def _shift_response_curve(
+    curve: np.ndarray, *, shift_bins: int, transpose_semitones: float
+) -> np.ndarray:
     src = np.asarray(curve, dtype=np.float64).reshape(-1)
     n = src.size
     if n == 0:

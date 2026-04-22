@@ -1,5 +1,3 @@
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
-# ruff: noqa: E402
 
 """Unit tests for control-bus routing helpers."""
 
@@ -44,10 +42,7 @@ class TestControlBus(unittest.TestCase):
         self.assertEqual(tuple(route2.params or ()), (0.8, 1.2))
 
     def test_apply_control_route_missing_source_column_raises(self) -> None:
-        payload = (
-            "start_sec,end_sec,stretch,pitch_ratio,confidence\n"
-            "0.0,0.1,1.0,1.0,1.0\n"
-        )
+        payload = "start_sec,end_sec,stretch,pitch_ratio,confidence\n0.0,0.1,1.0,1.0,1.0\n"
         with self.assertRaises(ValueError):
             apply_control_routes_csv(
                 payload,
@@ -74,10 +69,7 @@ class TestControlBus(unittest.TestCase):
         self.assertIn(",0.750000000,1.000000000,", lines[2])
 
     def test_apply_control_routes_csv_pitch_ratio_from_cents(self) -> None:
-        payload = (
-            "start_sec,end_sec,stretch,pitch_cents,confidence\n"
-            "0.0,0.1,1.0,1200,1.0\n"
-        )
+        payload = "start_sec,end_sec,stretch,pitch_cents,confidence\n0.0,0.1,1.0,1200,1.0\n"
         routed = apply_control_routes_csv(
             payload,
             routes=parse_control_routes(["stretch=pitch_ratio"]),
@@ -105,8 +97,7 @@ class TestControlBus(unittest.TestCase):
 
     def test_apply_control_routes_csv_inv_zero_raises(self) -> None:
         payload = (
-            "start_sec,end_sec,stretch,pitch_ratio,confidence,f0_hz\n"
-            "0.0,0.1,1.0,1.0,0.0,0.0\n"
+            "start_sec,end_sec,stretch,pitch_ratio,confidence,f0_hz\n0.0,0.1,1.0,1.0,0.0,0.0\n"
         )
         with self.assertRaises(ValueError):
             apply_control_routes_csv(
