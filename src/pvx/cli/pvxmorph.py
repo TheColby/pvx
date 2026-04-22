@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """Spectral morphing between two input files."""
 
@@ -8,9 +7,9 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import warnings
 from dataclasses import dataclass
 from pathlib import Path
-import warnings
 
 import numpy as np
 
@@ -33,7 +32,14 @@ from pvx.core.common import (
     validate_vocoder_args,
     write_output,
 )
-from pvx.core.voc import add_mastering_args, apply_mastering_chain, cepstral_envelope, istft, resample_1d, stft
+from pvx.core.voc import (
+    add_mastering_args,
+    apply_mastering_chain,
+    cepstral_envelope,
+    istft,
+    resample_1d,
+    stft,
+)
 
 BLEND_MODE_CHOICES: tuple[str, ...] = (
     "linear",
@@ -70,7 +76,9 @@ class MorphControlSignal:
     order: int
 
 
-def _normalize_control_points(points: list[tuple[float, float]], *, context: str) -> tuple[np.ndarray, np.ndarray]:
+def _normalize_control_points(
+    points: list[tuple[float, float]], *, context: str
+) -> tuple[np.ndarray, np.ndarray]:
     if not points:
         raise ValueError(f"{context}: control file has no points")
     points_sorted = sorted((float(t), float(v)) for t, v in points)
@@ -111,10 +119,14 @@ def _parse_csv_control_points(path: Path, *, context: str) -> tuple[np.ndarray, 
                 points.append((start, value))
                 points.append((end, value))
             return _normalize_control_points(points, context=context)
-    raise ValueError(f"{context}: CSV must contain either time_sec,value or start_sec,end_sec,value")
+    raise ValueError(
+        f"{context}: CSV must contain either time_sec,value or start_sec,end_sec,value"
+    )
 
 
-def _parse_json_control_points(path: Path, *, context: str) -> tuple[np.ndarray, np.ndarray, str | None, int | None]:
+def _parse_json_control_points(
+    path: Path, *, context: str
+) -> tuple[np.ndarray, np.ndarray, str | None, int | None]:
     payload = json.loads(path.read_text(encoding="utf-8"))
     interp_override: str | None = None
     order_override: int | None = None
@@ -179,7 +191,9 @@ def _load_control_signal(
     if suffix == ".csv":
         times, values = _parse_csv_control_points(path, context=context)
     elif suffix == ".json":
-        times, values, interp_override, order_override = _parse_json_control_points(path, context=context)
+        times, values, interp_override, order_override = _parse_json_control_points(
+            path, context=context
+        )
         if interp_override is not None:
             interp = interp_override
         if order_override is not None:
@@ -187,7 +201,9 @@ def _load_control_signal(
     else:
         raise ValueError(f"{context}: unsupported control file type '{path.suffix}'")
     if interp not in CONTROL_INTERP_CHOICES:
-        raise ValueError(f"{context}: interpolation must be one of {', '.join(CONTROL_INTERP_CHOICES)}")
+        raise ValueError(
+            f"{context}: interpolation must be one of {', '.join(CONTROL_INTERP_CHOICES)}"
+        )
     if fit_order < 1:
         raise ValueError(f"{context}: polynomial order must be >= 1")
     return MorphControlSignal(
@@ -215,7 +231,9 @@ def _parse_scalar_or_control(
     if path.suffix.lower() in {".csv", ".json"}:
         if not path.exists():
             raise ValueError(f"{context}: control file not found: {path}")
-        signal = _load_control_signal(path, interpolation=interpolation, order=order, context=context)
+        signal = _load_control_signal(
+            path, interpolation=interpolation, order=order, context=context
+        )
         return None, signal, str(path)
     try:
         return float(text), None, None
@@ -432,7 +450,9 @@ def morph_pair(
         phase_b = np.angle(sb2)
 
         if alpha_curve_cache is None or alpha_curve_cache.size != n_frames:
-            frame_times = (np.arange(n_frames, dtype=np.float64) * float(config.hop_size)) / float(sr)
+            frame_times = (np.arange(n_frames, dtype=np.float64) * float(config.hop_size)) / float(
+                sr
+            )
             if alpha_signal is not None:
                 alpha_curve = _sample_control_signal(alpha_signal, frame_times)
             else:
@@ -456,10 +476,10 @@ def morph_pair(
         if mode == "linear":
             out_mag = linear_mag
         elif mode == "geometric":
-            out_mag = np.exp((1.0 - alpha_mix) * np.log(mag_a + EPS) + alpha_mix * np.log(mag_b + EPS))
-        elif mode == "magnitude_b_phase_a":
-            out_mag = linear_mag
-        elif mode == "magnitude_a_phase_b":
+            out_mag = np.exp(
+                (1.0 - alpha_mix) * np.log(mag_a + EPS) + alpha_mix * np.log(mag_b + EPS)
+            )
+        elif mode == "magnitude_b_phase_a" or mode == "magnitude_a_phase_b":
             out_mag = linear_mag
         elif mode == "carrier_a_envelope_b":
             env_a = _framewise_envelope(mag_a, envelope_lifter)
@@ -495,7 +515,9 @@ def morph_pair(
 
         if normalize_energy:
             alpha_mean = float(np.mean(alpha_curve_cache))
-            target_rms = (1.0 - alpha_mean) * _safe_rms(a2[:, ch]) + alpha_mean * _safe_rms(b2[:, ch])
+            target_rms = (1.0 - alpha_mean) * _safe_rms(a2[:, ch]) + alpha_mean * _safe_rms(
+                b2[:, ch]
+            )
             cur_rms = _safe_rms(rendered)
             if target_rms > 0.0 and cur_rms > EPS:
                 rendered = rendered * (target_rms / cur_rms)
@@ -749,12 +771,14 @@ def main(argv: list[str] | None = None) -> int:
                 }
             },
         )
-        log_message(args, f"[ok] {args.input_a} + {args.input_b} -> {out_path}", min_level="verbose")
+        log_message(
+            args, f"[ok] {args.input_a} + {args.input_b} -> {out_path}", min_level="verbose"
+        )
         status.step(1, out_path.name)
         status.finish("done")
         log_message(args, "[done] pvxmorph processed=1 failed=0", min_level="normal")
         return 0
-    except Exception as exc:
+    except (OSError, ValueError, RuntimeError) as exc:
         log_error(args, f"[error] {args.input_a} + {args.input_b}: {exc}")
         status.step(1, "error")
         status.finish("errors=1")

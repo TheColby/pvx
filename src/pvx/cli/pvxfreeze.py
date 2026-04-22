@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """Spectral freeze tool built on pvx phase-vocoder primitives."""
 
@@ -16,15 +15,15 @@ from pvx.core.common import (
     build_status_bar,
     build_vocoder_config,
     default_output_path,
+    ensure_runtime,
     finalize_audio,
     log_error,
     log_message,
+    print_input_output_metrics_table,
     read_audio,
     resolve_inputs,
     validate_vocoder_args,
     write_output,
-    print_input_output_metrics_table,
-    ensure_runtime,
 )
 from pvx.core.voc import istft, stft
 
@@ -101,9 +100,15 @@ def build_parser() -> argparse.ArgumentParser:
     )
     add_common_io_args(parser, default_suffix="_freeze")
     add_vocoder_args(parser, default_n_fft=2048, default_win_length=2048, default_hop_size=256)
-    parser.add_argument("--freeze-time", type=float, default=0.2, help="Freeze anchor time in seconds")
-    parser.add_argument("--duration", type=float, default=3.0, help="Output freeze duration in seconds")
-    parser.add_argument("--random-phase", action="store_true", help="Add subtle phase randomization per frame")
+    parser.add_argument(
+        "--freeze-time", type=float, default=0.2, help="Freeze anchor time in seconds"
+    )
+    parser.add_argument(
+        "--duration", type=float, default=3.0, help="Output freeze duration in seconds"
+    )
+    parser.add_argument(
+        "--random-phase", action="store_true", help="Add subtle phase randomization per frame"
+    )
     parser.add_argument(
         "--phase-mode",
         choices=["instantaneous", "bin", "hold"],
@@ -165,13 +170,19 @@ def main(argv: list[str] | None = None) -> int:
                 output_sr=sr,
             )
             write_output(out_path, out, sr, args, input_path=path)
-            log_message(args, f"[ok] {path} -> {out_path} | ch={out.shape[1]}, dur={out.shape[0]/sr:.3f}s", min_level="verbose")
-        except Exception as exc:
+            log_message(
+                args,
+                f"[ok] {path} -> {out_path} | ch={out.shape[1]}, dur={out.shape[0] / sr:.3f}s",
+                min_level="verbose",
+            )
+        except (OSError, ValueError, RuntimeError) as exc:
             failures += 1
             log_error(args, f"[error] {path}: {exc}")
         status.step(idx, path.name)
     status.finish("done" if failures == 0 else f"errors={failures}")
-    log_message(args, f"[done] pvxfreeze processed={len(paths)} failed={failures}", min_level="normal")
+    log_message(
+        args, f"[done] pvxfreeze processed={len(paths)} failed={failures}", min_level="normal"
+    )
     return 1 if failures else 0
 
 

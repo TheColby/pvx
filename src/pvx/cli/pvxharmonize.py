@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """Multi-voice harmonizer built from phase-vocoder pitch shifts."""
 
@@ -21,13 +20,13 @@ from pvx.core.common import (
     log_error,
     log_message,
     parse_float_list,
+    print_input_output_metrics_table,
     read_audio,
     resolve_inputs,
     semitone_to_ratio,
     time_pitch_shift_audio,
     validate_vocoder_args,
     write_output,
-    print_input_output_metrics_table,
 )
 
 
@@ -57,15 +56,23 @@ def build_parser() -> argparse.ArgumentParser:
     )
     add_common_io_args(parser, default_suffix="_harm")
     add_vocoder_args(parser, default_n_fft=2048, default_win_length=2048, default_hop_size=512)
-    parser.add_argument("--intervals", default="0,4,7", help="Comma-separated semitone intervals per voice (supports fractional values)")
+    parser.add_argument(
+        "--intervals",
+        default="0,4,7",
+        help="Comma-separated semitone intervals per voice (supports fractional values)",
+    )
     parser.add_argument(
         "--intervals-cents",
         default="",
         help="Optional cents offsets per voice, added to --intervals (e.g. 0,14,-12)",
     )
-    parser.add_argument("--gains", default="", help="Optional comma-separated linear gain per voice")
+    parser.add_argument(
+        "--gains", default="", help="Optional comma-separated linear gain per voice"
+    )
     parser.add_argument("--pans", default="", help="Optional comma-separated pan per voice [-1..1]")
-    parser.add_argument("--force-stereo", action="store_true", help="Mix result as stereo with panning")
+    parser.add_argument(
+        "--force-stereo", action="store_true", help="Mix result as stereo with panning"
+    )
     parser.add_argument("--resample-mode", choices=["auto", "fft", "linear"], default="auto")
     return parser
 
@@ -79,7 +86,11 @@ def main(argv: list[str] | None = None) -> int:
     intervals = parse_float_list(args.intervals)
     if not intervals:
         parser.error("--intervals requires at least one value")
-    interval_cents = parse_float_list(args.intervals_cents, allow_empty=True) if args.intervals_cents else [0.0] * len(intervals)
+    interval_cents = (
+        parse_float_list(args.intervals_cents, allow_empty=True)
+        if args.intervals_cents
+        else [0.0] * len(intervals)
+    )
     if len(interval_cents) < len(intervals):
         interval_cents = interval_cents + [0.0] * (len(intervals) - len(interval_cents))
     interval_cents = interval_cents[: len(intervals)]
@@ -90,12 +101,18 @@ def main(argv: list[str] | None = None) -> int:
         gains = gains + [gains[-1] if gains else 1.0] * (len(intervals) - len(gains))
     gains = gains[: len(intervals)]
 
-    pans = parse_float_list(args.pans, allow_empty=True) if args.pans else list(np.linspace(-0.7, 0.7, num=len(intervals)))
+    pans = (
+        parse_float_list(args.pans, allow_empty=True)
+        if args.pans
+        else list(np.linspace(-0.7, 0.7, num=len(intervals)))
+    )
     if len(pans) < len(intervals):
         pans = pans + [0.0] * (len(intervals) - len(pans))
     pans = [float(np.clip(v, -1.0, 1.0)) for v in pans[: len(intervals)]]
 
-    config = build_vocoder_config(args, phase_locking="identity", transient_preserve=True, transient_threshold=2.0)
+    config = build_vocoder_config(
+        args, phase_locking="identity", transient_preserve=True, transient_threshold=2.0
+    )
     paths = resolve_inputs(args.inputs, parser, args)
     status = build_status_bar(args, "pvxharmonize", len(paths))
 
@@ -106,7 +123,9 @@ def main(argv: list[str] | None = None) -> int:
             voices: list[np.ndarray] = []
             for semi, gain in zip(pitch_steps, gains):
                 ratio = semitone_to_ratio(semi)
-                shifted = time_pitch_shift_audio(audio, 1.0, ratio, config, resample_mode=args.resample_mode)
+                shifted = time_pitch_shift_audio(
+                    audio, 1.0, ratio, config, resample_mode=args.resample_mode
+                )
                 voices.append(shifted * gain)
 
             out_len = max(v.shape[0] for v in voices)
@@ -132,13 +151,19 @@ def main(argv: list[str] | None = None) -> int:
                 output_sr=sr,
             )
             write_output(out_path, out, sr, args, input_path=path)
-            log_message(args, f"[ok] {path} -> {out_path} | voices={len(intervals)}, ch={out.shape[1]}", min_level="verbose")
-        except Exception as exc:
+            log_message(
+                args,
+                f"[ok] {path} -> {out_path} | voices={len(intervals)}, ch={out.shape[1]}",
+                min_level="verbose",
+            )
+        except (OSError, ValueError, RuntimeError) as exc:
             failures += 1
             log_error(args, f"[error] {path}: {exc}")
         status.step(idx, path.name)
     status.finish("done" if failures == 0 else f"errors={failures}")
-    log_message(args, f"[done] pvxharmonize processed={len(paths)} failed={failures}", min_level="normal")
+    log_message(
+        args, f"[done] pvxharmonize processed={len(paths)} failed={failures}", min_level="normal"
+    )
     return 1 if failures else 0
 
 

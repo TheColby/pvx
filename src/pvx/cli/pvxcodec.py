@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """pvxcodec — simulate lossy codec and transmission degradation.
 
@@ -12,10 +11,10 @@ Available presets
 -----------------
   mp3_low       ~32 kbps MP3 (11 kHz bandwidth, 12-bit quantization)
   mp3_medium    ~128 kbps MP3 (16 kHz bandwidth, 14-bit quantization)
-  telephone     POTS telephone band (300–3400 Hz, 8 kHz, 8-bit)
-  voip_narrow   Narrow-band VoIP (50–4000 Hz, 8 kHz, 8-bit)
-  voip_wide     Wide-band VoIP (50–7000 Hz, 16 kHz, 12-bit)
-  am_radio      AM radio (200–5000 Hz, 8-bit)
+  telephone     POTS telephone band (300-3400 Hz, 8 kHz, 8-bit)
+  voip_narrow   Narrow-band VoIP (50-4000 Hz, 8 kHz, 8-bit)
+  voip_wide     Wide-band VoIP (50-7000 Hz, 16 kHz, 12-bit)
+  am_radio      AM radio (200-5000 Hz, 8-bit)
   lo_fi         Extreme lo-fi (8 kHz bandwidth, 6-bit)
   random        Pick a random preset each run
 
@@ -44,8 +43,16 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--output", "-o", required=True, help="Output audio file")
     p.add_argument(
         "--codec",
-        choices=["mp3_low", "mp3_medium", "telephone", "voip_narrow", "voip_wide",
-                 "am_radio", "lo_fi", "random"],
+        choices=[
+            "mp3_low",
+            "mp3_medium",
+            "telephone",
+            "voip_narrow",
+            "voip_wide",
+            "am_radio",
+            "lo_fi",
+            "random",
+        ],
         default=None,
         help="Codec preset to simulate (default: none — use --bits for raw bit-crush)",
     )
@@ -53,7 +60,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--bits",
         type=int,
         default=None,
-        help="Bit depth for raw bit-crushing (4–16). Applied after codec if both specified.",
+        help="Bit depth for raw bit-crushing (4-16). Applied after codec if both specified.",
     )
     p.add_argument("--seed", type=int, default=0, help="Random seed (default: 0)")
     p.add_argument(
@@ -69,9 +76,9 @@ def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
 
+    from pvx.augment import Pipeline
+    from pvx.augment.codec import BitCrusher, CodecDegradation
     from pvx.augment.core import load_audio, save_audio
-    from pvx.augment.codec import CodecDegradation, BitCrusher
-    from pvx.augment import Pipeline, Identity
 
     audio, sr = load_audio(args.input)
 

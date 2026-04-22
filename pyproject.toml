@@ -7,7 +7,7 @@ name = "pvx"
 version = "0.1.0a1"
 description = "Phase-vocoder DSP toolkit with pvx command suite"
 readme = "README.md"
-license = { text = "MIT" }
+license = "MIT"
 requires-python = ">=3.10"
 authors = [
     { name = "Colby Leider", email = "colby@thecolby.com" },
@@ -28,7 +28,6 @@ classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
@@ -53,6 +52,8 @@ Homepage = "https://github.com/TheColby/pvx"
 Repository = "https://github.com/TheColby/pvx"
 Issues = "https://github.com/TheColby/pvx/issues"
 Documentation = "https://github.com/TheColby/pvx/tree/main/docs"
+Changelog = "https://github.com/TheColby/pvx/blob/main/CHANGELOG.md"
+Release-Guide = "https://github.com/TheColby/pvx/blob/main/docs/ALPHA_RELEASE.md"
 
 [project.optional-dependencies]
 dev = [
@@ -63,6 +64,12 @@ dev = [
 ]
 build = [
     "pyinstaller>=6.0",
+]
+docs = [
+    "mkdocs>=1.5",
+    "mkdocs-material>=9.4",
+    "pymdown-extensions>=10.0",
+    "mkdocstrings[python]>=0.24",
 ]
 # ML/DL framework integrations (install only what you need)
 torch = [
@@ -84,27 +91,33 @@ ml = [
     "transformers>=4.35",
 ]
 
+# CLI entry points — stability tiers:
+#   stable:       Public API; breaking changes require a major version bump.
+#   beta:         Functional but interface may change in minor versions.
+#   experimental: May change or be removed without notice; not for scripting.
 [project.scripts]
-pvx = "pvx.cli.pvx:main"
-pvxvoc = "pvx.core.voc:main"
-pvxfreeze = "pvx.cli.pvxfreeze:main"
+# --- stable ---
+pvx = "pvx.cli.pvx:main"               # unified entry point / orchestrator
+pvxvoc = "pvx.cli.pvxvoc:main"          # core phase vocoder (time/pitch)
+pvxfreeze = "pvx.cli.pvxfreeze:main"    # spectral freeze
+pvxwarp = "pvx.cli.pvxwarp:main"        # envelope-driven warp
+pvxformant = "pvx.cli.pvxformant:main"  # formant shifting
+pvxfilter = "pvx.cli.pvxfilter:main"    # spectral filter
+pvxretune = "pvx.cli.pvxretune:main"    # pitch retune
+pvxanalysis = "pvx.cli.pvxanalysis:main" # audio analysis / metrics
+
+# --- beta ---
 pvxharmonize = "pvx.cli.pvxharmonize:main"
 pvxconform = "pvx.cli.pvxconform:main"
 pvxmorph = "pvx.cli.pvxmorph:main"
-pvxwarp = "pvx.cli.pvxwarp:main"
-pvxformant = "pvx.cli.pvxformant:main"
 pvxtransient = "pvx.cli.pvxtransient:main"
 pvxunison = "pvx.cli.pvxunison:main"
 pvxdenoise = "pvx.cli.pvxdenoise:main"
 pvxdeverb = "pvx.cli.pvxdeverb:main"
-pvxretune = "pvx.cli.pvxretune:main"
 pvxlayer = "pvx.cli.pvxlayer:main"
-hps-pitch-track = "pvx.cli.hps_pitch_track:main"
-pvxanalysis = "pvx.cli.pvxanalysis:main"
 pvxresponse = "pvx.cli.pvxresponse:main"
 pvxenvelope = "pvx.cli.pvxenvelope:main"
 pvxreshape = "pvx.cli.pvxreshape:main"
-pvxfilter = "pvx.cli.pvxfilter:main"
 pvxtvfilter = "pvx.cli.pvxtvfilter:main"
 pvxnoisefilter = "pvx.cli.pvxnoisefilter:main"
 pvxbandamp = "pvx.cli.pvxbandamp:main"
@@ -113,15 +126,70 @@ pvxring = "pvx.cli.pvxring:main"
 pvxringfilter = "pvx.cli.pvxringfilter:main"
 pvxringtvfilter = "pvx.cli.pvxringtvfilter:main"
 pvxharmmap = "pvx.cli.pvxharmmap:main"
+
+# --- experimental ---
+hps-pitch-track = "pvx.cli.hps_pitch_track:main"
 pvxchordmapper = "pvx.cli.pvxchordmapper:main"
 pvxinharmonator = "pvx.cli.pvxinharmonator:main"
 pvxtrajectoryreverb = "pvx.cli.pvxtrajectoryreverb:main"
-# ML/DL augmentation tools
+# ML/DL augmentation tools (require optional extras: pip install pvx[torch])
 pvxnoise = "pvx.cli.pvxnoise:main"
 pvxrir = "pvx.cli.pvxrir:main"
 pvxcodec = "pvx.cli.pvxcodec:main"
 pvxspecaugment = "pvx.cli.pvxspecaugment:main"
 pvxgain = "pvx.cli.pvxgain:main"
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+src = ["src", "tests", "benchmarks"]
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # pyflakes
+    "I",      # isort
+    "N",      # pep8-naming
+    "UP",     # pyupgrade
+    "B",      # flake8-bugbear
+    "A",      # flake8-builtins
+    "C4",     # flake8-comprehensions
+    "SIM",    # flake8-simplify
+    "TCH",    # flake8-type-checking
+    "RUF",    # ruff-specific rules
+    "PIE",    # flake8-pie
+    "PT",     # flake8-pytest-style
+    "RET",    # flake8-return
+    "ISC",    # flake8-implicit-str-concat
+]
+ignore = [
+    "E501",    # line too long — handled by formatter
+    "B905",    # zip without strict — too noisy
+    "SIM108",  # ternary operator — readability preference
+    "RET504",  # unnecessary assign before return — readability
+    "UP007",   # use X | Y — keep Optional for 3.10 compat
+    "ISC001",  # conflicts with ruff-format
+    "PT011",   # pytest.raises too broad — sometimes intentional
+    # Legacy patterns we're not bulk-rewriting:
+    "PT009",   # unittest-style assertions (test suite uses unittest.TestCase)
+    "PT027",   # unittest-style assertRaises
+    "N806",    # non-lowercase variables (DSP code uses N, T, B, C, etc.)
+    "N803",    # non-lowercase argument names (e.g. STFT params)
+    "N805",    # first arg name (legitimate in some classmethod patterns)
+    "RUF046",  # unnecessary int() cast — readability for explicit DSP code
+    "TC001",   # typing-only first-party import — adds churn
+    "TC002",   # typing-only third-party import — adds churn
+    "TC003",   # typing-only stdlib import — adds churn
+    "E402",    # module import not at top — common in scripts/CLIs
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["pvx"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

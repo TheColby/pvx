@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """PVC-inspired response-driven spectral operators."""
 
@@ -53,7 +52,9 @@ INTERP_CHOICES: tuple[InterpMode, ...] = (
 )
 
 
-def build_parser(default_operator: OperatorName = "filter", prog: str = "pvx filter") -> argparse.ArgumentParser:
+def build_parser(
+    default_operator: OperatorName = "filter", prog: str = "pvx filter"
+) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog=prog,
         description="Response-driven spectral processing using PVXRF artifacts.",
@@ -76,25 +77,71 @@ def build_parser(default_operator: OperatorName = "filter", prog: str = "pvx fil
         default=default_operator,
         help=f"Processing operator (default: {default_operator})",
     )
-    parser.add_argument("--response", type=Path, required=True, help="Input PVXRF response artifact")
-    parser.add_argument("--response-mix", type=float, default=1.0, help="Wet response mix amount (default: 1.0)")
-    parser.add_argument("--dry-mix", type=float, default=0.0, help="Dry signal mix amount in [0,1] (default: 0.0)")
-    parser.add_argument("--response-gain-db", type=float, default=0.0, help="Global response gain in dB (default: 0)")
-    parser.add_argument("--transpose-semitones", type=float, default=0.0, help="Transpose response curve in semitones")
-    parser.add_argument("--shift-bins", type=int, default=0, help="Shift response curve by FFT bins")
+    parser.add_argument(
+        "--response", type=Path, required=True, help="Input PVXRF response artifact"
+    )
+    parser.add_argument(
+        "--response-mix", type=float, default=1.0, help="Wet response mix amount (default: 1.0)"
+    )
+    parser.add_argument(
+        "--dry-mix", type=float, default=0.0, help="Dry signal mix amount in [0,1] (default: 0.0)"
+    )
+    parser.add_argument(
+        "--response-gain-db",
+        type=float,
+        default=0.0,
+        help="Global response gain in dB (default: 0)",
+    )
+    parser.add_argument(
+        "--transpose-semitones",
+        type=float,
+        default=0.0,
+        help="Transpose response curve in semitones",
+    )
+    parser.add_argument(
+        "--shift-bins", type=int, default=0, help="Shift response curve by FFT bins"
+    )
 
-    parser.add_argument("--tv-map", type=Path, default=None, help="Optional CSV/JSON map for time-varying response_mix")
-    parser.add_argument("--tv-key", default="response_mix", help="Column/key in --tv-map (default: response_mix)")
-    parser.add_argument("--tv-interp", choices=list(INTERP_CHOICES), default="linear", help="TV interpolation mode")
-    parser.add_argument("--tv-order", type=int, default=3, help="Polynomial order for --tv-interp polynomial")
+    parser.add_argument(
+        "--tv-map",
+        type=Path,
+        default=None,
+        help="Optional CSV/JSON map for time-varying response_mix",
+    )
+    parser.add_argument(
+        "--tv-key", default="response_mix", help="Column/key in --tv-map (default: response_mix)"
+    )
+    parser.add_argument(
+        "--tv-interp", choices=list(INTERP_CHOICES), default="linear", help="TV interpolation mode"
+    )
+    parser.add_argument(
+        "--tv-order", type=int, default=3, help="Polynomial order for --tv-interp polynomial"
+    )
 
-    parser.add_argument("--noise-floor", type=float, default=1.0, help="Threshold scale for noisefilter")
-    parser.add_argument("--band-gain-db", type=float, default=6.0, help="Band boost amount for bandamp (dB)")
-    parser.add_argument("--band-width-bins", type=int, default=6, help="Band width in bins for bandamp")
-    parser.add_argument("--peak-count", type=int, default=8, help="Number of response peaks for bandamp")
-    parser.add_argument("--comp-threshold-db", type=float, default=-18.0, help="Relative threshold for spec-compander")
-    parser.add_argument("--comp-ratio", type=float, default=2.0, help="Compression ratio for spec-compander")
-    parser.add_argument("--expand-ratio", type=float, default=1.2, help="Expansion ratio for spec-compander")
+    parser.add_argument(
+        "--noise-floor", type=float, default=1.0, help="Threshold scale for noisefilter"
+    )
+    parser.add_argument(
+        "--band-gain-db", type=float, default=6.0, help="Band boost amount for bandamp (dB)"
+    )
+    parser.add_argument(
+        "--band-width-bins", type=int, default=6, help="Band width in bins for bandamp"
+    )
+    parser.add_argument(
+        "--peak-count", type=int, default=8, help="Number of response peaks for bandamp"
+    )
+    parser.add_argument(
+        "--comp-threshold-db",
+        type=float,
+        default=-18.0,
+        help="Relative threshold for spec-compander",
+    )
+    parser.add_argument(
+        "--comp-ratio", type=float, default=2.0, help="Compression ratio for spec-compander"
+    )
+    parser.add_argument(
+        "--expand-ratio", type=float, default=1.2, help="Expansion ratio for spec-compander"
+    )
     return parser
 
 
@@ -174,13 +221,15 @@ def run_filter_cli(
             )
             write_output(out_path, out, sr, args, input_path=path)
             log_message(args, f"[ok] {path} -> {out_path}", min_level="verbose")
-        except Exception as exc:
+        except (OSError, ValueError, RuntimeError) as exc:
             failures += 1
             log_error(args, f"[error] {path}: {exc}")
         status.step(idx, path.name)
 
     status.finish("done" if failures == 0 else f"errors={failures}")
-    log_message(args, f"[done] pvxfilter processed={len(paths)} failed={failures}", min_level="normal")
+    log_message(
+        args, f"[done] pvxfilter processed={len(paths)} failed={failures}", min_level="normal"
+    )
     return 1 if failures else 0
 
 

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """Formant processing tool with optional pitch shifting."""
 
@@ -21,13 +20,13 @@ from pvx.core.common import (
     finalize_audio,
     log_error,
     log_message,
+    print_input_output_metrics_table,
     read_audio,
     resolve_inputs,
     semitone_to_ratio,
     time_pitch_shift_channel,
     validate_vocoder_args,
     write_output,
-    print_input_output_metrics_table,
 )
 from pvx.core.voc import cepstral_envelope, db_to_amplitude, istft, stft
 
@@ -83,14 +82,21 @@ def build_parser() -> argparse.ArgumentParser:
     )
     add_common_io_args(parser, default_suffix="_formant")
     add_vocoder_args(parser, default_n_fft=2048, default_win_length=2048, default_hop_size=512)
-    parser.add_argument("--pitch-shift-semitones", type=float, default=0.0, help="Optional pitch shift before formant stage")
+    parser.add_argument(
+        "--pitch-shift-semitones",
+        type=float,
+        default=0.0,
+        help="Optional pitch shift before formant stage",
+    )
     parser.add_argument(
         "--pitch-shift-cents",
         type=float,
         default=0.0,
         help="Additional microtonal pitch shift in cents before formant stage",
     )
-    parser.add_argument("--formant-shift-ratio", type=float, default=1.0, help="Formant ratio (>1 up, <1 down)")
+    parser.add_argument(
+        "--formant-shift-ratio", type=float, default=1.0, help="Formant ratio (>1 up, <1 down)"
+    )
     parser.add_argument("--mode", choices=["shift", "preserve"], default="shift")
     parser.add_argument("--formant-lifter", type=int, default=32)
     parser.add_argument("--formant-max-gain-db", type=float, default=12.0)
@@ -111,7 +117,9 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--formant-max-gain-db must be > 0")
 
     config = build_vocoder_config(args, phase_locking="identity", transient_preserve=False)
-    pitch_ratio = semitone_to_ratio(args.pitch_shift_semitones) * cents_to_ratio(args.pitch_shift_cents)
+    pitch_ratio = semitone_to_ratio(args.pitch_shift_semitones) * cents_to_ratio(
+        args.pitch_shift_cents
+    )
     paths = resolve_inputs(args.inputs, parser, args)
     status = build_status_bar(args, "pvxformant", len(paths))
 
@@ -162,12 +170,14 @@ def main(argv: list[str] | None = None) -> int:
             )
             write_output(out_path, out, sr, args, input_path=path)
             log_message(args, f"[ok] {path} -> {out_path} | mode={args.mode}", min_level="verbose")
-        except Exception as exc:
+        except (OSError, ValueError, RuntimeError) as exc:
             failures += 1
             log_error(args, f"[error] {path}: {exc}")
         status.step(idx, path.name)
     status.finish("done" if failures == 0 else f"errors={failures}")
-    log_message(args, f"[done] pvxformant processed={len(paths)} failed={failures}", min_level="normal")
+    log_message(
+        args, f"[done] pvxformant processed={len(paths)} failed={failures}", min_level="normal"
+    )
     return 1 if failures else 0
 
 

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """PVC-style envelope function-stream generator."""
 
@@ -51,8 +50,12 @@ def build_parser(prog: str = "pvx envelope") -> argparse.ArgumentParser:
         default="adsr",
         help="Envelope/LFO waveform mode",
     )
-    parser.add_argument("--duration", type=float, required=True, help="Envelope duration in seconds")
-    parser.add_argument("--rate", type=float, default=20.0, help="Control points per second (default: 20)")
+    parser.add_argument(
+        "--duration", type=float, required=True, help="Envelope duration in seconds"
+    )
+    parser.add_argument(
+        "--rate", type=float, default=20.0, help="Control points per second (default: 20)"
+    )
     parser.add_argument(
         "--start",
         "--center",
@@ -74,7 +77,9 @@ def build_parser(prog: str = "pvx envelope") -> argparse.ArgumentParser:
     parser.add_argument("--attack-sec", type=float, default=0.1, help="ADSR attack in seconds")
     parser.add_argument("--decay-sec", type=float, default=0.2, help="ADSR decay in seconds")
     parser.add_argument("--release-sec", type=float, default=0.2, help="ADSR release in seconds")
-    parser.add_argument("--exp-curve", type=float, default=4.0, help="Exponential curve steepness for exp mode")
+    parser.add_argument(
+        "--exp-curve", type=float, default=4.0, help="Exponential curve steepness for exp mode"
+    )
     parser.add_argument(
         "--sine-cycles",
         "--cycles",
@@ -106,16 +111,24 @@ def build_parser(prog: str = "pvx envelope") -> argparse.ArgumentParser:
         default=0.5,
         help="Duty cycle in (0,1) for square mode (default: 0.5)",
     )
-    parser.add_argument("--min", dest="min_value", type=float, default=None, help="Optional value clamp minimum")
-    parser.add_argument("--max", dest="max_value", type=float, default=None, help="Optional value clamp maximum")
-    parser.add_argument("--key", default="value", help="Output control column/key name (default: value)")
+    parser.add_argument(
+        "--min", dest="min_value", type=float, default=None, help="Optional value clamp minimum"
+    )
+    parser.add_argument(
+        "--max", dest="max_value", type=float, default=None, help="Optional value clamp maximum"
+    )
+    parser.add_argument(
+        "--key", default="value", help="Output control column/key name (default: value)"
+    )
     parser.add_argument(
         "--format",
         choices=["csv", "json", "auto"],
         default="auto",
         help="Output format (default: auto from extension or csv for stdout)",
     )
-    parser.add_argument("--output", "--out", type=Path, default=None, help="Output path. Default: stdout.")
+    parser.add_argument(
+        "--output", "--out", type=Path, default=None, help="Output path. Default: stdout."
+    )
     parser.add_argument("--stdout", action="store_true", help="Write map to stdout")
     add_console_args(parser)
     return parser

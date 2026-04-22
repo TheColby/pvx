@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """Stateful chunked streaming helpers for the unified pvx CLI."""
 
@@ -14,13 +13,14 @@ from pathlib import Path
 import numpy as np
 import soundfile as sf
 
+from pvx.core import voc as voc_core
 from pvx.core.audio_metrics import (
     render_audio_comparison_table,
     render_audio_metrics_table,
     summarize_audio_metrics,
 )
 from pvx.core.output_policy import prepare_output_audio, write_metadata_sidecar
-from pvx.core import voc as voc_core
+from pvx.core.voc_console import collect_cli_flags
 
 
 def _read_audio(path: Path) -> tuple[np.ndarray, int]:
@@ -64,7 +64,7 @@ def _resolve_voc_args_for_stream(
 ) -> tuple[argparse.Namespace, argparse.ArgumentParser, list[Path], set[str]]:
     voc_argv = [input_token, *passthrough]
     parser = voc_core.build_parser()
-    cli_flags = voc_core.collect_cli_flags(voc_argv)
+    cli_flags = collect_cli_flags(voc_argv)
     args = parser.parse_args(voc_argv)
     args._cli_flags = cli_flags
 
@@ -84,7 +84,9 @@ def _resolve_voc_args_for_stream(
     if bool(args.explain_plan):
         parser.error("Stateful stream mode does not support --explain-plan")
     if bool(args.auto_segment_seconds > 0.0):
-        parser.error("Stateful stream mode manages chunking directly; remove --auto-segment-seconds")
+        parser.error(
+            "Stateful stream mode manages chunking directly; remove --auto-segment-seconds"
+        )
 
     preset_changes = voc_core.apply_named_preset(
         args,
@@ -106,7 +108,9 @@ def _resolve_voc_args_for_stream(
             channel_mode=str(args.analysis_channel),
             lookahead_seconds=float(args.auto_profile_lookahead_seconds),
         )
-        active_profile = voc_core.suggest_quality_profile(stretch_ratio=stretch_estimate, features=auto_features)
+        active_profile = voc_core.suggest_quality_profile(
+            stretch_ratio=stretch_estimate, features=auto_features
+        )
 
     args._active_quality_profile = active_profile
     profile_changes = voc_core.apply_quality_profile_overrides(
@@ -151,7 +155,9 @@ def _resolve_voc_args_for_stream(
             info += f", overrides={','.join(sorted(set(profile_changes)))}"
         voc_core.log_message(args, info, min_level="verbose")
         if auto_features is not None:
-            voc_core.log_message(args, f"[info] auto-profile features={auto_features}", min_level="debug")
+            voc_core.log_message(
+                args, f"[info] auto-profile features={auto_features}", min_level="debug"
+            )
 
     if str(output_token) == "-":
         args.stdout = True
@@ -237,7 +243,9 @@ def run_stateful_stream(
     base_stretch = voc_core.resolve_base_stretch(args, audio.shape[0], sr)
     if base_stretch <= 0.0:
         parser.error("--time-stretch/--target-duration resolved to non-positive value")
-    dynamic_refs: dict[str, voc_core.DynamicControlRef] = dict(getattr(args, "_dynamic_control_refs", {}) or {})
+    dynamic_refs: dict[str, voc_core.DynamicControlRef] = dict(
+        getattr(args, "_dynamic_control_refs", {}) or {}
+    )
 
     config = _build_config(args)
     # Chunk size controls scheduling granularity; context protects continuity at seams.
@@ -305,11 +313,13 @@ def run_stateful_stream(
                     chunk_pitch_ratio = value
                 else:
                     overrides[parameter] = value
-            chunk_stretch, chunk_pitch_ratio, clean_overrides = voc_core._finalize_dynamic_segment_values(
-                args=args,
-                stretch=chunk_stretch,
-                pitch_ratio=chunk_pitch_ratio,
-                overrides=overrides,
+            chunk_stretch, chunk_pitch_ratio, clean_overrides = (
+                voc_core._finalize_dynamic_segment_values(
+                    args=args,
+                    stretch=chunk_stretch,
+                    pitch_ratio=chunk_pitch_ratio,
+                    overrides=overrides,
+                )
             )
             if clean_overrides:
                 chunk_args = voc_core.clone_args_namespace(args)
@@ -422,7 +432,7 @@ def run_stateful_stream(
         args,
         (
             f"[stream] done -> {output_path} | chunks={total_chunks}, stages={stage_count}, "
-            f"dur={audio.shape[0]/sr:.3f}s->{out_audio.shape[0]/out_sr:.3f}s"
+            f"dur={audio.shape[0] / sr:.3f}s->{out_audio.shape[0] / out_sr:.3f}s"
         ),
         min_level="normal",
     )
