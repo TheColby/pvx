@@ -1,4 +1,3 @@
-
 """pvx package root.
 
 Contains stable CLI entrypoints (`pvx.cli`), reusable DSP/runtime core (`pvx.core`),

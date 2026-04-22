@@ -100,5 +100,3 @@ Primary references:
 | Phase 5 | Medium-Low | `align`, `match`, `stem`, `spatialize`, `live`, `serve` | Expands into advanced alignment, immersive, and deployment workflows after core parity and QA gates are stable. |
 
 ## Attribution
-
-

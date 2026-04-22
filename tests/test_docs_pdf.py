@@ -1,4 +1,3 @@
-
 """Tests for scripts/scripts_generate_docs_pdf.py helpers."""
 
 from __future__ import annotations

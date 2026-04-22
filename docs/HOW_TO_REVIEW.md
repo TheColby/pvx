@@ -130,5 +130,3 @@ Check:
 - includes new coverage for `pvx follow` and control-bus route helpers.
 
 ## Attribution
-
-

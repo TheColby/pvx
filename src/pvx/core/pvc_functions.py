@@ -283,7 +283,6 @@ def generate_envelope_points(
             r *= scale
         s_dur = max(0.0, duration - (a + d + r))
 
-        p0 = 0.0
         p1 = a
         p2 = p1 + d
         p3 = p2 + s_dur
@@ -434,10 +433,9 @@ def reshape_control_points(
     else:
         raise ValueError(f"Unsupported reshape operation: {operation}")
 
-    if min_value is not None or max_value is not None:
-        if op not in {"clip"}:
-            lo = -np.inf if min_value is None else float(min_value)
-            hi = np.inf if max_value is None else float(max_value)
-            out_v = np.clip(out_v, lo, hi)
+    if (min_value is not None or max_value is not None) and op not in {"clip"}:
+        lo = -np.inf if min_value is None else float(min_value)
+        hi = np.inf if max_value is None else float(max_value)
+        out_v = np.clip(out_v, lo, hi)
 
     return _sanitize_times_values(out_t, out_v)

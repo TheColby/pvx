@@ -1,4 +1,3 @@
-
 """Tests for GPU-accelerated augmentation transforms (pvx.augment.gpu)."""
 
 from __future__ import annotations

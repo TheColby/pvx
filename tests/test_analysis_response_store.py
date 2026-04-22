@@ -1,4 +1,3 @@
-
 """Unit tests for PVXAN/PVXRF artifact storage and determinism."""
 
 from __future__ import annotations

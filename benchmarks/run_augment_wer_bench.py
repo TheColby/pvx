@@ -27,6 +27,7 @@ Results are saved as JSON to ``benchmarks/out_augment/wer_results.json``.
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import sys
 import time
@@ -311,20 +312,19 @@ def main():
     device = get_device(args.device)
     print(f"Device: {device}")
 
-    # Check dependencies
-    try:
-        import datasets
-        import evaluate
-        import jiwer
-        import torch
-        import transformers
-    except ImportError as e:
-        print(f"Missing dependency: {e}")
+    missing = [
+        name
+        for name in ("datasets", "evaluate", "jiwer", "torch", "transformers")
+        if importlib.util.find_spec(name) is None
+    ]
+    if missing:
+        print(f"Missing dependencies: {', '.join(missing)}")
         print(
             "Install with: pip install 'pvx[torch]' datasets transformers evaluate jiwer torchaudio"
         )
         sys.exit(1)
 
+    import torch
     from transformers import Wav2Vec2Processor
 
     # Set seeds

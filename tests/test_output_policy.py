@@ -1,4 +1,3 @@
-
 """Unit tests for shared output policy helpers."""
 
 from __future__ import annotations

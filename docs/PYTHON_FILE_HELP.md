@@ -4,7 +4,7 @@
 
 Comprehensive reference for every Python file in this repository.
 
-Total Python files documented: **266**
+Total Python files documented: **268**
 
 ## Contents
 
@@ -247,6 +247,7 @@ Total Python files documented: **266**
 - [`src/pvx/integrations/tensorflow.py`](#srcpvxintegrationstensorflowpy)
 - [`src/pvx/metrics/__init__.py`](#srcpvxmetricsinitpy)
 - [`src/pvx/metrics/coherence.py`](#srcpvxmetricscoherencepy)
+- [`src/pvx/voc_cli.py`](#srcpvxvocclipy)
 - [`src/pvxalgorithms/__init__.py`](#srcpvxalgorithmsinitpy)
 - [`src/pvxalgorithms/base.py`](#srcpvxalgorithmsbasepy)
 - [`src/pvxalgorithms/registry.py`](#srcpvxalgorithmsregistrypy)
@@ -274,6 +275,7 @@ Total Python files documented: **266**
 - [`tests/test_pvxvoc_cli.py`](#teststestpvxvocclipy)
 - [`tests/test_transient_and_stereo.py`](#teststesttransientandstereopy)
 - [`tests/test_voc_console.py`](#teststestvocconsolepy)
+- [`tests/test_voc_jobs.py`](#teststestvocjobspy)
 
 ## `benchmarks/__init__.py`
 
@@ -375,7 +377,7 @@ Results are saved as JSON to ``benchmarks/out_augment/wer_results.json``.
 **Purpose:** Reproducible quality benchmark: pvx vs Rubber Band vs librosa baseline.
 
 **Classes:** `TaskSpec`
-**Functions:** `_sha256_bytes`, `_sha256_file`, `_parse_version`, `_collect_environment_metadata`, `_corpus_manifest_entries`, `_load_manifest`, `_write_manifest`, `_manifest_index`, `_validate_corpus_against_manifest`, `_prepare_dataset`, `_case_key`, `_diagnose_metrics`, `_method_diagnostics`, `_pvx_bench_args`, `_read_audio`, `_write_audio`, `_match_channels`, `_to_mono`, `_align_pair`, `_generate_tiny_dataset`, `_run_pvx_cycle`, `_find_rubberband`, `_run_rubberband_cycle`, `_run_librosa_cycle`, `_compute_metrics`, `_aggregate`, `_render_markdown`, `_check_gate`, `main`
+**Functions:** `_sha256_bytes`, `_sha256_file`, `_parse_version`, `_collect_environment_metadata`, `_corpus_manifest_entries`, `_load_manifest`, `_write_manifest`, `_manifest_index`, `_validate_corpus_against_manifest`, `_prepare_dataset`, `_case_key`, `_row_case_key`, `_diagnose_metrics`, `_method_diagnostics`, `_pvx_bench_args`, `_read_audio`, `_write_audio`, `_match_channels`, `_to_mono`, `_align_pair`, `_generate_tiny_dataset`, `_run_pvx_cycle`, `_find_rubberband`, `_run_rubberband_cycle`, `_run_librosa_cycle`, `_compute_metrics`, `_aggregate`, `_render_markdown`, `_check_gate`, `main`
 
 **Help commands:** `python3 benchmarks/run_bench.py`, `python3 benchmarks/run_bench.py --help`
 
@@ -6155,10 +6157,10 @@ Create unison width via micro-detuned phase-vocoder voices.
 
 ## `src/pvx/cli/pvxvoc.py`
 
-**Purpose:** CLI entrypoint for the phase-vocoder tool.
+**Purpose:** CLI entrypoint wrapper for the phase-vocoder tool.
 
 **Classes:** None
-**Functions:** `_prompt_text`, `_prompt_choice`, `run_guided_mode`, `expand_inputs`, `_build_explain_plan`, `_manifest_entries`, `main`
+**Functions:** None
 
 **Help commands:** `python3 src/pvx/cli/pvxvoc.py --help`
 
@@ -6166,8 +6168,8 @@ Create unison width via micro-detuned phase-vocoder voices.
 
 ```text
 Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxvoc.py", line 13, in <module>
-    from pvx.core.presets import PRESET_CHOICES
+  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxvoc.py", line 5, in <module>
+    from pvx.voc_cli import build_parser, expand_inputs, main, run_guided_mode
   File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 16, in <module>
     from pvx.cli.catalog import (
     ...<4 lines>...
@@ -6178,7 +6180,7 @@ ModuleNotFoundError: No module named 'pvx.cli'; 'pvx' is not a package
 ### Module Docstring
 
 ```text
-CLI entrypoint for the phase-vocoder tool.
+CLI entrypoint wrapper for the phase-vocoder tool.
 ```
 
 ## `src/pvx/cli/pvxwarp.py`
@@ -6485,7 +6487,7 @@ Transient analysis and segmentation helpers for hybrid pvx modes.
 **Purpose:** Multi-channel phase vocoder CLI for time and pitch manipulation.
 
 **Classes:** `VocoderConfig`, `PitchConfig`, `ControlSegment`, `DynamicControlRef`, `DynamicControlSignal`, `JobResult`, `FourierSyncPlan`, `AudioBlockResult`, `RuntimeConfig`
-**Functions:** `db_to_amplitude`, `cents_to_ratio`, `_eval_numeric_expr`, `parse_numeric_expression`, `parse_pitch_ratio_value`, `_is_power_of_two`, `parse_numeric_list`, `parse_int_list`, `_looks_like_control_signal_reference`, `_parse_scalar_cli_value`, `_parse_int_cli_value`, `_parse_control_signal_value`, `_coerce_control_interp`, `_control_value_column_candidates`, `_deduplicate_points`, `_normalize_control_points`, `_parse_csv_control_points`, `_parse_json_control_points`, `load_dynamic_control_signal`, `_smoothstep`, `_smootherstep`, `_exp_ease`, `_piecewise_ease_sample`, `_sample_dynamic_signal`, `estimate_content_features`, `suggest_quality_profile`, `apply_quality_profile_overrides`, `resolve_transform_auto`, `_has_cupy`, `_is_cupy_array`, `_array_module`, `_to_numpy`, `_to_runtime_array`, `_as_float`, `_as_bool`, `_i0`, `normalize_transform_name`, `transform_bin_count`, `_analysis_angular_velocity`, `_transform_requires_scipy`, `ensure_transform_backend_available`, `validate_transform_available`, `_resize_or_pad_1d`, `_onesided_to_full_spectrum`, `_forward_transform_numpy`, `_inverse_transform_numpy`, `_forward_transform`, `_inverse_transform`, `add_runtime_args`, `runtime_config`, `configure_runtime`, `configure_runtime_from_args`, `ensure_runtime_dependencies`, `principal_angle`, `_cosine_series_window`, `_bartlett_window`, `_bohman_window`, `_cosine_window`, `_sine_window`, `_triangular_window`, `_bartlett_hann_window`, `_tukey_window`, `_parzen_window`, `_lanczos_window`, `_welch_window`, `_gaussian_window`, `_general_gaussian_window`, `_exponential_window`, `_cauchy_window`, `_cosine_power_window`, `_hann_poisson_window`, `_general_hamming_window`, `_kaiser_window`, `make_window`, `pad_for_framing`, `stft`, `istft`, `scaled_win_length`, `resize_spectrum_bins`, `smooth_series`, `regularize_frame_lengths`, `fill_nan_with_nearest`, `lock_fft_length_to_f0`, `build_fourier_sync_plan`, `compute_transient_flags`, `build_output_time_steps`, `create_phase_rng`, `draw_random_phase`, `apply_phase_engine`, `find_spectral_peaks`, `apply_identity_phase_locking`, `phase_vocoder_time_stretch`, `phase_vocoder_time_stretch_fourier_sync`, `compute_multistage_stretches`, `phase_vocoder_time_stretch_multistage`, `stretch_channel_with_strategy`, `phase_vocoder_time_stretch_multires_fusion`, `linear_resample_1d`, `resample_1d`, `force_length`, `estimate_f0_autocorrelation`, `normalize_audio`, `_envelope_coeff`, `_envelope_follower`, `_estimate_lufs_or_rms_db`, `_apply_compressor`, `_apply_expander`, `_apply_compander`, `_apply_limiter`, `_apply_soft_clip`, `add_mastering_args`, `validate_mastering_args`, `apply_mastering_chain`, `cepstral_envelope`, `apply_formant_preservation`, `choose_pitch_ratio`, `_parse_optional_float`, `parse_control_segments_csv`, `apply_control_confidence_policy`, `smooth_control_ratios`, `expand_control_segments`, `load_control_segments`, `_lock_channel_phase_to_reference`, `process_audio_block`, `resolve_base_stretch`, `build_vocoder_config_from_args`, `_finalize_dynamic_segment_values`, `build_dynamic_control_segments`, `compute_output_path`, `_stream_format_name`, `_read_audio_input`, `_write_audio_output`, `concat_audio_chunks`, `build_uniform_control_segments`, `resolve_checkpoint_context`, `load_checkpoint_chunk`, `save_checkpoint_chunk`, `write_manifest`, `process_file`, `force_length_multi`, `resample_multi`, `validate_args`, `build_parser`, `run_guided_mode`, `expand_inputs`, `collect_cli_flags`, `apply_named_preset`, `main`
+**Functions:** `db_to_amplitude`, `cents_to_ratio`, `_eval_numeric_expr`, `parse_numeric_expression`, `parse_pitch_ratio_value`, `_is_power_of_two`, `parse_numeric_list`, `parse_int_list`, `_looks_like_control_signal_reference`, `looks_like_control_signal_reference`, `_parse_scalar_cli_value`, `_parse_int_cli_value`, `parse_int_cli_value`, `_parse_control_signal_value`, `_coerce_control_interp`, `_control_value_column_candidates`, `_deduplicate_points`, `_normalize_control_points`, `_parse_csv_control_points`, `_parse_json_control_points`, `load_dynamic_control_signal`, `_smoothstep`, `_smootherstep`, `_exp_ease`, `_piecewise_ease_sample`, `_sample_dynamic_signal`, `estimate_content_features`, `suggest_quality_profile`, `apply_quality_profile_overrides`, `resolve_transform_auto`, `_has_cupy`, `_is_cupy_array`, `_array_module`, `_to_numpy`, `_to_runtime_array`, `_as_float`, `_as_bool`, `_i0`, `normalize_transform_name`, `transform_bin_count`, `_analysis_angular_velocity`, `_transform_requires_scipy`, `ensure_transform_backend_available`, `validate_transform_available`, `_resize_or_pad_1d`, `_onesided_to_full_spectrum`, `_forward_transform_numpy`, `_inverse_transform_numpy`, `_forward_transform`, `_inverse_transform`, `add_runtime_args`, `runtime_config`, `configure_runtime`, `configure_runtime_from_args`, `ensure_runtime_dependencies`, `principal_angle`, `_cosine_series_window`, `_bartlett_window`, `_bohman_window`, `_cosine_window`, `_sine_window`, `_triangular_window`, `_bartlett_hann_window`, `_tukey_window`, `_parzen_window`, `_lanczos_window`, `_welch_window`, `_gaussian_window`, `_general_gaussian_window`, `_exponential_window`, `_cauchy_window`, `_cosine_power_window`, `_hann_poisson_window`, `_general_hamming_window`, `_kaiser_window`, `make_window`, `pad_for_framing`, `stft`, `istft`, `scaled_win_length`, `resize_spectrum_bins`, `smooth_series`, `regularize_frame_lengths`, `fill_nan_with_nearest`, `lock_fft_length_to_f0`, `build_fourier_sync_plan`, `compute_transient_flags`, `build_output_time_steps`, `create_phase_rng`, `draw_random_phase`, `apply_phase_engine`, `find_spectral_peaks`, `apply_identity_phase_locking`, `phase_vocoder_time_stretch`, `phase_vocoder_time_stretch_fourier_sync`, `compute_multistage_stretches`, `phase_vocoder_time_stretch_multistage`, `stretch_channel_with_strategy`, `phase_vocoder_time_stretch_multires_fusion`, `linear_resample_1d`, `resample_1d`, `force_length`, `estimate_f0_autocorrelation`, `normalize_audio`, `_envelope_coeff`, `_envelope_follower`, `_estimate_lufs_or_rms_db`, `_apply_compressor`, `_apply_expander`, `_apply_compander`, `_apply_limiter`, `_apply_soft_clip`, `add_mastering_args`, `validate_mastering_args`, `apply_mastering_chain`, `cepstral_envelope`, `apply_formant_preservation`, `choose_pitch_ratio`, `_parse_optional_float`, `parse_control_segments_csv`, `apply_control_confidence_policy`, `smooth_control_ratios`, `expand_control_segments`, `load_control_segments`, `_lock_channel_phase_to_reference`, `process_audio_block`, `resolve_base_stretch`, `build_vocoder_config_from_args`, `_finalize_dynamic_segment_values`, `build_dynamic_control_segments`, `compute_output_path`, `_stream_format_name`, `_read_audio_input`, `read_audio_input`, `_write_audio_output`, `concat_audio_chunks`, `build_uniform_control_segments`, `resolve_checkpoint_context`, `load_checkpoint_chunk`, `save_checkpoint_chunk`, `write_manifest`, `process_file`, `force_length_multi`, `resample_multi`, `validate_args`, `build_parser`, `run_guided_mode`, `expand_inputs`, `collect_cli_flags`, `apply_named_preset`, `main`
 
 **Help commands:** `python3 src/pvx/core/voc.py --help`
 
@@ -6589,7 +6591,7 @@ Console, preset, and example helpers for the pvx voc CLI.
 **Purpose:** Job orchestration helpers for pvx voc renders.
 
 **Classes:** None
-**Functions:** `compute_output_path`, `_stream_format_name`, `_read_audio_input`, `_write_audio_output`, `concat_audio_chunks`, `build_uniform_control_segments`, `_checkpoint_job_id`, `resolve_checkpoint_context`, `load_checkpoint_chunk`, `save_checkpoint_chunk`, `write_manifest`, `process_file`
+**Functions:** `compute_output_path`, `_stream_format_name`, `_hash_file_contents`, `_metadata_sidecar_path`, `_checkpoint_chunk_meta_path`, `_read_audio_input`, `_write_audio_output`, `concat_audio_chunks`, `build_uniform_control_segments`, `_checkpoint_job_id`, `_render_fingerprint`, `resolve_checkpoint_context`, `load_checkpoint_chunk`, `save_checkpoint_chunk`, `write_manifest`, `_resolve_output_path`, `_ensure_writable_target`, `_preflight_file_writes`, `_consume_prefetched_audio`, `_preflight_checkpoint_targets`, `process_file`
 
 ### Module Docstring
 
@@ -6797,6 +6799,21 @@ Objective metric helpers for pvx benchmarks and tests.
 
 ```text
 Inter-channel coherence drift metrics.
+```
+
+## `src/pvx/voc_cli.py`
+
+**Purpose:** CLI entrypoint for the phase-vocoder tool.
+
+**Classes:** None
+**Functions:** `_prompt_text`, `_prompt_choice`, `run_guided_mode`, `expand_inputs`, `_build_explain_plan`, `_manifest_entries`, `_preflight_manifest_target`, `main`
+
+**Help commands:** `python3 src/pvx/voc_cli.py`, `python3 src/pvx/voc_cli.py --help`
+
+### Module Docstring
+
+```text
+CLI entrypoint for the phase-vocoder tool.
 ```
 
 ## `src/pvxalgorithms/__init__.py`
@@ -7219,6 +7236,21 @@ Tests for hybrid transient processing and stereo coherence modes.
 
 ```text
 Focused regression tests for the extracted voc console helpers.
+```
+
+## `tests/test_voc_jobs.py`
+
+**Purpose:** Focused regression tests for extracted voc job helpers.
+
+**Classes:** `TestVocJobs`
+**Functions:** None
+
+**Help commands:** `python3 tests/test_voc_jobs.py`
+
+### Module Docstring
+
+```text
+Focused regression tests for extracted voc job helpers.
 ```
 
 ## Attribution

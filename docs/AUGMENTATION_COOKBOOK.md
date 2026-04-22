@@ -403,5 +403,3 @@ for vocal, drums, bass, other in stems:
 | Extreme | 0.50–2.00 | ±7.0 st | 0–15 dB | 0.5–4.0 s | Robustness stress tests |
 
 ## Attribution
-
-

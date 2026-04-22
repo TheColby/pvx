@@ -1,4 +1,3 @@
-
 """pvx.augment — Audio data augmentation Python API.
 
 .. warning::
@@ -112,47 +111,47 @@ from .time_domain import (
 )
 
 __all__ = [
-    # Core
-    "Transform",
-    "Pipeline",
-    "OneOf",
-    "SomeOf",
-    "RandomApply",
-    "Identity",
-    "TransformResult",
-    "load_audio",
-    "save_audio",
-    "fingerprint_audio",
-    "register_transform",
-    "get_transform",
-    "list_transforms",
     # Noise
     "AddNoise",
     "BackgroundMixer",
-    "ImpulseNoise",
-    # Room
-    "RoomSimulator",
-    "ImpulseResponseConvolver",
+    "BandwidthLimiter",
+    "BitCrusher",
+    "ClippingSimulator",
     # Codec
     "CodecDegradation",
-    "BitCrusher",
-    "BandwidthLimiter",
-    # Spectral
-    "SpecAugment",
     "EQPerturber",
-    "SpectralNoise",
-    "PitchShiftSimple",
+    "Fade",
+    "FixedLengthCrop",
     # Time domain
     "GainPerturber",
+    "Identity",
+    "ImpulseNoise",
+    "ImpulseResponseConvolver",
     "Normalizer",
-    "ClippingSimulator",
-    "TimeShift",
-    "Reverse",
-    "Fade",
-    "TrimSilence",
-    "FixedLengthCrop",
-    "TimeStretch",
+    "OneOf",
+    "Pipeline",
     "PitchShift",
+    "PitchShiftSimple",
+    "RandomApply",
+    "Reverse",
+    # Room
+    "RoomSimulator",
+    "SomeOf",
+    # Spectral
+    "SpecAugment",
+    "SpectralNoise",
+    "TimeShift",
+    "TimeStretch",
+    # Core
+    "Transform",
+    "TransformResult",
+    "TrimSilence",
+    "fingerprint_audio",
+    "get_transform",
+    "list_transforms",
+    "load_audio",
+    "register_transform",
+    "save_audio",
 ]
 
 # ---------------------------------------------------------------------------

@@ -1,4 +1,3 @@
-
 """Tests for PVC parity benchmark runner and gate logic."""
 
 from __future__ import annotations

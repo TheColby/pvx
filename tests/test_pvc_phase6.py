@@ -1,4 +1,3 @@
-
 """Unit tests for PVC-inspired Phase 6 function-stream utilities."""
 
 from __future__ import annotations

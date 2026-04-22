@@ -115,5 +115,3 @@ python3 scripts/scripts_generate_html_docs.py
 ```
 
 ## Attribution
-
-

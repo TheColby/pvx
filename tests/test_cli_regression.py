@@ -1,4 +1,3 @@
-
 """CLI regression tests for pvxvoc end-to-end workflows.
 
 Coverage includes:

@@ -235,5 +235,3 @@ sf.write("segment_output.wav", y, sr)
 - `pvx voc --manifest-json ...` to log run metadata.
 
 ## Attribution
-
-

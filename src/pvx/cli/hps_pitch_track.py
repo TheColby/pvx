@@ -342,7 +342,7 @@ def _emit_csv(
 
     row_count = 0
     extra_columns = dict(extra_columns or {})
-    ordered_extra = [name for name in extra_columns.keys() if str(name).strip()]
+    ordered_extra = [name for name in extra_columns if str(name).strip()]
     writer = csv.writer(stream)
     writer.writerow(
         ["start_sec", "end_sec", "stretch", "pitch_ratio", "confidence", "f0_hz", *ordered_extra]
@@ -555,4 +555,4 @@ if __name__ == "__main__":
         raise SystemExit(main())
     except (OSError, ValueError, RuntimeError) as exc:
         print(f"[error] {exc}", file=sys.stderr)
-        raise SystemExit(1)
+        raise SystemExit(1) from exc

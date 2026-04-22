@@ -1,4 +1,3 @@
-
 """Curated impulse response (IR) database integration.
 
 Provides a simple downloader and cache manager for publicly available
@@ -36,6 +35,7 @@ import json
 import shutil
 import zipfile
 from pathlib import Path
+from urllib.parse import urlparse
 from urllib.request import urlretrieve
 
 # ---------------------------------------------------------------------------
@@ -165,12 +165,15 @@ class IRDatabase:
             return db_dir
 
         url = str(info["url"])
+        parsed = urlparse(url)
+        if parsed.scheme not in {"http", "https"}:
+            raise ValueError(f"Unsupported IR database URL scheme: {parsed.scheme!r}")
         zip_path = self.cache_dir / f"{database_id}.zip"
 
         if progress:
             print(f"[ir_database] Downloading {info['name']} ({info['size_mb']}MB)...")
 
-        urlretrieve(url, str(zip_path))
+        urlretrieve(url, str(zip_path))  # nosec B310
 
         if progress:
             print(f"[ir_database] Extracting to {db_dir}...")

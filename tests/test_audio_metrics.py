@@ -1,4 +1,3 @@
-
 """Tests for shared audio metric table utilities."""
 
 from __future__ import annotations

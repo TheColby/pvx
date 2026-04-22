@@ -1,4 +1,3 @@
-
 """Noise-based audio augmentation transforms.
 
 Provides additive noise injection at controlled SNR levels, background
@@ -241,7 +240,7 @@ class BackgroundMixer(Transform):
         snr_db = float(rng.uniform(self.snr_db_range[0], self.snr_db_range[1]))
 
         bg_path = self.background_files[int(rng.integers(len(self.background_files)))]
-        bg, bg_sr = load_audio(bg_path, target_sr=sr, mono=(n_ch == 1))
+        bg, _bg_sr = load_audio(bg_path, target_sr=sr, mono=(n_ch == 1))
         bg2d, _ = _to_2d(bg)
 
         # Match channel count

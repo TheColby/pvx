@@ -21,7 +21,7 @@ def _load_profiles(path: Path) -> list[str]:
     profiles = payload.get("profiles", {}) if isinstance(payload, dict) else {}
     if not isinstance(profiles, dict):
         return []
-    return sorted(str(k) for k in profiles.keys())
+    return sorted(str(k) for k in profiles)
 
 
 def _load_json(path: Path) -> dict[str, Any]:

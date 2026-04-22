@@ -1,4 +1,3 @@
-
 """Trajectory-aware multichannel convolution reverb helpers."""
 
 from __future__ import annotations

@@ -1,4 +1,3 @@
-
 """PyTorch integration for pvx augmentation pipelines.
 
 Provides ``torch.utils.data.Dataset`` subclasses and collate helpers so
@@ -108,7 +107,6 @@ class PvxAugmentDataset:
         return_path: bool = False,
     ) -> None:
         torch = _require_torch()
-        import torch.utils.data
 
         self.files = [Path(f) for f in files]
         self.pipeline = pipeline
@@ -198,9 +196,10 @@ class PvxAugmentDataset:
     # ------------------------------------------------------------------
     def as_torch_dataset(self):
         """Return ``self`` wrapped as a ``torch.utils.data.Dataset``."""
-        torch = _require_torch()
+        _require_torch()
+        from torch.utils.data import Dataset
 
-        class _TorchWrapper(torch.utils.data.Dataset):
+        class _TorchWrapper(Dataset):
             def __init__(inner, parent):
                 inner._parent = parent
 

@@ -192,5 +192,3 @@ Implemented after this Phase 0 note:
   - `pvx stretch-budget` for preflight max-stretch estimation from file metadata + disk budget assumptions
 
 ## Attribution
-
-

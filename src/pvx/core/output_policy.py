@@ -1,4 +1,3 @@
-
 """Shared output policy helpers for bit depth, dither, true-peak, and metadata sidecars."""
 
 from __future__ import annotations

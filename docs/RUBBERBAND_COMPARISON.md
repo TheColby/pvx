@@ -60,5 +60,3 @@ If Rubber Band is installed, it is included automatically; if not, it is skipped
 Use the benchmark report as a directional signal, then always audition critical renders.
 
 ## Attribution
-
-

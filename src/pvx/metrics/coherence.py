@@ -1,4 +1,3 @@
-
 """Inter-channel coherence drift metrics."""
 
 from __future__ import annotations

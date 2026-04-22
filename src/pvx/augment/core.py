@@ -1,4 +1,3 @@
-
 """Core base classes for pvx augmentation transforms.
 
 All transforms operate on NumPy arrays with shape (channels, samples) or
@@ -162,7 +161,7 @@ class Pipeline:
 
     def append(self, transform: Transform) -> Pipeline:
         """Return a new Pipeline with *transform* appended."""
-        return Pipeline(self.transforms + [transform], seed=self.seed, p=self.p)
+        return Pipeline([*self.transforms, transform], seed=self.seed, p=self.p)
 
 
 # ---------------------------------------------------------------------------

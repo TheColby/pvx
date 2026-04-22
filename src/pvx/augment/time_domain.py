@@ -1,4 +1,3 @@
-
 """Time-domain audio augmentation transforms.
 
 Provides transforms that operate on the waveform directly: gain
@@ -215,7 +214,7 @@ class TimeShift(Transform):
         shift_s = float(rng.uniform(self.shift_range[0], self.shift_range[1]))
         shift_samples = int(shift_s * sr)
         arr, was_mono = _to_2d(audio)
-        n_ch, n_samp = arr.shape
+        _n_ch, n_samp = arr.shape
 
         if shift_samples == 0:
             return _from_2d(arr, was_mono), sr
@@ -318,7 +317,7 @@ class Fade(Transform):
         rng: np.random.Generator,
     ) -> tuple[np.ndarray, int]:
         arr, was_mono = _to_2d(audio)
-        n_ch, n_samp = arr.shape
+        _n_ch, n_samp = arr.shape
         result = arr.copy()
 
         fi_s = float(rng.uniform(self.fade_in_range[0], self.fade_in_range[1]))
@@ -862,13 +861,13 @@ def _call_pvx_voc(
                     f"stderr: {stderr_msg}"
                 )
             return load_audio(tmp_out)
-        except subprocess.TimeoutExpired:
+        except subprocess.TimeoutExpired as exc:
             raise RuntimeError(
                 "pvx voc timed out after 120 seconds. The input audio may be "
                 "too long for real-time processing."
-            )
-        except FileNotFoundError:
+            ) from exc
+        except FileNotFoundError as exc:
             raise RuntimeError(
                 "pvx CLI not found. TimeStretch and PitchShift require the pvx "
                 "CLI to be installed and accessible. Install with: pip install pvx"
-            )
+            ) from exc

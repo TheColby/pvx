@@ -297,5 +297,3 @@
   - refreshed `/Users/cleider/dev/pvx/README.md`, `/Users/cleider/dev/pvx/docs/GETTING_STARTED.md`, `/Users/cleider/dev/pvx/docs/EXAMPLES.md`
 
 ## Attribution
-
-

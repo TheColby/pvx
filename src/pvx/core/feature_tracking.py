@@ -321,7 +321,9 @@ def extract_feature_tracks(
         hi_band = freqs >= 6000.0
         hiss_ratio[idx] = float(np.sum(pwr[hi_band]) / max(total_pwr, EPS))
 
-        def _hum_ratio(base_hz: float) -> float:
+        def _hum_ratio(
+            base_hz: float, *, power: np.ndarray = pwr, total_power: float = total_pwr
+        ) -> float:
             accum = 0.0
             for h in range(1, 6):
                 target = h * base_hz
@@ -329,9 +331,9 @@ def extract_feature_tracks(
                     break
                 b = int(np.argmin(np.abs(freqs - target)))
                 lo_b = max(0, b - 1)
-                hi_b = min(pwr.size, b + 2)
-                accum += float(np.sum(pwr[lo_b:hi_b]))
-            return float(accum / max(total_pwr, EPS))
+                hi_b = min(power.size, b + 2)
+                accum += float(np.sum(power[lo_b:hi_b]))
+            return float(accum / max(total_power, EPS))
 
         hum_50[idx] = _hum_ratio(50.0)
         hum_60[idx] = _hum_ratio(60.0)

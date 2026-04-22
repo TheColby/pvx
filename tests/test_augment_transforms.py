@@ -50,7 +50,7 @@ class TestPipelineCore(unittest.TestCase):
 
         audio, sr = _mono()
         p = Pipeline([])
-        out, sr_out = p(audio, sr, seed=0)
+        out, _sr_out = p(audio, sr, seed=0)
         np.testing.assert_array_equal(out, audio)
 
     def test_pipeline_reproducibility(self):
@@ -123,7 +123,7 @@ class TestAddNoise(unittest.TestCase):
         from pvx.augment import AddNoise
 
         audio, sr = _stereo()
-        out, sr_out = AddNoise(snr_db=20)(audio, sr, seed=0)
+        out, _sr_out = AddNoise(snr_db=20)(audio, sr, seed=0)
         self.assertEqual(out.shape, audio.shape)
 
     def test_noise_types(self):
@@ -656,7 +656,7 @@ class TestPluginSystem(unittest.TestCase):
         cls = get_transform("test_double")
         pipeline = Pipeline([cls(p=1.0)], seed=42)
         audio, sr = _mono()
-        out, out_sr = pipeline(audio, sr)
+        out, _out_sr = pipeline(audio, sr)
         np.testing.assert_allclose(out, audio * 2.0, atol=1e-7)
 
 
@@ -729,9 +729,7 @@ class TestPipelineConfig(unittest.TestCase):
             def apply(self, audio, sr, rng):
                 return audio, sr
 
-        manifest = (
-            '{"transforms": [{"name": "config_test_passthrough", "params": {"p": 1.0}}]}'
-        )
+        manifest = '{"transforms": [{"name": "config_test_passthrough", "params": {"p": 1.0}}]}'
         path = self._write("pipeline.json", manifest)
         pipeline = load_pipeline(path)
         self.assertEqual(len(pipeline), 1)

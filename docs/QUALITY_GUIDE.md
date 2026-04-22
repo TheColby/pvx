@@ -108,5 +108,3 @@ pvx denoise speech.wav \
 5. Only after quality is acceptable, optimize runtime (`--n-fft`, staging, segmentation/checkpoint options).
 
 ## Attribution
-
-

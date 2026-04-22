@@ -1,4 +1,3 @@
-
 """Deterministic WSOLA time-stretch primitives for transient handling."""
 
 from __future__ import annotations

@@ -103,5 +103,3 @@ Remaining PVC-inspired opportunities:
   - state key artifacts to listen for
 
 ## Attribution
-
-

@@ -583,5 +583,3 @@ gpu_pipeline = TorchPipeline([
 | `RandomApply` | `core` | `transform`, `p` | Stochastic application |
 
 ## Attribution
-
-

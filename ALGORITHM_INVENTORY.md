@@ -140,5 +140,3 @@ Total algorithms: 123
 - `spatial_and_multichannel/creative_spatial_fx/spatial_freeze_resynthesis.py`: Spatial freeze resynthesis
 
 ## Attribution
-
-

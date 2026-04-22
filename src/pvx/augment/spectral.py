@@ -1,4 +1,3 @@
-
 """Spectral-domain augmentation transforms.
 
 Implements SpecAugment (frequency and time masking), random EQ perturbation,
@@ -26,7 +25,7 @@ def _stft(
     """Return complex STFT with shape ``(n_bins, n_frames)``."""
     if window is None:
         window = np.hanning(n_fft).astype(np.float32)
-    n_samp = len(audio)
+    len(audio)
     pad = n_fft // 2
     padded = np.pad(audio.astype(np.float32), pad)
     n_frames = 1 + (len(padded) - n_fft) // hop
@@ -262,7 +261,7 @@ class EQPerturber(Transform):
         from scipy.signal import sosfiltfilt
 
         arr, was_mono = _to_2d(audio)
-        n_ch, n_samp = arr.shape
+        n_ch, _n_samp = arr.shape
         nyq = sr / 2.0
 
         out_channels = []
