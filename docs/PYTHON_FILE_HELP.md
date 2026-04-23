@@ -4,7 +4,7 @@
 
 Comprehensive reference for every Python file in this repository.
 
-Total Python files documented: **219**
+Total Python files documented: **224**
 
 ## Contents
 
@@ -24,6 +24,7 @@ Total Python files documented: **219**
 - [`scripts/scripts_generate_html_docs.py`](#scriptsscriptsgeneratehtmldocspy)
 - [`scripts/scripts_generate_python_docs.py`](#scriptsscriptsgeneratepythondocspy)
 - [`scripts/scripts_generate_theory_docs.py`](#scriptsscriptsgeneratetheorydocspy)
+- [`scripts/scripts_install_man_pages.py`](#scriptsscriptsinstallmanpagespy)
 - [`scripts/scripts_quality_regression.py`](#scriptsscriptsqualityregressionpy)
 - [`src/pvx/__init__.py`](#srcpvxinitpy)
 - [`src/pvx/algorithms/__init__.py`](#srcpvxalgorithmsinitpy)
@@ -156,6 +157,8 @@ Total Python files documented: **219**
 - [`src/pvx/algorithms/time_scale_and_pitch_core/nonlinear_time_maps.py`](#srcpvxalgorithmstimescaleandpitchcorenonlineartimemapspy)
 - [`src/pvx/algorithms/time_scale_and_pitch_core/td_psola.py`](#srcpvxalgorithmstimescaleandpitchcoretdpsolapy)
 - [`src/pvx/algorithms/time_scale_and_pitch_core/wsola_waveform_similarity_overlap_add.py`](#srcpvxalgorithmstimescaleandpitchcorewsolawaveformsimilarityoverlapaddpy)
+- [`src/pvx/algorithms/utils/__init__.py`](#srcpvxalgorithmsutilsinitpy)
+- [`src/pvx/algorithms/utils/denoise.py`](#srcpvxalgorithmsutilsdenoisepy)
 - [`src/pvx/cli/__init__.py`](#srcpvxcliinitpy)
 - [`src/pvx/cli/hps_pitch_track.py`](#srcpvxclihpspitchtrackpy)
 - [`src/pvx/cli/main.py`](#srcpvxclimainpy)
@@ -183,6 +186,7 @@ Total Python files documented: **219**
 - [`src/pvx/cli/pvxringfilter.py`](#srcpvxclipvxringfilterpy)
 - [`src/pvx/cli/pvxringtvfilter.py`](#srcpvxclipvxringtvfilterpy)
 - [`src/pvx/cli/pvxspeccompander.py`](#srcpvxclipvxspeccompanderpy)
+- [`src/pvx/cli/pvxtrajectoryreverb.py`](#srcpvxclipvxtrajectoryreverbpy)
 - [`src/pvx/cli/pvxtransient.py`](#srcpvxclipvxtransientpy)
 - [`src/pvx/cli/pvxtvfilter.py`](#srcpvxclipvxtvfilterpy)
 - [`src/pvx/cli/pvxunison.py`](#srcpvxclipvxunisonpy)
@@ -201,6 +205,7 @@ Total Python files documented: **219**
 - [`src/pvx/core/pvc_ops.py`](#srcpvxcorepvcopspy)
 - [`src/pvx/core/pvc_resonators.py`](#srcpvxcorepvcresonatorspy)
 - [`src/pvx/core/response_store.py`](#srcpvxcoreresponsestorepy)
+- [`src/pvx/core/spatial_reverb.py`](#srcpvxcorespatialreverbpy)
 - [`src/pvx/core/stereo.py`](#srcpvxcorestereopy)
 - [`src/pvx/core/streaming.py`](#srcpvxcorestreamingpy)
 - [`src/pvx/core/transients.py`](#srcpvxcoretransientspy)
@@ -390,7 +395,7 @@ Validate that runtime requirements.txt matches project runtime dependencies.
 **Purpose:** Generate advanced docs artifacts (coverage, limitations, benchmarks, citations, cookbook, architecture).
 
 **Classes:** None
-**Functions:** `git_commit_meta`, `generated_stamp_lines`, `logo_lines`, `attribution_section_lines`, `write_json`, `_string_literal`, `_simple_literal`, `_tool_name_for_path`, `_iter_cli_sources`, `collect_cli_flags`, `generate_cli_flags_reference`, `_unique_join`, `generate_algorithm_limitations`, `generate_cookbook`, `generate_architecture_doc`, `_spectral_distance_db`, `_snr_db`, `_make_signal`, `_benchmark_backend`, `generate_benchmarks`, `_classify_reference_url`, `_extract_doi`, `_bib_escape`, `_bib_key`, `generate_citation_docs`, `generate_docs_contract`, `main`
+**Functions:** `git_commit_meta`, `generated_stamp_lines`, `logo_lines`, `attribution_section_lines`, `write_json`, `_string_literal`, `_simple_literal`, `_tool_name_for_path`, `_iter_cli_sources`, `collect_cli_flags`, `generate_cli_flags_reference`, `_unique_join`, `generate_algorithm_limitations`, `generate_cookbook`, `generate_architecture_doc`, `_ensure_2d`, `_align_audio_pair`, `_finite_mean`, `_finite_max`, `_make_benchmark_cases`, `_quality_score_0_100`, `_compute_roundtrip_metrics`, `_roundtrip_stft_istft`, `_benchmark_backend_case`, `_summarize_backend_rows`, `generate_benchmarks`, `_classify_reference_url`, `_extract_doi`, `_bib_escape`, `_bib_key`, `generate_citation_docs`, `generate_docs_contract`, `main`
 
 **Help commands:** `python3 scripts/scripts_generate_docs_extras.py`, `python3 scripts/scripts_generate_docs_extras.py --help`
 
@@ -458,6 +463,21 @@ Generate comprehensive documentation for every Python file in the repository.
 
 ```text
 Generate GitHub-renderable theory docs (math foundations + window reference).
+```
+
+## `scripts/scripts_install_man_pages.py`
+
+**Purpose:** Generate and optionally install pvx man pages.
+
+**Classes:** None
+**Functions:** `_run_help`, `_roff_escape`, `_build_man_page`, `_write_pages`, `_install_pages`, `main`
+
+**Help commands:** `python3 scripts/scripts_install_man_pages.py`, `python3 scripts/scripts_install_man_pages.py --help`
+
+### Module Docstring
+
+```text
+Generate and optionally install pvx man pages.
 ```
 
 ## `scripts/scripts_quality_regression.py`
@@ -762,7 +782,7 @@ I/O contract, and parameter-routing behavior.
 **Purpose:** Shared DSP utilities and implementations for pvx algorithm modules.
 
 **Classes:** `AlgorithmResult`
-**Functions:** `coerce_audio`, `maybe_librosa`, `maybe_loudnorm`, `build_metadata`, `normalize_peak`, `ensure_length`, `resample_length`, `envelope_follower`, `soft_clip`, `_resolve_transform_name`, `_stft_config`, `stft_multi`, `istft_multi`, `spectral_sharpen`, `spectral_blur`, `hpss_split`, `time_stretch`, `pitch_shift`, `overlap_add_frames`, `granular_time_stretch`, `spectral_gate`, `spectral_subtract_denoise`, `mmse_like_denoise`, `minimum_statistics_denoise`, `simple_declick`, `simple_declip`, `dereverb_decay_subtract`, `dereverb_wpe_style`, `compressor`, `upward_compressor`, `true_peak_limit`, `transient_shaper`, `spectral_dynamics`, `split_bands`, `multiband_compression`, `cross_synthesis`, `spectral_convolution`, `spectral_freeze`, `phase_randomize`, `formant_warp`, `resonator_bank`, `spectral_contrast_exaggerate`, `rhythmic_gate`, `ring_mod`, `spectral_tremolo`, `envelope_modulation`, `estimate_f0_track`, `nearest_scale_freq`, `variable_pitch_shift`, `detect_key_from_chroma`, `cqt_or_stft`, `icqt_or_istft`, `_dispatch_time_scale`, `_dispatch_pitch_tracking`, `_scale_cents_from_name`, `_dispatch_retune`, `_dispatch_transforms`, `_dispatch_separation`, `_dispatch_denoise`, `_dispatch_dereverb`, `_lufs_estimate`, `_dispatch_dynamics`, `_dispatch_creative`, `_dispatch_granular`, `_dispatch_analysis`, `_spatial_to_channels`, `_spatial_fractional_delay`, `_spatial_apply_delays`, `_spatial_circular_gains`, `_spatial_delay_by_xcorr`, `_spatial_estimate_channel_delays`, `_spatial_synthetic_rir`, `_dispatch_spatial`, `run_algorithm`
+**Functions:** `coerce_audio`, `maybe_librosa`, `maybe_loudnorm`, `build_metadata`, `normalize_peak`, `ensure_length`, `resample_length`, `envelope_follower`, `soft_clip`, `_resolve_transform_name`, `_stft_config`, `stft_multi`, `istft_multi`, `spectral_sharpen`, `spectral_blur`, `hpss_split`, `time_stretch`, `pitch_shift`, `overlap_add_frames`, `granular_time_stretch`, `spectral_gate`, `spectral_subtract_denoise`, `mmse_like_denoise`, `minimum_statistics_denoise`, `simple_declick`, `simple_declip`, `dereverb_decay_subtract`, `dereverb_wpe_style`, `compressor`, `upward_compressor`, `true_peak_limit`, `transient_shaper`, `spectral_dynamics`, `split_bands`, `multiband_compression`, `cross_synthesis`, `spectral_convolution`, `spectral_freeze`, `phase_randomize`, `formant_warp`, `resonator_bank`, `spectral_contrast_exaggerate`, `rhythmic_gate`, `ring_mod`, `spectral_tremolo`, `envelope_modulation`, `estimate_f0_track`, `nearest_scale_freq`, `variable_pitch_shift`, `detect_key_from_chroma`, `cqt_or_stft`, `icqt_or_istft`, `_dispatch_time_scale`, `_dispatch_pitch_tracking`, `_scale_cents_from_name`, `_dispatch_retune`, `_dispatch_transforms`, `_dispatch_separation`, `_dispatch_dereverb`, `_lufs_estimate`, `_dispatch_dynamics`, `_dispatch_creative`, `_dispatch_granular`, `_dispatch_analysis`, `_spatial_to_channels`, `_spatial_fractional_delay`, `_spatial_apply_delays`, `_spatial_circular_gains`, `_spatial_delay_by_xcorr`, `_spatial_estimate_channel_delays`, `_spatial_synthetic_rir`, `_dispatch_spatial`, `run_algorithm`
 
 ### Module Docstring
 
@@ -4068,6 +4088,26 @@ When executed directly, it prints verbose help text describing purpose,
 I/O contract, and parameter-routing behavior.
 ```
 
+## `src/pvx/algorithms/utils/__init__.py`
+
+**Purpose:** No module docstring present.
+
+**Classes:** None
+**Functions:** None
+
+## `src/pvx/algorithms/utils/denoise.py`
+
+**Purpose:** Dispatch logic for denoise and restoration algorithms.
+
+**Classes:** None
+**Functions:** `_dispatch_denoise`
+
+### Module Docstring
+
+```text
+Dispatch logic for denoise and restoration algorithms.
+```
+
 ## `src/pvx/cli/__init__.py`
 
 **Purpose:** CLI entrypoints for pvx tools.
@@ -4094,9 +4134,9 @@ CLI entrypoints for pvx tools.
 
 ```text
 Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/hps_pitch_track.py", line 17, in <module>
+  File "/app/src/pvx/cli/hps_pitch_track.py", line 17, in <module>
     from pvx.core.common import add_console_args, build_examples_epilog, build_status_bar, log_message
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 25, in <module>
+  File "/app/src/pvx/cli/pvx.py", line 26, in <module>
     from pvx.core.streaming import run_stateful_stream
 ModuleNotFoundError: No module named 'pvx.core'; 'pvx' is not a package
 ```
@@ -4120,9 +4160,9 @@ Track F0 and emit a pvx control-map CSV for pitch-follow pipelines.
 
 ```text
 Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/main.py", line 8, in <module>
+  File "/app/src/pvx/cli/main.py", line 8, in <module>
     from pvx.cli.pvx import build_parser, main
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 25, in <module>
+  File "/app/src/pvx/cli/pvx.py", line 26, in <module>
     from pvx.core.streaming import run_stateful_stream
 ModuleNotFoundError: No module named 'pvx.core'; 'pvx' is not a package
 ```
@@ -4138,7 +4178,7 @@ Compatibility entrypoint for the unified pvx CLI.
 **Purpose:** Unified top-level CLI for the pvx command suite.
 
 **Classes:** `ToolSpec`, `_BytesStdin`
-**Functions:** `_tool_index`, `_load_entrypoint`, `_looks_like_audio_input`, `_tool_names_csv`, `print_tools`, `print_examples`, `_prompt_text`, `_prompt_choice`, `_print_command_preview`, `print_follow_examples`, `_extract_follow_example_request`, `run_guided_mode`, `_split_pipeline_stages`, `_token_flag`, `_run_stage_command`, `_run_stage_capture_stdout`, `_patched_stdin_bytes`, `run_follow_mode`, `run_chain_mode`, `run_stream_mode`, `_parse_size_bytes`, `_format_bytes_human`, `_infer_output_format`, `_bytes_per_sample_from_subtype`, `run_stretch_budget_mode`, `dispatch_tool`, `build_parser`, `main`
+**Functions:** `_tool_index`, `_load_entrypoint`, `_looks_like_audio_input`, `_tool_names_csv`, `print_tools`, `print_examples`, `_prompt_text`, `_prompt_choice`, `_print_command_preview`, `print_follow_examples`, `_extract_follow_example_request`, `run_guided_mode`, `_split_pipeline_stages`, `_token_flag`, `_extract_flag_value`, `_strip_flags`, `_replace_flag_value`, `_consume_lucky_options`, `_lucky_output_variant`, `_lucky_mastering_overrides`, `_lucky_tool_overrides`, `_run_lucky_tool_mode`, `_run_lucky_helper_mode`, `_run_stage_command`, `_run_stage_capture_stdout`, `_patched_stdin_bytes`, `run_follow_mode`, `run_chain_mode`, `run_stream_mode`, `_parse_size_bytes`, `_format_bytes_human`, `_infer_output_format`, `_bytes_per_sample_from_subtype`, `run_stretch_budget_mode`, `dispatch_tool`, `build_parser`, `main`
 
 **Help commands:** `python3 src/pvx/cli/pvx.py --help`
 
@@ -4146,9 +4186,9 @@ Compatibility entrypoint for the unified pvx CLI.
 
 ```text
 Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 25, in <module>
+  File "/app/src/pvx/cli/pvx.py", line 26, in <module>
     from pvx.core.streaming import run_stateful_stream
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 25, in <module>
+  File "/app/src/pvx/cli/pvx.py", line 26, in <module>
     from pvx.core.streaming import run_stateful_stream
 ModuleNotFoundError: No module named 'pvx.core'; 'pvx' is not a package
 ```
@@ -4172,11 +4212,11 @@ Unified top-level CLI for the pvx command suite.
 
 ```text
 Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxanalysis.py", line 15, in <module>
+  File "/app/src/pvx/cli/pvxanalysis.py", line 15, in <module>
     from pvx.core.analysis_store import (
     ...<4 lines>...
     )
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 25, in <module>
+  File "/app/src/pvx/cli/pvx.py", line 26, in <module>
     from pvx.core.streaming import run_stateful_stream
 ModuleNotFoundError: No module named 'pvx.core'; 'pvx' is not a package
 ```
@@ -4200,9 +4240,9 @@ Persist and inspect reusable phase-vocoder analysis artifacts (PVXAN).
 
 ```text
 Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxbandamp.py", line 8, in <module>
+  File "/app/src/pvx/cli/pvxbandamp.py", line 8, in <module>
     from pvx.cli.pvxfilter import run_filter_cli
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 25, in <module>
+  File "/app/src/pvx/cli/pvx.py", line 26, in <module>
     from pvx.core.streaming import run_stateful_stream
 ModuleNotFoundError: No module named 'pvx.core'; 'pvx' is not a package
 ```
@@ -4226,9 +4266,9 @@ Response-peak band emphasis wrapper.
 
 ```text
 Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxchordmapper.py", line 8, in <module>
+  File "/app/src/pvx/cli/pvxchordmapper.py", line 8, in <module>
     from pvx.cli.pvxharmmap import run_harmmap_cli
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 25, in <module>
+  File "/app/src/pvx/cli/pvx.py", line 26, in <module>
     from pvx.core.streaming import run_stateful_stream
 ModuleNotFoundError: No module named 'pvx.core'; 'pvx' is not a package
 ```
@@ -4252,11 +4292,11 @@ Chordmapper wrapper.
 
 ```text
 Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxconform.py", line 13, in <module>
+  File "/app/src/pvx/cli/pvxconform.py", line 13, in <module>
     from pvx.core.common import (
     ...<19 lines>...
     )
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 25, in <module>
+  File "/app/src/pvx/cli/pvx.py", line 26, in <module>
     from pvx.core.streaming import run_stateful_stream
 ModuleNotFoundError: No module named 'pvx.core'; 'pvx' is not a package
 ```
@@ -4280,11 +4320,11 @@ Conform timing and pitch to a user-provided segment map.
 
 ```text
 Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxdenoise.py", line 13, in <module>
+  File "/app/src/pvx/cli/pvxdenoise.py", line 13, in <module>
     from pvx.core.common import (
     ...<15 lines>...
     )
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 25, in <module>
+  File "/app/src/pvx/cli/pvx.py", line 26, in <module>
     from pvx.core.streaming import run_stateful_stream
 ModuleNotFoundError: No module named 'pvx.core'; 'pvx' is not a package
 ```
@@ -4308,11 +4348,11 @@ Phase-consistent spectral denoiser.
 
 ```text
 Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxdeverb.py", line 12, in <module>
+  File "/app/src/pvx/cli/pvxdeverb.py", line 12, in <module>
     from pvx.core.common import (
     ...<15 lines>...
     )
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 25, in <module>
+  File "/app/src/pvx/cli/pvx.py", line 26, in <module>
     from pvx.core.streaming import run_stateful_stream
 ModuleNotFoundError: No module named 'pvx.core'; 'pvx' is not a package
 ```
@@ -4336,11 +4376,11 @@ Spectral tail suppression for dereverberation-like cleanup.
 
 ```text
 Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxenvelope.py", line 12, in <module>
+  File "/app/src/pvx/cli/pvxenvelope.py", line 12, in <module>
     from pvx.core.common import (
     ...<4 lines>...
     )
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 25, in <module>
+  File "/app/src/pvx/cli/pvx.py", line 26, in <module>
     from pvx.core.streaming import run_stateful_stream
 ModuleNotFoundError: No module named 'pvx.core'; 'pvx' is not a package
 ```
@@ -4364,11 +4404,11 @@ PVC-style envelope function-stream generator.
 
 ```text
 Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxfilter.py", line 11, in <module>
+  File "/app/src/pvx/cli/pvxfilter.py", line 11, in <module>
     from pvx.core.common import (
     ...<15 lines>...
     )
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 25, in <module>
+  File "/app/src/pvx/cli/pvx.py", line 26, in <module>
     from pvx.core.streaming import run_stateful_stream
 ModuleNotFoundError: No module named 'pvx.core'; 'pvx' is not a package
 ```
@@ -4392,11 +4432,11 @@ PVC-inspired response-driven spectral operators.
 
 ```text
 Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxformant.py", line 12, in <module>
+  File "/app/src/pvx/cli/pvxformant.py", line 12, in <module>
     from pvx.core.common import (
     ...<18 lines>...
     )
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 25, in <module>
+  File "/app/src/pvx/cli/pvx.py", line 26, in <module>
     from pvx.core.streaming import run_stateful_stream
 ModuleNotFoundError: No module named 'pvx.core'; 'pvx' is not a package
 ```
@@ -4412,7 +4452,7 @@ Formant processing tool with optional pitch shifting.
 **Purpose:** Spectral freeze tool built on pvx phase-vocoder primitives.
 
 **Classes:** None
-**Functions:** `freeze_channel`, `build_parser`, `main`
+**Functions:** `_principal_angle`, `freeze_channel`, `build_parser`, `main`
 
 **Help commands:** `python3 src/pvx/cli/pvxfreeze.py --help`
 
@@ -4420,11 +4460,11 @@ Formant processing tool with optional pitch shifting.
 
 ```text
 Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxfreeze.py", line 12, in <module>
+  File "/app/src/pvx/cli/pvxfreeze.py", line 12, in <module>
     from pvx.core.common import (
     ...<15 lines>...
     )
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 25, in <module>
+  File "/app/src/pvx/cli/pvx.py", line 26, in <module>
     from pvx.core.streaming import run_stateful_stream
 ModuleNotFoundError: No module named 'pvx.core'; 'pvx' is not a package
 ```
@@ -4448,11 +4488,11 @@ Spectral freeze tool built on pvx phase-vocoder primitives.
 
 ```text
 Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxharmmap.py", line 10, in <module>
+  File "/app/src/pvx/cli/pvxharmmap.py", line 10, in <module>
     from pvx.core.common import (
     ...<15 lines>...
     )
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 25, in <module>
+  File "/app/src/pvx/cli/pvx.py", line 26, in <module>
     from pvx.core.streaming import run_stateful_stream
 ModuleNotFoundError: No module named 'pvx.core'; 'pvx' is not a package
 ```
@@ -4476,11 +4516,11 @@ PVC-inspired harmonic/chord spectral mapping CLI.
 
 ```text
 Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxharmonize.py", line 12, in <module>
+  File "/app/src/pvx/cli/pvxharmonize.py", line 12, in <module>
     from pvx.core.common import (
     ...<18 lines>...
     )
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 25, in <module>
+  File "/app/src/pvx/cli/pvx.py", line 26, in <module>
     from pvx.core.streaming import run_stateful_stream
 ModuleNotFoundError: No module named 'pvx.core'; 'pvx' is not a package
 ```
@@ -4504,9 +4544,9 @@ Multi-voice harmonizer built from phase-vocoder pitch shifts.
 
 ```text
 Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxinharmonator.py", line 8, in <module>
+  File "/app/src/pvx/cli/pvxinharmonator.py", line 8, in <module>
     from pvx.cli.pvxharmmap import run_harmmap_cli
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 25, in <module>
+  File "/app/src/pvx/cli/pvx.py", line 26, in <module>
     from pvx.core.streaming import run_stateful_stream
 ModuleNotFoundError: No module named 'pvx.core'; 'pvx' is not a package
 ```
@@ -4530,11 +4570,11 @@ Inharmonator wrapper.
 
 ```text
 Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxlayer.py", line 12, in <module>
+  File "/app/src/pvx/cli/pvxlayer.py", line 12, in <module>
     from pvx.core.common import (
     ...<18 lines>...
     )
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 25, in <module>
+  File "/app/src/pvx/cli/pvx.py", line 26, in <module>
     from pvx.core.streaming import run_stateful_stream
 ModuleNotFoundError: No module named 'pvx.core'; 'pvx' is not a package
 ```
@@ -4550,7 +4590,7 @@ Layered harmonic/percussive processing with independent controls.
 **Purpose:** Spectral morphing between two input files.
 
 **Classes:** `MorphControlSignal`
-**Functions:** `_normalize_control_points`, `_parse_csv_control_points`, `_parse_json_control_points`, `_load_control_signal`, `_parse_scalar_or_control`, `_sample_cubic_local`, `_sample_control_signal`, `match_channels`, `_phase_blend`, `_resolve_phase_mix_curve`, `_safe_rms`, `_framewise_envelope`, `_mask_from_modulator`, `morph_pair`, `build_parser`, `main`
+**Functions:** `_normalize_control_points`, `_parse_csv_control_points`, `_parse_json_control_points`, `_load_control_signal`, `_parse_scalar_or_control`, `_sample_cubic_local`, `_smoothstep`, `_smootherstep`, `_exp_ease`, `_sample_piecewise_ease`, `_sample_control_signal`, `match_channels`, `_phase_blend`, `_resolve_phase_mix_curve`, `_safe_rms`, `_framewise_envelope`, `_mask_from_modulator`, `morph_pair`, `build_parser`, `main`
 
 **Help commands:** `python3 src/pvx/cli/pvxmorph.py --help`
 
@@ -4558,11 +4598,11 @@ Layered harmonic/percussive processing with independent controls.
 
 ```text
 Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxmorph.py", line 17, in <module>
+  File "/app/src/pvx/cli/pvxmorph.py", line 17, in <module>
     from pvx.core.audio_metrics import (
     ...<3 lines>...
     )
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 25, in <module>
+  File "/app/src/pvx/cli/pvx.py", line 26, in <module>
     from pvx.core.streaming import run_stateful_stream
 ModuleNotFoundError: No module named 'pvx.core'; 'pvx' is not a package
 ```
@@ -4586,9 +4626,9 @@ Spectral morphing between two input files.
 
 ```text
 Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxnoisefilter.py", line 8, in <module>
+  File "/app/src/pvx/cli/pvxnoisefilter.py", line 8, in <module>
     from pvx.cli.pvxfilter import run_filter_cli
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 25, in <module>
+  File "/app/src/pvx/cli/pvx.py", line 26, in <module>
     from pvx.core.streaming import run_stateful_stream
 ModuleNotFoundError: No module named 'pvx.core'; 'pvx' is not a package
 ```
@@ -4612,11 +4652,11 @@ Response-profile noise filter wrapper.
 
 ```text
 Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxreshape.py", line 12, in <module>
+  File "/app/src/pvx/cli/pvxreshape.py", line 12, in <module>
     from pvx.core.common import (
     ...<4 lines>...
     )
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 25, in <module>
+  File "/app/src/pvx/cli/pvx.py", line 26, in <module>
     from pvx.core.streaming import run_stateful_stream
 ModuleNotFoundError: No module named 'pvx.core'; 'pvx' is not a package
 ```
@@ -4640,9 +4680,9 @@ PVC-style function-stream reshaper for control maps.
 
 ```text
 Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxresponse.py", line 13, in <module>
+  File "/app/src/pvx/cli/pvxresponse.py", line 13, in <module>
     from pvx.core.analysis_store import load_analysis_artifact
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 25, in <module>
+  File "/app/src/pvx/cli/pvx.py", line 26, in <module>
     from pvx.core.streaming import run_stateful_stream
 ModuleNotFoundError: No module named 'pvx.core'; 'pvx' is not a package
 ```
@@ -4658,7 +4698,7 @@ Create and inspect reusable frequency-response artifacts (PVXRF).
 **Purpose:** Monophonic retuning with phase-vocoder segment processing.
 
 **Classes:** None
-**Functions:** `freq_to_midi`, `midi_to_freq`, `normalize_octave_cents`, `nearest_scale_freq`, `overlap_add`, `build_parser`, `main`
+**Functions:** `freq_to_midi`, `midi_to_freq`, `normalize_octave_cents`, `nearest_scale_freq`, `overlap_add`, `collect_f0_values`, `recommend_root_hz`, `build_parser`, `main`
 
 **Help commands:** `python3 src/pvx/cli/pvxretune.py --help`
 
@@ -4666,11 +4706,11 @@ Create and inspect reusable frequency-response artifacts (PVXRF).
 
 ```text
 Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxretune.py", line 13, in <module>
+  File "/app/src/pvx/cli/pvxretune.py", line 13, in <module>
     from pvx.core.common import (
     ...<17 lines>...
     )
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 25, in <module>
+  File "/app/src/pvx/cli/pvx.py", line 26, in <module>
     from pvx.core.streaming import run_stateful_stream
 ModuleNotFoundError: No module named 'pvx.core'; 'pvx' is not a package
 ```
@@ -4694,11 +4734,11 @@ Monophonic retuning with phase-vocoder segment processing.
 
 ```text
 Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxring.py", line 11, in <module>
+  File "/app/src/pvx/cli/pvxring.py", line 11, in <module>
     from pvx.core.common import (
     ...<14 lines>...
     )
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 25, in <module>
+  File "/app/src/pvx/cli/pvx.py", line 26, in <module>
     from pvx.core.streaming import run_stateful_stream
 ModuleNotFoundError: No module named 'pvx.core'; 'pvx' is not a package
 ```
@@ -4722,9 +4762,9 @@ PVC-inspired ring and resonator operators.
 
 ```text
 Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxringfilter.py", line 8, in <module>
+  File "/app/src/pvx/cli/pvxringfilter.py", line 8, in <module>
     from pvx.cli.pvxring import run_ring_cli
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 25, in <module>
+  File "/app/src/pvx/cli/pvx.py", line 26, in <module>
     from pvx.core.streaming import run_stateful_stream
 ModuleNotFoundError: No module named 'pvx.core'; 'pvx' is not a package
 ```
@@ -4748,9 +4788,9 @@ Ring + resonator filter wrapper.
 
 ```text
 Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxringtvfilter.py", line 8, in <module>
+  File "/app/src/pvx/cli/pvxringtvfilter.py", line 8, in <module>
     from pvx.cli.pvxring import run_ring_cli
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 25, in <module>
+  File "/app/src/pvx/cli/pvx.py", line 26, in <module>
     from pvx.core.streaming import run_stateful_stream
 ModuleNotFoundError: No module named 'pvx.core'; 'pvx' is not a package
 ```
@@ -4774,9 +4814,9 @@ Time-varying ring + resonator filter wrapper.
 
 ```text
 Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxspeccompander.py", line 8, in <module>
+  File "/app/src/pvx/cli/pvxspeccompander.py", line 8, in <module>
     from pvx.cli.pvxfilter import run_filter_cli
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 25, in <module>
+  File "/app/src/pvx/cli/pvx.py", line 26, in <module>
     from pvx.core.streaming import run_stateful_stream
 ModuleNotFoundError: No module named 'pvx.core'; 'pvx' is not a package
 ```
@@ -4785,6 +4825,34 @@ ModuleNotFoundError: No module named 'pvx.core'; 'pvx' is not a package
 
 ```text
 Response-referenced spectral compander wrapper.
+```
+
+## `src/pvx/cli/pvxtrajectoryreverb.py`
+
+**Purpose:** Trajectory-aware multichannel convolution reverb for mono sources.
+
+**Classes:** None
+**Functions:** `build_parser`, `_to_mono`, `main`
+
+**Help commands:** `python3 src/pvx/cli/pvxtrajectoryreverb.py --help`
+
+### CLI Help Snapshot
+
+```text
+Traceback (most recent call last):
+  File "/app/src/pvx/cli/pvxtrajectoryreverb.py", line 13, in <module>
+    from pvx.core.common import (
+    ...<12 lines>...
+    )
+  File "/app/src/pvx/cli/pvx.py", line 26, in <module>
+    from pvx.core.streaming import run_stateful_stream
+ModuleNotFoundError: No module named 'pvx.core'; 'pvx' is not a package
+```
+
+### Module Docstring
+
+```text
+Trajectory-aware multichannel convolution reverb for mono sources.
 ```
 
 ## `src/pvx/cli/pvxtransient.py`
@@ -4800,11 +4868,11 @@ Response-referenced spectral compander wrapper.
 
 ```text
 Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxtransient.py", line 12, in <module>
+  File "/app/src/pvx/cli/pvxtransient.py", line 12, in <module>
     from pvx.core.common import (
     ...<19 lines>...
     )
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 25, in <module>
+  File "/app/src/pvx/cli/pvx.py", line 26, in <module>
     from pvx.core.streaming import run_stateful_stream
 ModuleNotFoundError: No module named 'pvx.core'; 'pvx' is not a package
 ```
@@ -4828,9 +4896,9 @@ Transient-aware time/pitch processing.
 
 ```text
 Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxtvfilter.py", line 8, in <module>
+  File "/app/src/pvx/cli/pvxtvfilter.py", line 8, in <module>
     from pvx.cli.pvxfilter import run_filter_cli
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 25, in <module>
+  File "/app/src/pvx/cli/pvx.py", line 26, in <module>
     from pvx.core.streaming import run_stateful_stream
 ModuleNotFoundError: No module named 'pvx.core'; 'pvx' is not a package
 ```
@@ -4854,11 +4922,11 @@ Time-varying response filter wrapper.
 
 ```text
 Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxunison.py", line 13, in <module>
+  File "/app/src/pvx/cli/pvxunison.py", line 13, in <module>
     from pvx.core.common import (
     ...<16 lines>...
     )
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 25, in <module>
+  File "/app/src/pvx/cli/pvx.py", line 26, in <module>
     from pvx.core.streaming import run_stateful_stream
 ModuleNotFoundError: No module named 'pvx.core'; 'pvx' is not a package
 ```
@@ -4882,11 +4950,11 @@ Create unison width via micro-detuned phase-vocoder voices.
 
 ```text
 Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxwarp.py", line 13, in <module>
+  File "/app/src/pvx/cli/pvxwarp.py", line 13, in <module>
     from pvx.core.common import (
     ...<19 lines>...
     )
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 25, in <module>
+  File "/app/src/pvx/cli/pvx.py", line 26, in <module>
     from pvx.core.streaming import run_stateful_stream
 ModuleNotFoundError: No module named 'pvx.core'; 'pvx' is not a package
 ```
@@ -5060,7 +5128,7 @@ Phase 5 coverage:
 **Purpose:** PVC-inspired response-driven spectral operators for pvx.
 
 **Classes:** None
-**Functions:** `db_to_amp`, `_coerce_audio`, `_resize_curve`, `_shift_response_curve`, `_read_rows_from_map`, `load_scalar_control_points`, `evaluate_scalar_control`, `_frame_times`, `_blend_dry_wet`, `_compute_band_shape`, `process_response_operator`
+**Functions:** `_piecewise_segment_fraction`, `_smoothstep`, `_smootherstep`, `_exp_ease`, `db_to_amp`, `_coerce_audio`, `_resize_curve`, `_shift_response_curve`, `_read_rows_from_map`, `load_scalar_control_points`, `evaluate_scalar_control`, `_frame_times`, `_blend_dry_wet`, `_compute_band_shape`, `process_response_operator`
 
 ### Module Docstring
 
@@ -5114,6 +5182,19 @@ PVXRF schema:
   - phase: float64 array, shape (channels, bins)
 ```
 
+## `src/pvx/core/spatial_reverb.py`
+
+**Purpose:** Trajectory-aware multichannel convolution reverb helpers.
+
+**Classes:** None
+**Functions:** `_parse_float_triplet`, `parse_coordinate`, `parse_speaker_angles`, `default_speaker_angles`, `_angles_to_unit_vectors`, `_shape_curve`, `compute_trajectory_gains`, `_fft_convolve_or_fallback`, `apply_multichannel_trajectory_reverb`, `resample_audio_linear`
+
+### Module Docstring
+
+```text
+Trajectory-aware multichannel convolution reverb helpers.
+```
+
 ## `src/pvx/core/stereo.py`
 
 **Purpose:** Stereo/multichannel helper utilities.
@@ -5158,17 +5239,84 @@ Transient analysis and segmentation helpers for hybrid pvx modes.
 **Purpose:** Multi-channel phase vocoder CLI for time and pitch manipulation.
 
 **Classes:** `VocoderConfig`, `PitchConfig`, `ControlSegment`, `DynamicControlRef`, `DynamicControlSignal`, `JobResult`, `FourierSyncPlan`, `AudioBlockResult`, `RuntimeConfig`, `ProgressBar`
-**Functions:** `add_console_args`, `console_level`, `is_quiet`, `is_silent`, `log_message`, `log_error`, `clone_args_namespace`, `collect_cli_flags`, `print_cli_examples`, `apply_named_preset`, `_prompt_text`, `_prompt_choice`, `run_guided_mode`, `db_to_amplitude`, `cents_to_ratio`, `_eval_numeric_expr`, `parse_numeric_expression`, `parse_pitch_ratio_value`, `_is_power_of_two`, `parse_numeric_list`, `parse_int_list`, `_looks_like_control_signal_reference`, `_parse_scalar_cli_value`, `_parse_int_cli_value`, `_parse_control_signal_value`, `_coerce_control_interp`, `_control_value_column_candidates`, `_deduplicate_points`, `_normalize_control_points`, `_parse_csv_control_points`, `_parse_json_control_points`, `load_dynamic_control_signal`, `_sample_dynamic_signal`, `estimate_content_features`, `suggest_quality_profile`, `apply_quality_profile_overrides`, `resolve_transform_auto`, `_has_cupy`, `_is_cupy_array`, `_array_module`, `_to_numpy`, `_to_runtime_array`, `_as_float`, `_as_bool`, `_i0`, `normalize_transform_name`, `transform_bin_count`, `_analysis_angular_velocity`, `_transform_requires_scipy`, `ensure_transform_backend_available`, `validate_transform_available`, `_resize_or_pad_1d`, `_onesided_to_full_spectrum`, `_forward_transform_numpy`, `_inverse_transform_numpy`, `_forward_transform`, `_inverse_transform`, `add_runtime_args`, `runtime_config`, `configure_runtime`, `configure_runtime_from_args`, `ensure_runtime_dependencies`, `principal_angle`, `_cosine_series_window`, `_bartlett_window`, `_bohman_window`, `_cosine_window`, `_sine_window`, `_triangular_window`, `_bartlett_hann_window`, `_tukey_window`, `_parzen_window`, `_lanczos_window`, `_welch_window`, `_gaussian_window`, `_general_gaussian_window`, `_exponential_window`, `_cauchy_window`, `_cosine_power_window`, `_hann_poisson_window`, `_general_hamming_window`, `_kaiser_window`, `make_window`, `pad_for_framing`, `stft`, `istft`, `scaled_win_length`, `resize_spectrum_bins`, `smooth_series`, `regularize_frame_lengths`, `fill_nan_with_nearest`, `lock_fft_length_to_f0`, `build_fourier_sync_plan`, `compute_transient_flags`, `build_output_time_steps`, `create_phase_rng`, `draw_random_phase`, `apply_phase_engine`, `find_spectral_peaks`, `apply_identity_phase_locking`, `phase_vocoder_time_stretch`, `phase_vocoder_time_stretch_fourier_sync`, `compute_multistage_stretches`, `phase_vocoder_time_stretch_multistage`, `stretch_channel_with_strategy`, `phase_vocoder_time_stretch_multires_fusion`, `linear_resample_1d`, `resample_1d`, `force_length`, `estimate_f0_autocorrelation`, `normalize_audio`, `_envelope_coeff`, `_envelope_follower`, `_estimate_lufs_or_rms_db`, `_apply_compressor`, `_apply_expander`, `_apply_compander`, `_apply_limiter`, `_apply_soft_clip`, `add_mastering_args`, `validate_mastering_args`, `apply_mastering_chain`, `cepstral_envelope`, `apply_formant_preservation`, `choose_pitch_ratio`, `_parse_optional_float`, `parse_control_segments_csv`, `apply_control_confidence_policy`, `smooth_control_ratios`, `expand_control_segments`, `load_control_segments`, `_lock_channel_phase_to_reference`, `process_audio_block`, `resolve_base_stretch`, `build_vocoder_config_from_args`, `_finalize_dynamic_segment_values`, `build_dynamic_control_segments`, `compute_output_path`, `_stream_format_name`, `_read_audio_input`, `_write_audio_output`, `concat_audio_chunks`, `build_uniform_control_segments`, `_checkpoint_job_id`, `resolve_checkpoint_context`, `load_checkpoint_chunk`, `save_checkpoint_chunk`, `write_manifest`, `process_file`, `force_length_multi`, `resample_multi`, `validate_args`, `build_parser`, `expand_inputs`, `main`
+**Functions:** `add_console_args`, `console_level`, `is_quiet`, `is_silent`, `log_message`, `log_error`, `clone_args_namespace`, `collect_cli_flags`, `print_cli_examples`, `apply_named_preset`, `_prompt_text`, `_prompt_choice`, `run_guided_mode`, `db_to_amplitude`, `cents_to_ratio`, `_eval_numeric_expr`, `parse_numeric_expression`, `parse_pitch_ratio_value`, `_is_power_of_two`, `parse_numeric_list`, `parse_int_list`, `_looks_like_control_signal_reference`, `_parse_scalar_cli_value`, `_parse_int_cli_value`, `_parse_control_signal_value`, `_coerce_control_interp`, `_control_value_column_candidates`, `_deduplicate_points`, `_normalize_control_points`, `_parse_csv_control_points`, `_parse_json_control_points`, `load_dynamic_control_signal`, `_smoothstep`, `_smootherstep`, `_exp_ease`, `_piecewise_ease_sample`, `_sample_dynamic_signal`, `estimate_content_features`, `suggest_quality_profile`, `apply_quality_profile_overrides`, `resolve_transform_auto`, `_has_cupy`, `_is_cupy_array`, `_array_module`, `_to_numpy`, `_to_runtime_array`, `_as_float`, `_as_bool`, `_i0`, `normalize_transform_name`, `transform_bin_count`, `_analysis_angular_velocity`, `_transform_requires_scipy`, `ensure_transform_backend_available`, `validate_transform_available`, `_resize_or_pad_1d`, `_onesided_to_full_spectrum`, `_forward_transform_numpy`, `_inverse_transform_numpy`, `_forward_transform`, `_inverse_transform`, `add_runtime_args`, `runtime_config`, `configure_runtime`, `configure_runtime_from_args`, `ensure_runtime_dependencies`, `principal_angle`, `_cosine_series_window`, `_bartlett_window`, `_bohman_window`, `_cosine_window`, `_sine_window`, `_triangular_window`, `_bartlett_hann_window`, `_tukey_window`, `_parzen_window`, `_lanczos_window`, `_welch_window`, `_gaussian_window`, `_general_gaussian_window`, `_exponential_window`, `_cauchy_window`, `_cosine_power_window`, `_hann_poisson_window`, `_general_hamming_window`, `_kaiser_window`, `make_window`, `pad_for_framing`, `stft`, `istft`, `scaled_win_length`, `resize_spectrum_bins`, `smooth_series`, `regularize_frame_lengths`, `fill_nan_with_nearest`, `lock_fft_length_to_f0`, `build_fourier_sync_plan`, `compute_transient_flags`, `build_output_time_steps`, `create_phase_rng`, `draw_random_phase`, `apply_phase_engine`, `find_spectral_peaks`, `apply_identity_phase_locking`, `phase_vocoder_time_stretch`, `phase_vocoder_time_stretch_fourier_sync`, `compute_multistage_stretches`, `phase_vocoder_time_stretch_multistage`, `stretch_channel_with_strategy`, `phase_vocoder_time_stretch_multires_fusion`, `linear_resample_1d`, `resample_1d`, `force_length`, `estimate_f0_autocorrelation`, `normalize_audio`, `_envelope_coeff`, `_envelope_follower`, `_estimate_lufs_or_rms_db`, `_apply_compressor`, `_apply_expander`, `_apply_compander`, `_apply_limiter`, `_apply_soft_clip`, `add_mastering_args`, `validate_mastering_args`, `apply_mastering_chain`, `cepstral_envelope`, `apply_formant_preservation`, `choose_pitch_ratio`, `_parse_optional_float`, `parse_control_segments_csv`, `apply_control_confidence_policy`, `smooth_control_ratios`, `expand_control_segments`, `load_control_segments`, `_lock_channel_phase_to_reference`, `process_audio_block`, `resolve_base_stretch`, `build_vocoder_config_from_args`, `_finalize_dynamic_segment_values`, `build_dynamic_control_segments`, `compute_output_path`, `_stream_format_name`, `_read_audio_input`, `_write_audio_output`, `concat_audio_chunks`, `build_uniform_control_segments`, `_checkpoint_job_id`, `resolve_checkpoint_context`, `load_checkpoint_chunk`, `save_checkpoint_chunk`, `write_manifest`, `process_file`, `force_length_multi`, `resample_multi`, `validate_args`, `build_parser`, `expand_inputs`, `main`
 
 **Help commands:** `python3 src/pvx/core/voc.py --help`
 
 ### CLI Help Snapshot
 
 ```text
-Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/core/voc.py", line 62, in <module>
-    from pvx.core.presets import PRESET_CHOICES, PRESET_OVERRIDES
-ModuleNotFoundError: No module named 'pvx'
+usage: voc.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
+              [--output-format OUTPUT_FORMAT] [--out OUTPUT] [--overwrite]
+              [--dry-run] [--stdout]
+              [--verbosity {silent,quiet,normal,verbose,debug}] [-v] [--quiet]
+              [--silent]
+              [--preset {none,default,vocal,ambient,extreme,vocal_studio,drums_safe,extreme_ambient,stereo_coherent}]
+              [--example {all,basic,vocal,ambient,extreme,drums_safe,stereo_coherent,hybrid,benchmark,gpu,pipeline,csv}]
+              [--guided] [--stretch STRETCH] [--gpu] [--cpu]
+              [--quality-profile {neutral,speech,music,percussion,ambient,extreme}]
+              [--auto-profile]
+              [--auto-profile-lookahead-seconds AUTO_PROFILE_LOOKAHEAD_SECONDS]
+              [--auto-transform] [--n-fft N_FFT] [--win-length WIN_LENGTH]
+              [--hop-size HOP_SIZE]
+              [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
+              [--kaiser-beta KAISER_BETA]
+              [--transform {fft,dft,czt,dct,dst,hartley}] [--no-center]
+              [--phase-locking {off,identity}]
+              [--phase-engine {propagate,hybrid,random}]
+              [--ambient-phase-mix AMBIENT_PHASE_MIX]
+              [--phase-random-seed PHASE_RANDOM_SEED] [--transient-preserve]
+              [--transient-threshold TRANSIENT_THRESHOLD] [--fourier-sync]
+              [--fourier-sync-min-fft FOURIER_SYNC_MIN_FFT]
+              [--fourier-sync-max-fft FOURIER_SYNC_MAX_FFT]
+              [--fourier-sync-smooth FOURIER_SYNC_SMOOTH] [--multires-fusion]
+              [--multires-ffts MULTIRES_FFTS]
+              [--multires-weights MULTIRES_WEIGHTS] [--device {auto,cpu,cuda}]
+              [--cuda-device CUDA_DEVICE] [--time-stretch TIME_STRETCH]
+              [--target-duration TARGET_DURATION]
+              [--stretch-mode {auto,standard,multistage}]
+              [--extreme-time-stretch]
+              [--extreme-stretch-threshold EXTREME_STRETCH_THRESHOLD]
+              [--max-stage-stretch MAX_STAGE_STRETCH] [--onset-time-credit]
+              [--onset-credit-pull ONSET_CREDIT_PULL]
+              [--onset-credit-max ONSET_CREDIT_MAX] [--no-onset-realign]
+              [--ambient-preset] [--auto-segment-seconds AUTO_SEGMENT_SECONDS]
+              [--checkpoint-dir CHECKPOINT_DIR]
+              [--checkpoint-id CHECKPOINT_ID] [--resume]
+              [--interp {none,linear,nearest,cubic,polynomial,exponential,s_curve,smootherstep}]
+              [--order ORDER] [--transient-mode {off,reset,hybrid,wsola}]
+              [--transient-sensitivity TRANSIENT_SENSITIVITY]
+              [--transient-protect-ms TRANSIENT_PROTECT_MS]
+              [--transient-crossfade-ms TRANSIENT_CROSSFADE_MS]
+              [--stereo-mode {independent,mid_side_lock,ref_channel_lock}]
+              [--ref-channel REF_CHANNEL]
+              [--coherence-strength COHERENCE_STRENGTH]
+              [--pitch-shift-semitones PITCH_SHIFT_SEMITONES |
+              --pitch-shift-cents PITCH_SHIFT_CENTS |
+              --pitch-shift-ratio PITCH_SHIFT_RATIO | --target-f0 TARGET_F0]
+              [--analysis-channel {first,mix}] [--f0-min F0_MIN]
+              [--f0-max F0_MAX] [--pitch-mode {standard,formant-preserving}]
+              [--formant-lifter FORMANT_LIFTER]
+              [--formant-strength FORMANT_STRENGTH]
+              [--formant-max-gain-db FORMANT_MAX_GAIN_DB]
+              [--pitch-map PITCH_MAP] [--pitch-map-stdin] [--control-stdin]
+              [--route EXPR] [--pitch-follow-stdin]
+              [--pitch-conf-min PITCH_CONF_MIN]
+              [--pitch-lowconf-mode {hold,unity,interp}]
+              [--pitch-map-smooth-ms PITCH_MAP_SMOOTH_MS]
+              [--pitch-map-crossfade-ms PITCH_MAP_CROSSFADE_MS]
+              [--target-sample-rate TARGET_SAMPLE_RATE]
+              [--resample-mode {auto,fft,linear}]
+              [--normalize {none,peak,rms}] [--peak-dbfs PEAK_DBFS]
+              [--rms-dbfs RMS_DBFS] [--target-lufs TARGET_LUFS]
+              [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
+              [--compressor-ratio COMPRESSOR_RATIO]
+              [--compressor-attack-ms COMPRESSOR_ATTACK_MS]
+              [--compressor-release-ms COMPRESSOR_RELEASE_MS]
+              [--compressor-makeup-db COMPRESSOR_MAKEUP_DB]
+              [--expander-threshold-db EXPANDER_THRESHOLD_DB]
+              [--expander-ratio EX
+... [truncated]
 ```
 
 ### Module Docstring
@@ -5341,7 +5489,7 @@ Tests for benchmark runner profile selection.
 **Purpose:** CLI regression tests for pvxvoc end-to-end workflows.
 
 **Classes:** `TestCLIRegression`
-**Functions:** `write_stereo_tone`, `write_mono_tone`, `write_mono_glide`, `write_mono_complex`
+**Functions:** `write_stereo_tone`, `write_mono_tone`, `write_mono_glide`, `write_mono_complex`, `write_multichannel_ir`
 
 **Help commands:** `python3 tests/test_cli_regression.py`
 

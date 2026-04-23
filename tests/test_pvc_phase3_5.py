@@ -18,11 +18,11 @@ if str(SRC) not in sys.path:
 if str(ROOT) not in sys.path:
     sys.path.insert(1, str(ROOT))
 
-from pvx.core.pvc_harmony import chord_mapper_mask, process_harmony_operator
-from pvx.core.pvc_ops import process_response_operator
-from pvx.core.pvc_resonators import process_ring_operator
-from pvx.core.response_store import ResponseArtifact
-from pvx.core.voc import VocoderConfig, configure_runtime
+from pvx.core.pvc_harmony import chord_mapper_mask, process_harmony_operator  # noqa: E402
+from pvx.core.pvc_ops import process_response_operator  # noqa: E402
+from pvx.core.pvc_resonators import process_ring_operator  # noqa: E402
+from pvx.core.response_store import ResponseArtifact  # noqa: E402
+from pvx.core.voc import VocoderConfig, configure_runtime  # noqa: E402
 
 
 class TestPVCPhase3To5(unittest.TestCase):

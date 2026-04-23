@@ -18,7 +18,7 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from pvx.core.voc import (
+from pvx.core.voc import (  # noqa: E402
     QUALITY_PROFILE_CHOICES,
     TRANSFORM_CHOICES,
     WINDOW_CHOICES,
