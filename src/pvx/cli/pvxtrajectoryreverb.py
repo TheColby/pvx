@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import argparse
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -133,9 +134,31 @@ def _to_mono(audio: np.ndarray) -> np.ndarray:
     return np.mean(arr, axis=1)
 
 
+def _normalize_coordinate_option_args(argv: list[str]) -> list[str]:
+    """Bind --start/--end values so argparse accepts negative coordinates."""
+
+    normalized: list[str] = []
+    idx = 0
+    coordinate_flags = {"--start", "--end"}
+    while idx < len(argv):
+        token = argv[idx]
+        if (
+            token in coordinate_flags
+            and idx + 1 < len(argv)
+            and "," in argv[idx + 1]
+        ):
+            normalized.append(f"{token}={argv[idx + 1]}")
+            idx += 2
+            continue
+        normalized.append(token)
+        idx += 1
+    return normalized
+
+
 def main(argv: list[str] | None = None) -> int:
+    raw_argv = list(sys.argv[1:] if argv is None else argv)
     parser = build_parser()
-    args = parser.parse_args(argv)
+    args = parser.parse_args(_normalize_coordinate_option_args(raw_argv))
     ensure_runtime(args, parser)
 
     if not (0.0 <= float(args.wet) <= 2.0):
