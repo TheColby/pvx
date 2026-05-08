@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import ast
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -48,6 +49,19 @@ def rel(path: Path) -> str:
 
 def safe_read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
+
+
+def module_name_for_path(path: Path) -> str | None:
+    try:
+        relative = path.relative_to(SRC_DIR)
+    except ValueError:
+        return None
+    if relative.suffix != ".py":
+        return None
+    parts = list(relative.with_suffix("").parts)
+    if parts and parts[-1] == "__init__":
+        parts = parts[:-1]
+    return ".".join(parts) if parts else None
 
 
 def parse_module(path: Path) -> dict:
@@ -98,20 +112,30 @@ def parse_module(path: Path) -> dict:
 
 
 def cli_help(path: Path) -> str | None:
+    module_name = module_name_for_path(path)
+    if module_name is None:
+        return None
+    python_path = str(SRC_DIR)
+    if existing_python_path := os.environ.get("PYTHONPATH"):
+        python_path = f"{python_path}{os.pathsep}{existing_python_path}"
     try:
         proc = subprocess.run(
-            ["python3", str(path), "--help"],
+            ["python3", "-m", module_name, "--help"],
             cwd=ROOT,
             text=True,
             capture_output=True,
             timeout=25,
             check=False,
+            env={
+                **os.environ,
+                "PYTHONPATH": python_path,
+            },
         )
     except Exception as exc:  # pragma: no cover
         return f"[help unavailable: {exc}]"
 
     out = (proc.stdout or "") + ("\n" + proc.stderr if proc.stderr else "")
-    out = out.strip()
+    out = out.replace(str(ROOT), "<repo>").strip()
     if not out:
         return None
     if len(out) > 5000:
@@ -235,8 +259,10 @@ def generate_python_help_doc() -> None:
         lines.append("")
 
         help_cmds = []
+        module_name = module_name_for_path(path)
         if path in CLI_HELP_CANDIDATES:
-            help_cmds.append(f"`python3 {title} --help`")
+            if module_name:
+                help_cmds.append(f"`PYTHONPATH=src python3 -m {module_name} --help`")
         elif info["has_main"]:
             help_cmds.append(f"`python3 {title}`")
             if info["uses_argparse"]:

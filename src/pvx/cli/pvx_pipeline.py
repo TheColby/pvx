@@ -408,6 +408,7 @@ def run_chain_mode(
     parser.add_argument(
         "--output", "--out", dest="output", required=True, help="Final output path (or '-')"
     )
+    parser.add_argument("--overwrite", action="store_true", help="Overwrite existing final output")
     parser.add_argument(
         "--work-dir",
         type=Path,
@@ -433,6 +434,14 @@ def run_chain_mode(
     raw_stages = _split_pipeline_stages(args.pipeline)
     if not raw_stages:
         parser.error("--pipeline produced no stages")
+
+    final_output = str(args.output)
+    if final_output != "-":
+        final_output_path = Path(final_output).expanduser().resolve()
+        if final_output_path.exists() and not bool(args.overwrite):
+            parser.error(
+                f"Output already exists: {final_output_path}. Use --overwrite to replace it."
+            )
 
     stages: list[tuple[str, list[str]]] = []
     for stage_idx, stage_text in enumerate(raw_stages, start=1):
@@ -513,9 +522,10 @@ def run_chain_mode(
             *stage_args,
             "--output",
             str(stage_out),
-            "--overwrite",
             "--quiet",
         ]
+        if (not is_last) or bool(args.overwrite):
+            command_args.append("--overwrite")
         print(f"[chain] stage {stage_idx}/{len(stages)}: {stage_tool}")
         code = _run_stage_command(stage_tool, command_args, dispatch_tool=dispatch_tool)
         if code != 0:

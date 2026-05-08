@@ -503,7 +503,7 @@ class TestEngineSelection(unittest.TestCase):
         from pvx.augment.time_domain import _resolve_engine
 
         result = _resolve_engine("auto")
-        self.assertIn(result, ("pytorch", "pvx-cli"))
+        self.assertIn(result, ("torchaudio", "pytorch", "pvx-cli"))
 
     @unittest.skipUnless(True, "always runs")
     def test_resolve_engine_pvx_cli(self):

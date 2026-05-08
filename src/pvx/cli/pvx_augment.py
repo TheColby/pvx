@@ -413,6 +413,12 @@ def _render_job_pytorch(
     return record
 
 
+def _augment_output_conflict(out_path: Path, *, overwrite: bool) -> str | None:
+    if overwrite or not out_path.exists():
+        return None
+    return f"output exists:{out_path}"
+
+
 def run_batch_gpu_mode(forwarded_args: list[str]) -> int:
     parser = argparse.ArgumentParser(
         prog="pvx batch-gpu",
@@ -890,6 +896,11 @@ def run_augment_mode(
             print(f"[augment] {idx}/{total_jobs} {src.name} -> {out_path.name}")
         if bool(args.dry_run):
             record["status"] = "planned"
+            return record
+
+        conflict = _augment_output_conflict(out_path, overwrite=bool(args.overwrite))
+        if conflict is not None:
+            record["status"] = f"error:{conflict}"
             return record
 
         params = dict(record.get("params", {}))

@@ -233,6 +233,27 @@ class TestCLIRegression(unittest.TestCase):
             self.assertEqual(out_audio.shape[1], 2)
             self.assertGreater(out_audio.shape[0], 0)
 
+    def test_unified_cli_chain_refuses_existing_output_without_overwrite(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            in_path = tmp_path / "chain_existing.wav"
+            out_path = tmp_path / "chain_existing_out.wav"
+            write_stereo_tone(in_path, duration=0.22)
+            write_stereo_tone(out_path, duration=0.10)
+
+            cmd = [
+                *UNIFIED_CLI,
+                "chain",
+                str(in_path),
+                "--pipeline",
+                "voc --time-stretch 1.10",
+                "--output",
+                str(out_path),
+            ]
+            proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+            self.assertNotEqual(proc.returncode, 0)
+            self.assertIn("Use --overwrite to replace it", proc.stderr)
+
     def test_unified_cli_chain_lucky_runs(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)

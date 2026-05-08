@@ -630,7 +630,7 @@ Generate grouped HTML documentation for pvx algorithms and research references.
 **Purpose:** Generate comprehensive documentation for every Python file in the repository.
 
 **Classes:** None
-**Functions:** `logo_lines`, `attribution_section_lines`, `rel`, `safe_read`, `parse_module`, `cli_help`, `extract_algorithm_params`, `generate_algorithm_param_doc`, `generate_python_help_doc`, `main`
+**Functions:** `logo_lines`, `attribution_section_lines`, `rel`, `safe_read`, `module_name_for_path`, `parse_module`, `cli_help`, `extract_algorithm_params`, `generate_algorithm_param_doc`, `generate_python_help_doc`, `main`
 
 **Help commands:** `python3 scripts/scripts_generate_python_docs.py`, `python3 scripts/scripts_generate_python_docs.py --help`
 
@@ -4715,7 +4715,7 @@ CLI entrypoints for pvx tools.
 **Classes:** `ToolSpec`
 **Functions:** `build_tool_index`
 
-**Help commands:** `python3 src/pvx/cli/catalog.py --help`
+**Help commands:** `PYTHONPATH=src python3 -m pvx.cli.catalog --help`
 
 ### Module Docstring
 
@@ -4730,19 +4730,90 @@ Static command catalog for the unified pvx CLI.
 **Classes:** None
 **Functions:** `_read_audio`, `_acf_pitch_and_confidence`, `_estimate_reference_hz`, `_smooth`, `_track_pyin`, `_track_acf`, `build_parser`, `validate_args`, `_emit_csv`, `_derive_stretch_track`, `main`
 
-**Help commands:** `python3 src/pvx/cli/hps_pitch_track.py --help`
+**Help commands:** `PYTHONPATH=src python3 -m pvx.cli.hps_pitch_track --help`
 
 ### CLI Help Snapshot
 
 ```text
-Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/hps_pitch_track.py", line 16, in <module>
-    from pvx.core.common import add_console_args, build_examples_epilog, build_status_bar, log_message
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 16, in <module>
-    from pvx.cli.catalog import (
-    ...<4 lines>...
-    )
-ModuleNotFoundError: No module named 'pvx.cli'; 'pvx' is not a package
+usage: python3 -m pvx.cli.hps_pitch_track [-h] [--output OUTPUT]
+                                          [--backend {auto,pyin,acf}]
+                                          [--fmin FMIN] [--fmax FMAX]
+                                          [--frame-length FRAME_LENGTH]
+                                          [--hop-size HOP_SIZE]
+                                          [--ratio-reference {median,mean,first,hz}]
+                                          [--reference-hz REFERENCE_HZ]
+                                          [--ratio-min RATIO_MIN]
+                                          [--ratio-max RATIO_MAX]
+                                          [--smooth-frames SMOOTH_FRAMES]
+                                          [--confidence-floor CONFIDENCE_FLOOR]
+                                          [--emit {pitch_map,stretch_map,pitch_to_stretch}]
+                                          [--stretch-from {pitch_ratio,inv_pitch_ratio,f0_hz}]
+                                          [--stretch-scale STRETCH_SCALE]
+                                          [--stretch-min STRETCH_MIN]
+                                          [--stretch-max STRETCH_MAX]
+                                          [--stretch STRETCH]
+                                          [--feature-set {none,basic,advanced,all}]
+                                          [--mfcc-count MFCC_COUNT]
+                                          [--verbosity {silent,quiet,normal,verbose,debug}]
+                                          [-v] [--quiet] [--silent]
+                                          input
+
+HPS/pyin-style pitch tracker that emits pvx control-map CSV to stdout.
+
+positional arguments:
+  input                 Input audio file path or '-' for stdin audio
+
+options:
+  -h, --help            show this help message and exit
+  --output OUTPUT       Output CSV path (default: '-' for stdout)
+  --backend {auto,pyin,acf}
+                        Pitch backend (default: auto -> pyin if available, else acf)
+  --fmin FMIN           Minimum F0 in Hz (default: 50)
+  --fmax FMAX           Maximum F0 in Hz (default: 1200)
+  --frame-length FRAME_LENGTH
+                        Frame length in samples (default: 2048)
+  --hop-size HOP_SIZE   Hop size in samples (default: 256)
+  --ratio-reference {median,mean,first,hz}
+                        Reference for emitted pitch_ratio values (default: median voiced f0).
+  --reference-hz REFERENCE_HZ
+                        Reference frequency in Hz when --ratio-reference hz.
+  --ratio-min RATIO_MIN
+                        Lower clamp for emitted pitch_ratio (default: 0.25).
+  --ratio-max RATIO_MAX
+                        Upper clamp for emitted pitch_ratio (default: 4.0).
+  --smooth-frames SMOOTH_FRAMES
+                        Smoothing window for pitch_ratio frames (default: 5).
+  --confidence-floor CONFIDENCE_FLOOR
+                        Set confidence below this floor to 0.0 (default: 0.0).
+  --emit {pitch_map,stretch_map,pitch_to_stretch}
+                        Output mode: pitch_map (default), stretch_map, or pitch_to_stretch.
+  --stretch-from {pitch_ratio,inv_pitch_ratio,f0_hz}
+                        Source signal used to derive stretch in stretch-oriented emit modes (default: pitch_ratio).
+  --stretch-scale STRETCH_SCALE
+                        Scale factor for derived stretch tracks (default: 1.0).
+  --stretch-min STRETCH_MIN
+                        Lower clamp for emitted stretch in stretch-oriented modes (default: 0.25).
+  --stretch-max STRETCH_MAX
+                        Upper clamp for emitted stretch in stretch-oriented modes (default: 4.0).
+  --stretch STRETCH     Emit constant stretch column value for --emit pitch_map (default: 1.0).
+  --feature-set {none,basic,advanced,all}
+                        Feature tracking preset emitted as extra CSV columns. none/basic/advanced/all (default: all).
+  --mfcc-count MFCC_COUNT
+                        Number of MFCC columns (mfcc_01..mfcc_N) when feature-set is advanced/all (default: 13).
+  --verbosity {silent,quiet,normal,verbose,debug}
+                        Console verbosity level
+  -v, --verbose         Increase verbosity (repeat for extra detail)
+  --quiet               Reduce output and hide status bars
+  --silent              Suppress all console output
+
+Examples:
+  pvx pitch-track guide.wav --output guide_pitch.csv
+  pvx pitch-track guide.wav --backend pyin --ratio-reference hz --reference-hz 440 --output guide_to_a440.csv
+  pvx pitch-track guide.wav --emit pitch_to_stretch --output - | pvx voc target.wav --control-stdin --output followed.wav
+
+Notes:
+  - Default output columns include control map fields and feature tracks (for example: rms_db, spectral_flux, voicing_prob, MFCCs, MPEG-7-style descriptors).
+  - Use --confidence-floor to gate unreliable pitch estimates.
 ```
 
 ### Module Docstring
@@ -4758,19 +4829,43 @@ Track F0 and emit a pvx control-map CSV for pitch-follow pipelines.
 **Classes:** None
 **Functions:** None
 
-**Help commands:** `python3 src/pvx/cli/main.py --help`
+**Help commands:** `PYTHONPATH=src python3 -m pvx.cli.main --help`
 
 ### CLI Help Snapshot
 
 ```text
-Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/main.py", line 7, in <module>
-    from pvx.cli.pvx import build_parser, main
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 16, in <module>
-    from pvx.cli.catalog import (
-    ...<4 lines>...
-    )
-ModuleNotFoundError: No module named 'pvx.cli'; 'pvx' is not a package
+usage: pvx [-h] [command] ...
+
+Unified CLI for pvx (audio quality first, speed second).
+Use subcommands to access all existing pvx tools from one entrypoint.
+
+positional arguments:
+  command     Subcommand name, helper command, or input path (defaults to `voc` when an input path is provided)
+  args        Arguments forwarded directly to the selected subcommand
+
+options:
+  -h, --help  show this help message and exit
+
+Quick start:
+  pvx voc input.wav --stretch 1.2 --output output.wav
+  pvx input.wav --stretch 1.2 --output output.wav   # defaults to `voc`
+  pvx follow guide.wav target.wav --output followed.wav --emit pitch_to_stretch
+  pvx chain input.wav --pipeline "voc --stretch 1.2 | formant --mode preserve" --output out.wav
+  pvx stream input.wav --output out.wav --chunk-seconds 0.2 --time-stretch 2.0
+  pvx stretch-budget input.wav --disk-budget 20GB --bit-depth 16 --requested-stretch 1000000
+  pvx doctor
+  pvx quickstart input.wav --output output.wav
+  pvx safe input.wav --material mix --output output.wav
+  pvx transforms
+  pvx smoke --output smoke_out.wav
+  pvx augment data/*.wav --output-dir aug_out --variants-per-input 4 --intent asr_robust --seed 1337
+  pvx augment-manifest validate aug_out/augment_manifest.jsonl
+  pvx voc input.wav --output-dir out --lucky 8
+  pvx list
+  pvx examples basic
+  pvx help voc
+
+Available tool commands: voc, freeze, harmonize, conform, morph, warp, formant, transient, unison, denoise, deverb, retune, layer, pitch-track, analysis, response, envelope, reshape, filter, tvfilter, noisefilter, bandamp, spec-compander, ring, ringfilter, ringtvfilter, chordmapper, inharmonator, trajectory-reverb, noise, rir, codec, specaugment, gain
 ```
 
 ### Module Docstring
@@ -4786,21 +4881,43 @@ Compatibility entrypoint for the unified pvx CLI.
 **Classes:** None
 **Functions:** `_load_entrypoint`, `_looks_like_audio_input`, `_tool_names_csv`, `print_tools`, `print_examples`, `_prompt_text`, `_prompt_choice`, `_print_command_preview`, `print_follow_examples`, `run_doctor_mode`, `run_quickstart_mode`, `run_safe_mode`, `run_transforms_mode`, `run_smoke_mode`, `_parse_split_ratios`, `_stable_seed_from_text`, `_augment_group_key`, `run_batch_gpu_mode`, `run_augment_mode`, `run_augment_manifest_mode`, `run_guided_mode`, `_token_flag`, `_extract_flag_value`, `_strip_flags`, `_replace_flag_value`, `_consume_lucky_options`, `_lucky_output_variant`, `_lucky_mastering_overrides`, `_lucky_tool_overrides`, `_run_lucky_tool_mode`, `_run_lucky_helper_mode`, `run_follow_mode`, `run_chain_mode`, `run_stream_mode`, `_parse_size_bytes`, `_format_bytes_human`, `_infer_output_format`, `_bytes_per_sample_from_subtype`, `run_stretch_budget_mode`, `dispatch_tool`, `build_parser`, `main`
 
-**Help commands:** `python3 src/pvx/cli/pvx.py --help`
+**Help commands:** `PYTHONPATH=src python3 -m pvx.cli.pvx --help`
 
 ### CLI Help Snapshot
 
 ```text
-Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 16, in <module>
-    from pvx.cli.catalog import (
-    ...<4 lines>...
-    )
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 16, in <module>
-    from pvx.cli.catalog import (
-    ...<4 lines>...
-    )
-ModuleNotFoundError: No module named 'pvx.cli'; 'pvx' is not a package
+usage: pvx [-h] [command] ...
+
+Unified CLI for pvx (audio quality first, speed second).
+Use subcommands to access all existing pvx tools from one entrypoint.
+
+positional arguments:
+  command     Subcommand name, helper command, or input path (defaults to `voc` when an input path is provided)
+  args        Arguments forwarded directly to the selected subcommand
+
+options:
+  -h, --help  show this help message and exit
+
+Quick start:
+  pvx voc input.wav --stretch 1.2 --output output.wav
+  pvx input.wav --stretch 1.2 --output output.wav   # defaults to `voc`
+  pvx follow guide.wav target.wav --output followed.wav --emit pitch_to_stretch
+  pvx chain input.wav --pipeline "voc --stretch 1.2 | formant --mode preserve" --output out.wav
+  pvx stream input.wav --output out.wav --chunk-seconds 0.2 --time-stretch 2.0
+  pvx stretch-budget input.wav --disk-budget 20GB --bit-depth 16 --requested-stretch 1000000
+  pvx doctor
+  pvx quickstart input.wav --output output.wav
+  pvx safe input.wav --material mix --output output.wav
+  pvx transforms
+  pvx smoke --output smoke_out.wav
+  pvx augment data/*.wav --output-dir aug_out --variants-per-input 4 --intent asr_robust --seed 1337
+  pvx augment-manifest validate aug_out/augment_manifest.jsonl
+  pvx voc input.wav --output-dir out --lucky 8
+  pvx list
+  pvx examples basic
+  pvx help voc
+
+Available tool commands: voc, freeze, harmonize, conform, morph, warp, formant, transient, unison, denoise, deverb, retune, layer, pitch-track, analysis, response, envelope, reshape, filter, tvfilter, noisefilter, bandamp, spec-compander, ring, ringfilter, ringtvfilter, chordmapper, inharmonator, trajectory-reverb, noise, rir, codec, specaugment, gain
 ```
 
 ### Module Docstring
@@ -4814,22 +4931,9 @@ Unified top-level CLI for the pvx command suite.
 **Purpose:** Augmentation helpers and subcommands for the unified pvx CLI.
 
 **Classes:** None
-**Functions:** `_expand_augment_inputs`, `_parse_split_ratios`, `_pick_split`, `_stable_seed_from_text`, `_augment_group_key`, `_token_flag`, `_flag_present`, `_load_augment_policy`, `_load_label_metadata`, `_source_metadata`, `_assign_balanced_split_for_groups`, `_sha256_file`, `_audio_audit_metrics`, `_manifest_required_errors`, `_load_manifest_jsonl`, `_merge_manifest_rows`, `_sample_augment_params`, `_render_job_pytorch`, `run_batch_gpu_mode`, `run_augment_mode`, `run_augment_manifest_mode`
+**Functions:** `_expand_augment_inputs`, `_parse_split_ratios`, `_pick_split`, `_stable_seed_from_text`, `_augment_group_key`, `_token_flag`, `_flag_present`, `_load_augment_policy`, `_load_label_metadata`, `_source_metadata`, `_assign_balanced_split_for_groups`, `_sha256_file`, `_audio_audit_metrics`, `_manifest_required_errors`, `_load_manifest_jsonl`, `_merge_manifest_rows`, `_sample_augment_params`, `_render_job_pytorch`, `_augment_output_conflict`, `run_batch_gpu_mode`, `run_augment_mode`, `run_augment_manifest_mode`
 
-**Help commands:** `python3 src/pvx/cli/pvx_augment.py --help`
-
-### CLI Help Snapshot
-
-```text
-Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx_augment.py", line 19, in <module>
-    from pvx.cli.catalog import _AUDIO_EXTENSIONS
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 16, in <module>
-    from pvx.cli.catalog import (
-    ...<4 lines>...
-    )
-ModuleNotFoundError: No module named 'pvx.cli'; 'pvx' is not a package
-```
+**Help commands:** `PYTHONPATH=src python3 -m pvx.cli.pvx_augment --help`
 
 ### Module Docstring
 
@@ -4844,20 +4948,7 @@ Augmentation helpers and subcommands for the unified pvx CLI.
 **Classes:** None
 **Functions:** `run_doctor_mode`, `run_quickstart_mode`, `_token_flag`, `run_safe_mode`, `run_transforms_mode`, `_build_smoke_signal`, `run_smoke_mode`, `run_guided_mode`, `_extract_flag_value`, `_strip_flags`, `_replace_flag_value`, `_consume_lucky_options`, `_lucky_output_variant`, `_lucky_mastering_overrides`, `_lucky_tool_overrides`, `_run_lucky_tool_mode`, `_run_lucky_helper_mode`, `_parse_size_bytes`, `_format_bytes_human`, `_infer_output_format`, `_bytes_per_sample_from_subtype`, `run_stretch_budget_mode`
 
-**Help commands:** `python3 src/pvx/cli/pvx_helpers.py --help`
-
-### CLI Help Snapshot
-
-```text
-Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx_helpers.py", line 22, in <module>
-    from pvx.cli.catalog import _LUCKY_PRESETS, _LUCKY_SUPPORTED_TOOLS, _LUCKY_WINDOWS
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 16, in <module>
-    from pvx.cli.catalog import (
-    ...<4 lines>...
-    )
-ModuleNotFoundError: No module named 'pvx.cli'; 'pvx' is not a package
-```
+**Help commands:** `PYTHONPATH=src python3 -m pvx.cli.pvx_helpers --help`
 
 ### Module Docstring
 
@@ -4872,22 +4963,7 @@ Helper modes and utility flows for the unified pvx CLI.
 **Classes:** `_BytesStdin`
 **Functions:** `print_follow_examples`, `_extract_follow_example_request`, `_split_pipeline_stages`, `_token_flag`, `_extract_flag_value`, `_run_stage_command`, `_run_stage_capture_stdout`, `_patched_stdin_bytes`, `run_follow_mode`, `run_chain_mode`, `run_stream_mode`
 
-**Help commands:** `python3 src/pvx/cli/pvx_pipeline.py --help`
-
-### CLI Help Snapshot
-
-```text
-Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx_pipeline.py", line 16, in <module>
-    from pvx.cli.catalog import (
-    ...<6 lines>...
-    )
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 16, in <module>
-    from pvx.cli.catalog import (
-    ...<4 lines>...
-    )
-ModuleNotFoundError: No module named 'pvx.cli'; 'pvx' is not a package
-```
+**Help commands:** `PYTHONPATH=src python3 -m pvx.cli.pvx_pipeline --help`
 
 ### Module Docstring
 
@@ -4902,21 +4978,31 @@ Pipeline-oriented helper commands for the unified pvx CLI.
 **Classes:** None
 **Functions:** `_normalize_argv`, `_default_output_path`, `_print_summary`, `_write_json`, `build_parser`, `_validate_create_args`, `_run_create`, `_run_inspect`, `main`
 
-**Help commands:** `python3 src/pvx/cli/pvxanalysis.py --help`
+**Help commands:** `PYTHONPATH=src python3 -m pvx.cli.pvxanalysis --help`
 
 ### CLI Help Snapshot
 
 ```text
-Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxanalysis.py", line 14, in <module>
-    from pvx.core.analysis_store import (
-    ...<4 lines>...
-    )
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 16, in <module>
-    from pvx.cli.catalog import (
-    ...<4 lines>...
-    )
-ModuleNotFoundError: No module named 'pvx.cli'; 'pvx' is not a package
+usage: pvx analysis [-h] {create,inspect} ...
+
+Create and inspect PVXAN analysis artifacts for reusable phase-vocoder workflows.
+
+positional arguments:
+  {create,inspect}
+    create          Analyze audio and save PVXAN artifact
+    inspect         Inspect existing PVXAN artifact
+
+options:
+  -h, --help        show this help message and exit
+
+Examples:
+  pvx analysis create input.wav --output input.pvxan.npz --n-fft 4096 --hop-size 256
+  pvx analysis inspect input.pvxan.npz
+  pvxanalysis input.wav --output input.pvxan.npz
+
+Notes:
+  - When command is omitted, create mode is assumed for convenience.
+  - PVXAN stores complex STFT payloads (channels x frames x bins) in compressed NPZ format.
 ```
 
 ### Module Docstring
@@ -4932,19 +5018,88 @@ Persist and inspect reusable phase-vocoder analysis artifacts (PVXAN).
 **Classes:** None
 **Functions:** `main`
 
-**Help commands:** `python3 src/pvx/cli/pvxbandamp.py --help`
+**Help commands:** `PYTHONPATH=src python3 -m pvx.cli.pvxbandamp --help`
 
 ### CLI Help Snapshot
 
 ```text
-Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxbandamp.py", line 7, in <module>
-    from pvx.cli.pvxfilter import run_filter_cli
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 16, in <module>
-    from pvx.cli.catalog import (
-    ...<4 lines>...
-    )
-ModuleNotFoundError: No module named 'pvx.cli'; 'pvx' is not a package
+usage: pvx bandamp [-h] [-o OUTPUT_DIR] [--output OUTPUT] [--suffix SUFFIX]
+                   [--output-format OUTPUT_FORMAT] [--stdout] [--overwrite]
+                   [--dry-run]
+                   [--verbosity {silent,quiet,normal,verbose,debug}] [-v]
+                   [--quiet] [--silent] [--normalize {none,peak,rms}]
+                   [--peak-dbfs PEAK_DBFS] [--rms-dbfs RMS_DBFS]
+                   [--target-lufs TARGET_LUFS]
+                   [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
+                   [--compressor-ratio COMPRESSOR_RATIO]
+                   [--compressor-attack-ms COMPRESSOR_ATTACK_MS]
+                   [--compressor-release-ms COMPRESSOR_RELEASE_MS]
+                   [--compressor-makeup-db COMPRESSOR_MAKEUP_DB]
+                   [--expander-threshold-db EXPANDER_THRESHOLD_DB]
+                   [--expander-ratio EXPANDER_RATIO]
+                   [--expander-attack-ms EXPANDER_ATTACK_MS]
+                   [--expander-release-ms EXPANDER_RELEASE_MS]
+                   [--compander-threshold-db COMPANDER_THRESHOLD_DB]
+                   [--compander-compress-ratio COMPANDER_COMPRESS_RATIO]
+                   [--compander-expand-ratio COMPANDER_EXPAND_RATIO]
+                   [--compander-attack-ms COMPANDER_ATTACK_MS]
+                   [--compander-release-ms COMPANDER_RELEASE_MS]
+                   [--compander-makeup-db COMPANDER_MAKEUP_DB]
+                   [--limiter-threshold LIMITER_THRESHOLD]
+                   [--soft-clip-level SOFT_CLIP_LEVEL]
+                   [--soft-clip-type {tanh,arctan,cubic}]
+                   [--soft-clip-drive SOFT_CLIP_DRIVE]
+                   [--hard-clip-level HARD_CLIP_LEVEL] [--clip]
+                   [--subtype SUBTYPE] [--bit-depth {inherit,16,24,32f}]
+                   [--dither {none,tpdf}] [--dither-seed DITHER_SEED]
+                   [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                   [--metadata-policy {none,sidecar,copy}] [--n-fft N_FFT]
+                   [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
+                   [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
+                   [--kaiser-beta KAISER_BETA]
+                   [--transform {fft,dft,czt,dct,dst,hartley}]
+                   [--phase-engine {propagate,hybrid,random}]
+                   [--ambient-phase-mix AMBIENT_PHASE_MIX]
+                   [--phase-random-seed PHASE_RANDOM_SEED]
+                   [--onset-time-credit]
+                   [--onset-credit-pull ONSET_CREDIT_PULL]
+                   [--onset-credit-max ONSET_CREDIT_MAX] [--no-onset-realign]
+                   [--no-center] [--device {auto,cpu,cuda}]
+                   [--cuda-device CUDA_DEVICE]
+                   [--operator {filter,tvfilter,noisefilter,bandamp,spec-compander}]
+                   --response RESPONSE [--response-mix RESPONSE_MIX]
+                   [--dry-mix DRY_MIX] [--response-gain-db RESPONSE_GAIN_DB]
+                   [--transpose-semitones TRANSPOSE_SEMITONES]
+                   [--shift-bins SHIFT_BINS] [--tv-map TV_MAP]
+                   [--tv-key TV_KEY]
+                   [--tv-interp {none,stairstep,nearest,linear,cubic,polynomial,exponential,s_curve,smootherstep}]
+                   [--tv-order TV_ORDER] [--noise-floor NOISE_FLOOR]
+                   [--band-gain-db BAND_GAIN_DB]
+                   [--band-width-bins BAND_WIDTH_BINS]
+                   [--peak-count PEAK_COUNT]
+                   [--comp-threshold-db COMP_THRESHOLD_DB]
+                   [--comp-ratio COMP_RATIO] [--expand-ratio EXPAND_RATIO]
+                   inputs [inputs ...]
+
+Response-driven spectral processing using PVXRF artifacts.
+
+positional arguments:
+  inputs                Input files/globs or '-' for stdin
+
+options:
+  -h, --help            show this help message and exit
+  -o, --output-dir OUTPUT_DIR
+                        Output directory
+  --output, --out OUTPUT
+                        Explicit output file path (single-input mode only). Alias: --out
+  --suffix SUFFIX       Output filename suffix (default: _filter)
+  --output-format OUTPUT_FORMAT
+                        Output extension/format
+  --stdout              Write processed audio to stdout stream (for piping); requires exactly one input
+  --overwrite           Overwrite existing outputs
+  --dry-run             Resolve and print, but do not write files
+  --verbosity {silent,qu
+... [truncated]
 ```
 
 ### Module Docstring
@@ -4960,19 +5115,86 @@ Response-peak band emphasis wrapper.
 **Classes:** None
 **Functions:** `main`
 
-**Help commands:** `python3 src/pvx/cli/pvxchordmapper.py --help`
+**Help commands:** `PYTHONPATH=src python3 -m pvx.cli.pvxchordmapper --help`
 
 ### CLI Help Snapshot
 
 ```text
-Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxchordmapper.py", line 7, in <module>
-    from pvx.cli.pvxharmmap import run_harmmap_cli
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 16, in <module>
-    from pvx.cli.catalog import (
-    ...<4 lines>...
-    )
-ModuleNotFoundError: No module named 'pvx.cli'; 'pvx' is not a package
+usage: pvx chordmapper [-h] [-o OUTPUT_DIR] [--output OUTPUT]
+                       [--suffix SUFFIX] [--output-format OUTPUT_FORMAT]
+                       [--stdout] [--overwrite] [--dry-run]
+                       [--verbosity {silent,quiet,normal,verbose,debug}] [-v]
+                       [--quiet] [--silent] [--normalize {none,peak,rms}]
+                       [--peak-dbfs PEAK_DBFS] [--rms-dbfs RMS_DBFS]
+                       [--target-lufs TARGET_LUFS]
+                       [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
+                       [--compressor-ratio COMPRESSOR_RATIO]
+                       [--compressor-attack-ms COMPRESSOR_ATTACK_MS]
+                       [--compressor-release-ms COMPRESSOR_RELEASE_MS]
+                       [--compressor-makeup-db COMPRESSOR_MAKEUP_DB]
+                       [--expander-threshold-db EXPANDER_THRESHOLD_DB]
+                       [--expander-ratio EXPANDER_RATIO]
+                       [--expander-attack-ms EXPANDER_ATTACK_MS]
+                       [--expander-release-ms EXPANDER_RELEASE_MS]
+                       [--compander-threshold-db COMPANDER_THRESHOLD_DB]
+                       [--compander-compress-ratio COMPANDER_COMPRESS_RATIO]
+                       [--compander-expand-ratio COMPANDER_EXPAND_RATIO]
+                       [--compander-attack-ms COMPANDER_ATTACK_MS]
+                       [--compander-release-ms COMPANDER_RELEASE_MS]
+                       [--compander-makeup-db COMPANDER_MAKEUP_DB]
+                       [--limiter-threshold LIMITER_THRESHOLD]
+                       [--soft-clip-level SOFT_CLIP_LEVEL]
+                       [--soft-clip-type {tanh,arctan,cubic}]
+                       [--soft-clip-drive SOFT_CLIP_DRIVE]
+                       [--hard-clip-level HARD_CLIP_LEVEL] [--clip]
+                       [--subtype SUBTYPE] [--bit-depth {inherit,16,24,32f}]
+                       [--dither {none,tpdf}] [--dither-seed DITHER_SEED]
+                       [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                       [--metadata-policy {none,sidecar,copy}] [--n-fft N_FFT]
+                       [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
+                       [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
+                       [--kaiser-beta KAISER_BETA]
+                       [--transform {fft,dft,czt,dct,dst,hartley}]
+                       [--phase-engine {propagate,hybrid,random}]
+                       [--ambient-phase-mix AMBIENT_PHASE_MIX]
+                       [--phase-random-seed PHASE_RANDOM_SEED]
+                       [--onset-time-credit]
+                       [--onset-credit-pull ONSET_CREDIT_PULL]
+                       [--onset-credit-max ONSET_CREDIT_MAX]
+                       [--no-onset-realign] [--no-center]
+                       [--device {auto,cpu,cuda}] [--cuda-device CUDA_DEVICE]
+                       [--operator {chordmapper,inharmonator}]
+                       [--root-hz ROOT_HZ]
+                       [--chord {aug,dim,dom7,maj7,major,min7,minor,power,sus2,sus4}]
+                       [--strength STRENGTH]
+                       [--tolerance-cents TOLERANCE_CENTS]
+                       [--boost-db BOOST_DB] [--attenuation ATTENUATION]
+                       [--inharmonic-f0-hz INHARMONIC_F0_HZ]
+                       [--inharmonicity INHARMONICITY]
+                       [--inharmonic-mix INHARMONIC_MIX] [--dry-mix DRY_MIX]
+                       inputs [inputs ...]
+
+Harmonic/chord mapping and inharmonic spectral warping.
+
+positional arguments:
+  inputs                Input files/globs or '-' for stdin
+
+options:
+  -h, --help            show this help message and exit
+  -o, --output-dir OUTPUT_DIR
+                        Output directory
+  --output, --out OUTPUT
+                        Explicit output file path (single-input mode only). Alias: --out
+  --suffix SUFFIX       Output filename suffix (default: _harm)
+  --output-format OUTPUT_FORMAT
+                        Output extension/format
+  --stdout              Write processed audio to stdout stream (for piping); requires exactly one input
+  --overwrite           Overwrite existing outputs
+  --dry-run             Resolve and print, but do not write files
+  --verbosity {silent,quiet,normal,verbose,debug}
+                        Console verbosity level
+  -v, --verbose         Increase verbosity (repeat for
+... [truncated]
 ```
 
 ### Module Docstring
@@ -4988,7 +5210,7 @@ Chordmapper wrapper.
 **Classes:** None
 **Functions:** `build_parser`, `main`
 
-**Help commands:** `python3 src/pvx/cli/pvxcodec.py --help`
+**Help commands:** `PYTHONPATH=src python3 -m pvx.cli.pvxcodec --help`
 
 ### CLI Help Snapshot
 
@@ -5077,21 +5299,76 @@ pvxcodec music.wav --bits 8 --output music_crushed.wav
 **Classes:** None
 **Functions:** `expand_segments`, `build_parser`, `main`
 
-**Help commands:** `python3 src/pvx/cli/pvxconform.py --help`
+**Help commands:** `PYTHONPATH=src python3 -m pvx.cli.pvxconform --help`
 
 ### CLI Help Snapshot
 
 ```text
-Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxconform.py", line 12, in <module>
-    from pvx.core.common import (
-    ...<19 lines>...
-    )
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 16, in <module>
-    from pvx.cli.catalog import (
-    ...<4 lines>...
-    )
-ModuleNotFoundError: No module named 'pvx.cli'; 'pvx' is not a package
+usage: python3 -m pvx.cli.pvxconform [-h] [-o OUTPUT_DIR] [--output OUTPUT]
+                                     [--suffix SUFFIX]
+                                     [--output-format OUTPUT_FORMAT]
+                                     [--stdout] [--overwrite] [--dry-run]
+                                     [--verbosity {silent,quiet,normal,verbose,debug}]
+                                     [-v] [--quiet] [--silent]
+                                     [--normalize {none,peak,rms}]
+                                     [--peak-dbfs PEAK_DBFS]
+                                     [--rms-dbfs RMS_DBFS]
+                                     [--target-lufs TARGET_LUFS]
+                                     [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
+                                     [--compressor-ratio COMPRESSOR_RATIO]
+                                     [--compressor-attack-ms COMPRESSOR_ATTACK_MS]
+                                     [--compressor-release-ms COMPRESSOR_RELEASE_MS]
+                                     [--compressor-makeup-db COMPRESSOR_MAKEUP_DB]
+                                     [--expander-threshold-db EXPANDER_THRESHOLD_DB]
+                                     [--expander-ratio EXPANDER_RATIO]
+                                     [--expander-attack-ms EXPANDER_ATTACK_MS]
+                                     [--expander-release-ms EXPANDER_RELEASE_MS]
+                                     [--compander-threshold-db COMPANDER_THRESHOLD_DB]
+                                     [--compander-compress-ratio COMPANDER_COMPRESS_RATIO]
+                                     [--compander-expand-ratio COMPANDER_EXPAND_RATIO]
+                                     [--compander-attack-ms COMPANDER_ATTACK_MS]
+                                     [--compander-release-ms COMPANDER_RELEASE_MS]
+                                     [--compander-makeup-db COMPANDER_MAKEUP_DB]
+                                     [--limiter-threshold LIMITER_THRESHOLD]
+                                     [--soft-clip-level SOFT_CLIP_LEVEL]
+                                     [--soft-clip-type {tanh,arctan,cubic}]
+                                     [--soft-clip-drive SOFT_CLIP_DRIVE]
+                                     [--hard-clip-level HARD_CLIP_LEVEL]
+                                     [--clip] [--subtype SUBTYPE]
+                                     [--bit-depth {inherit,16,24,32f}]
+                                     [--dither {none,tpdf}]
+                                     [--dither-seed DITHER_SEED]
+                                     [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                                     [--metadata-policy {none,sidecar,copy}]
+                                     [--n-fft N_FFT] [--win-length WIN_LENGTH]
+                                     [--hop-size HOP_SIZE]
+                                     [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
+                                     [--kaiser-beta KAISER_BETA]
+                                     [--transform {fft,dft,czt,dct,dst,hartley}]
+                                     [--phase-engine {propagate,hybrid,random}]
+                                     [--ambient-phase-mix AMBIENT_PHASE_MIX]
+                                     [--phase-random-seed PHASE_RANDOM_SEED]
+                                     [--onset-time-credit]
+                                     [--onset-credit-pull ONSET_CREDIT_PULL]
+                                     [--onset-credit-max ONSET_CREDIT_MAX]
+                                     [--no-onset-realign] [--no-center]
+                                     [--device {auto,cpu,cuda}]
+                                     [--cuda-device CUDA_DEVICE] --map MAP
+                                     [--crossfade-ms CROSSFADE_MS]
+                                     [--resample-mode {auto,fft,linear}]
+                                     inputs [inputs ...]
+
+Conform audio to a CSV map. CSV columns: start_sec,end_sec,stretch, and one pitch field: pitch_semitones or pitch_cents or pitch_ratio (pitch_ratio accepts decimals, fractions like 3/2, or expressions like 2^(1/12))
+
+positional arguments:
+  inputs                Input files/globs or '-' for stdin
+
+options:
+  -h, --help            show this help message and exit
+  -o, --output-dir OUTPUT_DIR
+                        Output directory
+  --outp
+... [truncated]
 ```
 
 ### Module Docstring
@@ -5107,21 +5384,79 @@ Conform timing and pitch to a user-provided segment map.
 **Classes:** None
 **Functions:** `smooth_mask`, `denoise_channel`, `build_parser`, `main`
 
-**Help commands:** `python3 src/pvx/cli/pvxdenoise.py --help`
+**Help commands:** `PYTHONPATH=src python3 -m pvx.cli.pvxdenoise --help`
 
 ### CLI Help Snapshot
 
 ```text
-Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxdenoise.py", line 12, in <module>
-    from pvx.core.common import (
-    ...<15 lines>...
-    )
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 16, in <module>
-    from pvx.cli.catalog import (
-    ...<4 lines>...
-    )
-ModuleNotFoundError: No module named 'pvx.cli'; 'pvx' is not a package
+usage: python3 -m pvx.cli.pvxdenoise [-h] [-o OUTPUT_DIR] [--output OUTPUT]
+                                     [--suffix SUFFIX]
+                                     [--output-format OUTPUT_FORMAT]
+                                     [--stdout] [--overwrite] [--dry-run]
+                                     [--verbosity {silent,quiet,normal,verbose,debug}]
+                                     [-v] [--quiet] [--silent]
+                                     [--normalize {none,peak,rms}]
+                                     [--peak-dbfs PEAK_DBFS]
+                                     [--rms-dbfs RMS_DBFS]
+                                     [--target-lufs TARGET_LUFS]
+                                     [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
+                                     [--compressor-ratio COMPRESSOR_RATIO]
+                                     [--compressor-attack-ms COMPRESSOR_ATTACK_MS]
+                                     [--compressor-release-ms COMPRESSOR_RELEASE_MS]
+                                     [--compressor-makeup-db COMPRESSOR_MAKEUP_DB]
+                                     [--expander-threshold-db EXPANDER_THRESHOLD_DB]
+                                     [--expander-ratio EXPANDER_RATIO]
+                                     [--expander-attack-ms EXPANDER_ATTACK_MS]
+                                     [--expander-release-ms EXPANDER_RELEASE_MS]
+                                     [--compander-threshold-db COMPANDER_THRESHOLD_DB]
+                                     [--compander-compress-ratio COMPANDER_COMPRESS_RATIO]
+                                     [--compander-expand-ratio COMPANDER_EXPAND_RATIO]
+                                     [--compander-attack-ms COMPANDER_ATTACK_MS]
+                                     [--compander-release-ms COMPANDER_RELEASE_MS]
+                                     [--compander-makeup-db COMPANDER_MAKEUP_DB]
+                                     [--limiter-threshold LIMITER_THRESHOLD]
+                                     [--soft-clip-level SOFT_CLIP_LEVEL]
+                                     [--soft-clip-type {tanh,arctan,cubic}]
+                                     [--soft-clip-drive SOFT_CLIP_DRIVE]
+                                     [--hard-clip-level HARD_CLIP_LEVEL]
+                                     [--clip] [--subtype SUBTYPE]
+                                     [--bit-depth {inherit,16,24,32f}]
+                                     [--dither {none,tpdf}]
+                                     [--dither-seed DITHER_SEED]
+                                     [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                                     [--metadata-policy {none,sidecar,copy}]
+                                     [--n-fft N_FFT] [--win-length WIN_LENGTH]
+                                     [--hop-size HOP_SIZE]
+                                     [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
+                                     [--kaiser-beta KAISER_BETA]
+                                     [--transform {fft,dft,czt,dct,dst,hartley}]
+                                     [--phase-engine {propagate,hybrid,random}]
+                                     [--ambient-phase-mix AMBIENT_PHASE_MIX]
+                                     [--phase-random-seed PHASE_RANDOM_SEED]
+                                     [--onset-time-credit]
+                                     [--onset-credit-pull ONSET_CREDIT_PULL]
+                                     [--onset-credit-max ONSET_CREDIT_MAX]
+                                     [--no-onset-realign] [--no-center]
+                                     [--device {auto,cpu,cuda}]
+                                     [--cuda-device CUDA_DEVICE]
+                                     [--noise-seconds NOISE_SECONDS]
+                                     [--noise-file NOISE_FILE]
+                                     [--reduction-db REDUCTION_DB]
+                                     [--floor FLOOR] [--smooth SMOOTH]
+                                     inputs [inputs ...]
+
+Spectral subtraction denoiser
+
+positional arguments:
+  inputs                Input files/globs or '-' for stdin
+
+options:
+  -h, --help            show this help message and exit
+  -o, --output-dir OUTPUT_DIR
+                        Output directory
+  --output, --out OUTPUT
+                        Explicit output file path
+... [truncated]
 ```
 
 ### Module Docstring
@@ -5137,21 +5472,80 @@ Phase-consistent spectral denoiser.
 **Classes:** None
 **Functions:** `deverb_channel`, `build_parser`, `main`
 
-**Help commands:** `python3 src/pvx/cli/pvxdeverb.py --help`
+**Help commands:** `PYTHONPATH=src python3 -m pvx.cli.pvxdeverb --help`
 
 ### CLI Help Snapshot
 
 ```text
-Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxdeverb.py", line 11, in <module>
-    from pvx.core.common import (
-    ...<15 lines>...
-    )
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 16, in <module>
-    from pvx.cli.catalog import (
-    ...<4 lines>...
-    )
-ModuleNotFoundError: No module named 'pvx.cli'; 'pvx' is not a package
+usage: python3 -m pvx.cli.pvxdeverb [-h] [-o OUTPUT_DIR] [--output OUTPUT]
+                                    [--suffix SUFFIX]
+                                    [--output-format OUTPUT_FORMAT] [--stdout]
+                                    [--overwrite] [--dry-run]
+                                    [--verbosity {silent,quiet,normal,verbose,debug}]
+                                    [-v] [--quiet] [--silent]
+                                    [--normalize {none,peak,rms}]
+                                    [--peak-dbfs PEAK_DBFS]
+                                    [--rms-dbfs RMS_DBFS]
+                                    [--target-lufs TARGET_LUFS]
+                                    [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
+                                    [--compressor-ratio COMPRESSOR_RATIO]
+                                    [--compressor-attack-ms COMPRESSOR_ATTACK_MS]
+                                    [--compressor-release-ms COMPRESSOR_RELEASE_MS]
+                                    [--compressor-makeup-db COMPRESSOR_MAKEUP_DB]
+                                    [--expander-threshold-db EXPANDER_THRESHOLD_DB]
+                                    [--expander-ratio EXPANDER_RATIO]
+                                    [--expander-attack-ms EXPANDER_ATTACK_MS]
+                                    [--expander-release-ms EXPANDER_RELEASE_MS]
+                                    [--compander-threshold-db COMPANDER_THRESHOLD_DB]
+                                    [--compander-compress-ratio COMPANDER_COMPRESS_RATIO]
+                                    [--compander-expand-ratio COMPANDER_EXPAND_RATIO]
+                                    [--compander-attack-ms COMPANDER_ATTACK_MS]
+                                    [--compander-release-ms COMPANDER_RELEASE_MS]
+                                    [--compander-makeup-db COMPANDER_MAKEUP_DB]
+                                    [--limiter-threshold LIMITER_THRESHOLD]
+                                    [--soft-clip-level SOFT_CLIP_LEVEL]
+                                    [--soft-clip-type {tanh,arctan,cubic}]
+                                    [--soft-clip-drive SOFT_CLIP_DRIVE]
+                                    [--hard-clip-level HARD_CLIP_LEVEL]
+                                    [--clip] [--subtype SUBTYPE]
+                                    [--bit-depth {inherit,16,24,32f}]
+                                    [--dither {none,tpdf}]
+                                    [--dither-seed DITHER_SEED]
+                                    [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                                    [--metadata-policy {none,sidecar,copy}]
+                                    [--n-fft N_FFT] [--win-length WIN_LENGTH]
+                                    [--hop-size HOP_SIZE]
+                                    [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
+                                    [--kaiser-beta KAISER_BETA]
+                                    [--transform {fft,dft,czt,dct,dst,hartley}]
+                                    [--phase-engine {propagate,hybrid,random}]
+                                    [--ambient-phase-mix AMBIENT_PHASE_MIX]
+                                    [--phase-random-seed PHASE_RANDOM_SEED]
+                                    [--onset-time-credit]
+                                    [--onset-credit-pull ONSET_CREDIT_PULL]
+                                    [--onset-credit-max ONSET_CREDIT_MAX]
+                                    [--no-onset-realign] [--no-center]
+                                    [--device {auto,cpu,cuda}]
+                                    [--cuda-device CUDA_DEVICE]
+                                    [--strength STRENGTH] [--decay DECAY]
+                                    [--floor FLOOR]
+                                    inputs [inputs ...]
+
+Reduce spectral tails / reverberant smear
+
+positional arguments:
+  inputs                Input files/globs or '-' for stdin
+
+options:
+  -h, --help            show this help message and exit
+  -o, --output-dir OUTPUT_DIR
+                        Output directory
+  --output, --out OUTPUT
+                        Explicit output file path (single-input mode only). Alias: --out
+  --suffix SUFFIX       Output filename suffix (default: _deverb)
+  --output-format OUTPUT_FORMAT
+                        Output extension/form
+... [truncated]
 ```
 
 ### Module Docstring
@@ -5167,21 +5561,80 @@ Spectral tail suppression for dereverberation-like cleanup.
 **Classes:** None
 **Functions:** `build_parser`, `_resolve_output_format`, `_render_payload`, `main`
 
-**Help commands:** `python3 src/pvx/cli/pvxenvelope.py --help`
+**Help commands:** `PYTHONPATH=src python3 -m pvx.cli.pvxenvelope --help`
 
 ### CLI Help Snapshot
 
 ```text
-Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxenvelope.py", line 11, in <module>
-    from pvx.core.common import (
-    ...<4 lines>...
-    )
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 16, in <module>
-    from pvx.cli.catalog import (
-    ...<4 lines>...
-    )
-ModuleNotFoundError: No module named 'pvx.cli'; 'pvx' is not a package
+usage: pvx envelope [-h]
+                    [--mode {adsr,ramp,exp,sine,triangle,square,saw_up,saw_down}]
+                    --duration DURATION [--rate RATE] [--start START]
+                    [--peak PEAK] [--sustain SUSTAIN] [--end END]
+                    [--attack-sec ATTACK_SEC] [--decay-sec DECAY_SEC]
+                    [--release-sec RELEASE_SEC] [--exp-curve EXP_CURVE]
+                    [--sine-cycles SINE_CYCLES] [--frequency-hz FREQUENCY_HZ]
+                    [--sine-phase-rad SINE_PHASE_RAD]
+                    [--duty-cycle DUTY_CYCLE] [--min MIN_VALUE]
+                    [--max MAX_VALUE] [--key KEY] [--format {csv,json,auto}]
+                    [--output OUTPUT] [--stdout]
+                    [--verbosity {silent,quiet,normal,verbose,debug}] [-v]
+                    [--quiet] [--silent]
+
+Generate deterministic envelope/LFO control-rate maps for pvx CSV/JSON workflows.
+
+options:
+  -h, --help            show this help message and exit
+  --mode, --wave {adsr,ramp,exp,sine,triangle,square,saw_up,saw_down}
+                        Envelope/LFO waveform mode
+  --duration DURATION   Envelope duration in seconds
+  --rate RATE           Control points per second (default: 20)
+  --start, --center START
+                        Start/center value (mode-dependent; for periodic modes this is the center/DC offset)
+  --peak, --amplitude PEAK
+                        Peak/depth/amplitude value (mode-dependent; periodic modes use this as waveform amplitude)
+  --sustain SUSTAIN     Sustain value for ADSR mode
+  --end END             End value for ADSR/ramp/exp modes
+  --attack-sec ATTACK_SEC
+                        ADSR attack in seconds
+  --decay-sec DECAY_SEC
+                        ADSR decay in seconds
+  --release-sec RELEASE_SEC
+                        ADSR release in seconds
+  --exp-curve EXP_CURVE
+                        Exponential curve steepness for exp mode
+  --sine-cycles, --cycles SINE_CYCLES
+                        Waveform cycles across full duration (periodic modes)
+  --frequency-hz, --freq FREQUENCY_HZ
+                        Waveform frequency in Hz for periodic modes (converted to cycles = frequency * duration)
+  --sine-phase-rad, --phase-rad, --phase SINE_PHASE_RAD
+                        Initial waveform phase in radians for periodic modes
+  --duty-cycle DUTY_CYCLE
+                        Duty cycle in (0,1) for square mode (default: 0.5)
+  --min MIN_VALUE       Optional value clamp minimum
+  --max MAX_VALUE       Optional value clamp maximum
+  --key KEY             Output control column/key name (default: value)
+  --format {csv,json,auto}
+                        Output format (default: auto from extension or csv for stdout)
+  --output, --out OUTPUT
+                        Output path. Default: stdout.
+  --stdout              Write map to stdout
+  --verbosity {silent,quiet,normal,verbose,debug}
+                        Console verbosity level
+  -v, --verbose         Increase verbosity (repeat for extra detail)
+  --quiet               Reduce output and hide status bars
+  --silent              Suppress all console output
+
+Examples:
+  pvx envelope --mode adsr --duration 8 --rate 20 --attack-sec 0.2 --decay-sec 0.6 --sustain 1.1 --release-sec 1.0 --key stretch --output stretch_env.csv
+  pvx envelope --mode ramp --duration 6 --rate 10 --start 1.0 --end 0.5 --key pitch_ratio --stdout | pvx voc input.wav --stretch 1.0 --pitch-map-stdin --route pitch_ratio=pitch_ratio --output out.wav
+  pvx lfo --wave sine --duration 12 --rate 30 --center 1.0 --amplitude 0.25 --cycles 6 --min 0.75 --max 1.25 --key stretch --output stretch_lfo.json
+  pvx lfo --wave triangle --duration 8 --frequency-hz 0.5 --center 1.0 --amplitude 0.2 --key stretch --output stretch_triangle.csv
+  pvx lfo --wave square --duration 8 --frequency-hz 2.0 --center 1.0 --amplitude 0.3 --duty-cycle 0.35 --key pitch_ratio --output pitch_square.csv
+
+Notes:
+  - Generated maps are control-rate signals (not sample-rate audio).
+  - Use --key to emit directly as stretch or pitch_ratio for pvx voc map workflows.
+  - Use `pvx lfo` as a shorthand alias for `pvx envelope` when authoring periodic control signals.
 ```
 
 ### Module Docstring
@@ -5197,21 +5650,89 @@ PVC-style envelope function-stream generator.
 **Classes:** None
 **Functions:** `build_parser`, `run_filter_cli`, `main`
 
-**Help commands:** `python3 src/pvx/cli/pvxfilter.py --help`
+**Help commands:** `PYTHONPATH=src python3 -m pvx.cli.pvxfilter --help`
 
 ### CLI Help Snapshot
 
 ```text
-Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxfilter.py", line 10, in <module>
-    from pvx.core.common import (
-    ...<15 lines>...
-    )
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 16, in <module>
-    from pvx.cli.catalog import (
-    ...<4 lines>...
-    )
-ModuleNotFoundError: No module named 'pvx.cli'; 'pvx' is not a package
+usage: pvx filter [-h] [-o OUTPUT_DIR] [--output OUTPUT] [--suffix SUFFIX]
+                  [--output-format OUTPUT_FORMAT] [--stdout] [--overwrite]
+                  [--dry-run]
+                  [--verbosity {silent,quiet,normal,verbose,debug}] [-v]
+                  [--quiet] [--silent] [--normalize {none,peak,rms}]
+                  [--peak-dbfs PEAK_DBFS] [--rms-dbfs RMS_DBFS]
+                  [--target-lufs TARGET_LUFS]
+                  [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
+                  [--compressor-ratio COMPRESSOR_RATIO]
+                  [--compressor-attack-ms COMPRESSOR_ATTACK_MS]
+                  [--compressor-release-ms COMPRESSOR_RELEASE_MS]
+                  [--compressor-makeup-db COMPRESSOR_MAKEUP_DB]
+                  [--expander-threshold-db EXPANDER_THRESHOLD_DB]
+                  [--expander-ratio EXPANDER_RATIO]
+                  [--expander-attack-ms EXPANDER_ATTACK_MS]
+                  [--expander-release-ms EXPANDER_RELEASE_MS]
+                  [--compander-threshold-db COMPANDER_THRESHOLD_DB]
+                  [--compander-compress-ratio COMPANDER_COMPRESS_RATIO]
+                  [--compander-expand-ratio COMPANDER_EXPAND_RATIO]
+                  [--compander-attack-ms COMPANDER_ATTACK_MS]
+                  [--compander-release-ms COMPANDER_RELEASE_MS]
+                  [--compander-makeup-db COMPANDER_MAKEUP_DB]
+                  [--limiter-threshold LIMITER_THRESHOLD]
+                  [--soft-clip-level SOFT_CLIP_LEVEL]
+                  [--soft-clip-type {tanh,arctan,cubic}]
+                  [--soft-clip-drive SOFT_CLIP_DRIVE]
+                  [--hard-clip-level HARD_CLIP_LEVEL] [--clip]
+                  [--subtype SUBTYPE] [--bit-depth {inherit,16,24,32f}]
+                  [--dither {none,tpdf}] [--dither-seed DITHER_SEED]
+                  [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                  [--metadata-policy {none,sidecar,copy}] [--n-fft N_FFT]
+                  [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
+                  [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
+                  [--kaiser-beta KAISER_BETA]
+                  [--transform {fft,dft,czt,dct,dst,hartley}]
+                  [--phase-engine {propagate,hybrid,random}]
+                  [--ambient-phase-mix AMBIENT_PHASE_MIX]
+                  [--phase-random-seed PHASE_RANDOM_SEED]
+                  [--onset-time-credit]
+                  [--onset-credit-pull ONSET_CREDIT_PULL]
+                  [--onset-credit-max ONSET_CREDIT_MAX] [--no-onset-realign]
+                  [--no-center] [--device {auto,cpu,cuda}]
+                  [--cuda-device CUDA_DEVICE]
+                  [--operator {filter,tvfilter,noisefilter,bandamp,spec-compander}]
+                  --response RESPONSE [--response-mix RESPONSE_MIX]
+                  [--dry-mix DRY_MIX] [--response-gain-db RESPONSE_GAIN_DB]
+                  [--transpose-semitones TRANSPOSE_SEMITONES]
+                  [--shift-bins SHIFT_BINS] [--tv-map TV_MAP]
+                  [--tv-key TV_KEY]
+                  [--tv-interp {none,stairstep,nearest,linear,cubic,polynomial,exponential,s_curve,smootherstep}]
+                  [--tv-order TV_ORDER] [--noise-floor NOISE_FLOOR]
+                  [--band-gain-db BAND_GAIN_DB]
+                  [--band-width-bins BAND_WIDTH_BINS]
+                  [--peak-count PEAK_COUNT]
+                  [--comp-threshold-db COMP_THRESHOLD_DB]
+                  [--comp-ratio COMP_RATIO] [--expand-ratio EXPAND_RATIO]
+                  inputs [inputs ...]
+
+Response-driven spectral processing using PVXRF artifacts.
+
+positional arguments:
+  inputs                Input files/globs or '-' for stdin
+
+options:
+  -h, --help            show this help message and exit
+  -o, --output-dir OUTPUT_DIR
+                        Output directory
+  --output, --out OUTPUT
+                        Explicit output file path (single-input mode only). Alias: --out
+  --suffix SUFFIX       Output filename suffix (default: _filter)
+  --output-format OUTPUT_FORMAT
+                        Output extension/format
+  --stdout              Write processed audio to stdout stream (for piping); requires exactly one input
+  --overwrite           Overwrite existing outputs
+  --dry-run             Resolve and print, but do not write files
+  --verbosity {silent,quiet,normal,verbose,debug}
+                        Console
+... [truncated]
 ```
 
 ### Module Docstring
@@ -5227,21 +5748,75 @@ PVC-inspired response-driven spectral operators.
 **Classes:** None
 **Functions:** `shift_envelope`, `formant_process_channel`, `build_parser`, `main`
 
-**Help commands:** `python3 src/pvx/cli/pvxformant.py --help`
+**Help commands:** `PYTHONPATH=src python3 -m pvx.cli.pvxformant --help`
 
 ### CLI Help Snapshot
 
 ```text
-Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxformant.py", line 11, in <module>
-    from pvx.core.common import (
-    ...<18 lines>...
-    )
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 16, in <module>
-    from pvx.cli.catalog import (
-    ...<4 lines>...
-    )
-ModuleNotFoundError: No module named 'pvx.cli'; 'pvx' is not a package
+usage: python3 -m pvx.cli.pvxformant [-h] [-o OUTPUT_DIR] [--output OUTPUT]
+                                     [--suffix SUFFIX]
+                                     [--output-format OUTPUT_FORMAT]
+                                     [--stdout] [--overwrite] [--dry-run]
+                                     [--verbosity {silent,quiet,normal,verbose,debug}]
+                                     [-v] [--quiet] [--silent]
+                                     [--normalize {none,peak,rms}]
+                                     [--peak-dbfs PEAK_DBFS]
+                                     [--rms-dbfs RMS_DBFS]
+                                     [--target-lufs TARGET_LUFS]
+                                     [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
+                                     [--compressor-ratio COMPRESSOR_RATIO]
+                                     [--compressor-attack-ms COMPRESSOR_ATTACK_MS]
+                                     [--compressor-release-ms COMPRESSOR_RELEASE_MS]
+                                     [--compressor-makeup-db COMPRESSOR_MAKEUP_DB]
+                                     [--expander-threshold-db EXPANDER_THRESHOLD_DB]
+                                     [--expander-ratio EXPANDER_RATIO]
+                                     [--expander-attack-ms EXPANDER_ATTACK_MS]
+                                     [--expander-release-ms EXPANDER_RELEASE_MS]
+                                     [--compander-threshold-db COMPANDER_THRESHOLD_DB]
+                                     [--compander-compress-ratio COMPANDER_COMPRESS_RATIO]
+                                     [--compander-expand-ratio COMPANDER_EXPAND_RATIO]
+                                     [--compander-attack-ms COMPANDER_ATTACK_MS]
+                                     [--compander-release-ms COMPANDER_RELEASE_MS]
+                                     [--compander-makeup-db COMPANDER_MAKEUP_DB]
+                                     [--limiter-threshold LIMITER_THRESHOLD]
+                                     [--soft-clip-level SOFT_CLIP_LEVEL]
+                                     [--soft-clip-type {tanh,arctan,cubic}]
+                                     [--soft-clip-drive SOFT_CLIP_DRIVE]
+                                     [--hard-clip-level HARD_CLIP_LEVEL]
+                                     [--clip] [--subtype SUBTYPE]
+                                     [--bit-depth {inherit,16,24,32f}]
+                                     [--dither {none,tpdf}]
+                                     [--dither-seed DITHER_SEED]
+                                     [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                                     [--metadata-policy {none,sidecar,copy}]
+                                     [--n-fft N_FFT] [--win-length WIN_LENGTH]
+                                     [--hop-size HOP_SIZE]
+                                     [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
+                                     [--kaiser-beta KAISER_BETA]
+                                     [--transform {fft,dft,czt,dct,dst,hartley}]
+                                     [--phase-engine {propagate,hybrid,random}]
+                                     [--ambient-phase-mix AMBIENT_PHASE_MIX]
+                                     [--phase-random-seed PHASE_RANDOM_SEED]
+                                     [--onset-time-credit]
+                                     [--onset-credit-pull ONSET_CREDIT_PULL]
+                                     [--onset-credit-max ONSET_CREDIT_MAX]
+                                     [--no-onset-realign] [--no-center]
+                                     [--device {auto,cpu,cuda}]
+                                     [--cuda-device CUDA_DEVICE]
+                                     [--pitch-shift-semitones PITCH_SHIFT_SEMITONES]
+                                     [--pitch-shift-cents PITCH_SHIFT_CENTS]
+                                     [--formant-shift-ratio FORMANT_SHIFT_RATIO]
+                                     [--mode {shift,preserve}]
+                                     [--formant-lifter FORMANT_LIFTER]
+                                     [--formant-max-gain-db FORMANT_MAX_GAIN_DB]
+                                     [--resample-mode {auto,fft,linear}]
+                                     inputs [inputs ...]
+
+Formant shift/preserve processor
+
+positional arguments:
+  inpu
+... [truncated]
 ```
 
 ### Module Docstring
@@ -5257,21 +5832,79 @@ Formant processing tool with optional pitch shifting.
 **Classes:** None
 **Functions:** `_principal_angle`, `freeze_channel`, `build_parser`, `main`
 
-**Help commands:** `python3 src/pvx/cli/pvxfreeze.py --help`
+**Help commands:** `PYTHONPATH=src python3 -m pvx.cli.pvxfreeze --help`
 
 ### CLI Help Snapshot
 
 ```text
-Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxfreeze.py", line 11, in <module>
-    from pvx.core.common import (
-    ...<15 lines>...
-    )
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 16, in <module>
-    from pvx.cli.catalog import (
-    ...<4 lines>...
-    )
-ModuleNotFoundError: No module named 'pvx.cli'; 'pvx' is not a package
+usage: python3 -m pvx.cli.pvxfreeze [-h] [-o OUTPUT_DIR] [--output OUTPUT]
+                                    [--suffix SUFFIX]
+                                    [--output-format OUTPUT_FORMAT] [--stdout]
+                                    [--overwrite] [--dry-run]
+                                    [--verbosity {silent,quiet,normal,verbose,debug}]
+                                    [-v] [--quiet] [--silent]
+                                    [--normalize {none,peak,rms}]
+                                    [--peak-dbfs PEAK_DBFS]
+                                    [--rms-dbfs RMS_DBFS]
+                                    [--target-lufs TARGET_LUFS]
+                                    [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
+                                    [--compressor-ratio COMPRESSOR_RATIO]
+                                    [--compressor-attack-ms COMPRESSOR_ATTACK_MS]
+                                    [--compressor-release-ms COMPRESSOR_RELEASE_MS]
+                                    [--compressor-makeup-db COMPRESSOR_MAKEUP_DB]
+                                    [--expander-threshold-db EXPANDER_THRESHOLD_DB]
+                                    [--expander-ratio EXPANDER_RATIO]
+                                    [--expander-attack-ms EXPANDER_ATTACK_MS]
+                                    [--expander-release-ms EXPANDER_RELEASE_MS]
+                                    [--compander-threshold-db COMPANDER_THRESHOLD_DB]
+                                    [--compander-compress-ratio COMPANDER_COMPRESS_RATIO]
+                                    [--compander-expand-ratio COMPANDER_EXPAND_RATIO]
+                                    [--compander-attack-ms COMPANDER_ATTACK_MS]
+                                    [--compander-release-ms COMPANDER_RELEASE_MS]
+                                    [--compander-makeup-db COMPANDER_MAKEUP_DB]
+                                    [--limiter-threshold LIMITER_THRESHOLD]
+                                    [--soft-clip-level SOFT_CLIP_LEVEL]
+                                    [--soft-clip-type {tanh,arctan,cubic}]
+                                    [--soft-clip-drive SOFT_CLIP_DRIVE]
+                                    [--hard-clip-level HARD_CLIP_LEVEL]
+                                    [--clip] [--subtype SUBTYPE]
+                                    [--bit-depth {inherit,16,24,32f}]
+                                    [--dither {none,tpdf}]
+                                    [--dither-seed DITHER_SEED]
+                                    [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                                    [--metadata-policy {none,sidecar,copy}]
+                                    [--n-fft N_FFT] [--win-length WIN_LENGTH]
+                                    [--hop-size HOP_SIZE]
+                                    [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
+                                    [--kaiser-beta KAISER_BETA]
+                                    [--transform {fft,dft,czt,dct,dst,hartley}]
+                                    [--phase-engine {propagate,hybrid,random}]
+                                    [--ambient-phase-mix AMBIENT_PHASE_MIX]
+                                    [--phase-random-seed PHASE_RANDOM_SEED]
+                                    [--onset-time-credit]
+                                    [--onset-credit-pull ONSET_CREDIT_PULL]
+                                    [--onset-credit-max ONSET_CREDIT_MAX]
+                                    [--no-onset-realign] [--no-center]
+                                    [--device {auto,cpu,cuda}]
+                                    [--cuda-device CUDA_DEVICE]
+                                    [--freeze-time FREEZE_TIME]
+                                    [--duration DURATION] [--random-phase]
+                                    [--phase-mode {instantaneous,bin,hold}]
+                                    inputs [inputs ...]
+
+Freeze a spectral slice into a sustained output
+
+positional arguments:
+  inputs                Input files/globs or '-' for stdin
+
+options:
+  -h, --help            show this help message and exit
+  -o, --output-dir OUTPUT_DIR
+                        Output directory
+  --output, --out OUTPUT
+                        Explicit output file path (single-input mode only). Alias: --out
+  --suffix SUFFIX       Output filename suffix (
+... [truncated]
 ```
 
 ### Module Docstring
@@ -5287,7 +5920,7 @@ Spectral freeze tool built on pvx phase-vocoder primitives.
 **Classes:** None
 **Functions:** `build_parser`, `main`
 
-**Help commands:** `python3 src/pvx/cli/pvxgain.py --help`
+**Help commands:** `PYTHONPATH=src python3 -m pvx.cli.pvxgain --help`
 
 ### CLI Help Snapshot
 
@@ -5367,21 +6000,86 @@ done
 **Classes:** None
 **Functions:** `build_parser`, `run_harmmap_cli`, `main`
 
-**Help commands:** `python3 src/pvx/cli/pvxharmmap.py --help`
+**Help commands:** `PYTHONPATH=src python3 -m pvx.cli.pvxharmmap --help`
 
 ### CLI Help Snapshot
 
 ```text
-Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxharmmap.py", line 9, in <module>
-    from pvx.core.common import (
-    ...<15 lines>...
-    )
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 16, in <module>
-    from pvx.cli.catalog import (
-    ...<4 lines>...
-    )
-ModuleNotFoundError: No module named 'pvx.cli'; 'pvx' is not a package
+usage: pvx chordmapper [-h] [-o OUTPUT_DIR] [--output OUTPUT]
+                       [--suffix SUFFIX] [--output-format OUTPUT_FORMAT]
+                       [--stdout] [--overwrite] [--dry-run]
+                       [--verbosity {silent,quiet,normal,verbose,debug}] [-v]
+                       [--quiet] [--silent] [--normalize {none,peak,rms}]
+                       [--peak-dbfs PEAK_DBFS] [--rms-dbfs RMS_DBFS]
+                       [--target-lufs TARGET_LUFS]
+                       [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
+                       [--compressor-ratio COMPRESSOR_RATIO]
+                       [--compressor-attack-ms COMPRESSOR_ATTACK_MS]
+                       [--compressor-release-ms COMPRESSOR_RELEASE_MS]
+                       [--compressor-makeup-db COMPRESSOR_MAKEUP_DB]
+                       [--expander-threshold-db EXPANDER_THRESHOLD_DB]
+                       [--expander-ratio EXPANDER_RATIO]
+                       [--expander-attack-ms EXPANDER_ATTACK_MS]
+                       [--expander-release-ms EXPANDER_RELEASE_MS]
+                       [--compander-threshold-db COMPANDER_THRESHOLD_DB]
+                       [--compander-compress-ratio COMPANDER_COMPRESS_RATIO]
+                       [--compander-expand-ratio COMPANDER_EXPAND_RATIO]
+                       [--compander-attack-ms COMPANDER_ATTACK_MS]
+                       [--compander-release-ms COMPANDER_RELEASE_MS]
+                       [--compander-makeup-db COMPANDER_MAKEUP_DB]
+                       [--limiter-threshold LIMITER_THRESHOLD]
+                       [--soft-clip-level SOFT_CLIP_LEVEL]
+                       [--soft-clip-type {tanh,arctan,cubic}]
+                       [--soft-clip-drive SOFT_CLIP_DRIVE]
+                       [--hard-clip-level HARD_CLIP_LEVEL] [--clip]
+                       [--subtype SUBTYPE] [--bit-depth {inherit,16,24,32f}]
+                       [--dither {none,tpdf}] [--dither-seed DITHER_SEED]
+                       [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                       [--metadata-policy {none,sidecar,copy}] [--n-fft N_FFT]
+                       [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
+                       [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
+                       [--kaiser-beta KAISER_BETA]
+                       [--transform {fft,dft,czt,dct,dst,hartley}]
+                       [--phase-engine {propagate,hybrid,random}]
+                       [--ambient-phase-mix AMBIENT_PHASE_MIX]
+                       [--phase-random-seed PHASE_RANDOM_SEED]
+                       [--onset-time-credit]
+                       [--onset-credit-pull ONSET_CREDIT_PULL]
+                       [--onset-credit-max ONSET_CREDIT_MAX]
+                       [--no-onset-realign] [--no-center]
+                       [--device {auto,cpu,cuda}] [--cuda-device CUDA_DEVICE]
+                       [--operator {chordmapper,inharmonator}]
+                       [--root-hz ROOT_HZ]
+                       [--chord {aug,dim,dom7,maj7,major,min7,minor,power,sus2,sus4}]
+                       [--strength STRENGTH]
+                       [--tolerance-cents TOLERANCE_CENTS]
+                       [--boost-db BOOST_DB] [--attenuation ATTENUATION]
+                       [--inharmonic-f0-hz INHARMONIC_F0_HZ]
+                       [--inharmonicity INHARMONICITY]
+                       [--inharmonic-mix INHARMONIC_MIX] [--dry-mix DRY_MIX]
+                       inputs [inputs ...]
+
+Harmonic/chord mapping and inharmonic spectral warping.
+
+positional arguments:
+  inputs                Input files/globs or '-' for stdin
+
+options:
+  -h, --help            show this help message and exit
+  -o, --output-dir OUTPUT_DIR
+                        Output directory
+  --output, --out OUTPUT
+                        Explicit output file path (single-input mode only). Alias: --out
+  --suffix SUFFIX       Output filename suffix (default: _harm)
+  --output-format OUTPUT_FORMAT
+                        Output extension/format
+  --stdout              Write processed audio to stdout stream (for piping); requires exactly one input
+  --overwrite           Overwrite existing outputs
+  --dry-run             Resolve and print, but do not write files
+  --verbosity {silent,quiet,normal,verbose,debug}
+                        Console verbosity level
+  -v, --verbose         Increase verbosity (repeat for
+... [truncated]
 ```
 
 ### Module Docstring
@@ -5397,21 +6095,74 @@ PVC-inspired harmonic/chord spectral mapping CLI.
 **Classes:** None
 **Functions:** `pan_stereo`, `build_parser`, `main`
 
-**Help commands:** `python3 src/pvx/cli/pvxharmonize.py --help`
+**Help commands:** `PYTHONPATH=src python3 -m pvx.cli.pvxharmonize --help`
 
 ### CLI Help Snapshot
 
 ```text
-Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxharmonize.py", line 11, in <module>
-    from pvx.core.common import (
-    ...<18 lines>...
-    )
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 16, in <module>
-    from pvx.cli.catalog import (
-    ...<4 lines>...
-    )
-ModuleNotFoundError: No module named 'pvx.cli'; 'pvx' is not a package
+usage: python3 -m pvx.cli.pvxharmonize [-h] [-o OUTPUT_DIR] [--output OUTPUT]
+                                       [--suffix SUFFIX]
+                                       [--output-format OUTPUT_FORMAT]
+                                       [--stdout] [--overwrite] [--dry-run]
+                                       [--verbosity {silent,quiet,normal,verbose,debug}]
+                                       [-v] [--quiet] [--silent]
+                                       [--normalize {none,peak,rms}]
+                                       [--peak-dbfs PEAK_DBFS]
+                                       [--rms-dbfs RMS_DBFS]
+                                       [--target-lufs TARGET_LUFS]
+                                       [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
+                                       [--compressor-ratio COMPRESSOR_RATIO]
+                                       [--compressor-attack-ms COMPRESSOR_ATTACK_MS]
+                                       [--compressor-release-ms COMPRESSOR_RELEASE_MS]
+                                       [--compressor-makeup-db COMPRESSOR_MAKEUP_DB]
+                                       [--expander-threshold-db EXPANDER_THRESHOLD_DB]
+                                       [--expander-ratio EXPANDER_RATIO]
+                                       [--expander-attack-ms EXPANDER_ATTACK_MS]
+                                       [--expander-release-ms EXPANDER_RELEASE_MS]
+                                       [--compander-threshold-db COMPANDER_THRESHOLD_DB]
+                                       [--compander-compress-ratio COMPANDER_COMPRESS_RATIO]
+                                       [--compander-expand-ratio COMPANDER_EXPAND_RATIO]
+                                       [--compander-attack-ms COMPANDER_ATTACK_MS]
+                                       [--compander-release-ms COMPANDER_RELEASE_MS]
+                                       [--compander-makeup-db COMPANDER_MAKEUP_DB]
+                                       [--limiter-threshold LIMITER_THRESHOLD]
+                                       [--soft-clip-level SOFT_CLIP_LEVEL]
+                                       [--soft-clip-type {tanh,arctan,cubic}]
+                                       [--soft-clip-drive SOFT_CLIP_DRIVE]
+                                       [--hard-clip-level HARD_CLIP_LEVEL]
+                                       [--clip] [--subtype SUBTYPE]
+                                       [--bit-depth {inherit,16,24,32f}]
+                                       [--dither {none,tpdf}]
+                                       [--dither-seed DITHER_SEED]
+                                       [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                                       [--metadata-policy {none,sidecar,copy}]
+                                       [--n-fft N_FFT]
+                                       [--win-length WIN_LENGTH]
+                                       [--hop-size HOP_SIZE]
+                                       [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
+                                       [--kaiser-beta KAISER_BETA]
+                                       [--transform {fft,dft,czt,dct,dst,hartley}]
+                                       [--phase-engine {propagate,hybrid,random}]
+                                       [--ambient-phase-mix AMBIENT_PHASE_MIX]
+                                       [--phase-random-seed PHASE_RANDOM_SEED]
+                                       [--onset-time-credit]
+                                       [--onset-credit-pull ONSET_CREDIT_PULL]
+                                       [--onset-credit-max ONSET_CREDIT_MAX]
+                                       [--no-onset-realign] [--no-center]
+                                       [--device {auto,cpu,cuda}]
+                                       [--cuda-device CUDA_DEVICE]
+                                       [--intervals INTERVALS]
+                                       [--intervals-cents INTERVALS_CENTS]
+                                       [--gains GAINS] [--pans PANS]
+                                       [--force-stereo]
+                                       [--resample-mode {auto,fft,linear}]
+                                       inputs [inputs ...]
+
+Generate harmonized voices from an input
+
+positional arguments:
+  inputs                Input files/globs or '-' f
+... [truncated]
 ```
 
 ### Module Docstring
@@ -5427,19 +6178,86 @@ Multi-voice harmonizer built from phase-vocoder pitch shifts.
 **Classes:** None
 **Functions:** `main`
 
-**Help commands:** `python3 src/pvx/cli/pvxinharmonator.py --help`
+**Help commands:** `PYTHONPATH=src python3 -m pvx.cli.pvxinharmonator --help`
 
 ### CLI Help Snapshot
 
 ```text
-Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxinharmonator.py", line 7, in <module>
-    from pvx.cli.pvxharmmap import run_harmmap_cli
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 16, in <module>
-    from pvx.cli.catalog import (
-    ...<4 lines>...
-    )
-ModuleNotFoundError: No module named 'pvx.cli'; 'pvx' is not a package
+usage: pvx inharmonator [-h] [-o OUTPUT_DIR] [--output OUTPUT]
+                        [--suffix SUFFIX] [--output-format OUTPUT_FORMAT]
+                        [--stdout] [--overwrite] [--dry-run]
+                        [--verbosity {silent,quiet,normal,verbose,debug}] [-v]
+                        [--quiet] [--silent] [--normalize {none,peak,rms}]
+                        [--peak-dbfs PEAK_DBFS] [--rms-dbfs RMS_DBFS]
+                        [--target-lufs TARGET_LUFS]
+                        [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
+                        [--compressor-ratio COMPRESSOR_RATIO]
+                        [--compressor-attack-ms COMPRESSOR_ATTACK_MS]
+                        [--compressor-release-ms COMPRESSOR_RELEASE_MS]
+                        [--compressor-makeup-db COMPRESSOR_MAKEUP_DB]
+                        [--expander-threshold-db EXPANDER_THRESHOLD_DB]
+                        [--expander-ratio EXPANDER_RATIO]
+                        [--expander-attack-ms EXPANDER_ATTACK_MS]
+                        [--expander-release-ms EXPANDER_RELEASE_MS]
+                        [--compander-threshold-db COMPANDER_THRESHOLD_DB]
+                        [--compander-compress-ratio COMPANDER_COMPRESS_RATIO]
+                        [--compander-expand-ratio COMPANDER_EXPAND_RATIO]
+                        [--compander-attack-ms COMPANDER_ATTACK_MS]
+                        [--compander-release-ms COMPANDER_RELEASE_MS]
+                        [--compander-makeup-db COMPANDER_MAKEUP_DB]
+                        [--limiter-threshold LIMITER_THRESHOLD]
+                        [--soft-clip-level SOFT_CLIP_LEVEL]
+                        [--soft-clip-type {tanh,arctan,cubic}]
+                        [--soft-clip-drive SOFT_CLIP_DRIVE]
+                        [--hard-clip-level HARD_CLIP_LEVEL] [--clip]
+                        [--subtype SUBTYPE] [--bit-depth {inherit,16,24,32f}]
+                        [--dither {none,tpdf}] [--dither-seed DITHER_SEED]
+                        [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                        [--metadata-policy {none,sidecar,copy}]
+                        [--n-fft N_FFT] [--win-length WIN_LENGTH]
+                        [--hop-size HOP_SIZE]
+                        [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
+                        [--kaiser-beta KAISER_BETA]
+                        [--transform {fft,dft,czt,dct,dst,hartley}]
+                        [--phase-engine {propagate,hybrid,random}]
+                        [--ambient-phase-mix AMBIENT_PHASE_MIX]
+                        [--phase-random-seed PHASE_RANDOM_SEED]
+                        [--onset-time-credit]
+                        [--onset-credit-pull ONSET_CREDIT_PULL]
+                        [--onset-credit-max ONSET_CREDIT_MAX]
+                        [--no-onset-realign] [--no-center]
+                        [--device {auto,cpu,cuda}] [--cuda-device CUDA_DEVICE]
+                        [--operator {chordmapper,inharmonator}]
+                        [--root-hz ROOT_HZ]
+                        [--chord {aug,dim,dom7,maj7,major,min7,minor,power,sus2,sus4}]
+                        [--strength STRENGTH]
+                        [--tolerance-cents TOLERANCE_CENTS]
+                        [--boost-db BOOST_DB] [--attenuation ATTENUATION]
+                        [--inharmonic-f0-hz INHARMONIC_F0_HZ]
+                        [--inharmonicity INHARMONICITY]
+                        [--inharmonic-mix INHARMONIC_MIX] [--dry-mix DRY_MIX]
+                        inputs [inputs ...]
+
+Harmonic/chord mapping and inharmonic spectral warping.
+
+positional arguments:
+  inputs                Input files/globs or '-' for stdin
+
+options:
+  -h, --help            show this help message and exit
+  -o, --output-dir OUTPUT_DIR
+                        Output directory
+  --output, --out OUTPUT
+                        Explicit output file path (single-input mode only). Alias: --out
+  --suffix SUFFIX       Output filename suffix (default: _harm)
+  --output-format OUTPUT_FORMAT
+                        Output extension/format
+  --stdout              Write processed audio to stdout stream (for piping); requires exactly one input
+  --overwrite           Overwrite existing outputs
+  --dry-run             Resolve and print, but do not write files
+  --verbosity {silent,quiet,normal,verbose,debug}
+                        C
+... [truncated]
 ```
 
 ### Module Docstring
@@ -5455,21 +6273,72 @@ Inharmonator wrapper.
 **Classes:** None
 **Functions:** `hpss_masks`, `split_hpss`, `build_parser`, `main`
 
-**Help commands:** `python3 src/pvx/cli/pvxlayer.py --help`
+**Help commands:** `PYTHONPATH=src python3 -m pvx.cli.pvxlayer --help`
 
 ### CLI Help Snapshot
 
 ```text
-Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxlayer.py", line 11, in <module>
-    from pvx.core.common import (
-    ...<18 lines>...
-    )
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 16, in <module>
-    from pvx.cli.catalog import (
-    ...<4 lines>...
-    )
-ModuleNotFoundError: No module named 'pvx.cli'; 'pvx' is not a package
+usage: python3 -m pvx.cli.pvxlayer [-h] [-o OUTPUT_DIR] [--output OUTPUT]
+                                   [--suffix SUFFIX]
+                                   [--output-format OUTPUT_FORMAT] [--stdout]
+                                   [--overwrite] [--dry-run]
+                                   [--verbosity {silent,quiet,normal,verbose,debug}]
+                                   [-v] [--quiet] [--silent]
+                                   [--normalize {none,peak,rms}]
+                                   [--peak-dbfs PEAK_DBFS]
+                                   [--rms-dbfs RMS_DBFS]
+                                   [--target-lufs TARGET_LUFS]
+                                   [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
+                                   [--compressor-ratio COMPRESSOR_RATIO]
+                                   [--compressor-attack-ms COMPRESSOR_ATTACK_MS]
+                                   [--compressor-release-ms COMPRESSOR_RELEASE_MS]
+                                   [--compressor-makeup-db COMPRESSOR_MAKEUP_DB]
+                                   [--expander-threshold-db EXPANDER_THRESHOLD_DB]
+                                   [--expander-ratio EXPANDER_RATIO]
+                                   [--expander-attack-ms EXPANDER_ATTACK_MS]
+                                   [--expander-release-ms EXPANDER_RELEASE_MS]
+                                   [--compander-threshold-db COMPANDER_THRESHOLD_DB]
+                                   [--compander-compress-ratio COMPANDER_COMPRESS_RATIO]
+                                   [--compander-expand-ratio COMPANDER_EXPAND_RATIO]
+                                   [--compander-attack-ms COMPANDER_ATTACK_MS]
+                                   [--compander-release-ms COMPANDER_RELEASE_MS]
+                                   [--compander-makeup-db COMPANDER_MAKEUP_DB]
+                                   [--limiter-threshold LIMITER_THRESHOLD]
+                                   [--soft-clip-level SOFT_CLIP_LEVEL]
+                                   [--soft-clip-type {tanh,arctan,cubic}]
+                                   [--soft-clip-drive SOFT_CLIP_DRIVE]
+                                   [--hard-clip-level HARD_CLIP_LEVEL]
+                                   [--clip] [--subtype SUBTYPE]
+                                   [--bit-depth {inherit,16,24,32f}]
+                                   [--dither {none,tpdf}]
+                                   [--dither-seed DITHER_SEED]
+                                   [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                                   [--metadata-policy {none,sidecar,copy}]
+                                   [--n-fft N_FFT] [--win-length WIN_LENGTH]
+                                   [--hop-size HOP_SIZE]
+                                   [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
+                                   [--kaiser-beta KAISER_BETA]
+                                   [--transform {fft,dft,czt,dct,dst,hartley}]
+                                   [--phase-engine {propagate,hybrid,random}]
+                                   [--ambient-phase-mix AMBIENT_PHASE_MIX]
+                                   [--phase-random-seed PHASE_RANDOM_SEED]
+                                   [--onset-time-credit]
+                                   [--onset-credit-pull ONSET_CREDIT_PULL]
+                                   [--onset-credit-max ONSET_CREDIT_MAX]
+                                   [--no-onset-realign] [--no-center]
+                                   [--device {auto,cpu,cuda}]
+                                   [--cuda-device CUDA_DEVICE]
+                                   [--harmonic-stretch HARMONIC_STRETCH]
+                                   [--harmonic-pitch-semitones HARMONIC_PITCH_SEMITONES]
+                                   [--harmonic-pitch-cents HARMONIC_PITCH_CENTS]
+                                   [--percussive-stretch PERCUSSIVE_STRETCH]
+                                   [--percussive-pitch-semitones PERCUSSIVE_PITCH_SEMITONES]
+                                   [--percussive-pitch-cents PERCUSSIVE_PITCH_CENTS]
+                                   [--harmonic-gain HARMONIC_GAIN]
+                                   [--percussive-gain PERCUSSIVE_GAIN]
+                                   [--harmonic-kernel HARMONIC_KERNEL]
+                                   [--percus
+... [truncated]
 ```
 
 ### Module Docstring
@@ -5485,21 +6354,75 @@ Layered harmonic/percussive processing with independent controls.
 **Classes:** `MorphControlSignal`
 **Functions:** `_normalize_control_points`, `_parse_csv_control_points`, `_parse_json_control_points`, `_load_control_signal`, `_parse_scalar_or_control`, `_sample_cubic_local`, `_smoothstep`, `_smootherstep`, `_exp_ease`, `_sample_piecewise_ease`, `_sample_control_signal`, `match_channels`, `_phase_blend`, `_resolve_phase_mix_curve`, `_safe_rms`, `_framewise_envelope`, `_mask_from_modulator`, `morph_pair`, `build_parser`, `main`
 
-**Help commands:** `python3 src/pvx/cli/pvxmorph.py --help`
+**Help commands:** `PYTHONPATH=src python3 -m pvx.cli.pvxmorph --help`
 
 ### CLI Help Snapshot
 
 ```text
-Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxmorph.py", line 16, in <module>
-    from pvx.core.audio_metrics import (
-    ...<3 lines>...
-    )
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 16, in <module>
-    from pvx.cli.catalog import (
-    ...<4 lines>...
-    )
-ModuleNotFoundError: No module named 'pvx.cli'; 'pvx' is not a package
+usage: python3 -m pvx.cli.pvxmorph [-h] [-o OUTPUT] [--stdout]
+                                   [--output-format OUTPUT_FORMAT]
+                                   [--alpha ALPHA]
+                                   [--blend-mode {linear,geometric,magnitude_b_phase_a,magnitude_a_phase_b,carrier_a_envelope_b,carrier_b_envelope_a,carrier_a_mask_b,carrier_b_mask_a,product,max_mag,min_mag}]
+                                   [--phase-mix PHASE_MIX]
+                                   [--interp {none,linear,nearest,cubic,polynomial,exponential,s_curve,smootherstep}]
+                                   [--order ORDER]
+                                   [--mask-exponent MASK_EXPONENT]
+                                   [--envelope-lifter ENVELOPE_LIFTER]
+                                   [--normalize-energy]
+                                   [--normalize {none,peak,rms}]
+                                   [--peak-dbfs PEAK_DBFS]
+                                   [--rms-dbfs RMS_DBFS]
+                                   [--target-lufs TARGET_LUFS]
+                                   [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
+                                   [--compressor-ratio COMPRESSOR_RATIO]
+                                   [--compressor-attack-ms COMPRESSOR_ATTACK_MS]
+                                   [--compressor-release-ms COMPRESSOR_RELEASE_MS]
+                                   [--compressor-makeup-db COMPRESSOR_MAKEUP_DB]
+                                   [--expander-threshold-db EXPANDER_THRESHOLD_DB]
+                                   [--expander-ratio EXPANDER_RATIO]
+                                   [--expander-attack-ms EXPANDER_ATTACK_MS]
+                                   [--expander-release-ms EXPANDER_RELEASE_MS]
+                                   [--compander-threshold-db COMPANDER_THRESHOLD_DB]
+                                   [--compander-compress-ratio COMPANDER_COMPRESS_RATIO]
+                                   [--compander-expand-ratio COMPANDER_EXPAND_RATIO]
+                                   [--compander-attack-ms COMPANDER_ATTACK_MS]
+                                   [--compander-release-ms COMPANDER_RELEASE_MS]
+                                   [--compander-makeup-db COMPANDER_MAKEUP_DB]
+                                   [--limiter-threshold LIMITER_THRESHOLD]
+                                   [--soft-clip-level SOFT_CLIP_LEVEL]
+                                   [--soft-clip-type {tanh,arctan,cubic}]
+                                   [--soft-clip-drive SOFT_CLIP_DRIVE]
+                                   [--hard-clip-level HARD_CLIP_LEVEL]
+                                   [--clip] [--subtype SUBTYPE]
+                                   [--bit-depth {inherit,16,24,32f}]
+                                   [--dither {none,tpdf}]
+                                   [--dither-seed DITHER_SEED]
+                                   [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                                   [--metadata-policy {none,sidecar,copy}]
+                                   [--overwrite]
+                                   [--verbosity {silent,quiet,normal,verbose,debug}]
+                                   [-v] [--quiet] [--silent] [--n-fft N_FFT]
+                                   [--win-length WIN_LENGTH]
+                                   [--hop-size HOP_SIZE]
+                                   [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
+                                   [--kaiser-beta KAISER_BETA]
+                                   [--transform {fft,dft,czt,dct,dst,hartley}]
+                                   [--phase-engine {propagate,hybrid,random}]
+                                   [--ambient-phase-mix AMBIENT_PHASE_MIX]
+                                   [--phase-random-seed PHASE_RANDOM_SEED]
+                                   [--onset-time-credit]
+                                   [--onset-credit-pull ONSET_CREDIT_PULL]
+                                   [--onset-credit-max ONSET_CREDIT_MAX]
+                                   [--no-onset-realign] [--no-center]
+                                   [--device {auto,cpu,cuda}]
+                                   [--cuda-device CUDA_DEVICE]
+                                   input_a input_b
+
+Morph two audio files in the STFT domain
+
+positional arguments:
+  input_a               Input A path or 
+... [truncated]
 ```
 
 ### Module Docstring
@@ -5515,7 +6438,7 @@ Spectral morphing between two input files.
 **Classes:** None
 **Functions:** `build_parser`, `main`
 
-**Help commands:** `python3 src/pvx/cli/pvxnoise.py --help`
+**Help commands:** `PYTHONPATH=src python3 -m pvx.cli.pvxnoise --help`
 
 ### CLI Help Snapshot
 
@@ -5599,19 +6522,85 @@ pvxnoise speech.wav --background-dir noise_samples/ --snr 10,25 --output out.wav
 **Classes:** None
 **Functions:** `main`
 
-**Help commands:** `python3 src/pvx/cli/pvxnoisefilter.py --help`
+**Help commands:** `PYTHONPATH=src python3 -m pvx.cli.pvxnoisefilter --help`
 
 ### CLI Help Snapshot
 
 ```text
-Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxnoisefilter.py", line 7, in <module>
-    from pvx.cli.pvxfilter import run_filter_cli
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 16, in <module>
-    from pvx.cli.catalog import (
-    ...<4 lines>...
-    )
-ModuleNotFoundError: No module named 'pvx.cli'; 'pvx' is not a package
+usage: pvx noisefilter [-h] [-o OUTPUT_DIR] [--output OUTPUT]
+                       [--suffix SUFFIX] [--output-format OUTPUT_FORMAT]
+                       [--stdout] [--overwrite] [--dry-run]
+                       [--verbosity {silent,quiet,normal,verbose,debug}] [-v]
+                       [--quiet] [--silent] [--normalize {none,peak,rms}]
+                       [--peak-dbfs PEAK_DBFS] [--rms-dbfs RMS_DBFS]
+                       [--target-lufs TARGET_LUFS]
+                       [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
+                       [--compressor-ratio COMPRESSOR_RATIO]
+                       [--compressor-attack-ms COMPRESSOR_ATTACK_MS]
+                       [--compressor-release-ms COMPRESSOR_RELEASE_MS]
+                       [--compressor-makeup-db COMPRESSOR_MAKEUP_DB]
+                       [--expander-threshold-db EXPANDER_THRESHOLD_DB]
+                       [--expander-ratio EXPANDER_RATIO]
+                       [--expander-attack-ms EXPANDER_ATTACK_MS]
+                       [--expander-release-ms EXPANDER_RELEASE_MS]
+                       [--compander-threshold-db COMPANDER_THRESHOLD_DB]
+                       [--compander-compress-ratio COMPANDER_COMPRESS_RATIO]
+                       [--compander-expand-ratio COMPANDER_EXPAND_RATIO]
+                       [--compander-attack-ms COMPANDER_ATTACK_MS]
+                       [--compander-release-ms COMPANDER_RELEASE_MS]
+                       [--compander-makeup-db COMPANDER_MAKEUP_DB]
+                       [--limiter-threshold LIMITER_THRESHOLD]
+                       [--soft-clip-level SOFT_CLIP_LEVEL]
+                       [--soft-clip-type {tanh,arctan,cubic}]
+                       [--soft-clip-drive SOFT_CLIP_DRIVE]
+                       [--hard-clip-level HARD_CLIP_LEVEL] [--clip]
+                       [--subtype SUBTYPE] [--bit-depth {inherit,16,24,32f}]
+                       [--dither {none,tpdf}] [--dither-seed DITHER_SEED]
+                       [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                       [--metadata-policy {none,sidecar,copy}] [--n-fft N_FFT]
+                       [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
+                       [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
+                       [--kaiser-beta KAISER_BETA]
+                       [--transform {fft,dft,czt,dct,dst,hartley}]
+                       [--phase-engine {propagate,hybrid,random}]
+                       [--ambient-phase-mix AMBIENT_PHASE_MIX]
+                       [--phase-random-seed PHASE_RANDOM_SEED]
+                       [--onset-time-credit]
+                       [--onset-credit-pull ONSET_CREDIT_PULL]
+                       [--onset-credit-max ONSET_CREDIT_MAX]
+                       [--no-onset-realign] [--no-center]
+                       [--device {auto,cpu,cuda}] [--cuda-device CUDA_DEVICE]
+                       [--operator {filter,tvfilter,noisefilter,bandamp,spec-compander}]
+                       --response RESPONSE [--response-mix RESPONSE_MIX]
+                       [--dry-mix DRY_MIX]
+                       [--response-gain-db RESPONSE_GAIN_DB]
+                       [--transpose-semitones TRANSPOSE_SEMITONES]
+                       [--shift-bins SHIFT_BINS] [--tv-map TV_MAP]
+                       [--tv-key TV_KEY]
+                       [--tv-interp {none,stairstep,nearest,linear,cubic,polynomial,exponential,s_curve,smootherstep}]
+                       [--tv-order TV_ORDER] [--noise-floor NOISE_FLOOR]
+                       [--band-gain-db BAND_GAIN_DB]
+                       [--band-width-bins BAND_WIDTH_BINS]
+                       [--peak-count PEAK_COUNT]
+                       [--comp-threshold-db COMP_THRESHOLD_DB]
+                       [--comp-ratio COMP_RATIO] [--expand-ratio EXPAND_RATIO]
+                       inputs [inputs ...]
+
+Response-driven spectral processing using PVXRF artifacts.
+
+positional arguments:
+  inputs                Input files/globs or '-' for stdin
+
+options:
+  -h, --help            show this help message and exit
+  -o, --output-dir OUTPUT_DIR
+                        Output directory
+  --output, --out OUTPUT
+                        Explicit output file path (single-input mode only). Alias: --out
+  --suffix SUFFIX       Output filename suffix (default: _filter)
+  --output-format OUTPUT_FORMAT
+                        Output extension/f
+... [truncated]
 ```
 
 ### Module Docstring
@@ -5627,21 +6616,72 @@ Response-profile noise filter wrapper.
 **Classes:** None
 **Functions:** `build_parser`, `_resolve_output_format`, `_resolve_input_format`, `_render_payload`, `main`
 
-**Help commands:** `python3 src/pvx/cli/pvxreshape.py --help`
+**Help commands:** `PYTHONPATH=src python3 -m pvx.cli.pvxreshape --help`
 
 ### CLI Help Snapshot
 
 ```text
-Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxreshape.py", line 11, in <module>
-    from pvx.core.common import (
-    ...<4 lines>...
-    )
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 16, in <module>
-    from pvx.cli.catalog import (
-    ...<4 lines>...
-    )
-ModuleNotFoundError: No module named 'pvx.cli'; 'pvx' is not a package
+usage: pvx reshape [-h] [--key KEY] [--output-key OUTPUT_KEY]
+                   --operation {scale,offset,clip,pow,normalize,invert,smooth,time-scale,time-shift,resample}
+                   [--factor FACTOR] [--offset OFFSET] [--min MIN_VALUE]
+                   [--max MAX_VALUE] [--exponent EXPONENT] [--window WINDOW]
+                   [--target-min TARGET_MIN] [--target-max TARGET_MAX]
+                   [--rate RATE]
+                   [--interp {none,stairstep,nearest,linear,cubic,polynomial,exponential,s_curve,smootherstep}]
+                   [--order ORDER] [--input-format {auto,csv,json}]
+                   [--format {auto,csv,json}] [--output OUTPUT] [--stdout]
+                   [--verbosity {silent,quiet,normal,verbose,debug}] [-v]
+                   [--quiet] [--silent]
+                   input
+
+Transform control-rate CSV/JSON maps for pvx routing and modulation workflows.
+
+positional arguments:
+  input                 Input control map path or '-' for stdin
+
+options:
+  -h, --help            show this help message and exit
+  --key KEY             Control column/key to read (default: value)
+  --output-key OUTPUT_KEY
+                        Output control key. Default: same as --key
+  --operation {scale,offset,clip,pow,normalize,invert,smooth,time-scale,time-shift,resample}
+                        Reshape operation
+  --factor FACTOR       Scale factor for scale/time-scale ops
+  --offset OFFSET       Offset for offset/time-shift ops
+  --min MIN_VALUE       Minimum clamp value
+  --max MAX_VALUE       Maximum clamp value
+  --exponent EXPONENT   Exponent for pow operation
+  --window WINDOW       Window size for smooth operation
+  --target-min TARGET_MIN
+                        Target minimum for normalize operation
+  --target-max TARGET_MAX
+                        Target maximum for normalize operation
+  --rate RATE           Resample control rate (Hz) for resample operation
+  --interp {none,stairstep,nearest,linear,cubic,polynomial,exponential,s_curve,smootherstep}
+                        Interpolation mode
+  --order ORDER         Polynomial order for --interp polynomial
+  --input-format {auto,csv,json}
+                        Input format override (default: auto by suffix or csv for stdin)
+  --format {auto,csv,json}
+                        Output format (default: auto from --output suffix or csv for stdout)
+  --output, --out OUTPUT
+                        Output file path. Default: stdout.
+  --stdout              Write reshaped map to stdout
+  --verbosity {silent,quiet,normal,verbose,debug}
+                        Console verbosity level
+  -v, --verbose         Increase verbosity (repeat for extra detail)
+  --quiet               Reduce output and hide status bars
+  --silent              Suppress all console output
+
+Examples:
+  pvx reshape stretch_env.csv --key stretch --operation scale --factor 1.2 --output stretch_scaled.csv
+  pvx reshape map.csv --key pitch_ratio --operation clip --min 0.5 --max 2.0 --stdout | pvx voc input.wav --pitch-map-stdin --route pitch_ratio=pitch_ratio --output out.wav
+  pvx reshape alpha_curve.csv --operation resample --rate 50 --interp polynomial --order 5 --output alpha_curve_dense.csv
+  pvx reshape stretch_env.csv --operation smooth --window 9 --output stretch_smooth.csv
+
+Notes:
+  - Use --key to select which control column to reshape.
+  - For stdin input, pass '-' as INPUT and optionally set --input-format.
 ```
 
 ### Module Docstring
@@ -5657,19 +6697,31 @@ PVC-style function-stream reshaper for control maps.
 **Classes:** None
 **Functions:** `_normalize_argv`, `_default_output_path`, `_print_summary`, `_write_json`, `build_parser`, `_run_create`, `_run_inspect`, `main`
 
-**Help commands:** `python3 src/pvx/cli/pvxresponse.py --help`
+**Help commands:** `PYTHONPATH=src python3 -m pvx.cli.pvxresponse --help`
 
 ### CLI Help Snapshot
 
 ```text
-Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxresponse.py", line 12, in <module>
-    from pvx.core.analysis_store import load_analysis_artifact
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 16, in <module>
-    from pvx.cli.catalog import (
-    ...<4 lines>...
-    )
-ModuleNotFoundError: No module named 'pvx.cli'; 'pvx' is not a package
+usage: pvx response [-h] {create,inspect} ...
+
+Create and inspect PVXRF frequency-response artifacts derived from PVXAN analyses.
+
+positional arguments:
+  {create,inspect}
+    create          Derive response artifact from analysis artifact
+    inspect         Inspect existing PVXRF artifact
+
+options:
+  -h, --help        show this help message and exit
+
+Examples:
+  pvx response create input.pvxan.npz --output input.pvxrf.npz --method median --normalize peak
+  pvx response inspect input.pvxrf.npz
+  pvxresponse input.pvxan.npz --phase-mode zero --normalize rms
+
+Notes:
+  - When command is omitted, create mode is assumed for convenience.
+  - PVXRF stores per-channel response magnitude/phase vectors and frequency bins.
 ```
 
 ### Module Docstring
@@ -5685,21 +6737,74 @@ Create and inspect reusable frequency-response artifacts (PVXRF).
 **Classes:** None
 **Functions:** `freq_to_midi`, `midi_to_freq`, `normalize_octave_cents`, `nearest_scale_freq`, `overlap_add`, `collect_f0_values`, `recommend_root_hz`, `build_parser`, `main`
 
-**Help commands:** `python3 src/pvx/cli/pvxretune.py --help`
+**Help commands:** `PYTHONPATH=src python3 -m pvx.cli.pvxretune --help`
 
 ### CLI Help Snapshot
 
 ```text
-Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxretune.py", line 12, in <module>
-    from pvx.core.common import (
-    ...<17 lines>...
-    )
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 16, in <module>
-    from pvx.cli.catalog import (
-    ...<4 lines>...
-    )
-ModuleNotFoundError: No module named 'pvx.cli'; 'pvx' is not a package
+usage: python3 -m pvx.cli.pvxretune [-h] [-o OUTPUT_DIR] [--output OUTPUT]
+                                    [--suffix SUFFIX]
+                                    [--output-format OUTPUT_FORMAT] [--stdout]
+                                    [--overwrite] [--dry-run]
+                                    [--verbosity {silent,quiet,normal,verbose,debug}]
+                                    [-v] [--quiet] [--silent]
+                                    [--normalize {none,peak,rms}]
+                                    [--peak-dbfs PEAK_DBFS]
+                                    [--rms-dbfs RMS_DBFS]
+                                    [--target-lufs TARGET_LUFS]
+                                    [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
+                                    [--compressor-ratio COMPRESSOR_RATIO]
+                                    [--compressor-attack-ms COMPRESSOR_ATTACK_MS]
+                                    [--compressor-release-ms COMPRESSOR_RELEASE_MS]
+                                    [--compressor-makeup-db COMPRESSOR_MAKEUP_DB]
+                                    [--expander-threshold-db EXPANDER_THRESHOLD_DB]
+                                    [--expander-ratio EXPANDER_RATIO]
+                                    [--expander-attack-ms EXPANDER_ATTACK_MS]
+                                    [--expander-release-ms EXPANDER_RELEASE_MS]
+                                    [--compander-threshold-db COMPANDER_THRESHOLD_DB]
+                                    [--compander-compress-ratio COMPANDER_COMPRESS_RATIO]
+                                    [--compander-expand-ratio COMPANDER_EXPAND_RATIO]
+                                    [--compander-attack-ms COMPANDER_ATTACK_MS]
+                                    [--compander-release-ms COMPANDER_RELEASE_MS]
+                                    [--compander-makeup-db COMPANDER_MAKEUP_DB]
+                                    [--limiter-threshold LIMITER_THRESHOLD]
+                                    [--soft-clip-level SOFT_CLIP_LEVEL]
+                                    [--soft-clip-type {tanh,arctan,cubic}]
+                                    [--soft-clip-drive SOFT_CLIP_DRIVE]
+                                    [--hard-clip-level HARD_CLIP_LEVEL]
+                                    [--clip] [--subtype SUBTYPE]
+                                    [--bit-depth {inherit,16,24,32f}]
+                                    [--dither {none,tpdf}]
+                                    [--dither-seed DITHER_SEED]
+                                    [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                                    [--metadata-policy {none,sidecar,copy}]
+                                    [--n-fft N_FFT] [--win-length WIN_LENGTH]
+                                    [--hop-size HOP_SIZE]
+                                    [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
+                                    [--kaiser-beta KAISER_BETA]
+                                    [--transform {fft,dft,czt,dct,dst,hartley}]
+                                    [--phase-engine {propagate,hybrid,random}]
+                                    [--ambient-phase-mix AMBIENT_PHASE_MIX]
+                                    [--phase-random-seed PHASE_RANDOM_SEED]
+                                    [--onset-time-credit]
+                                    [--onset-credit-pull ONSET_CREDIT_PULL]
+                                    [--onset-credit-max ONSET_CREDIT_MAX]
+                                    [--no-onset-realign] [--no-center]
+                                    [--device {auto,cpu,cuda}]
+                                    [--cuda-device CUDA_DEVICE] [--root ROOT]
+                                    [--root-hz ROOT_HZ] [--recommend-root]
+                                    [--scale {chromatic,major,minor,pentatonic}]
+                                    [--scale-cents SCALE_CENTS]
+                                    [--strength STRENGTH]
+                                    [--chunk-ms CHUNK_MS]
+                                    [--overlap-ms OVERLAP_MS]
+                                    [--a4-reference-hz A4_REFERENCE_HZ]
+                                    [--f0-min F0_MIN] [--f0-max F0_MAX]
+                                    [--resample-mode {auto,fft,linear}]
+                                    inputs [inputs ...]
+
+Monophonic retun
+... [truncated]
 ```
 
 ### Module Docstring
@@ -5715,21 +6820,91 @@ Monophonic retuning with phase-vocoder segment processing.
 **Classes:** None
 **Functions:** `build_parser`, `run_ring_cli`, `main`
 
-**Help commands:** `python3 src/pvx/cli/pvxring.py --help`
+**Help commands:** `PYTHONPATH=src python3 -m pvx.cli.pvxring --help`
 
 ### CLI Help Snapshot
 
 ```text
-Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxring.py", line 10, in <module>
-    from pvx.core.common import (
-    ...<14 lines>...
-    )
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 16, in <module>
-    from pvx.cli.catalog import (
-    ...<4 lines>...
-    )
-ModuleNotFoundError: No module named 'pvx.cli'; 'pvx' is not a package
+usage: pvx ring [-h] [-o OUTPUT_DIR] [--output OUTPUT] [--suffix SUFFIX]
+                [--output-format OUTPUT_FORMAT] [--stdout] [--overwrite]
+                [--dry-run] [--verbosity {silent,quiet,normal,verbose,debug}]
+                [-v] [--quiet] [--silent] [--normalize {none,peak,rms}]
+                [--peak-dbfs PEAK_DBFS] [--rms-dbfs RMS_DBFS]
+                [--target-lufs TARGET_LUFS]
+                [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
+                [--compressor-ratio COMPRESSOR_RATIO]
+                [--compressor-attack-ms COMPRESSOR_ATTACK_MS]
+                [--compressor-release-ms COMPRESSOR_RELEASE_MS]
+                [--compressor-makeup-db COMPRESSOR_MAKEUP_DB]
+                [--expander-threshold-db EXPANDER_THRESHOLD_DB]
+                [--expander-ratio EXPANDER_RATIO]
+                [--expander-attack-ms EXPANDER_ATTACK_MS]
+                [--expander-release-ms EXPANDER_RELEASE_MS]
+                [--compander-threshold-db COMPANDER_THRESHOLD_DB]
+                [--compander-compress-ratio COMPANDER_COMPRESS_RATIO]
+                [--compander-expand-ratio COMPANDER_EXPAND_RATIO]
+                [--compander-attack-ms COMPANDER_ATTACK_MS]
+                [--compander-release-ms COMPANDER_RELEASE_MS]
+                [--compander-makeup-db COMPANDER_MAKEUP_DB]
+                [--limiter-threshold LIMITER_THRESHOLD]
+                [--soft-clip-level SOFT_CLIP_LEVEL]
+                [--soft-clip-type {tanh,arctan,cubic}]
+                [--soft-clip-drive SOFT_CLIP_DRIVE]
+                [--hard-clip-level HARD_CLIP_LEVEL] [--clip]
+                [--subtype SUBTYPE] [--bit-depth {inherit,16,24,32f}]
+                [--dither {none,tpdf}] [--dither-seed DITHER_SEED]
+                [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                [--metadata-policy {none,sidecar,copy}] [--n-fft N_FFT]
+                [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
+                [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
+                [--kaiser-beta KAISER_BETA]
+                [--transform {fft,dft,czt,dct,dst,hartley}]
+                [--phase-engine {propagate,hybrid,random}]
+                [--ambient-phase-mix AMBIENT_PHASE_MIX]
+                [--phase-random-seed PHASE_RANDOM_SEED] [--onset-time-credit]
+                [--onset-credit-pull ONSET_CREDIT_PULL]
+                [--onset-credit-max ONSET_CREDIT_MAX] [--no-onset-realign]
+                [--no-center] [--device {auto,cpu,cuda}]
+                [--cuda-device CUDA_DEVICE]
+                [--operator {ring,ringfilter,ringtvfilter}]
+                [--frequency-hz FREQUENCY_HZ] [--depth DEPTH] [--mix MIX]
+                [--feedback FEEDBACK] [--resonance-hz RESONANCE_HZ]
+                [--resonance-q RESONANCE_Q] [--resonance-mix RESONANCE_MIX]
+                [--resonance-decay RESONANCE_DECAY] [--tv-map TV_MAP]
+                [--tv-interp {none,stairstep,nearest,linear,cubic,polynomial,exponential,s_curve,smootherstep}]
+                [--tv-order TV_ORDER]
+                inputs [inputs ...]
+
+Ring modulation and resonator filtering with PVC-style controls.
+
+positional arguments:
+  inputs                Input files/globs or '-' for stdin
+
+options:
+  -h, --help            show this help message and exit
+  -o, --output-dir OUTPUT_DIR
+                        Output directory
+  --output, --out OUTPUT
+                        Explicit output file path (single-input mode only). Alias: --out
+  --suffix SUFFIX       Output filename suffix (default: _ring)
+  --output-format OUTPUT_FORMAT
+                        Output extension/format
+  --stdout              Write processed audio to stdout stream (for piping); requires exactly one input
+  --overwrite           Overwrite existing outputs
+  --dry-run             Resolve and print, but do not write files
+  --verbosity {silent,quiet,normal,verbose,debug}
+                        Console verbosity level
+  -v, --verbose         Increase verbosity (repeat for extra detail)
+  --quiet               Reduce output and hide status bars
+  --silent              Suppress all console output
+  --normalize {none,peak,rms}
+                        Output normalization mode
+  --peak-dbfs PEAK_DBFS
+                        Target peak dBFS when --normalize peak
+  --rms-dbfs RMS_DBFS   Target RMS dBFS when --normalize rms
+  --target-lufs TARGET_LUFS
+             
+... [truncated]
 ```
 
 ### Module Docstring
@@ -5745,19 +6920,86 @@ PVC-inspired ring and resonator operators.
 **Classes:** None
 **Functions:** `main`
 
-**Help commands:** `python3 src/pvx/cli/pvxringfilter.py --help`
+**Help commands:** `PYTHONPATH=src python3 -m pvx.cli.pvxringfilter --help`
 
 ### CLI Help Snapshot
 
 ```text
-Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxringfilter.py", line 7, in <module>
-    from pvx.cli.pvxring import run_ring_cli
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 16, in <module>
-    from pvx.cli.catalog import (
-    ...<4 lines>...
-    )
-ModuleNotFoundError: No module named 'pvx.cli'; 'pvx' is not a package
+usage: pvx ringfilter [-h] [-o OUTPUT_DIR] [--output OUTPUT] [--suffix SUFFIX]
+                      [--output-format OUTPUT_FORMAT] [--stdout] [--overwrite]
+                      [--dry-run]
+                      [--verbosity {silent,quiet,normal,verbose,debug}] [-v]
+                      [--quiet] [--silent] [--normalize {none,peak,rms}]
+                      [--peak-dbfs PEAK_DBFS] [--rms-dbfs RMS_DBFS]
+                      [--target-lufs TARGET_LUFS]
+                      [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
+                      [--compressor-ratio COMPRESSOR_RATIO]
+                      [--compressor-attack-ms COMPRESSOR_ATTACK_MS]
+                      [--compressor-release-ms COMPRESSOR_RELEASE_MS]
+                      [--compressor-makeup-db COMPRESSOR_MAKEUP_DB]
+                      [--expander-threshold-db EXPANDER_THRESHOLD_DB]
+                      [--expander-ratio EXPANDER_RATIO]
+                      [--expander-attack-ms EXPANDER_ATTACK_MS]
+                      [--expander-release-ms EXPANDER_RELEASE_MS]
+                      [--compander-threshold-db COMPANDER_THRESHOLD_DB]
+                      [--compander-compress-ratio COMPANDER_COMPRESS_RATIO]
+                      [--compander-expand-ratio COMPANDER_EXPAND_RATIO]
+                      [--compander-attack-ms COMPANDER_ATTACK_MS]
+                      [--compander-release-ms COMPANDER_RELEASE_MS]
+                      [--compander-makeup-db COMPANDER_MAKEUP_DB]
+                      [--limiter-threshold LIMITER_THRESHOLD]
+                      [--soft-clip-level SOFT_CLIP_LEVEL]
+                      [--soft-clip-type {tanh,arctan,cubic}]
+                      [--soft-clip-drive SOFT_CLIP_DRIVE]
+                      [--hard-clip-level HARD_CLIP_LEVEL] [--clip]
+                      [--subtype SUBTYPE] [--bit-depth {inherit,16,24,32f}]
+                      [--dither {none,tpdf}] [--dither-seed DITHER_SEED]
+                      [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                      [--metadata-policy {none,sidecar,copy}] [--n-fft N_FFT]
+                      [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
+                      [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
+                      [--kaiser-beta KAISER_BETA]
+                      [--transform {fft,dft,czt,dct,dst,hartley}]
+                      [--phase-engine {propagate,hybrid,random}]
+                      [--ambient-phase-mix AMBIENT_PHASE_MIX]
+                      [--phase-random-seed PHASE_RANDOM_SEED]
+                      [--onset-time-credit]
+                      [--onset-credit-pull ONSET_CREDIT_PULL]
+                      [--onset-credit-max ONSET_CREDIT_MAX]
+                      [--no-onset-realign] [--no-center]
+                      [--device {auto,cpu,cuda}] [--cuda-device CUDA_DEVICE]
+                      [--operator {ring,ringfilter,ringtvfilter}]
+                      [--frequency-hz FREQUENCY_HZ] [--depth DEPTH]
+                      [--mix MIX] [--feedback FEEDBACK]
+                      [--resonance-hz RESONANCE_HZ]
+                      [--resonance-q RESONANCE_Q]
+                      [--resonance-mix RESONANCE_MIX]
+                      [--resonance-decay RESONANCE_DECAY] [--tv-map TV_MAP]
+                      [--tv-interp {none,stairstep,nearest,linear,cubic,polynomial,exponential,s_curve,smootherstep}]
+                      [--tv-order TV_ORDER]
+                      inputs [inputs ...]
+
+Ring modulation and resonator filtering with PVC-style controls.
+
+positional arguments:
+  inputs                Input files/globs or '-' for stdin
+
+options:
+  -h, --help            show this help message and exit
+  -o, --output-dir OUTPUT_DIR
+                        Output directory
+  --output, --out OUTPUT
+                        Explicit output file path (single-input mode only). Alias: --out
+  --suffix SUFFIX       Output filename suffix (default: _ring)
+  --output-format OUTPUT_FORMAT
+                        Output extension/format
+  --stdout              Write processed audio to stdout stream (for piping); requires exactly one input
+  --overwrite           Overwrite existing outputs
+  --dry-run             Resolve and print, but do not write files
+  --verbosity {silent,quiet,normal,verbose,debug}
+                        Console verbosity level
+  -v, --verbose         Increase verbosity (repeat for extra detail
+... [truncated]
 ```
 
 ### Module Docstring
@@ -5773,19 +7015,85 @@ Ring + resonator filter wrapper.
 **Classes:** None
 **Functions:** `main`
 
-**Help commands:** `python3 src/pvx/cli/pvxringtvfilter.py --help`
+**Help commands:** `PYTHONPATH=src python3 -m pvx.cli.pvxringtvfilter --help`
 
 ### CLI Help Snapshot
 
 ```text
-Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxringtvfilter.py", line 7, in <module>
-    from pvx.cli.pvxring import run_ring_cli
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 16, in <module>
-    from pvx.cli.catalog import (
-    ...<4 lines>...
-    )
-ModuleNotFoundError: No module named 'pvx.cli'; 'pvx' is not a package
+usage: pvx ringtvfilter [-h] [-o OUTPUT_DIR] [--output OUTPUT]
+                        [--suffix SUFFIX] [--output-format OUTPUT_FORMAT]
+                        [--stdout] [--overwrite] [--dry-run]
+                        [--verbosity {silent,quiet,normal,verbose,debug}] [-v]
+                        [--quiet] [--silent] [--normalize {none,peak,rms}]
+                        [--peak-dbfs PEAK_DBFS] [--rms-dbfs RMS_DBFS]
+                        [--target-lufs TARGET_LUFS]
+                        [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
+                        [--compressor-ratio COMPRESSOR_RATIO]
+                        [--compressor-attack-ms COMPRESSOR_ATTACK_MS]
+                        [--compressor-release-ms COMPRESSOR_RELEASE_MS]
+                        [--compressor-makeup-db COMPRESSOR_MAKEUP_DB]
+                        [--expander-threshold-db EXPANDER_THRESHOLD_DB]
+                        [--expander-ratio EXPANDER_RATIO]
+                        [--expander-attack-ms EXPANDER_ATTACK_MS]
+                        [--expander-release-ms EXPANDER_RELEASE_MS]
+                        [--compander-threshold-db COMPANDER_THRESHOLD_DB]
+                        [--compander-compress-ratio COMPANDER_COMPRESS_RATIO]
+                        [--compander-expand-ratio COMPANDER_EXPAND_RATIO]
+                        [--compander-attack-ms COMPANDER_ATTACK_MS]
+                        [--compander-release-ms COMPANDER_RELEASE_MS]
+                        [--compander-makeup-db COMPANDER_MAKEUP_DB]
+                        [--limiter-threshold LIMITER_THRESHOLD]
+                        [--soft-clip-level SOFT_CLIP_LEVEL]
+                        [--soft-clip-type {tanh,arctan,cubic}]
+                        [--soft-clip-drive SOFT_CLIP_DRIVE]
+                        [--hard-clip-level HARD_CLIP_LEVEL] [--clip]
+                        [--subtype SUBTYPE] [--bit-depth {inherit,16,24,32f}]
+                        [--dither {none,tpdf}] [--dither-seed DITHER_SEED]
+                        [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                        [--metadata-policy {none,sidecar,copy}]
+                        [--n-fft N_FFT] [--win-length WIN_LENGTH]
+                        [--hop-size HOP_SIZE]
+                        [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
+                        [--kaiser-beta KAISER_BETA]
+                        [--transform {fft,dft,czt,dct,dst,hartley}]
+                        [--phase-engine {propagate,hybrid,random}]
+                        [--ambient-phase-mix AMBIENT_PHASE_MIX]
+                        [--phase-random-seed PHASE_RANDOM_SEED]
+                        [--onset-time-credit]
+                        [--onset-credit-pull ONSET_CREDIT_PULL]
+                        [--onset-credit-max ONSET_CREDIT_MAX]
+                        [--no-onset-realign] [--no-center]
+                        [--device {auto,cpu,cuda}] [--cuda-device CUDA_DEVICE]
+                        [--operator {ring,ringfilter,ringtvfilter}]
+                        [--frequency-hz FREQUENCY_HZ] [--depth DEPTH]
+                        [--mix MIX] [--feedback FEEDBACK]
+                        [--resonance-hz RESONANCE_HZ]
+                        [--resonance-q RESONANCE_Q]
+                        [--resonance-mix RESONANCE_MIX]
+                        [--resonance-decay RESONANCE_DECAY] [--tv-map TV_MAP]
+                        [--tv-interp {none,stairstep,nearest,linear,cubic,polynomial,exponential,s_curve,smootherstep}]
+                        [--tv-order TV_ORDER]
+                        inputs [inputs ...]
+
+Ring modulation and resonator filtering with PVC-style controls.
+
+positional arguments:
+  inputs                Input files/globs or '-' for stdin
+
+options:
+  -h, --help            show this help message and exit
+  -o, --output-dir OUTPUT_DIR
+                        Output directory
+  --output, --out OUTPUT
+                        Explicit output file path (single-input mode only). Alias: --out
+  --suffix SUFFIX       Output filename suffix (default: _ring)
+  --output-format OUTPUT_FORMAT
+                        Output extension/format
+  --stdout              Write processed audio to stdout stream (for piping); requires exactly one input
+  --overwrite           Overwrite existing outputs
+  --dry-run             Resolve and print, but do not write files
+  --verbosity {silent,quiet,normal,
+... [truncated]
 ```
 
 ### Module Docstring
@@ -5801,7 +7109,7 @@ Time-varying ring + resonator filter wrapper.
 **Classes:** None
 **Functions:** `build_parser`, `_parse_range`, `main`
 
-**Help commands:** `python3 src/pvx/cli/pvxrir.py --help`
+**Help commands:** `PYTHONPATH=src python3 -m pvx.cli.pvxrir --help`
 
 ### CLI Help Snapshot
 
@@ -5920,7 +7228,7 @@ pvxrir input.wav --list-databases --output /dev/null
 **Classes:** None
 **Functions:** `build_parser`, `main`
 
-**Help commands:** `python3 src/pvx/cli/pvxspecaugment.py --help`
+**Help commands:** `PYTHONPATH=src python3 -m pvx.cli.pvxspecaugment --help`
 
 ### CLI Help Snapshot
 
@@ -6016,19 +7324,84 @@ pvxspecaugment speech.wav --freq-mask 30 --time-mask 100 --num-freq-masks 2 --nu
 **Classes:** None
 **Functions:** `main`
 
-**Help commands:** `python3 src/pvx/cli/pvxspeccompander.py --help`
+**Help commands:** `PYTHONPATH=src python3 -m pvx.cli.pvxspeccompander --help`
 
 ### CLI Help Snapshot
 
 ```text
-Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxspeccompander.py", line 7, in <module>
-    from pvx.cli.pvxfilter import run_filter_cli
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 16, in <module>
-    from pvx.cli.catalog import (
-    ...<4 lines>...
-    )
-ModuleNotFoundError: No module named 'pvx.cli'; 'pvx' is not a package
+usage: pvx spec-compander [-h] [-o OUTPUT_DIR] [--output OUTPUT]
+                          [--suffix SUFFIX] [--output-format OUTPUT_FORMAT]
+                          [--stdout] [--overwrite] [--dry-run]
+                          [--verbosity {silent,quiet,normal,verbose,debug}]
+                          [-v] [--quiet] [--silent]
+                          [--normalize {none,peak,rms}]
+                          [--peak-dbfs PEAK_DBFS] [--rms-dbfs RMS_DBFS]
+                          [--target-lufs TARGET_LUFS]
+                          [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
+                          [--compressor-ratio COMPRESSOR_RATIO]
+                          [--compressor-attack-ms COMPRESSOR_ATTACK_MS]
+                          [--compressor-release-ms COMPRESSOR_RELEASE_MS]
+                          [--compressor-makeup-db COMPRESSOR_MAKEUP_DB]
+                          [--expander-threshold-db EXPANDER_THRESHOLD_DB]
+                          [--expander-ratio EXPANDER_RATIO]
+                          [--expander-attack-ms EXPANDER_ATTACK_MS]
+                          [--expander-release-ms EXPANDER_RELEASE_MS]
+                          [--compander-threshold-db COMPANDER_THRESHOLD_DB]
+                          [--compander-compress-ratio COMPANDER_COMPRESS_RATIO]
+                          [--compander-expand-ratio COMPANDER_EXPAND_RATIO]
+                          [--compander-attack-ms COMPANDER_ATTACK_MS]
+                          [--compander-release-ms COMPANDER_RELEASE_MS]
+                          [--compander-makeup-db COMPANDER_MAKEUP_DB]
+                          [--limiter-threshold LIMITER_THRESHOLD]
+                          [--soft-clip-level SOFT_CLIP_LEVEL]
+                          [--soft-clip-type {tanh,arctan,cubic}]
+                          [--soft-clip-drive SOFT_CLIP_DRIVE]
+                          [--hard-clip-level HARD_CLIP_LEVEL] [--clip]
+                          [--subtype SUBTYPE]
+                          [--bit-depth {inherit,16,24,32f}]
+                          [--dither {none,tpdf}] [--dither-seed DITHER_SEED]
+                          [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                          [--metadata-policy {none,sidecar,copy}]
+                          [--n-fft N_FFT] [--win-length WIN_LENGTH]
+                          [--hop-size HOP_SIZE]
+                          [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
+                          [--kaiser-beta KAISER_BETA]
+                          [--transform {fft,dft,czt,dct,dst,hartley}]
+                          [--phase-engine {propagate,hybrid,random}]
+                          [--ambient-phase-mix AMBIENT_PHASE_MIX]
+                          [--phase-random-seed PHASE_RANDOM_SEED]
+                          [--onset-time-credit]
+                          [--onset-credit-pull ONSET_CREDIT_PULL]
+                          [--onset-credit-max ONSET_CREDIT_MAX]
+                          [--no-onset-realign] [--no-center]
+                          [--device {auto,cpu,cuda}]
+                          [--cuda-device CUDA_DEVICE]
+                          [--operator {filter,tvfilter,noisefilter,bandamp,spec-compander}]
+                          --response RESPONSE [--response-mix RESPONSE_MIX]
+                          [--dry-mix DRY_MIX]
+                          [--response-gain-db RESPONSE_GAIN_DB]
+                          [--transpose-semitones TRANSPOSE_SEMITONES]
+                          [--shift-bins SHIFT_BINS] [--tv-map TV_MAP]
+                          [--tv-key TV_KEY]
+                          [--tv-interp {none,stairstep,nearest,linear,cubic,polynomial,exponential,s_curve,smootherstep}]
+                          [--tv-order TV_ORDER] [--noise-floor NOISE_FLOOR]
+                          [--band-gain-db BAND_GAIN_DB]
+                          [--band-width-bins BAND_WIDTH_BINS]
+                          [--peak-count PEAK_COUNT]
+                          [--comp-threshold-db COMP_THRESHOLD_DB]
+                          [--comp-ratio COMP_RATIO]
+                          [--expand-ratio EXPAND_RATIO]
+                          inputs [inputs ...]
+
+Response-driven spectral processing using PVXRF artifacts.
+
+positional arguments:
+  inputs                Input files/globs or '-' for stdin
+
+options:
+  -h, --help            show this help message and exit
+  -o, --output-dir OU
+... [truncated]
 ```
 
 ### Module Docstring
@@ -6042,23 +7415,87 @@ Response-referenced spectral compander wrapper.
 **Purpose:** Trajectory-aware multichannel convolution reverb for mono sources.
 
 **Classes:** None
-**Functions:** `build_parser`, `_to_mono`, `main`
+**Functions:** `build_parser`, `_to_mono`, `_normalize_coordinate_option_args`, `main`
 
-**Help commands:** `python3 src/pvx/cli/pvxtrajectoryreverb.py --help`
+**Help commands:** `PYTHONPATH=src python3 -m pvx.cli.pvxtrajectoryreverb --help`
 
 ### CLI Help Snapshot
 
 ```text
-Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxtrajectoryreverb.py", line 12, in <module>
-    from pvx.core.common import (
-    ...<12 lines>...
-    )
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 16, in <module>
-    from pvx.cli.catalog import (
-    ...<4 lines>...
-    )
-ModuleNotFoundError: No module named 'pvx.cli'; 'pvx' is not a package
+usage: python3 -m pvx.cli.pvxtrajectoryreverb [-h] [-o OUTPUT_DIR]
+                                              [--output OUTPUT]
+                                              [--suffix SUFFIX]
+                                              [--output-format OUTPUT_FORMAT]
+                                              [--stdout] [--overwrite]
+                                              [--dry-run]
+                                              [--verbosity {silent,quiet,normal,verbose,debug}]
+                                              [-v] [--quiet] [--silent]
+                                              [--normalize {none,peak,rms}]
+                                              [--peak-dbfs PEAK_DBFS]
+                                              [--rms-dbfs RMS_DBFS]
+                                              [--target-lufs TARGET_LUFS]
+                                              [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
+                                              [--compressor-ratio COMPRESSOR_RATIO]
+                                              [--compressor-attack-ms COMPRESSOR_ATTACK_MS]
+                                              [--compressor-release-ms COMPRESSOR_RELEASE_MS]
+                                              [--compressor-makeup-db COMPRESSOR_MAKEUP_DB]
+                                              [--expander-threshold-db EXPANDER_THRESHOLD_DB]
+                                              [--expander-ratio EXPANDER_RATIO]
+                                              [--expander-attack-ms EXPANDER_ATTACK_MS]
+                                              [--expander-release-ms EXPANDER_RELEASE_MS]
+                                              [--compander-threshold-db COMPANDER_THRESHOLD_DB]
+                                              [--compander-compress-ratio COMPANDER_COMPRESS_RATIO]
+                                              [--compander-expand-ratio COMPANDER_EXPAND_RATIO]
+                                              [--compander-attack-ms COMPANDER_ATTACK_MS]
+                                              [--compander-release-ms COMPANDER_RELEASE_MS]
+                                              [--compander-makeup-db COMPANDER_MAKEUP_DB]
+                                              [--limiter-threshold LIMITER_THRESHOLD]
+                                              [--soft-clip-level SOFT_CLIP_LEVEL]
+                                              [--soft-clip-type {tanh,arctan,cubic}]
+                                              [--soft-clip-drive SOFT_CLIP_DRIVE]
+                                              [--hard-clip-level HARD_CLIP_LEVEL]
+                                              [--clip] [--subtype SUBTYPE]
+                                              [--bit-depth {inherit,16,24,32f}]
+                                              [--dither {none,tpdf}]
+                                              [--dither-seed DITHER_SEED]
+                                              [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                                              [--metadata-policy {none,sidecar,copy}]
+                                              --ir IR
+                                              [--coord-system {cartesian,spherical}]
+                                              --start START --end END
+                                              [--speaker-angles SPEAKER_ANGLES]
+                                              [--trajectory-shape {linear,ease-in,ease-out,ease-in-out}]
+                                              [--distance-law {none,inverse,inverse-square}]
+                                              [--normalize-gains]
+                                              [--no-normalize-gains]
+                                              [--wet WET] [--dry DRY]
+                                              inputs [inputs ...]
+
+Convolve mono source with multichannel impulse response and move source from A to B.
+
+positional arguments:
+  inputs                Input files/globs or '-' for stdin
+
+options:
+  -h, --help            show this help message and exit
+  -o, --output-dir OUTPUT_DIR
+                        Output directory
+  --output, --out OUTPUT
+                        Explicit output file path (single-input mode only). Alias: --out
+  --suffix SUFFIX       Output filename suffix (default: _trajrev)
+  --output-format OUTPUT_FORMAT
+                        Output extension/format
+  --stdout              Write processed audio to stdout stream (for piping); requires exactly one input
+  --overwrite           Overwrite existing outputs
+  --dry-run             Resolve and print, but do not write files
+  --verbosity {silent,quiet,normal,verbose,debug}
+                        Console verbosity level
+  -v, --verbose         Increase verbosity (repeat for extra detail)
+  --quiet               Reduce output and hide status bars
+  --silent              Suppress all console output
+  --normalize {none,peak,rms}
+                        
+... [truncated]
 ```
 
 ### Module Docstring
@@ -6074,21 +7511,70 @@ Trajectory-aware multichannel convolution reverb for mono sources.
 **Classes:** None
 **Functions:** `build_parser`, `main`
 
-**Help commands:** `python3 src/pvx/cli/pvxtransient.py --help`
+**Help commands:** `PYTHONPATH=src python3 -m pvx.cli.pvxtransient --help`
 
 ### CLI Help Snapshot
 
 ```text
-Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxtransient.py", line 11, in <module>
-    from pvx.core.common import (
-    ...<19 lines>...
-    )
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 16, in <module>
-    from pvx.cli.catalog import (
-    ...<4 lines>...
-    )
-ModuleNotFoundError: No module named 'pvx.cli'; 'pvx' is not a package
+usage: python3 -m pvx.cli.pvxtransient [-h] [-o OUTPUT_DIR] [--output OUTPUT]
+                                       [--suffix SUFFIX]
+                                       [--output-format OUTPUT_FORMAT]
+                                       [--stdout] [--overwrite] [--dry-run]
+                                       [--verbosity {silent,quiet,normal,verbose,debug}]
+                                       [-v] [--quiet] [--silent]
+                                       [--normalize {none,peak,rms}]
+                                       [--peak-dbfs PEAK_DBFS]
+                                       [--rms-dbfs RMS_DBFS]
+                                       [--target-lufs TARGET_LUFS]
+                                       [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
+                                       [--compressor-ratio COMPRESSOR_RATIO]
+                                       [--compressor-attack-ms COMPRESSOR_ATTACK_MS]
+                                       [--compressor-release-ms COMPRESSOR_RELEASE_MS]
+                                       [--compressor-makeup-db COMPRESSOR_MAKEUP_DB]
+                                       [--expander-threshold-db EXPANDER_THRESHOLD_DB]
+                                       [--expander-ratio EXPANDER_RATIO]
+                                       [--expander-attack-ms EXPANDER_ATTACK_MS]
+                                       [--expander-release-ms EXPANDER_RELEASE_MS]
+                                       [--compander-threshold-db COMPANDER_THRESHOLD_DB]
+                                       [--compander-compress-ratio COMPANDER_COMPRESS_RATIO]
+                                       [--compander-expand-ratio COMPANDER_EXPAND_RATIO]
+                                       [--compander-attack-ms COMPANDER_ATTACK_MS]
+                                       [--compander-release-ms COMPANDER_RELEASE_MS]
+                                       [--compander-makeup-db COMPANDER_MAKEUP_DB]
+                                       [--limiter-threshold LIMITER_THRESHOLD]
+                                       [--soft-clip-level SOFT_CLIP_LEVEL]
+                                       [--soft-clip-type {tanh,arctan,cubic}]
+                                       [--soft-clip-drive SOFT_CLIP_DRIVE]
+                                       [--hard-clip-level HARD_CLIP_LEVEL]
+                                       [--clip] [--subtype SUBTYPE]
+                                       [--bit-depth {inherit,16,24,32f}]
+                                       [--dither {none,tpdf}]
+                                       [--dither-seed DITHER_SEED]
+                                       [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                                       [--metadata-policy {none,sidecar,copy}]
+                                       [--n-fft N_FFT]
+                                       [--win-length WIN_LENGTH]
+                                       [--hop-size HOP_SIZE]
+                                       [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
+                                       [--kaiser-beta KAISER_BETA]
+                                       [--transform {fft,dft,czt,dct,dst,hartley}]
+                                       [--phase-engine {propagate,hybrid,random}]
+                                       [--ambient-phase-mix AMBIENT_PHASE_MIX]
+                                       [--phase-random-seed PHASE_RANDOM_SEED]
+                                       [--onset-time-credit]
+                                       [--onset-credit-pull ONSET_CREDIT_PULL]
+                                       [--onset-credit-max ONSET_CREDIT_MAX]
+                                       [--no-onset-realign] [--no-center]
+                                       [--device {auto,cpu,cuda}]
+                                       [--cuda-device CUDA_DEVICE]
+                                       [--time-stretch TIME_STRETCH]
+                                       [--target-duration TARGET_DURATION]
+                                       [--pitch-shift-semitones PITCH_SHIFT_SEMITONES]
+                                       [--pitch-shift-cents PITCH_SHIFT_CENTS]
+                                       [--pitch-shift-ratio PITCH_SHIFT_RATIO]
+                                       [--transient-threshold TRANSIENT_THRESHOLD]
+                                       [
+... [truncated]
 ```
 
 ### Module Docstring
@@ -6104,19 +7590,87 @@ Transient-aware time/pitch processing.
 **Classes:** None
 **Functions:** `main`
 
-**Help commands:** `python3 src/pvx/cli/pvxtvfilter.py --help`
+**Help commands:** `PYTHONPATH=src python3 -m pvx.cli.pvxtvfilter --help`
 
 ### CLI Help Snapshot
 
 ```text
-Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxtvfilter.py", line 7, in <module>
-    from pvx.cli.pvxfilter import run_filter_cli
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 16, in <module>
-    from pvx.cli.catalog import (
-    ...<4 lines>...
-    )
-ModuleNotFoundError: No module named 'pvx.cli'; 'pvx' is not a package
+usage: pvx tvfilter [-h] [-o OUTPUT_DIR] [--output OUTPUT] [--suffix SUFFIX]
+                    [--output-format OUTPUT_FORMAT] [--stdout] [--overwrite]
+                    [--dry-run]
+                    [--verbosity {silent,quiet,normal,verbose,debug}] [-v]
+                    [--quiet] [--silent] [--normalize {none,peak,rms}]
+                    [--peak-dbfs PEAK_DBFS] [--rms-dbfs RMS_DBFS]
+                    [--target-lufs TARGET_LUFS]
+                    [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
+                    [--compressor-ratio COMPRESSOR_RATIO]
+                    [--compressor-attack-ms COMPRESSOR_ATTACK_MS]
+                    [--compressor-release-ms COMPRESSOR_RELEASE_MS]
+                    [--compressor-makeup-db COMPRESSOR_MAKEUP_DB]
+                    [--expander-threshold-db EXPANDER_THRESHOLD_DB]
+                    [--expander-ratio EXPANDER_RATIO]
+                    [--expander-attack-ms EXPANDER_ATTACK_MS]
+                    [--expander-release-ms EXPANDER_RELEASE_MS]
+                    [--compander-threshold-db COMPANDER_THRESHOLD_DB]
+                    [--compander-compress-ratio COMPANDER_COMPRESS_RATIO]
+                    [--compander-expand-ratio COMPANDER_EXPAND_RATIO]
+                    [--compander-attack-ms COMPANDER_ATTACK_MS]
+                    [--compander-release-ms COMPANDER_RELEASE_MS]
+                    [--compander-makeup-db COMPANDER_MAKEUP_DB]
+                    [--limiter-threshold LIMITER_THRESHOLD]
+                    [--soft-clip-level SOFT_CLIP_LEVEL]
+                    [--soft-clip-type {tanh,arctan,cubic}]
+                    [--soft-clip-drive SOFT_CLIP_DRIVE]
+                    [--hard-clip-level HARD_CLIP_LEVEL] [--clip]
+                    [--subtype SUBTYPE] [--bit-depth {inherit,16,24,32f}]
+                    [--dither {none,tpdf}] [--dither-seed DITHER_SEED]
+                    [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                    [--metadata-policy {none,sidecar,copy}] [--n-fft N_FFT]
+                    [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
+                    [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
+                    [--kaiser-beta KAISER_BETA]
+                    [--transform {fft,dft,czt,dct,dst,hartley}]
+                    [--phase-engine {propagate,hybrid,random}]
+                    [--ambient-phase-mix AMBIENT_PHASE_MIX]
+                    [--phase-random-seed PHASE_RANDOM_SEED]
+                    [--onset-time-credit]
+                    [--onset-credit-pull ONSET_CREDIT_PULL]
+                    [--onset-credit-max ONSET_CREDIT_MAX] [--no-onset-realign]
+                    [--no-center] [--device {auto,cpu,cuda}]
+                    [--cuda-device CUDA_DEVICE]
+                    [--operator {filter,tvfilter,noisefilter,bandamp,spec-compander}]
+                    --response RESPONSE [--response-mix RESPONSE_MIX]
+                    [--dry-mix DRY_MIX] [--response-gain-db RESPONSE_GAIN_DB]
+                    [--transpose-semitones TRANSPOSE_SEMITONES]
+                    [--shift-bins SHIFT_BINS] [--tv-map TV_MAP]
+                    [--tv-key TV_KEY]
+                    [--tv-interp {none,stairstep,nearest,linear,cubic,polynomial,exponential,s_curve,smootherstep}]
+                    [--tv-order TV_ORDER] [--noise-floor NOISE_FLOOR]
+                    [--band-gain-db BAND_GAIN_DB]
+                    [--band-width-bins BAND_WIDTH_BINS]
+                    [--peak-count PEAK_COUNT]
+                    [--comp-threshold-db COMP_THRESHOLD_DB]
+                    [--comp-ratio COMP_RATIO] [--expand-ratio EXPAND_RATIO]
+                    inputs [inputs ...]
+
+Response-driven spectral processing using PVXRF artifacts.
+
+positional arguments:
+  inputs                Input files/globs or '-' for stdin
+
+options:
+  -h, --help            show this help message and exit
+  -o, --output-dir OUTPUT_DIR
+                        Output directory
+  --output, --out OUTPUT
+                        Explicit output file path (single-input mode only). Alias: --out
+  --suffix SUFFIX       Output filename suffix (default: _filter)
+  --output-format OUTPUT_FORMAT
+                        Output extension/format
+  --stdout              Write processed audio to stdout stream (for piping); requires exactly one input
+  --overwrite           Overwrite existing outputs
+  --dry-run             Resolve a
+... [truncated]
 ```
 
 ### Module Docstring
@@ -6132,21 +7686,80 @@ Time-varying response filter wrapper.
 **Classes:** None
 **Functions:** `cents_to_ratio`, `pan_gains`, `build_parser`, `main`
 
-**Help commands:** `python3 src/pvx/cli/pvxunison.py --help`
+**Help commands:** `PYTHONPATH=src python3 -m pvx.cli.pvxunison --help`
 
 ### CLI Help Snapshot
 
 ```text
-Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxunison.py", line 12, in <module>
-    from pvx.core.common import (
-    ...<16 lines>...
-    )
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 16, in <module>
-    from pvx.cli.catalog import (
-    ...<4 lines>...
-    )
-ModuleNotFoundError: No module named 'pvx.cli'; 'pvx' is not a package
+usage: python3 -m pvx.cli.pvxunison [-h] [-o OUTPUT_DIR] [--output OUTPUT]
+                                    [--suffix SUFFIX]
+                                    [--output-format OUTPUT_FORMAT] [--stdout]
+                                    [--overwrite] [--dry-run]
+                                    [--verbosity {silent,quiet,normal,verbose,debug}]
+                                    [-v] [--quiet] [--silent]
+                                    [--normalize {none,peak,rms}]
+                                    [--peak-dbfs PEAK_DBFS]
+                                    [--rms-dbfs RMS_DBFS]
+                                    [--target-lufs TARGET_LUFS]
+                                    [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
+                                    [--compressor-ratio COMPRESSOR_RATIO]
+                                    [--compressor-attack-ms COMPRESSOR_ATTACK_MS]
+                                    [--compressor-release-ms COMPRESSOR_RELEASE_MS]
+                                    [--compressor-makeup-db COMPRESSOR_MAKEUP_DB]
+                                    [--expander-threshold-db EXPANDER_THRESHOLD_DB]
+                                    [--expander-ratio EXPANDER_RATIO]
+                                    [--expander-attack-ms EXPANDER_ATTACK_MS]
+                                    [--expander-release-ms EXPANDER_RELEASE_MS]
+                                    [--compander-threshold-db COMPANDER_THRESHOLD_DB]
+                                    [--compander-compress-ratio COMPANDER_COMPRESS_RATIO]
+                                    [--compander-expand-ratio COMPANDER_EXPAND_RATIO]
+                                    [--compander-attack-ms COMPANDER_ATTACK_MS]
+                                    [--compander-release-ms COMPANDER_RELEASE_MS]
+                                    [--compander-makeup-db COMPANDER_MAKEUP_DB]
+                                    [--limiter-threshold LIMITER_THRESHOLD]
+                                    [--soft-clip-level SOFT_CLIP_LEVEL]
+                                    [--soft-clip-type {tanh,arctan,cubic}]
+                                    [--soft-clip-drive SOFT_CLIP_DRIVE]
+                                    [--hard-clip-level HARD_CLIP_LEVEL]
+                                    [--clip] [--subtype SUBTYPE]
+                                    [--bit-depth {inherit,16,24,32f}]
+                                    [--dither {none,tpdf}]
+                                    [--dither-seed DITHER_SEED]
+                                    [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                                    [--metadata-policy {none,sidecar,copy}]
+                                    [--n-fft N_FFT] [--win-length WIN_LENGTH]
+                                    [--hop-size HOP_SIZE]
+                                    [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
+                                    [--kaiser-beta KAISER_BETA]
+                                    [--transform {fft,dft,czt,dct,dst,hartley}]
+                                    [--phase-engine {propagate,hybrid,random}]
+                                    [--ambient-phase-mix AMBIENT_PHASE_MIX]
+                                    [--phase-random-seed PHASE_RANDOM_SEED]
+                                    [--onset-time-credit]
+                                    [--onset-credit-pull ONSET_CREDIT_PULL]
+                                    [--onset-credit-max ONSET_CREDIT_MAX]
+                                    [--no-onset-realign] [--no-center]
+                                    [--device {auto,cpu,cuda}]
+                                    [--cuda-device CUDA_DEVICE]
+                                    [--voices VOICES]
+                                    [--detune-cents DETUNE_CENTS]
+                                    [--width WIDTH] [--dry-mix DRY_MIX]
+                                    [--resample-mode {auto,fft,linear}]
+                                    inputs [inputs ...]
+
+Stereo unison thickener
+
+positional arguments:
+  inputs                Input files/globs or '-' for stdin
+
+options:
+  -h, --help            show this help message and exit
+  -o, --output-dir OUTPUT_DIR
+                        Output directory
+  --output, --out OUTPUT
+                        Explicit output file path (single-input mode only). Alias: --out
+  --suffix SUFFIX      
+... [truncated]
 ```
 
 ### Module Docstring
@@ -6162,19 +7775,73 @@ Create unison width via micro-detuned phase-vocoder voices.
 **Classes:** None
 **Functions:** None
 
-**Help commands:** `python3 src/pvx/cli/pvxvoc.py --help`
+**Help commands:** `PYTHONPATH=src python3 -m pvx.cli.pvxvoc --help`
 
 ### CLI Help Snapshot
 
 ```text
-Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxvoc.py", line 5, in <module>
-    from pvx.voc_cli import build_parser, expand_inputs, main, run_guided_mode
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 16, in <module>
-    from pvx.cli.catalog import (
-    ...<4 lines>...
-    )
-ModuleNotFoundError: No module named 'pvx.cli'; 'pvx' is not a package
+usage: python3 -m pvx.cli.pvxvoc [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
+                                 [--output-format OUTPUT_FORMAT]
+                                 [--out OUTPUT] [--overwrite] [--dry-run]
+                                 [--stdout]
+                                 [--verbosity {silent,quiet,normal,verbose,debug}]
+                                 [-v] [--quiet] [--silent]
+                                 [--preset {none,default,vocal,ambient,extreme,vocal_studio,drums_safe,extreme_ambient,stereo_coherent}]
+                                 [--example {all,basic,vocal,ambient,extreme,drums_safe,stereo_coherent,hybrid,benchmark,gpu,pipeline,csv}]
+                                 [--guided] [--stretch STRETCH] [--gpu]
+                                 [--cpu]
+                                 [--quality-profile {neutral,speech,music,percussion,ambient,extreme}]
+                                 [--auto-profile]
+                                 [--auto-profile-lookahead-seconds AUTO_PROFILE_LOOKAHEAD_SECONDS]
+                                 [--auto-transform] [--n-fft N_FFT]
+                                 [--win-length WIN_LENGTH]
+                                 [--hop-size HOP_SIZE]
+                                 [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
+                                 [--kaiser-beta KAISER_BETA]
+                                 [--transform {fft,dft,czt,dct,dst,hartley}]
+                                 [--no-center]
+                                 [--phase-locking {off,identity}]
+                                 [--phase-engine {propagate,hybrid,random}]
+                                 [--ambient-phase-mix AMBIENT_PHASE_MIX]
+                                 [--phase-random-seed PHASE_RANDOM_SEED]
+                                 [--transient-preserve]
+                                 [--transient-threshold TRANSIENT_THRESHOLD]
+                                 [--fourier-sync]
+                                 [--fourier-sync-min-fft FOURIER_SYNC_MIN_FFT]
+                                 [--fourier-sync-max-fft FOURIER_SYNC_MAX_FFT]
+                                 [--fourier-sync-smooth FOURIER_SYNC_SMOOTH]
+                                 [--multires-fusion]
+                                 [--multires-ffts MULTIRES_FFTS]
+                                 [--multires-weights MULTIRES_WEIGHTS]
+                                 [--device {auto,cpu,cuda}]
+                                 [--cuda-device CUDA_DEVICE]
+                                 [--time-stretch TIME_STRETCH]
+                                 [--target-duration TARGET_DURATION]
+                                 [--stretch-mode {auto,standard,multistage}]
+                                 [--extreme-time-stretch]
+                                 [--extreme-stretch-threshold EXTREME_STRETCH_THRESHOLD]
+                                 [--max-stage-stretch MAX_STAGE_STRETCH]
+                                 [--onset-time-credit]
+                                 [--onset-credit-pull ONSET_CREDIT_PULL]
+                                 [--onset-credit-max ONSET_CREDIT_MAX]
+                                 [--no-onset-realign] [--ambient-preset]
+                                 [--auto-segment-seconds AUTO_SEGMENT_SECONDS]
+                                 [--checkpoint-dir CHECKPOINT_DIR]
+                                 [--checkpoint-id CHECKPOINT_ID] [--resume]
+                                 [--interp {none,linear,nearest,cubic,polynomial,exponential,s_curve,smootherstep}]
+                                 [--order ORDER]
+                                 [--transient-mode {off,reset,hybrid,wsola}]
+                                 [--transient-sensitivity TRANSIENT_SENSITIVITY]
+                                 [--transient-protect-ms TRANSIENT_PROTECT_MS]
+                                 [--transient-crossfade-ms TRANSIENT_CROSSFADE_MS]
+                                 [--stereo-mode {independent,mid_side_lock,ref_channel_lock}]
+                                 [--ref-channel REF_CHANNEL]
+                                 [--coherence-strength COHERENCE_STRENGTH]
+                                 [--pitch-shift-semitones PITCH_SHIFT_SEMITONES |
+                                 --pitch-shift-cents PITCH_SHIFT_CENTS |
+                                 --pitch-shift-ratio PITCH_SHIFT_RATIO |
+    
+... [truncated]
 ```
 
 ### Module Docstring
@@ -6190,21 +7857,81 @@ CLI entrypoint wrapper for the phase-vocoder tool.
 **Classes:** None
 **Functions:** `fill_stretch_segments`, `build_parser`, `main`
 
-**Help commands:** `python3 src/pvx/cli/pvxwarp.py --help`
+**Help commands:** `PYTHONPATH=src python3 -m pvx.cli.pvxwarp --help`
 
 ### CLI Help Snapshot
 
 ```text
-Traceback (most recent call last):
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvxwarp.py", line 12, in <module>
-    from pvx.core.common import (
-    ...<19 lines>...
-    )
-  File "/Users/cleider/dev/pvx/src/pvx/cli/pvx.py", line 16, in <module>
-    from pvx.cli.catalog import (
-    ...<4 lines>...
-    )
-ModuleNotFoundError: No module named 'pvx.cli'; 'pvx' is not a package
+usage: python3 -m pvx.cli.pvxwarp [-h] [-o OUTPUT_DIR] [--output OUTPUT]
+                                  [--suffix SUFFIX]
+                                  [--output-format OUTPUT_FORMAT] [--stdout]
+                                  [--overwrite] [--dry-run]
+                                  [--verbosity {silent,quiet,normal,verbose,debug}]
+                                  [-v] [--quiet] [--silent]
+                                  [--normalize {none,peak,rms}]
+                                  [--peak-dbfs PEAK_DBFS]
+                                  [--rms-dbfs RMS_DBFS]
+                                  [--target-lufs TARGET_LUFS]
+                                  [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
+                                  [--compressor-ratio COMPRESSOR_RATIO]
+                                  [--compressor-attack-ms COMPRESSOR_ATTACK_MS]
+                                  [--compressor-release-ms COMPRESSOR_RELEASE_MS]
+                                  [--compressor-makeup-db COMPRESSOR_MAKEUP_DB]
+                                  [--expander-threshold-db EXPANDER_THRESHOLD_DB]
+                                  [--expander-ratio EXPANDER_RATIO]
+                                  [--expander-attack-ms EXPANDER_ATTACK_MS]
+                                  [--expander-release-ms EXPANDER_RELEASE_MS]
+                                  [--compander-threshold-db COMPANDER_THRESHOLD_DB]
+                                  [--compander-compress-ratio COMPANDER_COMPRESS_RATIO]
+                                  [--compander-expand-ratio COMPANDER_EXPAND_RATIO]
+                                  [--compander-attack-ms COMPANDER_ATTACK_MS]
+                                  [--compander-release-ms COMPANDER_RELEASE_MS]
+                                  [--compander-makeup-db COMPANDER_MAKEUP_DB]
+                                  [--limiter-threshold LIMITER_THRESHOLD]
+                                  [--soft-clip-level SOFT_CLIP_LEVEL]
+                                  [--soft-clip-type {tanh,arctan,cubic}]
+                                  [--soft-clip-drive SOFT_CLIP_DRIVE]
+                                  [--hard-clip-level HARD_CLIP_LEVEL] [--clip]
+                                  [--subtype SUBTYPE]
+                                  [--bit-depth {inherit,16,24,32f}]
+                                  [--dither {none,tpdf}]
+                                  [--dither-seed DITHER_SEED]
+                                  [--true-peak-max-dbtp TRUE_PEAK_MAX_DBTP]
+                                  [--metadata-policy {none,sidecar,copy}]
+                                  [--n-fft N_FFT] [--win-length WIN_LENGTH]
+                                  [--hop-size HOP_SIZE]
+                                  [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
+                                  [--kaiser-beta KAISER_BETA]
+                                  [--transform {fft,dft,czt,dct,dst,hartley}]
+                                  [--phase-engine {propagate,hybrid,random}]
+                                  [--ambient-phase-mix AMBIENT_PHASE_MIX]
+                                  [--phase-random-seed PHASE_RANDOM_SEED]
+                                  [--onset-time-credit]
+                                  [--onset-credit-pull ONSET_CREDIT_PULL]
+                                  [--onset-credit-max ONSET_CREDIT_MAX]
+                                  [--no-onset-realign] [--no-center]
+                                  [--device {auto,cpu,cuda}]
+                                  [--cuda-device CUDA_DEVICE] --map MAP
+                                  [--crossfade-ms CROSSFADE_MS]
+                                  [--resample-mode {auto,fft,linear}]
+                                  inputs [inputs ...]
+
+Apply variable time-stretch map from CSV
+
+positional arguments:
+  inputs                Input files/globs or '-' for stdin
+
+options:
+  -h, --help            show this help message and exit
+  -o, --output-dir OUTPUT_DIR
+                        Output directory
+  --output, --out OUTPUT
+                        Explicit output file path (single-input mode only). Alias: --out
+  --suffix SUFFIX       Output filename suffix (default: _warp)
+  --output-format OUTPUT_FORMAT
+                        Output extension/format
+  --stdout              Write processed audio to stdout stream (for piping); require
+... [truncated]
 ```
 
 ### Module Docstring
@@ -6489,81 +8216,71 @@ Transient analysis and segmentation helpers for hybrid pvx modes.
 **Classes:** `VocoderConfig`, `PitchConfig`, `ControlSegment`, `DynamicControlRef`, `DynamicControlSignal`, `JobResult`, `FourierSyncPlan`, `AudioBlockResult`, `RuntimeConfig`
 **Functions:** `db_to_amplitude`, `cents_to_ratio`, `_eval_numeric_expr`, `parse_numeric_expression`, `parse_pitch_ratio_value`, `_is_power_of_two`, `parse_numeric_list`, `parse_int_list`, `_looks_like_control_signal_reference`, `looks_like_control_signal_reference`, `_parse_scalar_cli_value`, `_parse_int_cli_value`, `parse_int_cli_value`, `_parse_control_signal_value`, `_coerce_control_interp`, `_control_value_column_candidates`, `_deduplicate_points`, `_normalize_control_points`, `_parse_csv_control_points`, `_parse_json_control_points`, `load_dynamic_control_signal`, `_smoothstep`, `_smootherstep`, `_exp_ease`, `_piecewise_ease_sample`, `_sample_dynamic_signal`, `estimate_content_features`, `suggest_quality_profile`, `apply_quality_profile_overrides`, `resolve_transform_auto`, `_has_cupy`, `_is_cupy_array`, `_array_module`, `_to_numpy`, `_to_runtime_array`, `_as_float`, `_as_bool`, `_i0`, `normalize_transform_name`, `transform_bin_count`, `_analysis_angular_velocity`, `_transform_requires_scipy`, `ensure_transform_backend_available`, `validate_transform_available`, `_resize_or_pad_1d`, `_onesided_to_full_spectrum`, `_forward_transform_numpy`, `_inverse_transform_numpy`, `_forward_transform`, `_inverse_transform`, `add_runtime_args`, `runtime_config`, `configure_runtime`, `configure_runtime_from_args`, `ensure_runtime_dependencies`, `principal_angle`, `_cosine_series_window`, `_bartlett_window`, `_bohman_window`, `_cosine_window`, `_sine_window`, `_triangular_window`, `_bartlett_hann_window`, `_tukey_window`, `_parzen_window`, `_lanczos_window`, `_welch_window`, `_gaussian_window`, `_general_gaussian_window`, `_exponential_window`, `_cauchy_window`, `_cosine_power_window`, `_hann_poisson_window`, `_general_hamming_window`, `_kaiser_window`, `make_window`, `pad_for_framing`, `stft`, `istft`, `scaled_win_length`, `resize_spectrum_bins`, `smooth_series`, `regularize_frame_lengths`, `fill_nan_with_nearest`, `lock_fft_length_to_f0`, `build_fourier_sync_plan`, `compute_transient_flags`, `build_output_time_steps`, `create_phase_rng`, `draw_random_phase`, `apply_phase_engine`, `find_spectral_peaks`, `apply_identity_phase_locking`, `phase_vocoder_time_stretch`, `phase_vocoder_time_stretch_fourier_sync`, `compute_multistage_stretches`, `phase_vocoder_time_stretch_multistage`, `stretch_channel_with_strategy`, `phase_vocoder_time_stretch_multires_fusion`, `linear_resample_1d`, `resample_1d`, `force_length`, `estimate_f0_autocorrelation`, `normalize_audio`, `_envelope_coeff`, `_envelope_follower`, `_estimate_lufs_or_rms_db`, `_apply_compressor`, `_apply_expander`, `_apply_compander`, `_apply_limiter`, `_apply_soft_clip`, `add_mastering_args`, `validate_mastering_args`, `apply_mastering_chain`, `cepstral_envelope`, `apply_formant_preservation`, `choose_pitch_ratio`, `_parse_optional_float`, `parse_control_segments_csv`, `apply_control_confidence_policy`, `smooth_control_ratios`, `expand_control_segments`, `load_control_segments`, `_lock_channel_phase_to_reference`, `process_audio_block`, `resolve_base_stretch`, `build_vocoder_config_from_args`, `_finalize_dynamic_segment_values`, `build_dynamic_control_segments`, `compute_output_path`, `_stream_format_name`, `_read_audio_input`, `read_audio_input`, `_write_audio_output`, `concat_audio_chunks`, `build_uniform_control_segments`, `resolve_checkpoint_context`, `load_checkpoint_chunk`, `save_checkpoint_chunk`, `write_manifest`, `process_file`, `force_length_multi`, `resample_multi`, `validate_args`, `build_parser`, `run_guided_mode`, `expand_inputs`, `collect_cli_flags`, `apply_named_preset`, `main`
 
-**Help commands:** `python3 src/pvx/core/voc.py --help`
+**Help commands:** `PYTHONPATH=src python3 -m pvx.core.voc --help`
 
 ### CLI Help Snapshot
 
 ```text
-usage: voc.py [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
-              [--output-format OUTPUT_FORMAT] [--out OUTPUT] [--overwrite]
-              [--dry-run] [--stdout]
-              [--verbosity {silent,quiet,normal,verbose,debug}] [-v] [--quiet]
-              [--silent]
-              [--preset {none,default,vocal,ambient,extreme,vocal_studio,drums_safe,extreme_ambient,stereo_coherent}]
-              [--example {all,basic,vocal,ambient,extreme,drums_safe,stereo_coherent,hybrid,benchmark,gpu,pipeline,csv}]
-              [--guided] [--stretch STRETCH] [--gpu] [--cpu]
-              [--quality-profile {neutral,speech,music,percussion,ambient,extreme}]
-              [--auto-profile]
-              [--auto-profile-lookahead-seconds AUTO_PROFILE_LOOKAHEAD_SECONDS]
-              [--auto-transform] [--n-fft N_FFT] [--win-length WIN_LENGTH]
-              [--hop-size HOP_SIZE]
-              [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
-              [--kaiser-beta KAISER_BETA]
-              [--transform {fft,dft,czt,dct,dst,hartley}] [--no-center]
-              [--phase-locking {off,identity}]
-              [--phase-engine {propagate,hybrid,random}]
-              [--ambient-phase-mix AMBIENT_PHASE_MIX]
-              [--phase-random-seed PHASE_RANDOM_SEED] [--transient-preserve]
-              [--transient-threshold TRANSIENT_THRESHOLD] [--fourier-sync]
-              [--fourier-sync-min-fft FOURIER_SYNC_MIN_FFT]
-              [--fourier-sync-max-fft FOURIER_SYNC_MAX_FFT]
-              [--fourier-sync-smooth FOURIER_SYNC_SMOOTH] [--multires-fusion]
-              [--multires-ffts MULTIRES_FFTS]
-              [--multires-weights MULTIRES_WEIGHTS] [--device {auto,cpu,cuda}]
-              [--cuda-device CUDA_DEVICE] [--time-stretch TIME_STRETCH]
-              [--target-duration TARGET_DURATION]
-              [--stretch-mode {auto,standard,multistage}]
-              [--extreme-time-stretch]
-              [--extreme-stretch-threshold EXTREME_STRETCH_THRESHOLD]
-              [--max-stage-stretch MAX_STAGE_STRETCH] [--onset-time-credit]
-              [--onset-credit-pull ONSET_CREDIT_PULL]
-              [--onset-credit-max ONSET_CREDIT_MAX] [--no-onset-realign]
-              [--ambient-preset] [--auto-segment-seconds AUTO_SEGMENT_SECONDS]
-              [--checkpoint-dir CHECKPOINT_DIR]
-              [--checkpoint-id CHECKPOINT_ID] [--resume]
-              [--interp {none,linear,nearest,cubic,polynomial,exponential,s_curve,smootherstep}]
-              [--order ORDER] [--transient-mode {off,reset,hybrid,wsola}]
-              [--transient-sensitivity TRANSIENT_SENSITIVITY]
-              [--transient-protect-ms TRANSIENT_PROTECT_MS]
-              [--transient-crossfade-ms TRANSIENT_CROSSFADE_MS]
-              [--stereo-mode {independent,mid_side_lock,ref_channel_lock}]
-              [--ref-channel REF_CHANNEL]
-              [--coherence-strength COHERENCE_STRENGTH]
-              [--pitch-shift-semitones PITCH_SHIFT_SEMITONES |
-              --pitch-shift-cents PITCH_SHIFT_CENTS |
-              --pitch-shift-ratio PITCH_SHIFT_RATIO | --target-f0 TARGET_F0]
-              [--analysis-channel {first,mix}] [--f0-min F0_MIN]
-              [--f0-max F0_MAX] [--pitch-mode {standard,formant-preserving}]
-              [--formant-lifter FORMANT_LIFTER]
-              [--formant-strength FORMANT_STRENGTH]
-              [--formant-max-gain-db FORMANT_MAX_GAIN_DB]
-              [--pitch-map PITCH_MAP] [--pitch-map-stdin] [--control-stdin]
-              [--route EXPR] [--pitch-follow-stdin]
-              [--pitch-conf-min PITCH_CONF_MIN]
-              [--pitch-lowconf-mode {hold,unity,interp}]
-              [--pitch-map-smooth-ms PITCH_MAP_SMOOTH_MS]
-              [--pitch-map-crossfade-ms PITCH_MAP_CROSSFADE_MS]
-              [--target-sample-rate TARGET_SAMPLE_RATE]
-              [--resample-mode {auto,fft,linear}]
-              [--normalize {none,peak,rms}] [--peak-dbfs PEAK_DBFS]
-              [--rms-dbfs RMS_DBFS] [--target-lufs TARGET_LUFS]
-              [--compressor-threshold-db COMPRESSOR_THRESHOLD_DB]
-              [--compressor-ratio COMPRESSOR_RATIO]
-              [--compressor-attack-ms COMPRESSOR_ATTACK_MS]
-              [--compressor-release-ms COMPRESSOR_RELEASE_MS]
-              [--compressor-makeup-db COMPRESSOR_MAKEUP_DB]
-              [--expander-threshold-db EXPANDER_THRESHOLD_DB]
-              [--expander-ratio EX
+usage: python3 -m pvx.core.voc [-h] [-o OUTPUT_DIR] [--suffix SUFFIX]
+                               [--output-format OUTPUT_FORMAT] [--out OUTPUT]
+                               [--overwrite] [--dry-run] [--stdout]
+                               [--verbosity {silent,quiet,normal,verbose,debug}]
+                               [-v] [--quiet] [--silent]
+                               [--preset {none,default,vocal,ambient,extreme,vocal_studio,drums_safe,extreme_ambient,stereo_coherent}]
+                               [--example {all,basic,vocal,ambient,extreme,drums_safe,stereo_coherent,hybrid,benchmark,gpu,pipeline,csv}]
+                               [--guided] [--stretch STRETCH] [--gpu] [--cpu]
+                               [--quality-profile {neutral,speech,music,percussion,ambient,extreme}]
+                               [--auto-profile]
+                               [--auto-profile-lookahead-seconds AUTO_PROFILE_LOOKAHEAD_SECONDS]
+                               [--auto-transform] [--n-fft N_FFT]
+                               [--win-length WIN_LENGTH] [--hop-size HOP_SIZE]
+                               [--window {hann,hamming,blackman,blackmanharris,nuttall,flattop,blackman_nuttall,exact_blackman,sine,bartlett,boxcar,triangular,bartlett_hann,tukey,tukey_0p1,tukey_0p25,tukey_0p75,tukey_0p9,parzen,lanczos,welch,gaussian_0p25,gaussian_0p35,gaussian_0p45,gaussian_0p55,gaussian_0p65,general_gaussian_1p5_0p35,general_gaussian_2p0_0p35,general_gaussian_3p0_0p35,general_gaussian_4p0_0p35,exponential_0p25,exponential_0p5,exponential_1p0,cauchy_0p5,cauchy_1p0,cauchy_2p0,cosine_power_2,cosine_power_3,cosine_power_4,hann_poisson_0p5,hann_poisson_1p0,hann_poisson_2p0,general_hamming_0p50,general_hamming_0p60,general_hamming_0p70,general_hamming_0p80,bohman,cosine,kaiser,rect}]
+                               [--kaiser-beta KAISER_BETA]
+                               [--transform {fft,dft,czt,dct,dst,hartley}]
+                               [--no-center] [--phase-locking {off,identity}]
+                               [--phase-engine {propagate,hybrid,random}]
+                               [--ambient-phase-mix AMBIENT_PHASE_MIX]
+                               [--phase-random-seed PHASE_RANDOM_SEED]
+                               [--transient-preserve]
+                               [--transient-threshold TRANSIENT_THRESHOLD]
+                               [--fourier-sync]
+                               [--fourier-sync-min-fft FOURIER_SYNC_MIN_FFT]
+                               [--fourier-sync-max-fft FOURIER_SYNC_MAX_FFT]
+                               [--fourier-sync-smooth FOURIER_SYNC_SMOOTH]
+                               [--multires-fusion]
+                               [--multires-ffts MULTIRES_FFTS]
+                               [--multires-weights MULTIRES_WEIGHTS]
+                               [--device {auto,cpu,cuda}]
+                               [--cuda-device CUDA_DEVICE]
+                               [--time-stretch TIME_STRETCH]
+                               [--target-duration TARGET_DURATION]
+                               [--stretch-mode {auto,standard,multistage}]
+                               [--extreme-time-stretch]
+                               [--extreme-stretch-threshold EXTREME_STRETCH_THRESHOLD]
+                               [--max-stage-stretch MAX_STAGE_STRETCH]
+                               [--onset-time-credit]
+                               [--onset-credit-pull ONSET_CREDIT_PULL]
+                               [--onset-credit-max ONSET_CREDIT_MAX]
+                               [--no-onset-realign] [--ambient-preset]
+                               [--auto-segment-seconds AUTO_SEGMENT_SECONDS]
+                               [--checkpoint-dir CHECKPOINT_DIR]
+                               [--checkpoint-id CHECKPOINT_ID] [--resume]
+                               [--interp {none,linear,nearest,cubic,polynomial,exponential,s_curve,smootherstep}]
+                               [--order ORDER]
+                               [--transient-mode {off,reset,hybrid,wsola}]
+                               [--transient-sensitivity TRANSIENT_SENSITIVITY]
+                               [--transient-protect-ms TRANSIENT_PROTECT_MS]
+                               [--transient-crossfade-ms TRANSIENT_CROSSFADE_MS]
+                               [--stereo-mode {independent,mid_side_lock,ref_channel_lock}]
+                               [--ref-channel REF_CHANNEL]
+                               [--coherence-strength COHERENCE_STRENGTH]
+                               [--pitch-shift-semitones PITCH_SHIFT_SEMITONES |
+                               --pitch-shift-cents PITCH_SHIFT_CENTS |
+                               --pitch-shift-ratio PITCH_SHIFT_RATIO |
+                               --target-f0 TARGET_F0]
+                               [--analysis-channel {first,mix}]
+                               [--f0-min F0_MIN] [--f0-max F0_MAX]
+                               [--pitch-mode {standard,formant-
 ... [truncated]
 ```
 
