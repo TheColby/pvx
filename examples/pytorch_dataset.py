@@ -24,14 +24,14 @@ from pathlib import Path
 
 def build_train_pipeline():
     from pvx.augment import (
-        Pipeline,
-        GainPerturber,
-        RoomSimulator,
         AddNoise,
-        SpecAugment,
-        OneOf,
-        Identity,
         CodecDegradation,
+        GainPerturber,
+        Identity,
+        OneOf,
+        Pipeline,
+        RoomSimulator,
+        SpecAugment,
     )
 
     return Pipeline(
@@ -49,7 +49,8 @@ def build_train_pipeline():
 
 def build_val_pipeline():
     """Validation: no augmentation (or very mild normalisation only)."""
-    from pvx.augment import Pipeline, Normalizer
+    from pvx.augment import Normalizer, Pipeline
+
     return Pipeline([Normalizer(mode="rms", target_db=-20.0, p=1.0)], seed=0)
 
 

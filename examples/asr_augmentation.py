@@ -19,7 +19,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import sys
 from pathlib import Path
 
@@ -27,14 +26,14 @@ from pathlib import Path
 def build_asr_pipeline(seed: int = 42):
     """Build a production-quality ASR augmentation pipeline."""
     from pvx.augment import (
-        Pipeline,
-        GainPerturber,
-        RoomSimulator,
         AddNoise,
         CodecDegradation,
-        SpecAugment,
-        OneOf,
+        GainPerturber,
         Identity,
+        OneOf,
+        Pipeline,
+        RoomSimulator,
+        SpecAugment,
     )
 
     return Pipeline(
@@ -143,7 +142,7 @@ def augment_directory(
         for var_idx in range(variants)
     ]
 
-    print(f"Processing {len(input_files)} files × {variants} variants = {len(jobs)} jobs "
+    print(f"Processing {len(input_files)} files x {variants} variants = {len(jobs)} jobs "
           f"using {workers} worker(s) …")
 
     if workers <= 1:
