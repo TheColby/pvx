@@ -58,6 +58,9 @@ reproducible given a fixed seed.
 ::: pvx.augment.TimeShift
 ::: pvx.augment.Reverse
 ::: pvx.augment.Fade
+::: pvx.augment.Tremolo
+::: pvx.augment.AudioDropout
+::: pvx.augment.StereoWidener
 ::: pvx.augment.TrimSilence
 ::: pvx.augment.FixedLengthCrop
 ::: pvx.augment.TimeStretch

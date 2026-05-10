@@ -1,9 +1,10 @@
 """Time-domain audio augmentation transforms.
 
 Provides transforms that operate on the waveform directly: gain
-perturbation, clipping, time shifting, fade in/out, silence trimming, and
-reverse.  Production-quality time-stretch and pitch-shift wrappers that
-call ``pvx voc`` are also provided here.
+perturbation, clipping, time shifting, fade in/out, tremolo, burst
+dropouts, stereo widening, silence trimming, and reverse. Production-quality
+time-stretch and pitch-shift wrappers that call ``pvx voc`` are also provided
+here.
 """
 
 from __future__ import annotations
@@ -335,6 +336,240 @@ class Fade(Transform):
             result[:, n_samp - fo_samp :] *= env
 
         return _from_2d(result, was_mono), sr
+
+
+# ---------------------------------------------------------------------------
+# Tremolo
+# ---------------------------------------------------------------------------
+
+
+class Tremolo(Transform):
+    """Apply rhythmic amplitude modulation.
+
+    Parameters
+    ----------
+    rate_hz:
+        Fixed modulation rate or ``(min_hz, max_hz)`` range.
+    depth:
+        Modulation depth in ``[0, 1]``. ``0`` is dry, ``1`` reaches silence
+        at the troughs.
+    waveform:
+        LFO shape: ``"sine"``, ``"triangle"``, or ``"square"``.
+    phase:
+        Fixed phase in cycles or ``"random"`` for a random starting phase.
+    p:
+        Probability of applying this transform.
+    """
+
+    def __init__(
+        self,
+        rate_hz: float | tuple[float, float] = (3.0, 8.0),
+        depth: float | tuple[float, float] = (0.3, 0.8),
+        waveform: str = "sine",
+        phase: float | str = "random",
+        p: float = 1.0,
+    ) -> None:
+        super().__init__(p=p)
+        if isinstance(rate_hz, (int, float)):
+            self.rate_hz_range: tuple[float, float] = (float(rate_hz), float(rate_hz))
+        else:
+            self.rate_hz_range = (float(rate_hz[0]), float(rate_hz[1]))
+        if isinstance(depth, (int, float)):
+            self.depth_range: tuple[float, float] = (float(depth), float(depth))
+        else:
+            self.depth_range = (float(depth[0]), float(depth[1]))
+        if waveform not in ("sine", "triangle", "square"):
+            raise ValueError(f"waveform must be sine/triangle/square, got {waveform!r}")
+        if phase != "random" and not isinstance(phase, (int, float)):
+            raise ValueError(f"phase must be a number of cycles or 'random', got {phase!r}")
+        self.waveform = waveform
+        self.phase = phase
+
+    def apply(
+        self,
+        audio: np.ndarray,
+        sr: int,
+        rng: np.random.Generator,
+    ) -> tuple[np.ndarray, int]:
+        arr, was_mono = _to_2d(audio)
+        n_samp = arr.shape[1]
+        if n_samp == 0:
+            return audio, sr
+
+        rate_hz = float(rng.uniform(self.rate_hz_range[0], self.rate_hz_range[1]))
+        depth = float(np.clip(rng.uniform(self.depth_range[0], self.depth_range[1]), 0.0, 1.0))
+        phase = float(rng.random() if self.phase == "random" else self.phase)
+        cycles = rate_hz * (np.arange(n_samp, dtype=np.float64) / float(sr)) + phase
+
+        if self.waveform == "sine":
+            lfo = 0.5 * (1.0 + np.sin(2.0 * np.pi * cycles))
+        elif self.waveform == "triangle":
+            lfo = 1.0 - np.abs(2.0 * (cycles % 1.0) - 1.0)
+        else:
+            lfo = (np.sin(2.0 * np.pi * cycles) >= 0.0).astype(np.float64)
+
+        envelope = (1.0 - depth) + depth * lfo
+        result = arr * envelope[np.newaxis, :]
+        return _from_2d(result.astype(audio.dtype, copy=False), was_mono), sr
+
+
+# ---------------------------------------------------------------------------
+# AudioDropout
+# ---------------------------------------------------------------------------
+
+
+class AudioDropout(Transform):
+    """Mute or replace short random bursts of audio.
+
+    Parameters
+    ----------
+    duration_s:
+        Fixed burst duration or ``(min_s, max_s)`` range.
+    count:
+        Fixed number of bursts or ``(min_count, max_count)`` inclusive range.
+    fill:
+        ``"zero"`` replaces bursts with silence, ``"noise"`` replaces them
+        with low-level noise.
+    fade_s:
+        Optional edge fade in seconds to reduce clicks around each burst.
+    noise_level:
+        RMS multiplier used when ``fill="noise"``.
+    p:
+        Probability of applying this transform.
+    """
+
+    def __init__(
+        self,
+        duration_s: float | tuple[float, float] = (0.02, 0.12),
+        count: int | tuple[int, int] = (1, 3),
+        fill: str = "zero",
+        fade_s: float = 0.002,
+        noise_level: float = 0.02,
+        p: float = 1.0,
+    ) -> None:
+        super().__init__(p=p)
+        if isinstance(duration_s, (int, float)):
+            self.duration_s_range: tuple[float, float] = (float(duration_s), float(duration_s))
+        else:
+            self.duration_s_range = (float(duration_s[0]), float(duration_s[1]))
+        if isinstance(count, int):
+            self.count_range: tuple[int, int] = (int(count), int(count))
+        else:
+            self.count_range = (int(count[0]), int(count[1]))
+        if fill not in ("zero", "noise"):
+            raise ValueError(f"fill must be 'zero' or 'noise', got {fill!r}")
+        self.fill = fill
+        self.fade_s = float(fade_s)
+        self.noise_level = float(noise_level)
+
+    @staticmethod
+    def _edge_envelope(length: int, fade: int) -> np.ndarray:
+        env = np.zeros(length, dtype=np.float32)
+        if fade <= 0:
+            return env
+        fade = min(fade, length // 2)
+        if fade == 0:
+            return env
+        ramp = np.linspace(1.0, 0.0, fade, endpoint=False, dtype=np.float32)
+        env[:fade] = ramp
+        env[-fade:] = ramp[::-1]
+        return env
+
+    def apply(
+        self,
+        audio: np.ndarray,
+        sr: int,
+        rng: np.random.Generator,
+    ) -> tuple[np.ndarray, int]:
+        arr, was_mono = _to_2d(audio)
+        n_samp = arr.shape[1]
+        if n_samp == 0:
+            return audio, sr
+
+        lo, hi = self.count_range
+        count = int(rng.integers(min(lo, hi), max(lo, hi) + 1))
+        result = arr.copy()
+        fade = max(0, int(round(self.fade_s * sr)))
+        base_rms = float(np.sqrt(np.mean(arr**2)) + 1e-12)
+
+        for _ in range(max(0, count)):
+            duration_s = float(rng.uniform(self.duration_s_range[0], self.duration_s_range[1]))
+            length = int(round(max(0.0, duration_s) * sr))
+            if length <= 0:
+                continue
+            length = min(length, n_samp)
+            start = int(rng.integers(0, n_samp - length + 1))
+            stop = start + length
+            env = self._edge_envelope(length, fade)[np.newaxis, :]
+            replacement = np.zeros_like(result[:, start:stop])
+            if self.fill == "noise":
+                replacement = (
+                    rng.standard_normal(replacement.shape).astype(result.dtype)
+                    * base_rms
+                    * self.noise_level
+                )
+            result[:, start:stop] = result[:, start:stop] * env + replacement * (1.0 - env)
+
+        return _from_2d(result.astype(audio.dtype, copy=False), was_mono), sr
+
+
+# ---------------------------------------------------------------------------
+# StereoWidener
+# ---------------------------------------------------------------------------
+
+
+class StereoWidener(Transform):
+    """Adjust stereo width with mid/side processing.
+
+    Parameters
+    ----------
+    width:
+        Fixed width or ``(min_width, max_width)`` range. ``0`` collapses to
+        mono, ``1`` preserves the original width, and values above ``1``
+        exaggerate the side signal.
+    preserve_peak:
+        Scale the output down when widening would exceed the input peak.
+    p:
+        Probability of applying this transform.
+    """
+
+    def __init__(
+        self,
+        width: float | tuple[float, float] = (0.7, 1.4),
+        preserve_peak: bool = True,
+        p: float = 1.0,
+    ) -> None:
+        super().__init__(p=p)
+        if isinstance(width, (int, float)):
+            self.width_range: tuple[float, float] = (float(width), float(width))
+        else:
+            self.width_range = (float(width[0]), float(width[1]))
+        self.preserve_peak = bool(preserve_peak)
+
+    def apply(
+        self,
+        audio: np.ndarray,
+        sr: int,
+        rng: np.random.Generator,
+    ) -> tuple[np.ndarray, int]:
+        arr, was_mono = _to_2d(audio)
+        if was_mono or arr.shape[0] != 2:
+            return audio, sr
+
+        width = float(rng.uniform(self.width_range[0], self.width_range[1]))
+        left = arr[0]
+        right = arr[1]
+        mid = 0.5 * (left + right)
+        side = 0.5 * (left - right) * width
+        result = np.stack((mid + side, mid - side)).astype(audio.dtype, copy=False)
+
+        if self.preserve_peak:
+            in_peak = float(np.max(np.abs(arr)))
+            out_peak = float(np.max(np.abs(result)))
+            if in_peak > 0.0 and out_peak > in_peak:
+                result = result * (in_peak / (out_peak + 1e-12))
+
+        return result, sr
 
 
 # ---------------------------------------------------------------------------

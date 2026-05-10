@@ -422,6 +422,80 @@ class TestFade(unittest.TestCase):
         self.assertAlmostEqual(float(out[-1]), 0.0, places=3)
 
 
+class TestTremolo(unittest.TestCase):
+    def test_shape_preserved_and_rms_reduced(self):
+        from pvx.augment import Tremolo
+
+        audio, sr = _sine(duration=1.0)
+        out, sr_out = Tremolo(rate_hz=(5.0, 5.0), depth=(0.8, 0.8), phase=0.0)(
+            audio, sr, seed=0
+        )
+        self.assertEqual(out.shape, audio.shape)
+        self.assertEqual(sr_out, sr)
+        self.assertLess(float(np.sqrt(np.mean(out**2))), float(np.sqrt(np.mean(audio**2))))
+
+    def test_reproducible_with_random_phase(self):
+        from pvx.augment import Tremolo
+
+        audio, sr = _mono()
+        aug = Tremolo(rate_hz=(4.0, 4.0), depth=(0.5, 0.5), phase="random")
+        out1, _ = aug(audio, sr, seed=17)
+        out2, _ = aug(audio, sr, seed=17)
+        np.testing.assert_array_equal(out1, out2)
+
+
+class TestAudioDropout(unittest.TestCase):
+    def test_zero_dropout_creates_silent_region(self):
+        from pvx.augment import AudioDropout
+
+        audio = np.ones(1000, dtype=np.float32)
+        out, sr_out = AudioDropout(duration_s=(0.1, 0.1), count=(1, 1), fade_s=0.0)(
+            audio, 1000, seed=0
+        )
+        self.assertEqual(out.shape, audio.shape)
+        self.assertEqual(sr_out, 1000)
+        self.assertGreaterEqual(int(np.sum(out == 0.0)), 100)
+
+    def test_noise_dropout_is_reproducible(self):
+        from pvx.augment import AudioDropout
+
+        audio, sr = _stereo(n=2048)
+        aug = AudioDropout(duration_s=(0.03, 0.03), count=(2, 2), fill="noise")
+        out1, _ = aug(audio, sr, seed=4)
+        out2, _ = aug(audio, sr, seed=4)
+        self.assertEqual(out1.shape, audio.shape)
+        np.testing.assert_array_equal(out1, out2)
+
+
+class TestStereoWidener(unittest.TestCase):
+    def test_width_zero_collapses_to_mid(self):
+        from pvx.augment import StereoWidener
+
+        audio = np.vstack(
+            [
+                np.linspace(-1.0, 1.0, 512, dtype=np.float32),
+                np.linspace(1.0, -1.0, 512, dtype=np.float32) * 0.25,
+            ]
+        )
+        out, sr_out = StereoWidener(width=(0.0, 0.0), preserve_peak=False)(audio, 48000, seed=0)
+        self.assertEqual(sr_out, 48000)
+        np.testing.assert_allclose(out[0], out[1], atol=1e-6)
+
+    def test_width_one_is_identity(self):
+        from pvx.augment import StereoWidener
+
+        audio, sr = _stereo(n=1024)
+        out, _ = StereoWidener(width=(1.0, 1.0), preserve_peak=False)(audio, sr, seed=0)
+        np.testing.assert_allclose(out, audio, atol=1e-6)
+
+    def test_mono_passthrough(self):
+        from pvx.augment import StereoWidener
+
+        audio, sr = _mono(n=1024)
+        out, _ = StereoWidener(width=(1.8, 1.8))(audio, sr, seed=0)
+        np.testing.assert_array_equal(out, audio)
+
+
 class TestFixedLengthCrop(unittest.TestCase):
     def test_crop_longer(self):
         from pvx.augment import FixedLengthCrop
