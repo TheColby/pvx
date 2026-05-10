@@ -102,6 +102,7 @@ def _builtin_transform_index() -> dict[str, type]:
     """Return ``{snake_case_name: cls}`` for all built-in pvx.augment transforms."""
     from . import (
         AddNoise,
+        AudioDropout,
         BackgroundMixer,
         BandwidthLimiter,
         BitCrusher,
@@ -121,13 +122,16 @@ def _builtin_transform_index() -> dict[str, type]:
         RoomSimulator,
         SpecAugment,
         SpectralNoise,
+        StereoWidener,
         TimeShift,
         TimeStretch,
+        Tremolo,
         TrimSilence,
     )
 
     classes = [
         AddNoise,
+        AudioDropout,
         BackgroundMixer,
         BandwidthLimiter,
         BitCrusher,
@@ -147,8 +151,10 @@ def _builtin_transform_index() -> dict[str, type]:
         RoomSimulator,
         SpecAugment,
         SpectralNoise,
+        StereoWidener,
         TimeShift,
         TimeStretch,
+        Tremolo,
         TrimSilence,
     ]
     return {_camel_to_snake(cls.__name__): cls for cls in classes}

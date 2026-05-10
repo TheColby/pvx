@@ -98,6 +98,7 @@ from .spectral import (
 
 # Time domain
 from .time_domain import (
+    AudioDropout,
     ClippingSimulator,
     Fade,
     FixedLengthCrop,
@@ -105,24 +106,24 @@ from .time_domain import (
     Normalizer,
     PitchShift,
     Reverse,
+    StereoWidener,
     TimeShift,
     TimeStretch,
+    Tremolo,
     TrimSilence,
 )
 
 __all__ = [
-    # Noise
     "AddNoise",
+    "AudioDropout",
     "BackgroundMixer",
     "BandwidthLimiter",
     "BitCrusher",
     "ClippingSimulator",
-    # Codec
     "CodecDegradation",
     "EQPerturber",
     "Fade",
     "FixedLengthCrop",
-    # Time domain
     "GainPerturber",
     "Identity",
     "ImpulseNoise",
@@ -134,17 +135,16 @@ __all__ = [
     "PitchShiftSimple",
     "RandomApply",
     "Reverse",
-    # Room
     "RoomSimulator",
     "SomeOf",
-    # Spectral
     "SpecAugment",
     "SpectralNoise",
+    "StereoWidener",
     "TimeShift",
     "TimeStretch",
-    # Core
     "Transform",
     "TransformResult",
+    "Tremolo",
     "TrimSilence",
     "fingerprint_audio",
     "get_transform",
