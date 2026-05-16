@@ -22,6 +22,7 @@ def _iter_cli_sources() -> list[Path]:
         ROOT / "src" / "pvx" / "core" / "voc_console.py",
     ]
     sources.extend(sorted((ROOT / "src" / "pvx" / "cli").glob("*.py")))
+    sources.extend(sorted((ROOT / "benchmarks").glob("*.py")))
     return [p for p in sources if p.exists() and p.name != "__init__.py"]
 
 
@@ -64,6 +65,8 @@ def load_doc_pairs() -> set[tuple[str, str]]:
 
 def test_cli_flag_docs_match_parser_definitions() -> None:
     code_pairs = extract_flags_from_code()
+    # Filter out benchmark scripts for this check
+    code_pairs = {(t, f) for t, f in code_pairs if not t.startswith("run_")}
     doc_pairs = load_doc_pairs()
 
     missing_in_docs = sorted(code_pairs - doc_pairs)

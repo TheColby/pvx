@@ -4902,6 +4902,13 @@ def resample_multi(audio: np.ndarray, output_samples: int, mode: ResampleMode) -
     return out
 
 
+def resample_length(audio: np.ndarray, length: int) -> np.ndarray:
+    length = int(max(1, length))
+    if audio.shape[0] == length:
+        return audio.copy()
+    return resample_multi(audio, length, mode="auto")
+
+
 def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     raw_dynamic_values: dict[str, str] = dict(getattr(args, "_dynamic_control_raw_values", {}) or {})
     for attr_name, raw_value in raw_dynamic_values.items():

@@ -16,6 +16,7 @@ from pvx.core.voc import (
     VocoderConfig as CoreVocoderConfig,
     istft as core_istft,
     normalize_transform_name as normalize_core_transform_name,
+    resample_length,
     stft as core_stft,
 )
 
@@ -96,16 +97,6 @@ def ensure_length(audio: np.ndarray, length: int) -> np.ndarray:
         return audio[:length, :]
     out = np.zeros((length, audio.shape[1]), dtype=np.float64)
     out[: audio.shape[0], :] = audio
-    return out
-
-
-def resample_length(audio: np.ndarray, length: int) -> np.ndarray:
-    length = int(max(1, length))
-    if audio.shape[0] == length:
-        return audio.copy()
-    out = np.zeros((length, audio.shape[1]), dtype=np.float64)
-    for ch in range(audio.shape[1]):
-        out[:, ch] = signal.resample(audio[:, ch], length)
     return out
 
 

@@ -76,11 +76,13 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--start",
+        nargs="?",
         required=True,
         help="Start position. Cartesian: x,y,z. Spherical: az_deg,el_deg,r.",
     )
     parser.add_argument(
         "--end",
+        nargs="?",
         required=True,
         help="End position. Cartesian: x,y,z. Spherical: az_deg,el_deg,r.",
     )
