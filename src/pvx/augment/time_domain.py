@@ -731,10 +731,12 @@ def _has_torchaudio() -> bool:
 def _resolve_engine(engine: str) -> str:
     """Resolve ``"auto"`` to the best available engine.
 
-    Returns ``"torchaudio"``, ``"pytorch"``, or ``"pvx-cli"``.
+    Returns ``"torchaudio"``, ``"pytorch"``, ``"wavelet"``, or ``"pvx-cli"``.
 
     Priority for ``"auto"``: torchaudio > pytorch > pvx-cli.
     """
+    if engine == "wavelet":
+        return "wavelet"
     if engine == "torchaudio":
         if not _has_torchaudio():
             raise RuntimeError(
@@ -757,6 +759,130 @@ def _resolve_engine(engine: str) -> str:
     if _has_torch():
         return "pytorch"
     return "pvx-cli"
+
+
+def _resample_1d(signal: np.ndarray, target_len: int) -> np.ndarray:
+    """Resample one 1-D array to *target_len* samples."""
+    from scipy.signal import resample
+
+    target_len = max(1, int(target_len))
+    if signal.size == target_len:
+        return signal.astype(np.float32, copy=True)
+    if signal.size == 0:
+        return np.zeros(target_len, dtype=np.float32)
+    return resample(signal.astype(np.float32, copy=False), target_len).astype(np.float32)
+
+
+def _match_length(signal: np.ndarray, target_len: int) -> np.ndarray:
+    """Crop or edge-pad a 1-D array to exactly *target_len* samples."""
+    target_len = max(1, int(target_len))
+    if signal.size == target_len:
+        return signal
+    if signal.size > target_len:
+        return signal[:target_len]
+    if signal.size == 0:
+        return np.zeros(target_len, dtype=np.float32)
+    return np.pad(signal, (0, target_len - signal.size), mode="edge")
+
+
+def _haar_decompose_1d(signal: np.ndarray, levels: int) -> tuple[np.ndarray, list[tuple[np.ndarray, int]]]:
+    """Return Haar approximation and ``[(detail, original_len), ...]``."""
+    approx = signal.astype(np.float32, copy=False)
+    details: list[tuple[np.ndarray, int]] = []
+    inv_sqrt2 = np.float32(1.0 / np.sqrt(2.0))
+
+    for _ in range(max(0, int(levels))):
+        original_len = approx.size
+        if original_len < 2:
+            break
+        padded = approx
+        if original_len % 2:
+            padded = np.pad(approx, (0, 1), mode="edge")
+        even = padded[0::2]
+        odd = padded[1::2]
+        approx = (even + odd) * inv_sqrt2
+        detail = (even - odd) * inv_sqrt2
+        details.append((detail.astype(np.float32), original_len))
+
+    return approx.astype(np.float32), details
+
+
+def _haar_reconstruct_1d(
+    approx: np.ndarray,
+    details: list[tuple[np.ndarray, int]],
+    target_lengths: list[int],
+) -> np.ndarray:
+    """Reconstruct a 1-D signal from Haar coefficients."""
+    inv_sqrt2 = np.float32(1.0 / np.sqrt(2.0))
+    current = approx.astype(np.float32, copy=False)
+
+    for (detail, _original_len), target_len in zip(reversed(details), reversed(target_lengths)):
+        detail = _match_length(detail.astype(np.float32, copy=False), current.size)
+        out = np.empty(current.size * 2, dtype=np.float32)
+        out[0::2] = (current + detail) * inv_sqrt2
+        out[1::2] = (current - detail) * inv_sqrt2
+        current = out[: max(1, int(target_len))]
+
+    return current.astype(np.float32)
+
+
+def _wavelet_time_stretch_channel(signal: np.ndarray, rate: float, levels: int) -> np.ndarray:
+    """Experimental Haar-wavelet multiband time stretching for one channel."""
+    target_len = max(1, int(round(signal.size * rate)))
+    if signal.size <= 1 or np.isclose(rate, 1.0):
+        return _match_length(signal.astype(np.float32, copy=True), target_len)
+
+    approx, details = _haar_decompose_1d(signal, levels)
+    if not details:
+        return _resample_1d(signal, target_len)
+
+    stretched_details: list[tuple[np.ndarray, int]] = []
+    target_lengths: list[int] = []
+    for detail, original_len in details:
+        scaled_original_len = max(1, int(round(original_len * rate)))
+        target_lengths.append(scaled_original_len)
+        scaled_detail_len = max(1, int(np.ceil(scaled_original_len / 2.0)))
+        stretched_details.append((_resample_1d(detail, scaled_detail_len), original_len))
+
+    approx_scale = max(1, int(round(approx.size * rate)))
+    stretched_approx = _resample_1d(approx, approx_scale)
+    reconstructed = _haar_reconstruct_1d(stretched_approx, stretched_details, target_lengths)
+    return _match_length(reconstructed, target_len).astype(np.float32)
+
+
+def _wavelet_time_stretch(
+    audio: np.ndarray,
+    sr: int,
+    rate: float,
+    levels: int = 4,
+) -> tuple[np.ndarray, int]:
+    """Experimental Haar-wavelet time stretching.
+
+    This backend decomposes audio into Haar wavelet bands, resamples each
+    band at the requested time scale, then reconstructs the waveform. It is
+    intended as a creative/experimental backend rather than a transparent
+    phase-vocoder replacement.
+    """
+    arr, was_mono = _to_2d(audio)
+    channels = [_wavelet_time_stretch_channel(arr[ch], rate, levels) for ch in range(arr.shape[0])]
+    max_len = max(ch.size for ch in channels)
+    result = np.stack([_match_length(ch, max_len) for ch in channels], axis=0)
+    return _from_2d(result.astype(audio.dtype, copy=False), was_mono), sr
+
+
+def _wavelet_pitch_shift(
+    audio: np.ndarray,
+    sr: int,
+    semitones: float,
+    levels: int = 4,
+) -> tuple[np.ndarray, int]:
+    """Experimental Haar-wavelet pitch shift via wavelet stretch + resampling."""
+    pitch_ratio = 2.0 ** (semitones / 12.0)
+    stretched, _ = _wavelet_time_stretch(audio, sr, rate=pitch_ratio, levels=levels)
+    orig_len = audio.shape[-1]
+    arr, was_mono = _to_2d(stretched)
+    result = np.stack([_resample_1d(arr[ch], orig_len) for ch in range(arr.shape[0])], axis=0)
+    return _from_2d(result.astype(audio.dtype, copy=False), was_mono), sr
 
 
 def _torchaudio_time_stretch(audio: np.ndarray, sr: int, rate: float) -> tuple[np.ndarray, int]:
@@ -886,12 +1012,12 @@ def _pytorch_pitch_shift(audio: np.ndarray, sr: int, semitones: float) -> tuple[
 
 
 class TimeStretch(Transform):
-    """High-quality time-stretch via a phase-vocoder engine.
+    """High-quality time-stretch via a selectable DSP engine.
 
     By default (``engine="auto"``), uses the native PyTorch phase vocoder
     when PyTorch is installed, falling back to ``pvx voc`` (subprocess) if
-    not.  You can force a specific engine with ``engine="pytorch"`` or
-    ``engine="pvx-cli"``.
+    not. You can force a specific engine with ``engine="pytorch"``,
+    ``engine="torchaudio"``, ``engine="wavelet"``, or ``engine="pvx-cli"``.
 
     The ``pvx-cli`` engine leverages the full pvx DSP stack (transient
     handling, stereo coherence, formant preservation) but requires the
@@ -910,7 +1036,10 @@ class TimeStretch(Transform):
         pvx preset name (e.g. ``"vocal_studio"``, ``"drums_safe"``).
         Only used with ``engine="pvx-cli"``.
     engine:
-        ``"auto"`` (default — prefer pytorch), ``"pytorch"``, or ``"pvx-cli"``.
+        ``"auto"`` (default — prefer pytorch), ``"pytorch"``, ``"torchaudio"``,
+        ``"wavelet"`` (experimental Haar wavelet), or ``"pvx-cli"``.
+    wavelet_levels:
+        Number of Haar decomposition levels used with ``engine="wavelet"``.
     p:
         Probability of applying this transform.
 
@@ -930,6 +1059,7 @@ class TimeStretch(Transform):
         preserve_pitch: bool = True,
         preset: str = "default",
         engine: str = "auto",
+        wavelet_levels: int = 4,
         p: float = 1.0,
     ) -> None:
         super().__init__(p=p)
@@ -939,9 +1069,12 @@ class TimeStretch(Transform):
             self.rate_range = (float(rate[0]), float(rate[1]))
         self.preserve_pitch = preserve_pitch
         self.preset = preset
-        if engine not in ("auto", "pytorch", "torchaudio", "pvx-cli"):
-            raise ValueError(f"engine must be auto/pytorch/torchaudio/pvx-cli, got {engine!r}")
+        if engine not in ("auto", "pytorch", "torchaudio", "wavelet", "pvx-cli"):
+            raise ValueError(
+                f"engine must be auto/pytorch/torchaudio/wavelet/pvx-cli, got {engine!r}"
+            )
         self.engine = engine
+        self.wavelet_levels = int(wavelet_levels)
 
     def apply(
         self,
@@ -956,6 +1089,8 @@ class TimeStretch(Transform):
             return _torchaudio_time_stretch(audio, sr, rate)
         if engine == "pytorch":
             return _pytorch_time_stretch(audio, sr, rate)
+        if engine == "wavelet":
+            return _wavelet_time_stretch(audio, sr, rate, levels=self.wavelet_levels)
         return _call_pvx_voc(
             audio,
             sr,
@@ -972,7 +1107,7 @@ class TimeStretch(Transform):
 
 
 class PitchShift(Transform):
-    """High-quality pitch shift via a phase-vocoder engine.
+    """High-quality pitch shift via a selectable DSP engine.
 
     By default (``engine="auto"``), uses the native PyTorch phase vocoder
     + resampling when PyTorch is installed, falling back to ``pvx voc``
@@ -995,7 +1130,10 @@ class PitchShift(Transform):
         pvx preset name.
         Only used with ``engine="pvx-cli"``.
     engine:
-        ``"auto"`` (default — prefer pytorch), ``"pytorch"``, or ``"pvx-cli"``.
+        ``"auto"`` (default — prefer pytorch), ``"pytorch"``, ``"torchaudio"``,
+        ``"wavelet"`` (experimental Haar wavelet), or ``"pvx-cli"``.
+    wavelet_levels:
+        Number of Haar decomposition levels used with ``engine="wavelet"``.
     p:
         Probability of applying this transform.
 
@@ -1016,6 +1154,7 @@ class PitchShift(Transform):
         formant_mode: str = "formant-preserving",
         preset: str = "vocal_studio",
         engine: str = "auto",
+        wavelet_levels: int = 4,
         p: float = 1.0,
     ) -> None:
         super().__init__(p=p)
@@ -1026,9 +1165,12 @@ class PitchShift(Transform):
         self.preserve_duration = preserve_duration
         self.formant_mode = formant_mode
         self.preset = preset
-        if engine not in ("auto", "pytorch", "torchaudio", "pvx-cli"):
-            raise ValueError(f"engine must be auto/pytorch/torchaudio/pvx-cli, got {engine!r}")
+        if engine not in ("auto", "pytorch", "torchaudio", "wavelet", "pvx-cli"):
+            raise ValueError(
+                f"engine must be auto/pytorch/torchaudio/wavelet/pvx-cli, got {engine!r}"
+            )
         self.engine = engine
+        self.wavelet_levels = int(wavelet_levels)
 
     def apply(
         self,
@@ -1043,6 +1185,8 @@ class PitchShift(Transform):
             return _torchaudio_pitch_shift(audio, sr, semitones)
         if engine == "pytorch":
             return _pytorch_pitch_shift(audio, sr, semitones)
+        if engine == "wavelet":
+            return _wavelet_pitch_shift(audio, sr, semitones, levels=self.wavelet_levels)
         stretch = 1.0 if self.preserve_duration else None
         return _call_pvx_voc(
             audio,

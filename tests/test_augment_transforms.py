@@ -580,6 +580,12 @@ class TestEngineSelection(unittest.TestCase):
         self.assertIn(result, ("torchaudio", "pytorch", "pvx-cli"))
 
     @unittest.skipUnless(True, "always runs")
+    def test_resolve_engine_wavelet(self):
+        from pvx.augment.time_domain import _resolve_engine
+
+        self.assertEqual(_resolve_engine("wavelet"), "wavelet")
+
+    @unittest.skipUnless(True, "always runs")
     def test_resolve_engine_pvx_cli(self):
         from pvx.augment.time_domain import _resolve_engine
 
@@ -596,6 +602,47 @@ class TestEngineSelection(unittest.TestCase):
 
         ps = PitchShift(semitones=(-1, 1), engine="auto")
         self.assertEqual(ps.engine, "auto")
+
+    def test_time_stretch_wavelet_engine_length(self):
+        from pvx.augment import TimeStretch
+
+        audio, sr = _sine(freq=440.0, sr=16000, duration=0.5)
+        ts = TimeStretch(rate=(1.25, 1.25), engine="wavelet", wavelet_levels=3, p=1.0)
+        out, out_sr = ts(audio, sr, seed=42)
+        self.assertEqual(out_sr, sr)
+        self.assertEqual(out.shape[-1], int(round(audio.shape[-1] * 1.25)))
+        self.assertGreater(float(np.sqrt(np.mean(out**2))), 0.01)
+
+    def test_time_stretch_wavelet_engine_stereo(self):
+        from pvx.augment import TimeStretch
+
+        audio, sr = _stereo(n=4096)
+        ts = TimeStretch(rate=(0.75, 0.75), engine="wavelet", wavelet_levels=2, p=1.0)
+        out, _ = ts(audio, sr, seed=42)
+        self.assertEqual(out.shape, (2, int(round(audio.shape[-1] * 0.75))))
+
+    def test_pitch_shift_wavelet_engine_preserves_duration(self):
+        from pvx.augment import PitchShift
+
+        audio, sr = _sine(freq=440.0, sr=16000, duration=0.5)
+        ps = PitchShift(semitones=(3, 3), engine="wavelet", wavelet_levels=3, p=1.0)
+        out, out_sr = ps(audio, sr, seed=42)
+        self.assertEqual(out_sr, sr)
+        self.assertEqual(out.shape, audio.shape)
+        self.assertGreater(float(np.sqrt(np.mean(out**2))), 0.01)
+
+    def test_wavelet_engine_loads_from_config(self):
+        from pvx.augment.config import _build_transform
+
+        transform = _build_transform(
+            {
+                "name": "time_stretch",
+                "params": {"rate": [1.1, 1.1], "engine": "wavelet", "wavelet_levels": 2},
+            },
+            gpu=False,
+        )
+        self.assertEqual(transform.engine, "wavelet")
+        self.assertEqual(transform.wavelet_levels, 2)
 
     def test_time_stretch_pytorch_engine(self):
         if not self._has_torch:
