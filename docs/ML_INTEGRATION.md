@@ -371,7 +371,7 @@ ds_aug = ds.map(augment_fn, num_proc=8, cache_file_name="data/cache/aug.arrow")
 
 ### TimeStretch and PitchShift — Engine Selection
 
-`TimeStretch` and `PitchShift` support four processing engines via the
+`TimeStretch` and `PitchShift` support five processing engines via the
 `engine` parameter:
 
 | Engine | Requires | Notes |
@@ -379,6 +379,7 @@ ds_aug = ds.map(augment_fn, num_proc=8, cache_file_name="data/cache/aug.arrow")
 | `"auto"` (default) | — | Prefers torchaudio > pytorch > pvx-cli |
 | `"torchaudio"` | `pip install "pvx[torch]"` | Optimized C++ phase-vocoder kernel via torchaudio |
 | `"pytorch"` | `pip install "pvx[torch]"` | Vectorized phase-vocoder in pure PyTorch |
+| `"wavelet"` | built-in Haar; optional `pip install PyWavelets` | Experimental multiband wavelet backend |
 | `"pvx-cli"` | pvx CLI on `PATH` | Full pvxvoc DSP stack via subprocess |
 
 ```python
@@ -393,6 +394,11 @@ ts = TimeStretch(rate=(0.8, 1.2), engine="torchaudio")
 # Force PyTorch engine (no torchaudio needed, just torch)
 ts = TimeStretch(rate=(0.8, 1.2), engine="pytorch")
 
+# Force experimental wavelet engine.
+# wavelet="auto" uses PyWavelets db4 when available, otherwise built-in Haar.
+ts = TimeStretch(rate=(0.8, 1.2), engine="wavelet", wavelet="auto", wavelet_levels=3)
+ps = PitchShift(semitones=(-2, 2), engine="wavelet", wavelet="haar", wavelet_levels=4)
+
 # Force pvx CLI subprocess (full DSP stack: transients, formants, stereo)
 ts = TimeStretch(rate=(0.8, 1.2), engine="pvx-cli")
 ```
@@ -404,6 +410,12 @@ pvx augment data/train/*.wav \
   --output-dir data/train_aug \
   --engine torchaudio \
   --intent asr_robust
+```
+
+To compare backend speed and simple pitch/duration smoke metrics:
+
+```bash
+python benchmarks/run_backend_compare.py --engines pytorch,pvx-cli,wavelet --wavelet auto
 ```
 
 If no engine is available, `TimeStretch` and `PitchShift` will raise a
@@ -572,8 +584,8 @@ gpu_pipeline = TorchPipeline([
 | `Fade` | `time_domain` | `fade_in`, `fade_out` | Boundary artifact reduction |
 | `TrimSilence` | `time_domain` | `threshold_db` | Pre-processing |
 | `FixedLengthCrop` | `time_domain` | `duration_s` | Batching fixed-size inputs |
-| `TimeStretch` | `time_domain` | `rate`, `preset`, `engine` | Tempo invariance (auto/torchaudio/pytorch/pvx-cli) |
-| `PitchShift` | `time_domain` | `semitones`, `formant_mode`, `engine` | Pitch invariance (auto/torchaudio/pytorch/pvx-cli) |
+| `TimeStretch` | `time_domain` | `rate`, `preset`, `engine`, `wavelet`, `wavelet_levels` | Tempo invariance (auto/torchaudio/pytorch/wavelet/pvx-cli) |
+| `PitchShift` | `time_domain` | `semitones`, `formant_mode`, `engine`, `wavelet`, `wavelet_levels` | Pitch invariance (auto/torchaudio/pytorch/wavelet/pvx-cli) |
 | `stream_augment_file` | `streaming` | `chunk_duration_s`, `overlap_s` | Memory-bounded long-form processing |
 | `IRDatabase` | `ir_database` | `cache_dir` | Real IR collection manager |
 | `PitchShiftSimple` | `spectral` | `semitones` | Lightweight pitch approximation |

@@ -852,6 +852,9 @@ pvx augment-manifest merge aug/run_a/augment_manifest.jsonl aug/run_b/augment_ma
 # Augmentation profile benchmark suite and gates (speech/music/noisy/stereo)
 python benchmarks/run_augment_profile_suite.py --quick --gate --out-dir benchmarks/out_augment_profiles
 
+# Compare TimeStretch/PitchShift backends on deterministic smoke signals
+python benchmarks/run_backend_compare.py --engines pytorch,pvx-cli,wavelet --wavelet auto
+
 # Refresh per-profile baselines after intentional benchmark changes
 python benchmarks/run_augment_profile_suite.py --quick --refresh-baselines --out-dir benchmarks/out_augment_profiles_refresh
 ```

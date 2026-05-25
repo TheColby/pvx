@@ -3,12 +3,20 @@
 from __future__ import annotations
 
 import json
+import sys
 import tempfile
 import unittest
+from argparse import Namespace
 from pathlib import Path
 
 import numpy as np
 import soundfile as sf
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from benchmarks.run_backend_compare import build_report
 from benchmarks.run_bench import (
     TaskSpec,
     _check_gate,
@@ -194,6 +202,29 @@ class TestBenchmarkRunnerProfiles(unittest.TestCase):
             self.assertEqual(issues2, [])
             self.assertEqual(len(paths2), len(paths))
             self.assertEqual(len(payload2.get("entries", [])), len(payload.get("entries", [])))
+
+    def test_backend_compare_wavelet_report(self) -> None:
+        report = build_report(
+            Namespace(
+                engines="wavelet",
+                sample_rate=8000,
+                duration=0.25,
+                base_freq=220.0,
+                stretch=1.25,
+                semitones=12.0,
+                wavelet="haar",
+                wavelet_levels=2,
+                seed=7,
+            )
+        )
+        self.assertEqual(report["benchmark"], "pvx_backend_compare")
+        self.assertEqual(len(report["rows"]), 2)
+        self.assertTrue(all(row["status"] == "ok" for row in report["rows"]))
+        stretch_row = next(row for row in report["rows"] if row["operation"] == "stretch")
+        pitch_row = next(row for row in report["rows"] if row["operation"] == "pitch")
+        self.assertEqual(stretch_row["samples"], int(round(report["input_samples"] * 1.25)))
+        self.assertEqual(pitch_row["samples"], report["input_samples"])
+        self.assertAlmostEqual(pitch_row["dominant_freq_hz"], 440.0, delta=90.0)
 
 
 if __name__ == "__main__":
