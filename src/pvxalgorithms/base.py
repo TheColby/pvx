@@ -5,7 +5,8 @@ from __future__ import annotations
 import warnings
 
 warnings.warn(
-    "`pvxalgorithms.base` is deprecated; import from `pvx.algorithms.base` instead.",
+    "`pvxalgorithms.base` is deprecated; import from `pvx.algorithms.base` instead. "
+    "The compatibility alias is planned for removal in v0.2.0.",
     DeprecationWarning,
     stacklevel=2,
 )

@@ -6,6 +6,7 @@ import argparse
 import sys
 import time
 from collections.abc import Iterable
+from typing import Any
 
 from pvx.core.presets import PRESET_CHOICES, PRESET_OVERRIDES
 
@@ -118,7 +119,7 @@ class ProgressBar:
 
 
 def add_console_args(
-    parser: argparse.ArgumentParser,
+    parser: Any,
     *,
     include_no_progress_alias: bool = False,
 ) -> None:

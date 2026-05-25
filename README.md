@@ -19,6 +19,7 @@ Primary project goals and differentiators:
 Start here:
 - [Install](#install)
 - [30-Second Quick Start](#30-second-quick-start)
+- [Supported Surface](docs/SUPPORTED_SURFACE.md)
 - [Unified CLI](#unified-cli-primary-entry-point)
 - [When To Use Which Tool](#when-to-use-which-tool-decision-tree)
 - [Alpha Release Guide](docs/ALPHA_RELEASE.md)
@@ -28,9 +29,9 @@ Start here:
 For `0.1.0a1`, treat these as the supported public surface:
 - stable CLIs: `pvx`, `pvxvoc`, `pvxfreeze`, `pvxwarp`, `pvxformant`, `pvxfilter`, `pvxretune`, `pvxanalysis`
 - beta CLIs: usable, but flags may still move in minor releases
-- compatibility imports: `pvxalgorithms*` remain available with deprecation warnings only to ease migration
+- compatibility imports: `pvxalgorithms*` remain available with deprecation warnings only to ease migration during `0.1.x`
 
-Release-validation commands live in [RELEASE.md](RELEASE.md) and the alpha checklist in [docs/ALPHA_RELEASE.md](docs/ALPHA_RELEASE.md).
+Release-validation commands live in [RELEASE.md](RELEASE.md), the alpha checklist in [docs/ALPHA_RELEASE.md](docs/ALPHA_RELEASE.md), and the surface contract in [docs/SUPPORTED_SURFACE.md](docs/SUPPORTED_SURFACE.md).
 
 ## Value Proposition
 

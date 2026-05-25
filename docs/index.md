@@ -46,6 +46,13 @@ pvxrir speech.wav --ir-database echothief --category hall --output reverbed.wav
 
 ## Find what you need
 
+Before diving into the long generated references, check the short contract docs:
+
+- [Supported Surface](SUPPORTED_SURFACE.md)
+- [Getting Started](GETTING_STARTED.md)
+- [Quality Guide](QUALITY_GUIDE.md)
+- [Homebrew Install](HOMEBREW.md)
+
 **I want to…**
 
 | Goal | Start here |

@@ -5,7 +5,8 @@ from __future__ import annotations
 import warnings
 
 warnings.warn(
-    "`pvxalgorithms.registry` is deprecated; import from `pvx.algorithms.registry` instead.",
+    "`pvxalgorithms.registry` is deprecated; import from `pvx.algorithms.registry` instead. "
+    "The compatibility alias is planned for removal in v0.2.0.",
     DeprecationWarning,
     stacklevel=2,
 )

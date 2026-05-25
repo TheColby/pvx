@@ -10,12 +10,17 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+import tomllib
+
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
+PYPROJECT = ROOT / "pyproject.toml"
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
+
+from scripts.scripts_sync_homebrew_tap_formula import main as sync_homebrew_formula_main
 
 from pvx import voc_cli
 from pvx.cli.pvx import _consume_lucky_options, _infer_output_format, _parse_size_bytes
@@ -45,6 +50,63 @@ class TestCLIHelperSeams(unittest.TestCase):
     def test_infer_output_format_normalizes_aliases(self) -> None:
         self.assertEqual(_infer_output_format(Path("clip.aif"), "auto"), "aiff")
         self.assertEqual(_infer_output_format(Path("clip.wav"), ".oga"), "ogg")
+
+    def test_sync_homebrew_formula_script_copies_formula_into_tap_checkout(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="pvx-homebrew-tap-") as tmp:
+            root = Path(tmp)
+            tap = root / "homebrew-pvx"
+            formula_dir = tap / "Formula"
+            formula_dir.mkdir(parents=True)
+            source_formula = root / "pvx.rb"
+            source_formula.write_text("class Pvx < Formula\nend\n", encoding="utf-8")
+
+            rc = sync_homebrew_formula_main([str(tap), "--formula", str(source_formula)])
+
+            self.assertEqual(rc, 0)
+            self.assertEqual(
+                (formula_dir / "pvx.rb").read_text(encoding="utf-8"),
+                source_formula.read_text(encoding="utf-8"),
+            )
+
+    def test_sync_homebrew_formula_script_rejects_missing_formula(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="pvx-homebrew-tap-") as tmp:
+            tap = Path(tmp) / "homebrew-pvx"
+            tap.mkdir()
+            with self.assertRaises(SystemExit):
+                sync_homebrew_formula_main([str(tap), "--formula", str(Path(tmp) / "missing.rb")])
+
+    def test_sync_homebrew_formula_script_rejects_missing_or_bad_tap_checkout(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="pvx-homebrew-tap-") as tmp:
+            root = Path(tmp)
+            source_formula = root / "pvx.rb"
+            source_formula.write_text("class Pvx < Formula\nend\n", encoding="utf-8")
+            with self.assertRaises(SystemExit):
+                sync_homebrew_formula_main(
+                    [str(root / "missing-tap"), "--formula", str(source_formula)]
+                )
+            bad_tap = root / "pvx"
+            bad_tap.mkdir()
+            with self.assertRaises(SystemExit):
+                sync_homebrew_formula_main([str(bad_tap), "--formula", str(source_formula)])
+
+    def test_supported_surface_doc_matches_stable_pyproject_scripts(self) -> None:
+        payload = tomllib.loads(PYPROJECT.read_text(encoding="utf-8"))
+        scripts = payload["project"]["scripts"]
+        supported_surface = (ROOT / "docs" / "SUPPORTED_SURFACE.md").read_text(encoding="utf-8")
+
+        stable_expected = [
+            "pvx",
+            "pvxvoc",
+            "pvxfreeze",
+            "pvxwarp",
+            "pvxformant",
+            "pvxfilter",
+            "pvxretune",
+            "pvxanalysis",
+        ]
+        for name in stable_expected:
+            self.assertIn(name, scripts)
+            self.assertIn(f"`{name}`", supported_surface)
 
 
 class TestVocCompatibilitySeams(unittest.TestCase):

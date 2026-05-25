@@ -1,6 +1,6 @@
 {
-  "commit": "dff2a4f",
-  "commit_date": "2026-04-21T21:20:38-04:00",
+  "commit": "35e9761",
+  "commit_date": "2026-05-25T08:14:42-04:00",
   "entries": [
     {
       "action": "",
@@ -400,11 +400,12 @@
         "auto",
         "pytorch",
         "torchaudio",
+        "wavelet",
         "pvx-cli"
       ],
       "default": "auto",
       "flag": "--engine",
-      "help": "DSP engine for time-stretch and pitch-shift transforms. 'auto' prefers torchaudio > pytorch > pvx-cli. 'torchaudio' uses torchaudio.functional.phase_vocoder. 'pytorch' uses native PyTorch phase vocoder. 'pvx-cli' always uses subprocess. (default: auto)",
+      "help": "DSP engine for time-stretch and pitch-shift transforms. 'auto' prefers torchaudio > pytorch > pvx-cli. 'torchaudio' uses torchaudio.functional.phase_vocoder. 'pytorch' uses native PyTorch phase vocoder. 'wavelet' uses the experimental wavelet backend. 'pvx-cli' always uses subprocess. (default: auto)",
       "required": false,
       "source": "src/pvx/cli/pvx_augment.py",
       "tool": "pvx"
@@ -3617,7 +3618,7 @@
       "flag": "--ambient-phase-mix",
       "help": "Random-phase blend when --phase-engine hybrid (0.0=propagated only, 1.0=random only; default: 0.5). Accepts scalar or control file (.csv/.json).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -3627,7 +3628,7 @@
       "flag": "--ambient-preset",
       "help": "Convenience preset for ambient extreme stretch (random phase engine, onset-time-credit, transient preserve, conservative staging).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -3640,7 +3641,7 @@
       "flag": "--analysis-channel",
       "help": "Channel strategy for F0 estimation with --target-f0 (default: mix)",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -3650,7 +3651,7 @@
       "flag": "--auto-profile",
       "help": "Analyze input and choose a profile automatically (speech/music/percussion/ambient/extreme).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -3660,7 +3661,7 @@
       "flag": "--auto-profile-lookahead-seconds",
       "help": "Seconds of audio used when estimating --auto-profile (default: 6.0).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -3670,7 +3671,7 @@
       "flag": "--auto-segment-seconds",
       "help": "Optional segment size in seconds for long jobs. When >0, processing runs per segment with crossfade assembly.",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -3680,7 +3681,7 @@
       "flag": "--auto-transform",
       "help": "Allow automatic transform selection when --transform is not explicitly set.",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -3690,7 +3691,7 @@
       "flag": "--bit-depth",
       "help": "Output bit-depth policy (default: inherit). Ignored when --subtype is set.",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -3700,7 +3701,7 @@
       "flag": "--cents",
       "help": "Pitch shift in cents (+1200 is one octave up). Accepts scalar or control file (.csv/.json).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -3710,7 +3711,7 @@
       "flag": "--checkpoint-dir",
       "help": "Directory used to cache per-segment checkpoint chunks for resume workflows.",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -3720,7 +3721,7 @@
       "flag": "--checkpoint-id",
       "help": "Optional checkpoint run identifier (default: hash of input/settings).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -3740,7 +3741,7 @@
       "flag": "--coherence-strength",
       "help": "Coherence lock strength in [0,1] (0=off, 1=full lock). Accepts scalar or control file (.csv/.json).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -3860,7 +3861,7 @@
       "flag": "--control-stdin",
       "help": "Alias for --pitch-map-stdin (canonical control-bus CSV stdin path).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -3870,7 +3871,7 @@
       "flag": "--cpu",
       "help": "Alias for --device cpu.",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -3904,7 +3905,7 @@
       "flag": "--dither",
       "help": "Dither policy before quantized writes (default: none)",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -3914,7 +3915,7 @@
       "flag": "--dither-seed",
       "help": "Deterministic RNG seed for dithering (default: random seed)",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -3924,7 +3925,7 @@
       "flag": "--dry-run",
       "help": "Resolve settings without writing files",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -3934,7 +3935,7 @@
       "flag": "--example",
       "help": "Print copy-paste example command(s) and exit.",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -3984,7 +3985,7 @@
       "flag": "--explain-plan",
       "help": "Print resolved processing plan JSON and exit without rendering audio.",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -3994,7 +3995,7 @@
       "flag": "--extreme-stretch-threshold",
       "help": "Auto-mode threshold for multistage activation (default: 2.0). Accepts scalar or control file (.csv/.json).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4004,7 +4005,7 @@
       "flag": "--extreme-time-stretch",
       "help": "Force multistage strategy even when ratio is moderate.",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4014,7 +4015,7 @@
       "flag": "--f0-max",
       "help": "Maximum F0 search bound in Hz (default: 1000)",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4024,7 +4025,7 @@
       "flag": "--f0-min",
       "help": "Minimum F0 search bound in Hz (default: 50)",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4034,7 +4035,7 @@
       "flag": "--force",
       "help": "Overwrite existing outputs and other write targets",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4044,7 +4045,7 @@
       "flag": "--formant-lifter",
       "help": "Cepstral lifter cutoff for formant envelope extraction (default: 32). Accepts scalar or control file (.csv/.json).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4054,7 +4055,7 @@
       "flag": "--formant-max-gain-db",
       "help": "Max per-bin formant correction gain in dB (default: 12). Accepts scalar or control file (.csv/.json).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4064,7 +4065,7 @@
       "flag": "--formant-strength",
       "help": "Formant correction blend 0..1 when pitch mode is formant-preserving (default: 1.0). Accepts scalar or control file (.csv/.json).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4074,7 +4075,7 @@
       "flag": "--fourier-sync",
       "help": "Enable fundamental frame locking. Uses generic short-time Fourier transforms with per-frame FFT sizes locked to detected F0.",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4084,7 +4085,7 @@
       "flag": "--fourier-sync-max-fft",
       "help": "Maximum frame FFT size for --fourier-sync (default: 8192). Accepts scalar or control file (.csv/.json).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4094,7 +4095,7 @@
       "flag": "--fourier-sync-min-fft",
       "help": "Minimum frame FFT size for --fourier-sync (default: 256). Accepts scalar or control file (.csv/.json).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4104,7 +4105,7 @@
       "flag": "--fourier-sync-smooth",
       "help": "Smoothing span (frames) for prescanned F0 track in --fourier-sync (default: 5). Accepts scalar or control file (.csv/.json).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4114,7 +4115,7 @@
       "flag": "--gpu",
       "help": "Alias for --device cuda.",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4124,7 +4125,7 @@
       "flag": "--guided",
       "help": "Interactive guided mode for first-time users.",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4144,7 +4145,7 @@
       "flag": "--hop-size",
       "help": "Hop size in samples (default: 512). Accepts scalar or control file (.csv/.json).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4154,7 +4155,7 @@
       "flag": "--interp",
       "help": "Interpolation mode for time-varying control signals loaded from CSV/JSON (default: linear).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4164,7 +4165,7 @@
       "flag": "--kaiser-beta",
       "help": "Kaiser window beta parameter used when --window kaiser (default: 14.0). Accepts scalar or control file (.csv/.json).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4184,7 +4185,7 @@
       "flag": "--manifest-append",
       "help": "Append entries to an existing --manifest-json file instead of replacing it.",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4194,7 +4195,7 @@
       "flag": "--manifest-json",
       "help": "Write processing manifest JSON with per-file settings and outcomes.",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4204,7 +4205,7 @@
       "flag": "--max-stage-stretch",
       "help": "Maximum per-stage ratio used in multistage mode (default: 1.8). Accepts scalar or control file (.csv/.json).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4214,7 +4215,7 @@
       "flag": "--metadata-policy",
       "help": "Output metadata policy: none, sidecar, or copy (sidecar implementation)",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4224,7 +4225,7 @@
       "flag": "--multires-ffts",
       "help": "Comma-separated FFT sizes for --multires-fusion (default: 1024,2048,4096)",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4234,7 +4235,7 @@
       "flag": "--multires-fusion",
       "help": "Blend multiple FFT resolutions for each channel before pitch resampling.",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4244,7 +4245,7 @@
       "flag": "--multires-weights",
       "help": "Comma-separated fusion weights for --multires-fusion (defaults to equal weights).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4254,7 +4255,7 @@
       "flag": "--n-fft",
       "help": "FFT size (default: 2048). Accepts scalar or control file (.csv/.json).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4264,7 +4265,7 @@
       "flag": "--no-center",
       "help": "Disable center padding in STFT/ISTFT",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4274,7 +4275,7 @@
       "flag": "--no-onset-realign",
       "help": "Disable fractional read-position realignment on onsets when --onset-time-credit is enabled.",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4308,7 +4309,7 @@
       "flag": "--onset-credit-max",
       "help": "Maximum accumulated onset time credit in analysis-frame units (default: 8.0). Accepts scalar or control file (.csv/.json).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4318,7 +4319,7 @@
       "flag": "--onset-credit-pull",
       "help": "Fraction of per-frame read advance removable while onset credit exists (0.0..1.0, default: 0.5). Accepts scalar or control file (.csv/.json).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4328,7 +4329,7 @@
       "flag": "--onset-time-credit",
       "help": "Enable onset-triggered time-credit scheduling to reduce transient smear during extreme stretching.",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4338,7 +4339,7 @@
       "flag": "--order",
       "help": "Polynomial order for --interp polynomial (default: 3). Accepts any integer >= 1; effective fit degree is min(order, control_points-1).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4348,7 +4349,7 @@
       "flag": "--out",
       "help": "Explicit output file path (single-input mode only). Alias: --out",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4358,7 +4359,7 @@
       "flag": "--output",
       "help": "Explicit output file path (single-input mode only). Alias: --out",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4368,7 +4369,7 @@
       "flag": "--output-dir",
       "help": "Directory for output files (default: same directory as each input)",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4378,7 +4379,7 @@
       "flag": "--output-format",
       "help": "Output format/extension (e.g. wav, flac, aiff). Default: keep input extension.",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4388,7 +4389,7 @@
       "flag": "--overwrite",
       "help": "Overwrite existing outputs and other write targets",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4408,7 +4409,7 @@
       "flag": "--phase-engine",
       "help": "Phase synthesis engine: propagate (classic phase vocoder), hybrid (propagated + stochastic blend), random (ambient stochastic phase).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4421,7 +4422,7 @@
       "flag": "--phase-locking",
       "help": "Inter-bin phase locking mode for transient fidelity (default: identity)",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4431,7 +4432,7 @@
       "flag": "--phase-random-seed",
       "help": "Optional deterministic seed for random/hybrid phase generation.",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4441,7 +4442,7 @@
       "flag": "--pitch",
       "help": "Pitch shift in semitones (+12 is one octave up). Accepts scalar or control file (.csv/.json).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4451,7 +4452,7 @@
       "flag": "--pitch-conf-min",
       "help": "Minimum accepted map confidence (default: 0 disables gating).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4461,7 +4462,7 @@
       "flag": "--pitch-follow-stdin",
       "help": "Shortcut for --pitch-map-stdin (sidechain pitch-follow workflows).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4475,7 +4476,7 @@
       "flag": "--pitch-lowconf-mode",
       "help": "Low-confidence map handling mode (default: hold).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4485,7 +4486,7 @@
       "flag": "--pitch-map",
       "help": "CSV control map for time-varying stretch/pitch. Columns: start_sec,end_sec plus optional stretch,pitch_ratio/pitch_cents/pitch_semitones,confidence. Use '-' to read from stdin.",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4495,7 +4496,7 @@
       "flag": "--pitch-map-crossfade-ms",
       "help": "Crossfade between processed map segments in milliseconds (default: 8.0).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4505,7 +4506,7 @@
       "flag": "--pitch-map-smooth-ms",
       "help": "Moving-average smoothing over map pitch ratios in milliseconds.",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4515,7 +4516,7 @@
       "flag": "--pitch-map-stdin",
       "help": "Read control-map CSV from stdin.",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4528,7 +4529,7 @@
       "flag": "--pitch-mode",
       "help": "Pitch mode: standard shift or formant-preserving correction (default: standard)",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4538,7 +4539,7 @@
       "flag": "--pitch-shift-cents",
       "help": "Pitch shift in cents (+1200 is one octave up). Accepts scalar or control file (.csv/.json).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4548,7 +4549,7 @@
       "flag": "--pitch-shift-ratio",
       "help": "Pitch ratio (>1 up, <1 down). Accepts decimals (1.5), integer ratios (3/2), expressions (2^(1/12)), or a control file (.csv/.json).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4558,7 +4559,7 @@
       "flag": "--pitch-shift-semitones",
       "help": "Pitch shift in semitones (+12 is one octave up). Accepts scalar or control file (.csv/.json).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4568,7 +4569,7 @@
       "flag": "--preset",
       "help": "High-level intent preset. Legacy: none/vocal/ambient/extreme. New: default/vocal_studio/drums_safe/extreme_ambient/stereo_coherent.",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4578,7 +4579,7 @@
       "flag": "--quality-profile",
       "help": "Named tuning profile for vocoder defaults (default: neutral)",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4598,7 +4599,7 @@
       "flag": "--ratio",
       "help": "Pitch ratio (>1 up, <1 down). Accepts decimals (1.5), integer ratios (3/2), expressions (2^(1/12)), or a control file (.csv/.json).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4608,7 +4609,7 @@
       "flag": "--ref-channel",
       "help": "Reference channel index used by --stereo-mode ref_channel_lock (default: 0).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4622,7 +4623,7 @@
       "flag": "--resample-mode",
       "help": "Resampling engine (auto=fft if scipy available, else linear)",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4632,7 +4633,7 @@
       "flag": "--resume",
       "help": "Reuse existing checkpoint chunks from --checkpoint-dir when available.",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4652,7 +4653,7 @@
       "flag": "--route",
       "help": "Control-bus routing expression for map rows. Repeat flag to chain routes. Syntax: target=source, target=const(v), target=inv(source), target=pow(source,exp), target=mul(source,factor), target=add(source,offset), target=affine(source,scale,bias), target=clip(source,lo,hi). Targets: stretch,pitch_ratio. Sources: any numeric column present in the control-map CSV.",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4662,7 +4663,7 @@
       "flag": "--semitones",
       "help": "Pitch shift in semitones (+12 is one octave up). Accepts scalar or control file (.csv/.json).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4716,7 +4717,7 @@
       "flag": "--stdout",
       "help": "Write processed audio to stdout stream (for piping); requires exactly one input",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4730,7 +4731,7 @@
       "flag": "--stereo-mode",
       "help": "Channel coherence strategy: independent (legacy), mid_side_lock (M/S-coupled), ref_channel_lock (phase-lock to reference channel).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4740,7 +4741,7 @@
       "flag": "--stretch",
       "help": "Alias for --time-stretch. Accepts scalar or control file (.csv/.json).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4754,7 +4755,7 @@
       "flag": "--stretch-mode",
       "help": "Stretch strategy: standard (single pass), multistage (chained moderate passes), or auto (multistage only for extreme ratios; default: auto).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4764,7 +4765,7 @@
       "flag": "--subtype",
       "help": "Explicit libsndfile output subtype override (e.g., PCM_16, PCM_24, FLOAT)",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4774,7 +4775,7 @@
       "flag": "--suffix",
       "help": "Suffix appended to output filename stem (default: _pv)",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4784,7 +4785,7 @@
       "flag": "--target-duration",
       "help": "Absolute target duration in seconds (overrides --time-stretch)",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4794,7 +4795,7 @@
       "flag": "--target-f0",
       "help": "Target fundamental frequency in Hz. Auto-estimates source F0 per file.",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4814,7 +4815,7 @@
       "flag": "--target-pitch-shift-semitones",
       "help": "Pitch shift in semitones (+12 is one octave up). Accepts scalar or control file (.csv/.json).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4824,7 +4825,7 @@
       "flag": "--target-sample-rate",
       "help": "Output sample rate in Hz (default: keep input rate)",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4834,7 +4835,7 @@
       "flag": "--time-stretch",
       "help": "Final duration multiplier (1.0=unchanged, 2.0=2x longer). Accepts scalar or control file (.csv/.json).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4844,7 +4845,7 @@
       "flag": "--time-stretch-factor",
       "help": "Final duration multiplier (1.0=unchanged, 2.0=2x longer). Accepts scalar or control file (.csv/.json).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4854,7 +4855,7 @@
       "flag": "--transform",
       "help": "Per-frame transform backend for STFT/ISTFT paths (default: fft; options: fft, dft, czt, dct, dst, hartley)",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4864,7 +4865,7 @@
       "flag": "--transient-crossfade-ms",
       "help": "Crossfade duration for transient/steady stitching (default: 10 ms). Accepts scalar or control file (.csv/.json).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4879,7 +4880,7 @@
       "flag": "--transient-mode",
       "help": "Transient handling mode: off (none), reset (phase reset), hybrid (PV steady + WSOLA transients), or wsola (time-domain transient-safe path).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4889,7 +4890,7 @@
       "flag": "--transient-preserve",
       "help": "Enable transient phase resets based on spectral flux",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4899,7 +4900,7 @@
       "flag": "--transient-protect-ms",
       "help": "Transient protection width in milliseconds (default: 30). Accepts scalar or control file (.csv/.json).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4909,7 +4910,7 @@
       "flag": "--transient-sensitivity",
       "help": "Transient detector sensitivity in [0,1] (higher catches more onsets). Accepts scalar or control file (.csv/.json).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4919,7 +4920,7 @@
       "flag": "--transient-threshold",
       "help": "Spectral-flux multiplier for transient detection (default: 2.0). Accepts scalar or control file (.csv/.json).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4929,7 +4930,7 @@
       "flag": "--true-peak-max-dbtp",
       "help": "Apply output gain trim to enforce max true-peak in dBTP",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4959,7 +4960,7 @@
       "flag": "--win-length",
       "help": "Window length in samples (default: 2048). Accepts scalar or control file (.csv/.json).",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {
@@ -4969,7 +4970,7 @@
       "flag": "--window",
       "help": "Window type (default: hann)",
       "required": false,
-      "source": "src/pvx/core/voc.py",
+      "source": "src/pvx/core/voc_parser.py",
       "tool": "pvxvoc"
     },
     {

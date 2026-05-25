@@ -53,6 +53,50 @@ class TestPvxvocCli(unittest.TestCase):
         guided.assert_called_once_with(args)
         self.assertIs(result, args)
 
+    def test_guided_mode_interactive_flow(self) -> None:
+        args = argparse.Namespace(
+            inputs=[],
+            output=None,
+            stdout=False,
+            time_stretch=1.0,
+            pitch_shift_cents=None,
+            pitch_shift_ratio=None,
+            target_f0=None,
+            pitch_shift_semitones=None,
+            preset="none",
+            device="auto",
+        )
+        answers = iter(["voice.wav", "out.wav", "both", "1.5", "2", "default", "cpu", "yes"])
+        with patch("sys.stdin.isatty", return_value=True), patch(
+            "builtins.input", side_effect=lambda _prompt: next(answers)
+        ):
+            result = pvxvoc.run_guided_mode(args)
+
+        self.assertEqual(result.inputs, ["voice.wav"])
+        self.assertEqual(result.time_stretch, 1.5)
+        self.assertEqual(result.pitch_shift_semitones, 2.0)
+        self.assertEqual(result.preset, "default")
+        self.assertEqual(result.device, "cpu")
+        self.assertTrue(result.stdout)
+        self.assertIsNone(result.output)
+
+    def test_guided_mode_rejects_non_tty(self) -> None:
+        args = argparse.Namespace(
+            inputs=[],
+            output=None,
+            stdout=False,
+            time_stretch=1.0,
+            pitch_shift_cents=None,
+            pitch_shift_ratio=None,
+            target_f0=None,
+            pitch_shift_semitones=None,
+            preset="none",
+            device="auto",
+        )
+        with patch("sys.stdin.isatty", return_value=False):
+            with self.assertRaises(ValueError):
+                pvxvoc.run_guided_mode(args)
+
     def test_legacy_registry_alias_emits_deprecation_warning(self) -> None:
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always", DeprecationWarning)
@@ -63,6 +107,7 @@ class TestPvxvocCli(unittest.TestCase):
             any(
                 item.category is DeprecationWarning
                 and "pvx.algorithms.registry" in str(item.message)
+                and "v0.2.0" in str(item.message)
                 for item in caught
             )
         )
