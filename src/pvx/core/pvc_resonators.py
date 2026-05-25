@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """PVC-inspired ring/resonator operators for pvx.
 
@@ -20,7 +19,7 @@ from pvx.core.pvc_ops import evaluate_scalar_control, load_scalar_control_points
 
 try:
     from scipy.signal import iirpeak, lfilter
-except Exception:  # pragma: no cover - optional at import-time
+except (ImportError, ModuleNotFoundError):  # pragma: no cover - optional at import-time
     iirpeak = None
     lfilter = None
 
@@ -67,7 +66,9 @@ def _ring_modulate(
     if n == 0:
         return x.copy()
 
-    freq = np.clip(np.asarray(freq_track_hz, dtype=np.float64).reshape(-1), 0.0, 0.5 * float(sample_rate))
+    freq = np.clip(
+        np.asarray(freq_track_hz, dtype=np.float64).reshape(-1), 0.0, 0.5 * float(sample_rate)
+    )
     depth = np.clip(np.asarray(depth_track, dtype=np.float64).reshape(-1), 0.0, 1.0)
     mix = np.clip(np.asarray(mix_track, dtype=np.float64).reshape(-1), 0.0, 1.0)
     if freq.size != n or depth.size != n or mix.size != n:

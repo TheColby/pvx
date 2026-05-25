@@ -1,16 +1,14 @@
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
-
 """Microtonal feature tests across CSV mapping, retune, and CLI pitch paths.
 
 Ensures cents/ratio/semitone mapping behavior remains stable and that
 microtonal pitch controls produce expected conversion outputs.
 """
 
+import math
+import sys
 import tempfile
 import unittest
 from pathlib import Path
-import math
-import sys
 
 import numpy as np
 
@@ -19,8 +17,8 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from pvx.core.common import cents_to_ratio, read_segment_csv
 from pvx.cli.pvxretune import nearest_scale_freq
+from pvx.core.common import cents_to_ratio, read_segment_csv
 from pvx.core.voc import choose_pitch_ratio, parse_pitch_ratio_value
 
 
@@ -34,8 +32,7 @@ class TestMicrotonalSupport(unittest.TestCase):
             csv_path = Path(tmp) / "map.csv"
             write_text(
                 csv_path,
-                "start_sec,end_sec,stretch,pitch_cents\n"
-                "0.0,1.0,1.0,50\n",
+                "start_sec,end_sec,stretch,pitch_cents\n0.0,1.0,1.0,50\n",
             )
             segments = read_segment_csv(csv_path, has_pitch=True)
             self.assertEqual(len(segments), 1)
@@ -46,8 +43,7 @@ class TestMicrotonalSupport(unittest.TestCase):
             csv_path = Path(tmp) / "map.csv"
             write_text(
                 csv_path,
-                "start_sec,end_sec,stretch,pitch_ratio\n"
-                "0.0,1.0,1.0,1.03715\n",
+                "start_sec,end_sec,stretch,pitch_ratio\n0.0,1.0,1.0,1.03715\n",
             )
             segments = read_segment_csv(csv_path, has_pitch=True)
             self.assertEqual(len(segments), 1)
@@ -58,8 +54,7 @@ class TestMicrotonalSupport(unittest.TestCase):
             csv_path = Path(tmp) / "map.csv"
             write_text(
                 csv_path,
-                "start_sec,end_sec,stretch,pitch_ratio\n"
-                "0.0,1.0,1.0,3/2\n",
+                "start_sec,end_sec,stretch,pitch_ratio\n0.0,1.0,1.0,3/2\n",
             )
             segments = read_segment_csv(csv_path, has_pitch=True)
             self.assertEqual(len(segments), 1)
@@ -70,8 +65,7 @@ class TestMicrotonalSupport(unittest.TestCase):
             csv_path = Path(tmp) / "map.csv"
             write_text(
                 csv_path,
-                "start_sec,end_sec,stretch,pitch_ratio\n"
-                "0.0,1.0,1.0,2^(1/12)\n",
+                "start_sec,end_sec,stretch,pitch_ratio\n0.0,1.0,1.0,2^(1/12)\n",
             )
             segments = read_segment_csv(csv_path, has_pitch=True)
             self.assertEqual(len(segments), 1)
@@ -82,8 +76,7 @@ class TestMicrotonalSupport(unittest.TestCase):
             csv_path = Path(tmp) / "map.csv"
             write_text(
                 csv_path,
-                "start_sec,end_sec,stretch,pitch_cents,pitch_ratio\n"
-                "0.0,1.0,1.0,25,1.02\n",
+                "start_sec,end_sec,stretch,pitch_cents,pitch_ratio\n0.0,1.0,1.0,25,1.02\n",
             )
             with self.assertRaises(ValueError):
                 read_segment_csv(csv_path, has_pitch=True)
@@ -159,7 +152,9 @@ class TestMicrotonalSupport(unittest.TestCase):
 
     def test_parse_pitch_ratio_value_supports_fraction_and_constants(self) -> None:
         self.assertAlmostEqual(parse_pitch_ratio_value("5/4"), 1.25, delta=1e-12)
-        self.assertAlmostEqual(parse_pitch_ratio_value("exp(log(2)/12)"), 2.0 ** (1.0 / 12.0), delta=1e-12)
+        self.assertAlmostEqual(
+            parse_pitch_ratio_value("exp(log(2)/12)"), 2.0 ** (1.0 / 12.0), delta=1e-12
+        )
         self.assertAlmostEqual(parse_pitch_ratio_value("pi/e"), math.pi / math.e, delta=1e-12)
 
 

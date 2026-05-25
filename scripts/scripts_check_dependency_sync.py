@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 """Validate that runtime requirements.txt matches project runtime dependencies."""
 
 from __future__ import annotations
 
-from pathlib import Path
 import re
+from pathlib import Path
+
 import tomllib
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -24,7 +24,7 @@ def read_requirements() -> set[str]:
         line = raw.strip()
         if not line or line.startswith("#"):
             continue
-        if line.startswith("-r ") or line.startswith("--"):
+        if line.startswith(("-r ", "--")):
             continue
         names.add(normalize_name(line))
     return names

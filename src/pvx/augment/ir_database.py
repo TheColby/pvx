@@ -1,5 +1,3 @@
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
-
 """Curated impulse response (IR) database integration.
 
 Provides a simple downloader and cache manager for publicly available
@@ -33,16 +31,12 @@ Usage
 
 from __future__ import annotations
 
-import hashlib
 import json
 import shutil
 import zipfile
 from pathlib import Path
-from typing import Sequence
+from urllib.parse import urlparse
 from urllib.request import urlretrieve
-
-import numpy as np
-
 
 # ---------------------------------------------------------------------------
 # Registry of known IR databases
@@ -77,6 +71,7 @@ _IR_REGISTRY: dict[str, dict[str, object]] = {
 # ---------------------------------------------------------------------------
 # IRDatabase
 # ---------------------------------------------------------------------------
+
 
 class IRDatabase:
     """Manage impulse response databases for room acoustics augmentation.
@@ -115,15 +110,17 @@ class IRDatabase:
         result = []
         for key, info in _IR_REGISTRY.items():
             downloaded = self._db_dir(key).exists()
-            result.append({
-                "id": key,
-                "name": info["name"],
-                "description": info["description"],
-                "license": info["license"],
-                "size_mb": info["size_mb"],
-                "downloaded": downloaded,
-                "n_files": len(self.list_irs(key)) if downloaded else 0,
-            })
+            result.append(
+                {
+                    "id": key,
+                    "name": info["name"],
+                    "description": info["description"],
+                    "license": info["license"],
+                    "size_mb": info["size_mb"],
+                    "downloaded": downloaded,
+                    "n_files": len(self.list_irs(key)) if downloaded else 0,
+                }
+            )
         return result
 
     def download(
@@ -156,10 +153,7 @@ class IRDatabase:
         """
         if database_id not in _IR_REGISTRY:
             available = ", ".join(sorted(_IR_REGISTRY))
-            raise ValueError(
-                f"Unknown IR database: {database_id!r}. "
-                f"Available: {available}"
-            )
+            raise ValueError(f"Unknown IR database: {database_id!r}. Available: {available}")
 
         info = _IR_REGISTRY[database_id]
         db_dir = self._db_dir(database_id)
@@ -171,12 +165,15 @@ class IRDatabase:
             return db_dir
 
         url = str(info["url"])
+        parsed = urlparse(url)
+        if parsed.scheme not in {"http", "https"}:
+            raise ValueError(f"Unsupported IR database URL scheme: {parsed.scheme!r}")
         zip_path = self.cache_dir / f"{database_id}.zip"
 
         if progress:
             print(f"[ir_database] Downloading {info['name']} ({info['size_mb']}MB)...")
 
-        urlretrieve(url, str(zip_path))
+        urlretrieve(url, str(zip_path))  # nosec B310
 
         if progress:
             print(f"[ir_database] Extracting to {db_dir}...")
@@ -219,9 +216,9 @@ class IRDatabase:
             return []
         audio_exts = {".wav", ".flac", ".aiff", ".aif", ".ogg"}
         return sorted(
-            p for p in db_dir.rglob("*")
-            if p.suffix.lower() in audio_exts
-            and not p.name.startswith(".")
+            p
+            for p in db_dir.rglob("*")
+            if p.suffix.lower() in audio_exts and not p.name.startswith(".")
         )
 
     def filter(
@@ -263,9 +260,11 @@ class IRDatabase:
             if keywords:
                 lower_keywords = [k.lower() for k in keywords]
                 files = [
-                    f for f in files
-                    if any(kw in f.stem.lower() or kw in str(f.parent).lower()
-                           for kw in lower_keywords)
+                    f
+                    for f in files
+                    if any(
+                        kw in f.stem.lower() or kw in str(f.parent).lower() for kw in lower_keywords
+                    )
                 ]
 
         if name_contains is not None:
@@ -274,6 +273,7 @@ class IRDatabase:
 
         if max_duration_s is not None or min_duration_s is not None:
             import soundfile as sf
+
             filtered = []
             for f in files:
                 try:
@@ -284,7 +284,7 @@ class IRDatabase:
                     if min_duration_s is not None and dur < min_duration_s:
                         continue
                     filtered.append(f)
-                except Exception:
+                except (OSError, RuntimeError, ValueError):
                     continue
             files = filtered
 

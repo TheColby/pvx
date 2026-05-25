@@ -36,13 +36,20 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install -e .
 
-      - name: Build documentation
+      - name: Build legacy documentation
         run: |
           python scripts/scripts_generate_python_docs.py
           python scripts/scripts_generate_theory_docs.py
           python scripts/scripts_generate_docs_extras.py
           python scripts/scripts_generate_html_docs.py
-          touch docs/.nojekyll
+
+      - name: Build mkdocs site
+        run: |
+          pip install "pvx[docs]"
+          mkdocs build --strict --site-dir site
+          # Merge: mkdocs site is the primary, legacy docs go under /legacy/
+          cp -r docs/html site/legacy/ 2>/dev/null || true
+          touch site/.nojekyll
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -50,7 +57,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: docs
+          path: site
 
   deploy:
     needs: build

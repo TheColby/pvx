@@ -1,40 +1,39 @@
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
-
 """Tests for GPU-accelerated augmentation transforms (pvx.augment.gpu)."""
 
 from __future__ import annotations
 
-import numpy as np
 import pytest
 
 torch = pytest.importorskip("torch", reason="PyTorch required for GPU transform tests")
 
-from pvx.augment.gpu import (  # noqa: E402
-    TorchGainPerturber,
+from pvx.augment.gpu import (
+    NumpyTransformAdapter,
     TorchAddNoise,
-    TorchEQPerturber,
-    TorchSpecAugment,
-    TorchNormalizer,
     TorchClippingSimulator,
-    TorchTimeStretch,
+    TorchEQPerturber,
+    TorchGainPerturber,
+    TorchMixup,
+    TorchNormalizer,
+    TorchPipeline,
     TorchPitchShift,
     TorchRoomSimulator,
-    TorchMixup,
-    TorchPipeline,
-    NumpyTransformAdapter,
+    TorchSpecAugment,
+    TorchTimeStretch,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _random_audio(batch: int = 4, channels: int = 1, samples: int = 16000):
     """Return a batch of random audio tensors."""
     return torch.randn(batch, channels, samples)
 
 
-def _sine_audio(batch: int = 4, channels: int = 1, samples: int = 16000, freq: float = 440.0, sr: int = 16000):
+def _sine_audio(
+    batch: int = 4, channels: int = 1, samples: int = 16000, freq: float = 440.0, sr: int = 16000
+):
     """Return a batch of sine-wave tensors."""
     t = torch.linspace(0, samples / sr, samples)
     sine = 0.5 * torch.sin(2 * torch.pi * freq * t)
@@ -44,6 +43,7 @@ def _sine_audio(batch: int = 4, channels: int = 1, samples: int = 16000, freq: f
 # ---------------------------------------------------------------------------
 # TorchGainPerturber
 # ---------------------------------------------------------------------------
+
 
 class TestTorchGainPerturber:
     def test_output_shape(self):
@@ -90,6 +90,7 @@ class TestTorchGainPerturber:
 # TorchAddNoise
 # ---------------------------------------------------------------------------
 
+
 class TestTorchAddNoise:
     def test_output_shape(self):
         aug = TorchAddNoise(snr_db=(10, 30))
@@ -120,6 +121,7 @@ class TestTorchAddNoise:
 # TorchEQPerturber
 # ---------------------------------------------------------------------------
 
+
 class TestTorchEQPerturber:
     def test_output_shape(self):
         aug = TorchEQPerturber(n_bands=4)
@@ -141,6 +143,7 @@ class TestTorchEQPerturber:
 # TorchSpecAugment
 # ---------------------------------------------------------------------------
 
+
 class TestTorchSpecAugment:
     def test_output_shape(self):
         aug = TorchSpecAugment(freq_mask_param=10, time_mask_param=20)
@@ -150,13 +153,18 @@ class TestTorchSpecAugment:
 
     def test_masking_reduces_energy(self):
         aug = TorchSpecAugment(
-            freq_mask_param=50, time_mask_param=50,
-            num_freq_masks=4, num_time_masks=4, p=1.0,
+            freq_mask_param=50,
+            time_mask_param=50,
+            num_freq_masks=4,
+            num_time_masks=4,
+            p=1.0,
         )
         audio = _sine_audio(samples=8192)
         result = aug(audio, sr=16000)
         # Heavy masking should reduce spectral energy
-        assert result.pow(2).mean() < audio.pow(2).mean() * 1.5  # just check it's finite and different
+        assert (
+            result.pow(2).mean() < audio.pow(2).mean() * 1.5
+        )  # just check it's finite and different
 
     def test_fill_mean(self):
         aug = TorchSpecAugment(freq_mask_param=10, fill_value="mean")
@@ -169,6 +177,7 @@ class TestTorchSpecAugment:
 # ---------------------------------------------------------------------------
 # TorchNormalizer
 # ---------------------------------------------------------------------------
+
 
 class TestTorchNormalizer:
     def test_peak_normalize(self):
@@ -190,6 +199,7 @@ class TestTorchNormalizer:
 # TorchClippingSimulator
 # ---------------------------------------------------------------------------
 
+
 class TestTorchClippingSimulator:
     def test_hard_clip(self):
         aug = TorchClippingSimulator(percentile=(50, 50), mode="hard", p=1.0)
@@ -210,32 +220,41 @@ class TestTorchClippingSimulator:
 # TorchPipeline
 # ---------------------------------------------------------------------------
 
+
 class TestTorchPipeline:
     def test_sequential_application(self):
-        pipeline = TorchPipeline([
-            TorchGainPerturber(gain_db=(-3, 3)),
-            TorchAddNoise(snr_db=(20, 30)),
-        ])
+        pipeline = TorchPipeline(
+            [
+                TorchGainPerturber(gain_db=(-3, 3)),
+                TorchAddNoise(snr_db=(20, 30)),
+            ]
+        )
         audio = _sine_audio()
         result = pipeline(audio, sr=16000)
         assert result.shape == audio.shape
 
     def test_reproducibility(self):
-        pipeline = TorchPipeline([
-            TorchGainPerturber(gain_db=(-6, 6)),
-            TorchAddNoise(snr_db=(10, 30)),
-        ], seed=42)
+        pipeline = TorchPipeline(
+            [
+                TorchGainPerturber(gain_db=(-6, 6)),
+                TorchAddNoise(snr_db=(10, 30)),
+            ],
+            seed=42,
+        )
         audio = _sine_audio()
         r1 = pipeline(audio, sr=16000, seed=42)
         r2 = pipeline(audio, sr=16000, seed=42)
         assert torch.allclose(r1, r2)
 
     def test_full_pipeline(self):
-        pipeline = TorchPipeline([
-            TorchGainPerturber(gain_db=(-6, 6), p=0.8),
-            TorchAddNoise(snr_db=(10, 30), noise_type="pink", p=0.5),
-            TorchSpecAugment(freq_mask_param=20, time_mask_param=30, p=0.5),
-        ], seed=42)
+        pipeline = TorchPipeline(
+            [
+                TorchGainPerturber(gain_db=(-6, 6), p=0.8),
+                TorchAddNoise(snr_db=(10, 30), noise_type="pink", p=0.5),
+                TorchSpecAugment(freq_mask_param=20, time_mask_param=30, p=0.5),
+            ],
+            seed=42,
+        )
         audio = _random_audio(batch=8, samples=8192)
         result = pipeline(audio, sr=16000)
         assert result.shape == audio.shape
@@ -246,9 +265,11 @@ class TestTorchPipeline:
 # NumpyTransformAdapter
 # ---------------------------------------------------------------------------
 
+
 class TestNumpyTransformAdapter:
     def test_wraps_numpy_transform(self):
         from pvx.augment import GainPerturber
+
         np_transform = GainPerturber(gain_db=(-6, 6), p=1.0)
         adapter = NumpyTransformAdapter(np_transform)
         audio = _random_audio(batch=2)
@@ -258,10 +279,14 @@ class TestNumpyTransformAdapter:
 
     def test_in_pipeline(self):
         from pvx.augment import AddNoise as NpAddNoise
-        pipeline = TorchPipeline([
-            TorchGainPerturber(gain_db=(-3, 3)),
-            NumpyTransformAdapter(NpAddNoise(snr_db=(10, 30), noise_type="white")),
-        ], seed=42)
+
+        pipeline = TorchPipeline(
+            [
+                TorchGainPerturber(gain_db=(-3, 3)),
+                NumpyTransformAdapter(NpAddNoise(snr_db=(10, 30), noise_type="white")),
+            ],
+            seed=42,
+        )
         audio = _sine_audio(batch=2)
         result = pipeline(audio, sr=16000)
         assert result.shape == audio.shape
@@ -270,6 +295,7 @@ class TestNumpyTransformAdapter:
 # ---------------------------------------------------------------------------
 # TorchTimeStretch
 # ---------------------------------------------------------------------------
+
 
 class TestTorchTimeStretch:
     def test_output_shape_stretch_down(self):
@@ -314,6 +340,7 @@ class TestTorchTimeStretch:
 # TorchPitchShift
 # ---------------------------------------------------------------------------
 
+
 class TestTorchPitchShift:
     def test_preserves_duration(self):
         aug = TorchPitchShift(semitones=(2, 2), p=1.0)
@@ -352,6 +379,7 @@ class TestTorchPitchShift:
 # TorchRoomSimulator
 # ---------------------------------------------------------------------------
 
+
 class TestTorchRoomSimulator:
     def test_output_shape(self):
         aug = TorchRoomSimulator(rt60_range=(0.2, 0.5))
@@ -388,6 +416,7 @@ class TestTorchRoomSimulator:
 # TorchMixup
 # ---------------------------------------------------------------------------
 
+
 class TestTorchMixup:
     def test_output_shape(self):
         aug = TorchMixup(alpha=0.4)
@@ -415,10 +444,13 @@ class TestTorchMixup:
         assert torch.isfinite(result).all()
 
     def test_in_pipeline(self):
-        pipeline = TorchPipeline([
-            TorchGainPerturber(gain_db=(-3, 3)),
-            TorchMixup(alpha=0.4),
-        ], seed=42)
+        pipeline = TorchPipeline(
+            [
+                TorchGainPerturber(gain_db=(-3, 3)),
+                TorchMixup(alpha=0.4),
+            ],
+            seed=42,
+        )
         audio = _random_audio(batch=4, samples=4096)
         result = pipeline(audio, sr=16000)
         assert result.shape == audio.shape

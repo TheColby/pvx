@@ -1,5 +1,3 @@
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
-
 """Transient analysis and segmentation helpers for hybrid pvx modes."""
 
 from __future__ import annotations
@@ -45,7 +43,9 @@ def _normalize_robust(values: np.ndarray) -> np.ndarray:
     return np.clip((x - lo) / span, 0.0, 1.0)
 
 
-def _frame_signal(signal: np.ndarray, n_fft: int, hop_size: int, *, center: bool = True) -> np.ndarray:
+def _frame_signal(
+    signal: np.ndarray, n_fft: int, hop_size: int, *, center: bool = True
+) -> np.ndarray:
     x = np.asarray(signal, dtype=np.float64).reshape(-1)
     if x.size == 0:
         return np.zeros((n_fft, 0), dtype=np.float64)
@@ -118,7 +118,9 @@ def compute_transient_features(
     broad_n = _normalize_robust(broadbandness)
     score = np.clip(0.5 * flux_n + 0.3 * hfc_n + 0.2 * broad_n, 0.0, 1.0)
 
-    frame_times_s = (np.arange(frame_count, dtype=np.float64) * hop_size) / float(max(1, sample_rate))
+    frame_times_s = (np.arange(frame_count, dtype=np.float64) * hop_size) / float(
+        max(1, sample_rate)
+    )
     return TransientFeatures(
         flux=flux,
         hfc=hfc,
@@ -140,7 +142,11 @@ def pick_onset_frames(
     if score.size == 0:
         return np.zeros(0, dtype=np.int64)
     if score.size <= 2:
-        return np.array([int(np.argmax(score))], dtype=np.int64) if score.size else np.zeros(0, dtype=np.int64)
+        return (
+            np.array([int(np.argmax(score))], dtype=np.int64)
+            if score.size
+            else np.zeros(0, dtype=np.int64)
+        )
 
     # Sensitivity shifts quantile threshold: higher sensitivity -> more candidate onsets.
     s = float(np.clip(sensitivity, 0.0, 1.0))
@@ -174,10 +180,14 @@ def _mask_to_regions(mask: np.ndarray) -> list[TransientRegion]:
     for idx in range(1, values.size):
         state = bool(values[idx])
         if state != current:
-            regions.append(TransientRegion(start_sample=start, end_sample=idx, is_transient=current))
+            regions.append(
+                TransientRegion(start_sample=start, end_sample=idx, is_transient=current)
+            )
             start = idx
             current = state
-    regions.append(TransientRegion(start_sample=start, end_sample=values.size, is_transient=current))
+    regions.append(
+        TransientRegion(start_sample=start, end_sample=values.size, is_transient=current)
+    )
     return regions
 
 

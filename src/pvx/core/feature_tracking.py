@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """Frame-level feature tracking for control-rate audio modulation maps."""
 
@@ -98,7 +97,9 @@ def _acf_peak_ratio(frame: np.ndarray, sr: int, fmin: float, fmax: float) -> tup
     return hz, conf
 
 
-def _estimate_formants_lpc(frame: np.ndarray, sr: int, count: int = 3) -> tuple[float, float, float]:
+def _estimate_formants_lpc(
+    frame: np.ndarray, sr: int, count: int = 3
+) -> tuple[float, float, float]:
     work = np.asarray(frame, dtype=np.float64)
     if work.size < 32:
         return float("nan"), float("nan"), float("nan")
@@ -319,7 +320,10 @@ def extract_feature_tracks(
         # Noise markers.
         hi_band = freqs >= 6000.0
         hiss_ratio[idx] = float(np.sum(pwr[hi_band]) / max(total_pwr, EPS))
-        def _hum_ratio(base_hz: float) -> float:
+
+        def _hum_ratio(
+            base_hz: float, *, power: np.ndarray = pwr, total_power: float = total_pwr
+        ) -> float:
             accum = 0.0
             for h in range(1, 6):
                 target = h * base_hz
@@ -327,9 +331,10 @@ def extract_feature_tracks(
                     break
                 b = int(np.argmin(np.abs(freqs - target)))
                 lo_b = max(0, b - 1)
-                hi_b = min(pwr.size, b + 2)
-                accum += float(np.sum(pwr[lo_b:hi_b]))
-            return float(accum / max(total_pwr, EPS))
+                hi_b = min(power.size, b + 2)
+                accum += float(np.sum(power[lo_b:hi_b]))
+            return float(accum / max(total_power, EPS))
+
         hum_50[idx] = _hum_ratio(50.0)
         hum_60[idx] = _hum_ratio(60.0)
 
@@ -358,7 +363,9 @@ def extract_feature_tracks(
 
     flux_norm = np.asarray(_safe_div(flux, np.percentile(flux, 95.0) + EPS), dtype=np.float64)
     flux_norm = np.clip(flux_norm, 0.0, 1.0)
-    onset_norm = np.asarray(_safe_div(onset_strength, np.percentile(onset_strength, 95.0) + EPS), dtype=np.float64)
+    onset_norm = np.asarray(
+        _safe_div(onset_strength, np.percentile(onset_strength, 95.0) + EPS), dtype=np.float64
+    )
     onset_norm = np.clip(onset_norm, 0.0, 1.0)
     rms_norm = np.asarray(_safe_div(rms, np.max(rms) + EPS), dtype=np.float64)
     centroid_norm = np.asarray(_safe_div(centroid, (0.5 * float(sr))), dtype=np.float64)
@@ -366,9 +373,14 @@ def extract_feature_tracks(
     rolloff_norm = np.asarray(_safe_div(rolloff, (0.5 * float(sr))), dtype=np.float64)
     rolloff_norm = np.clip(rolloff_norm, 0.0, 1.0)
 
-    voicing_prob = np.clip(np.maximum(np.asarray(confidence, dtype=np.float64), harmonic_ratio), 0.0, 1.0)
+    voicing_prob = np.clip(
+        np.maximum(np.asarray(confidence, dtype=np.float64), harmonic_ratio), 0.0, 1.0
+    )
     diff = np.diff(np.asarray(f0_hz, dtype=np.float64), prepend=float(f0_hz[0]))
-    cents_jump = 1200.0 * np.log2(np.maximum(np.asarray(f0_hz, dtype=np.float64), EPS) / np.maximum(np.asarray(f0_hz, dtype=np.float64) - diff, EPS))
+    cents_jump = 1200.0 * np.log2(
+        np.maximum(np.asarray(f0_hz, dtype=np.float64), EPS)
+        / np.maximum(np.asarray(f0_hz, dtype=np.float64) - diff, EPS)
+    )
     cents_jump = np.nan_to_num(cents_jump, nan=0.0, posinf=0.0, neginf=0.0)
     # Convert pitch jump into a smooth "stable vs unstable" control signal.
     pitch_stability = np.exp(-np.abs(cents_jump) / 50.0)
@@ -379,7 +391,11 @@ def extract_feature_tracks(
     # Very lightweight content classifier probabilities.
     silence_prob = np.clip((-rms_db - 45.0) / 30.0, 0.0, 1.0)
     speech_score = np.clip(voicing_prob * (1.0 - flatness) * (1.0 - hiss_ratio), 0.0, 1.0)
-    music_score = np.clip((1.0 - silence_prob) * (0.45 * (1.0 - flatness) + 0.35 * centroid_norm + 0.2 * (1.0 - zcr)), 0.0, 1.0)
+    music_score = np.clip(
+        (1.0 - silence_prob) * (0.45 * (1.0 - flatness) + 0.35 * centroid_norm + 0.2 * (1.0 - zcr)),
+        0.0,
+        1.0,
+    )
     noise_score = np.clip((0.5 * flatness + 0.5 * hiss_ratio) * (1.0 - silence_prob), 0.0, 1.0)
     score_stack = np.stack([silence_prob, speech_score, music_score, noise_score], axis=1)
     score_sum = np.sum(score_stack, axis=1, keepdims=True)

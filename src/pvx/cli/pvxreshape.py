@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """PVC-style function-stream reshaper for control maps."""
 
@@ -45,24 +44,46 @@ def build_parser(prog: str = "pvx reshape") -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument("input", help="Input control map path or '-' for stdin")
-    parser.add_argument("--key", default="value", help="Control column/key to read (default: value)")
+    parser.add_argument(
+        "--key", default="value", help="Control column/key to read (default: value)"
+    )
     parser.add_argument(
         "--output-key",
         default=None,
         help="Output control key. Default: same as --key",
     )
-    parser.add_argument("--operation", choices=list(RESHAPE_OPERATIONS), required=True, help="Reshape operation")
-    parser.add_argument("--factor", type=float, default=1.0, help="Scale factor for scale/time-scale ops")
-    parser.add_argument("--offset", type=float, default=0.0, help="Offset for offset/time-shift ops")
-    parser.add_argument("--min", dest="min_value", type=float, default=None, help="Minimum clamp value")
-    parser.add_argument("--max", dest="max_value", type=float, default=None, help="Maximum clamp value")
+    parser.add_argument(
+        "--operation", choices=list(RESHAPE_OPERATIONS), required=True, help="Reshape operation"
+    )
+    parser.add_argument(
+        "--factor", type=float, default=1.0, help="Scale factor for scale/time-scale ops"
+    )
+    parser.add_argument(
+        "--offset", type=float, default=0.0, help="Offset for offset/time-shift ops"
+    )
+    parser.add_argument(
+        "--min", dest="min_value", type=float, default=None, help="Minimum clamp value"
+    )
+    parser.add_argument(
+        "--max", dest="max_value", type=float, default=None, help="Maximum clamp value"
+    )
     parser.add_argument("--exponent", type=float, default=1.0, help="Exponent for pow operation")
     parser.add_argument("--window", type=int, default=5, help="Window size for smooth operation")
-    parser.add_argument("--target-min", type=float, default=0.0, help="Target minimum for normalize operation")
-    parser.add_argument("--target-max", type=float, default=1.0, help="Target maximum for normalize operation")
-    parser.add_argument("--rate", type=float, default=20.0, help="Resample control rate (Hz) for resample operation")
-    parser.add_argument("--interp", choices=list(INTERP_CHOICES), default="linear", help="Interpolation mode")
-    parser.add_argument("--order", type=int, default=3, help="Polynomial order for --interp polynomial")
+    parser.add_argument(
+        "--target-min", type=float, default=0.0, help="Target minimum for normalize operation"
+    )
+    parser.add_argument(
+        "--target-max", type=float, default=1.0, help="Target maximum for normalize operation"
+    )
+    parser.add_argument(
+        "--rate", type=float, default=20.0, help="Resample control rate (Hz) for resample operation"
+    )
+    parser.add_argument(
+        "--interp", choices=list(INTERP_CHOICES), default="linear", help="Interpolation mode"
+    )
+    parser.add_argument(
+        "--order", type=int, default=3, help="Polynomial order for --interp polynomial"
+    )
     parser.add_argument(
         "--input-format",
         choices=["auto", "csv", "json"],
@@ -75,7 +96,9 @@ def build_parser(prog: str = "pvx reshape") -> argparse.ArgumentParser:
         default="auto",
         help="Output format (default: auto from --output suffix or csv for stdout)",
     )
-    parser.add_argument("--output", "--out", type=Path, default=None, help="Output file path. Default: stdout.")
+    parser.add_argument(
+        "--output", "--out", type=Path, default=None, help="Output file path. Default: stdout."
+    )
     parser.add_argument("--stdout", action="store_true", help="Write reshaped map to stdout")
     add_console_args(parser)
     return parser

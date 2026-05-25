@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """Trajectory-aware multichannel convolution reverb for mono sources."""
 
 from __future__ import annotations
 
 import argparse
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -51,7 +51,7 @@ def build_parser() -> argparse.ArgumentParser:
                 ),
                 (
                     "pvx trajectory-reverb source.wav --ir room_4ch.wav "
-                    "--speaker-angles \"-45,0;45,0;135,0;-135,0\" --wet 0.9 --dry 0.2 "
+                    '--speaker-angles "-45,0;45,0;135,0;-135,0" --wet 0.9 --dry 0.2 '
                     "--stdout | pvx deverb - --strength 0.25 --output flythrough_clean.wav"
                 ),
             ],
@@ -89,7 +89,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help=(
             "Optional speaker layout azimuth/elevation list in degrees as "
-            "\"az,el;az,el;...\". Count must match impulse-response channels."
+            '"az,el;az,el;...". Count must match impulse-response channels.'
         ),
     )
     parser.add_argument(
@@ -116,8 +116,12 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_false",
         help="Disable per-sample gain normalization.",
     )
-    parser.add_argument("--wet", type=float, default=1.0, help="Wet reverb mix scalar (default: 1.0)")
-    parser.add_argument("--dry", type=float, default=0.0, help="Dry direct mix scalar (default: 0.0)")
+    parser.add_argument(
+        "--wet", type=float, default=1.0, help="Wet reverb mix scalar (default: 1.0)"
+    )
+    parser.add_argument(
+        "--dry", type=float, default=0.0, help="Dry direct mix scalar (default: 0.0)"
+    )
     return parser
 
 
@@ -130,9 +134,31 @@ def _to_mono(audio: np.ndarray) -> np.ndarray:
     return np.mean(arr, axis=1)
 
 
+def _normalize_coordinate_option_args(argv: list[str]) -> list[str]:
+    """Bind --start/--end values so argparse accepts negative coordinates."""
+
+    normalized: list[str] = []
+    idx = 0
+    coordinate_flags = {"--start", "--end"}
+    while idx < len(argv):
+        token = argv[idx]
+        if (
+            token in coordinate_flags
+            and idx + 1 < len(argv)
+            and "," in argv[idx + 1]
+        ):
+            normalized.append(f"{token}={argv[idx + 1]}")
+            idx += 2
+            continue
+        normalized.append(token)
+        idx += 1
+    return normalized
+
+
 def main(argv: list[str] | None = None) -> int:
+    raw_argv = list(sys.argv[1:] if argv is None else argv)
     parser = build_parser()
-    args = parser.parse_args(argv)
+    args = parser.parse_args(_normalize_coordinate_option_args(raw_argv))
     ensure_runtime(args, parser)
 
     if not (0.0 <= float(args.wet) <= 2.0):
@@ -143,7 +169,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         start_xyz = parse_coordinate(str(args.start), str(args.coord_system))
         end_xyz = parse_coordinate(str(args.end), str(args.coord_system))
-    except Exception as exc:
+    except (OSError, ValueError, RuntimeError) as exc:
         parser.error(f"Invalid trajectory coordinates: {exc}")
 
     ir_audio, ir_sr = read_audio(Path(args.ir).expanduser().resolve())
@@ -154,7 +180,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.speaker_angles:
         try:
             speaker_angles = parse_speaker_angles(str(args.speaker_angles), ir_ch)
-        except Exception as exc:
+        except (OSError, ValueError, RuntimeError) as exc:
             parser.error(f"Invalid --speaker-angles: {exc}")
     else:
         speaker_angles = default_speaker_angles(ir_ch)
@@ -213,12 +239,16 @@ def main(argv: list[str] | None = None) -> int:
                 ),
                 min_level="verbose",
             )
-        except Exception as exc:
+        except (OSError, ValueError, RuntimeError) as exc:
             failures += 1
             log_error(args, f"[error] {path}: {exc}")
         status.step(idx, path.name)
     status.finish("done" if failures == 0 else f"errors={failures}")
-    log_message(args, f"[done] pvxtrajectoryreverb processed={len(paths)} failed={failures}", min_level="normal")
+    log_message(
+        args,
+        f"[done] pvxtrajectoryreverb processed={len(paths)} failed={failures}",
+        min_level="normal",
+    )
     return 1 if failures else 0
 
 

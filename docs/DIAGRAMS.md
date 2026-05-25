@@ -457,5 +457,3 @@ Use this atlas together with:
 - [docs/EXAMPLES.md](EXAMPLES.md) for copy-paste command recipes
 
 ## Attribution
-
-Copyright (c) 2026 Colby Leider and contributors. See [ATTRIBUTION.md](../ATTRIBUTION.md).

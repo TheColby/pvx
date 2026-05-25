@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """Generate and optionally install pvx man pages."""
 
@@ -10,7 +9,6 @@ import datetime as _dt
 import subprocess
 import sys
 from pathlib import Path
-
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUT_DIR = ROOT / "man" / "man1"
@@ -34,7 +32,7 @@ def _run_help(cmd: list[str]) -> str:
         text=True,
         check=False,
     )
-    text = (proc.stdout or "") + ((("\n" + proc.stderr) if proc.stderr else ""))
+    text = (proc.stdout or "") + (("\n" + proc.stderr) if proc.stderr else "")
     if proc.returncode != 0 and not text.strip():
         raise RuntimeError(f"Failed to collect help text: {' '.join(cmd)}")
     return text.strip() or "(no help text emitted)"
@@ -61,7 +59,7 @@ def _build_man_page(name: str, summary: str, help_text: str) -> str:
     footer = [
         ".fi",
         ".SH ATTRIBUTION",
-        "Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.",
+
         "",
     ]
     return "\n".join(header + body + footer)

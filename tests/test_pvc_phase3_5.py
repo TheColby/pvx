@@ -1,13 +1,11 @@
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
-
 """Unit tests for PVC-inspired Phase 3-5 core operators."""
 
 from __future__ import annotations
 
+import sys
 import tempfile
 import unittest
 from pathlib import Path
-import sys
 
 import numpy as np
 
@@ -80,9 +78,7 @@ class TestPVCPhase3To5(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="pvx-ringtv-") as tmp:
             map_path = Path(tmp) / "ring_map.csv"
             map_path.write_text(
-                "time_sec,frequency_hz,depth,mix\n"
-                "0.0,20,0.2,0.4\n"
-                "0.2,120,1.0,1.0\n",
+                "time_sec,frequency_hz,depth,mix\n0.0,20,0.2,0.4\n0.2,120,1.0,1.0\n",
                 encoding="utf-8",
             )
             out = process_ring_operator(

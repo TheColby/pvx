@@ -2,7 +2,7 @@
 
 # pvx Citation Quality Report
 
-_Generated from commit `77bdfde` (commit date: 2026-03-02T01:29:29-05:00)._
+_Generated from commit `35e9761` (commit date: 2026-05-25T08:14:42-04:00)._
 
 This report classifies bibliography URLs by citation quality and highlights entries still using search-index links.
 
@@ -115,4 +115,4 @@ These are prime targets for future DOI/publisher URL upgrades.
 
 ## Attribution
 
-Copyright (c) 2026 Colby Leider and contributors. See [`ATTRIBUTION.md`](../ATTRIBUTION.md).
+ See [`ATTRIBUTION.md`](../ATTRIBUTION.md).

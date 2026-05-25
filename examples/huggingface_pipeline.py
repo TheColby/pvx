@@ -34,15 +34,15 @@ def build_augment_pipeline(intent: str = "asr_robust", seed: int = 42):
     if intent == "asr_robust":
         from pvx.augment import asr_pipeline
         return asr_pipeline(seed=seed)
-    elif intent == "mir_music":
+    if intent == "mir_music":
         from pvx.augment import music_pipeline
         return music_pipeline(seed=seed)
-    elif intent == "ssl_contrastive":
+    if intent == "ssl_contrastive":
         from pvx.augment import contrastive_pipeline
         return contrastive_pipeline(seed=seed)[0]
-    else:
-        from pvx.augment import speech_enhancement_pipeline
-        return speech_enhancement_pipeline(seed=seed)
+
+    from pvx.augment import speech_enhancement_pipeline
+    return speech_enhancement_pipeline(seed=seed)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -52,7 +52,7 @@ def main(argv: list[str] | None = None) -> int:
         print("HuggingFace datasets not installed. Run: pip install datasets", file=sys.stderr)
         return 1
 
-    from datasets import load_dataset, Audio, DatasetDict
+    from datasets import Audio, load_dataset
 
     parser = argparse.ArgumentParser(description="HuggingFace augmentation example")
     parser.add_argument("--dataset", default=None, help="HuggingFace dataset name")
@@ -116,7 +116,7 @@ def main(argv: list[str] | None = None) -> int:
 
     # Concatenate all variants
     from datasets import concatenate_datasets
-    ds_aug = concatenate_datasets([ds] + all_augmented)
+    ds_aug = concatenate_datasets([ds, *all_augmented])
     print(f"\nFinal dataset: {len(ds_aug)} rows ({len(ds)} original + {len(ds) * args.variants} augmented)")
 
     # Save

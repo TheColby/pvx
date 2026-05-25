@@ -32,5 +32,3 @@ To report issues, contact:
 - colbyleider at gmail dot com
 
 ## Attribution
-
-Copyright (c) 2026 Colby Leider and contributors. See [ATTRIBUTION.md](ATTRIBUTION.md).

@@ -19,6 +19,7 @@ Primary project goals and differentiators:
 Start here:
 - [Install](#install)
 - [30-Second Quick Start](#30-second-quick-start)
+- [Supported Surface](docs/SUPPORTED_SURFACE.md)
 - [Unified CLI](#unified-cli-primary-entry-point)
 - [When To Use Which Tool](#when-to-use-which-tool-decision-tree)
 - [Alpha Release Guide](docs/ALPHA_RELEASE.md)
@@ -28,9 +29,9 @@ Start here:
 For `0.1.0a1`, treat these as the supported public surface:
 - stable CLIs: `pvx`, `pvxvoc`, `pvxfreeze`, `pvxwarp`, `pvxformant`, `pvxfilter`, `pvxretune`, `pvxanalysis`
 - beta CLIs: usable, but flags may still move in minor releases
-- compatibility imports: `pvxalgorithms*` remain available with deprecation warnings only to ease migration
+- compatibility imports: `pvxalgorithms*` remain available with deprecation warnings only to ease migration during `0.1.x`
 
-Release-validation commands live in [RELEASE.md](RELEASE.md) and the alpha checklist in [docs/ALPHA_RELEASE.md](docs/ALPHA_RELEASE.md).
+Release-validation commands live in [RELEASE.md](RELEASE.md), the alpha checklist in [docs/ALPHA_RELEASE.md](docs/ALPHA_RELEASE.md), and the surface contract in [docs/SUPPORTED_SURFACE.md](docs/SUPPORTED_SURFACE.md).
 
 ## Value Proposition
 
@@ -851,6 +852,9 @@ pvx augment-manifest merge aug/run_a/augment_manifest.jsonl aug/run_b/augment_ma
 
 # Augmentation profile benchmark suite and gates (speech/music/noisy/stereo)
 python benchmarks/run_augment_profile_suite.py --quick --gate --out-dir benchmarks/out_augment_profiles
+
+# Compare TimeStretch/PitchShift backends on deterministic smoke signals
+python benchmarks/run_backend_compare.py --engines pytorch,pvx-cli,wavelet --wavelet auto
 
 # Refresh per-profile baselines after intentional benchmark changes
 python benchmarks/run_augment_profile_suite.py --quick --refresh-baselines --out-dir benchmarks/out_augment_profiles_refresh

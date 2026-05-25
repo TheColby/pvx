@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """pvxnoise — add synthetic noise to audio at a controlled SNR.
 
@@ -12,7 +11,7 @@ Examples
 # Add pink noise at 20 dB SNR:
 pvxnoise speech.wav --snr 20 --noise-type pink --output speech_noisy.wav
 
-# Random SNR between 5–30 dB, white noise:
+# Random SNR between 5-30 dB, white noise:
 pvxnoise speech.wav --snr 5,30 --noise-type white --output speech_noisy.wav
 
 # Band-limited noise (telephone band):
@@ -26,9 +25,6 @@ from __future__ import annotations
 
 import argparse
 import sys
-from pathlib import Path
-
-import numpy as np
 
 
 def build_parser() -> argparse.ArgumentParser:

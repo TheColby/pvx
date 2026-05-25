@@ -1,5 +1,3 @@
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
-
 """PyTorch integration for pvx augmentation pipelines.
 
 Provides ``torch.utils.data.Dataset`` subclasses and collate helpers so
@@ -39,8 +37,9 @@ Usage
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Callable, Sequence
+from typing import Any
 
 import numpy as np
 
@@ -51,17 +50,18 @@ import numpy as np
 def _require_torch():
     try:
         import torch
+
         return torch
     except ImportError as exc:
         raise ImportError(
-            "PyTorch is required for pvx.integrations.pytorch. "
-            "Install it with: pip install torch"
+            "PyTorch is required for pvx.integrations.pytorch. Install it with: pip install torch"
         ) from exc
 
 
 # ---------------------------------------------------------------------------
 # PvxAugmentDataset
 # ---------------------------------------------------------------------------
+
 
 class PvxAugmentDataset:
     """A ``torch.utils.data.Dataset`` backed by pvx augmentation pipelines.
@@ -107,7 +107,6 @@ class PvxAugmentDataset:
         return_path: bool = False,
     ) -> None:
         torch = _require_torch()
-        import torch.utils.data  # noqa: F401 — ensure Dataset is available
 
         self.files = [Path(f) for f in files]
         self.pipeline = pipeline
@@ -169,7 +168,7 @@ class PvxAugmentDataset:
         ``lengths``, and optionally ``label``, ``sr``, ``path``.
         """
         import torch
-        import torch.nn.functional as F
+        import torch.nn.functional as F  # noqa: N812
 
         max_len = max(item["audio"].shape[-1] for item in batch)
         padded = []
@@ -197,9 +196,10 @@ class PvxAugmentDataset:
     # ------------------------------------------------------------------
     def as_torch_dataset(self):
         """Return ``self`` wrapped as a ``torch.utils.data.Dataset``."""
-        torch = _require_torch()
+        _require_torch()
+        from torch.utils.data import Dataset
 
-        class _TorchWrapper(torch.utils.data.Dataset):
+        class _TorchWrapper(Dataset):
             def __init__(inner, parent):
                 inner._parent = parent
 
@@ -215,6 +215,7 @@ class PvxAugmentDataset:
 # ---------------------------------------------------------------------------
 # PvxAugmentTransform — torchvision-style transform callable
 # ---------------------------------------------------------------------------
+
 
 class PvxAugmentTransform:
     """A torchvision-compatible callable transform wrapping a pvx pipeline.
@@ -247,8 +248,9 @@ class PvxAugmentTransform:
 
     def __call__(self, tensor) -> Any:
         import torch
+
         numpy_audio = tensor.numpy() if hasattr(tensor, "numpy") else np.asarray(tensor)
-        seed = self.seed if self.seed is not None else (self._counter % (2 ** 31))
+        seed = self.seed if self.seed is not None else (self._counter % (2**31))
         self._counter += 1
         audio_aug, _ = self.pipeline(numpy_audio, self.sample_rate, seed=seed)
         return torch.from_numpy(np.asarray(audio_aug, dtype=np.float32))
@@ -257,6 +259,7 @@ class PvxAugmentTransform:
 # ---------------------------------------------------------------------------
 # AudioCollator — for DataLoader with variable-length batches
 # ---------------------------------------------------------------------------
+
 
 class AudioCollator:
     """DataLoader collate function for variable-length audio tensors.
@@ -283,7 +286,7 @@ class AudioCollator:
 
     def __call__(self, batch: list[Any]) -> Any:
         import torch
-        import torch.nn.functional as F
+        import torch.nn.functional as F  # noqa: N812
 
         if isinstance(batch[0], dict):
             return PvxAugmentDataset.collate_fn(batch)

@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
-# ruff: noqa: E402
 
 """Generate comprehensive documentation for every Python file in the repository."""
 
 from __future__ import annotations
 
 import ast
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -30,7 +29,7 @@ CLI_HELP_CANDIDATES = {
 
 def logo_lines() -> list[str]:
     return [
-        "<p align=\"center\"><img src=\"../assets/pvx_logo.png\" alt=\"pvx logo\" width=\"192\" /></p>",
+        '<p align="center"><img src="../assets/pvx_logo.png" alt="pvx logo" width="192" /></p>',
         "",
     ]
 
@@ -52,20 +51,25 @@ def safe_read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
+def module_name_for_path(path: Path) -> str | None:
+    try:
+        relative = path.relative_to(SRC_DIR)
+    except ValueError:
+        return None
+    if relative.suffix != ".py":
+        return None
+    parts = list(relative.with_suffix("").parts)
+    if parts and parts[-1] == "__init__":
+        parts = parts[:-1]
+    return ".".join(parts) if parts else None
+
+
 def parse_module(path: Path) -> dict:
     src = safe_read(path)
     tree = ast.parse(src)
     module_doc = ast.get_docstring(tree) or ""
-    functions = [
-        node.name
-        for node in tree.body
-        if isinstance(node, ast.FunctionDef)
-    ]
-    classes = [
-        node.name
-        for node in tree.body
-        if isinstance(node, ast.ClassDef)
-    ]
+    functions = [node.name for node in tree.body if isinstance(node, ast.FunctionDef)]
+    classes = [node.name for node in tree.body if isinstance(node, ast.ClassDef)]
 
     has_main = any(
         isinstance(node, ast.If)
@@ -82,9 +86,17 @@ def parse_module(path: Path) -> dict:
     for node in tree.body:
         if isinstance(node, ast.Assign):
             for target in node.targets:
-                if isinstance(target, ast.Name) and target.id == "ALGORITHM_ID" and isinstance(node.value, ast.Constant):
+                if (
+                    isinstance(target, ast.Name)
+                    and target.id == "ALGORITHM_ID"
+                    and isinstance(node.value, ast.Constant)
+                ):
                     algorithm_id = str(node.value.value)
-                if isinstance(target, ast.Name) and target.id == "THEME" and isinstance(node.value, ast.Constant):
+                if (
+                    isinstance(target, ast.Name)
+                    and target.id == "THEME"
+                    and isinstance(node.value, ast.Constant)
+                ):
                     theme = str(node.value.value)
 
     return {
@@ -100,20 +112,30 @@ def parse_module(path: Path) -> dict:
 
 
 def cli_help(path: Path) -> str | None:
+    module_name = module_name_for_path(path)
+    if module_name is None:
+        return None
+    python_path = str(SRC_DIR)
+    if existing_python_path := os.environ.get("PYTHONPATH"):
+        python_path = f"{python_path}{os.pathsep}{existing_python_path}"
     try:
         proc = subprocess.run(
-            ["python3", str(path), "--help"],
+            ["python3", "-m", module_name, "--help"],
             cwd=ROOT,
             text=True,
             capture_output=True,
             timeout=25,
             check=False,
+            env={
+                **os.environ,
+                "PYTHONPATH": python_path,
+            },
         )
     except Exception as exc:  # pragma: no cover
         return f"[help unavailable: {exc}]"
 
     out = (proc.stdout or "") + ("\n" + proc.stderr if proc.stderr else "")
-    out = out.strip()
+    out = out.replace(str(ROOT), "<repo>").strip()
     if not out:
         return None
     if len(out) > 5000:
@@ -141,7 +163,7 @@ def extract_algorithm_params(base_path: Path) -> dict[str, list[str]]:
 
     for line in lines:
         line_s = line.strip()
-        if line_s.startswith('if slug == "') or line_s.startswith('elif slug == "'):
+        if line_s.startswith(('if slug == "', 'elif slug == "')):
             if current_slug is not None:
                 commit()
             current_slug = line_s.split('"')[1]
@@ -165,9 +187,15 @@ def generate_algorithm_param_doc() -> None:
     lines.extend(logo_lines())
     lines.append("# pvx Algorithm Parameter Reference")
     lines.append("")
-    lines.append("This file lists per-algorithm parameter keys consumed by `pvx.algorithms.base.run_algorithm()` dispatch.")
-    lines.append("Legacy import alias `pvxalgorithms.base.run_algorithm()` is still available for compatibility.")
-    lines.append("Use these keys as `**params` when calling module `process(audio, sample_rate, **params)`. ")
+    lines.append(
+        "This file lists per-algorithm parameter keys consumed by `pvx.algorithms.base.run_algorithm()` dispatch."
+    )
+    lines.append(
+        "Deprecated compatibility alias `pvxalgorithms.base.run_algorithm()` still resolves to the canonical dispatcher."
+    )
+    lines.append(
+        "Use these keys as `**params` when calling module `process(audio, sample_rate, **params)`. "
+    )
     lines.append("")
     for slug in sorted(params):
         lines.append(f"## `{slug}`")
@@ -180,7 +208,9 @@ def generate_algorithm_param_doc() -> None:
         lines.append("")
 
     lines.extend(attribution_section_lines())
-    (DOCS_DIR / "pvx_ALGORITHM_PARAMS.md").write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+    (DOCS_DIR / "pvx_ALGORITHM_PARAMS.md").write_text(
+        "\n".join(lines).rstrip() + "\n", encoding="utf-8"
+    )
 
 
 def generate_python_help_doc() -> None:
@@ -212,17 +242,27 @@ def generate_python_help_doc() -> None:
         if info["algorithm_id"]:
             lines.append(f"**Algorithm ID:** `{info['algorithm_id']}`")
             lines.append(f"**Theme:** `{info['theme']}`")
-            lines.append("**Primary API:** `process(audio, sample_rate, **params) -> AlgorithmResult`")
-            lines.append("**Parameter docs:** see [docs/PVX_ALGORITHM_PARAMS.md](PVX_ALGORITHM_PARAMS.md).")
+            lines.append(
+                "**Primary API:** `process(audio, sample_rate, **params) -> AlgorithmResult`"
+            )
+            lines.append(
+                "**Parameter docs:** see [docs/PVX_ALGORITHM_PARAMS.md](PVX_ALGORITHM_PARAMS.md)."
+            )
             lines.append("")
 
-        lines.append(f"**Classes:** {', '.join('`'+c+'`' for c in info['classes']) if info['classes'] else 'None'}")
-        lines.append(f"**Functions:** {', '.join('`'+f+'`' for f in info['functions']) if info['functions'] else 'None'}")
+        lines.append(
+            f"**Classes:** {', '.join('`' + c + '`' for c in info['classes']) if info['classes'] else 'None'}"
+        )
+        lines.append(
+            f"**Functions:** {', '.join('`' + f + '`' for f in info['functions']) if info['functions'] else 'None'}"
+        )
         lines.append("")
 
         help_cmds = []
+        module_name = module_name_for_path(path)
         if path in CLI_HELP_CANDIDATES:
-            help_cmds.append(f"`python3 {title} --help`")
+            if module_name:
+                help_cmds.append(f"`PYTHONPATH=src python3 -m {module_name} --help`")
         elif info["has_main"]:
             help_cmds.append(f"`python3 {title}`")
             if info["uses_argparse"]:

@@ -2,7 +2,7 @@
 
 # pvx Benchmarks
 
-_Generated from commit `77bdfde` (commit date: 2026-03-02T01:29:29-05:00)._
+_Generated from commit `35e9761` (commit date: 2026-05-25T08:14:42-04:00)._
 
 Reproducible benchmark summary for core short-time Fourier transform/inverse short-time Fourier transform (STFT/ISTFT) path across central processing unit/Compute Unified Device Architecture/Apple-Silicon-native contexts.
 
@@ -83,53 +83,6 @@ Interpretation notes:
 
 Raw machine-readable benchmark output: `docs/benchmarks/latest.json`.
 
-## Augmentation Benchmark Gate
-
-For AI research/data augmentation workflows, run the profile suite:
-
-```bash
-python benchmarks/run_augment_profile_suite.py \
-  --quick \
-  --gate \
-  --out-dir benchmarks/out_augment_profiles
-```
-
-This executes four task-specific profiles from `benchmarks/augment_profiles.json`:
-
-- `speech`: automatic speech recognition (ASR)-oriented augmentation
-- `music`: music information retrieval (MIR)-oriented augmentation
-- `noisy`: noise-stress profile for robustness checks
-- `stereo`: contrastive paired-view profile for stereo/coherence-sensitive workflows
-
-To refresh profile baselines after an intentional benchmark change:
-
-```bash
-python benchmarks/run_augment_profile_suite.py \
-  --quick \
-  --refresh-baselines \
-  --out-dir benchmarks/out_augment_profiles_refresh
-```
-
-Per-profile reports are written to:
-- `benchmarks/out_augment_profiles/<profile>/report.json`
-- `benchmarks/out_augment_profiles/<profile>/report.md`
-
-Suite summary is written to:
-- `benchmarks/out_augment_profiles/suite_report.json`
-- `benchmarks/out_augment_profiles/suite_report.md`
-
-Each profile applies:
-- relative drift gating against its baseline (profile-specific `gate_tolerance`)
-- absolute metric gates (for example, manifest integrity, clipping bounds, pair coverage)
-
-Tracked metrics include:
-- record/rendered counts
-- required-field manifest validation errors
-- split balance (`split_balance_l1`)
-- augmentation diversity (`stretch_std`, `pitch_std`)
-- safety/quality indicators (`clip_pct_max`, `peak_dbfs_p95`)
-- pair completeness (`pair_coverage`) for contrastive two-view runs
-
 ## Attribution
 
-Copyright (c) 2026 Colby Leider and contributors. See [`ATTRIBUTION.md`](../ATTRIBUTION.md).
+ See [`ATTRIBUTION.md`](../ATTRIBUTION.md).

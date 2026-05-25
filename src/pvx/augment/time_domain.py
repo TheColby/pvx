@@ -1,11 +1,10 @@
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
-
 """Time-domain audio augmentation transforms.
 
 Provides transforms that operate on the waveform directly: gain
-perturbation, clipping, time shifting, fade in/out, silence trimming, and
-reverse.  Production-quality time-stretch and pitch-shift wrappers that
-call ``pvx voc`` are also provided here.
+perturbation, clipping, time shifting, fade in/out, tremolo, burst
+dropouts, stereo widening, silence trimming, and reverse. Production-quality
+time-stretch and pitch-shift wrappers that call ``pvx voc`` are also provided
+here.
 """
 
 from __future__ import annotations
@@ -17,12 +16,12 @@ from pathlib import Path
 
 import numpy as np
 
-from .core import Transform, _to_2d, _from_2d, load_audio, save_audio
-
+from .core import Transform, _from_2d, _to_2d, load_audio, save_audio
 
 # ---------------------------------------------------------------------------
 # GainPerturber
 # ---------------------------------------------------------------------------
+
 
 class GainPerturber(Transform):
     """Randomly adjust the gain of audio.
@@ -68,6 +67,7 @@ class GainPerturber(Transform):
 # Normalizer
 # ---------------------------------------------------------------------------
 
+
 class Normalizer(Transform):
     """Normalize audio to a target peak or RMS level.
 
@@ -102,7 +102,7 @@ class Normalizer(Transform):
         if self.mode == "peak":
             current = float(np.max(np.abs(audio)) + 1e-12)
         else:
-            current = float(np.sqrt(np.mean(audio ** 2)) + 1e-12)
+            current = float(np.sqrt(np.mean(audio**2)) + 1e-12)
         target = 10.0 ** (self.target_db / 20.0)
         scale = target / current
         return (audio * scale).astype(audio.dtype), sr
@@ -111,6 +111,7 @@ class Normalizer(Transform):
 # ---------------------------------------------------------------------------
 # ClippingSimulator
 # ---------------------------------------------------------------------------
+
 
 class ClippingSimulator(Transform):
     """Simulate ADC clipping or amplifier saturation.
@@ -169,6 +170,7 @@ class ClippingSimulator(Transform):
 # TimeShift
 # ---------------------------------------------------------------------------
 
+
 class TimeShift(Transform):
     """Randomly shift audio in time with zero-padding or wrap-around.
 
@@ -213,7 +215,7 @@ class TimeShift(Transform):
         shift_s = float(rng.uniform(self.shift_range[0], self.shift_range[1]))
         shift_samples = int(shift_s * sr)
         arr, was_mono = _to_2d(audio)
-        n_ch, n_samp = arr.shape
+        _n_ch, n_samp = arr.shape
 
         if shift_samples == 0:
             return _from_2d(arr, was_mono), sr
@@ -233,6 +235,7 @@ class TimeShift(Transform):
 # ---------------------------------------------------------------------------
 # Reverse
 # ---------------------------------------------------------------------------
+
 
 class Reverse(Transform):
     """Reverse the audio waveform.
@@ -255,6 +258,7 @@ class Reverse(Transform):
 # ---------------------------------------------------------------------------
 # Fade
 # ---------------------------------------------------------------------------
+
 
 class Fade(Transform):
     """Apply fade-in and/or fade-out to audio.
@@ -302,10 +306,10 @@ class Fade(Transform):
         t = np.linspace(0.0, 1.0, n)
         if curve == "linear":
             return t.astype(np.float32)
-        elif curve == "logarithmic":
+        if curve == "logarithmic":
             return (np.log1p(t * (np.e - 1))).astype(np.float32)
-        else:  # exponential
-            return ((np.exp(t) - 1.0) / (np.e - 1.0)).astype(np.float32)
+        # exponential
+        return ((np.exp(t) - 1.0) / (np.e - 1.0)).astype(np.float32)
 
     def apply(
         self,
@@ -314,7 +318,7 @@ class Fade(Transform):
         rng: np.random.Generator,
     ) -> tuple[np.ndarray, int]:
         arr, was_mono = _to_2d(audio)
-        n_ch, n_samp = arr.shape
+        _n_ch, n_samp = arr.shape
         result = arr.copy()
 
         fi_s = float(rng.uniform(self.fade_in_range[0], self.fade_in_range[1]))
@@ -329,14 +333,249 @@ class Fade(Transform):
 
         if fo_samp > 0:
             env = self._make_envelope(fo_samp, self.curve)[::-1]
-            result[:, n_samp - fo_samp:] *= env
+            result[:, n_samp - fo_samp :] *= env
 
         return _from_2d(result, was_mono), sr
 
 
 # ---------------------------------------------------------------------------
+# Tremolo
+# ---------------------------------------------------------------------------
+
+
+class Tremolo(Transform):
+    """Apply rhythmic amplitude modulation.
+
+    Parameters
+    ----------
+    rate_hz:
+        Fixed modulation rate or ``(min_hz, max_hz)`` range.
+    depth:
+        Modulation depth in ``[0, 1]``. ``0`` is dry, ``1`` reaches silence
+        at the troughs.
+    waveform:
+        LFO shape: ``"sine"``, ``"triangle"``, or ``"square"``.
+    phase:
+        Fixed phase in cycles or ``"random"`` for a random starting phase.
+    p:
+        Probability of applying this transform.
+    """
+
+    def __init__(
+        self,
+        rate_hz: float | tuple[float, float] = (3.0, 8.0),
+        depth: float | tuple[float, float] = (0.3, 0.8),
+        waveform: str = "sine",
+        phase: float | str = "random",
+        p: float = 1.0,
+    ) -> None:
+        super().__init__(p=p)
+        if isinstance(rate_hz, (int, float)):
+            self.rate_hz_range: tuple[float, float] = (float(rate_hz), float(rate_hz))
+        else:
+            self.rate_hz_range = (float(rate_hz[0]), float(rate_hz[1]))
+        if isinstance(depth, (int, float)):
+            self.depth_range: tuple[float, float] = (float(depth), float(depth))
+        else:
+            self.depth_range = (float(depth[0]), float(depth[1]))
+        if waveform not in ("sine", "triangle", "square"):
+            raise ValueError(f"waveform must be sine/triangle/square, got {waveform!r}")
+        if phase != "random" and not isinstance(phase, (int, float)):
+            raise ValueError(f"phase must be a number of cycles or 'random', got {phase!r}")
+        self.waveform = waveform
+        self.phase = phase
+
+    def apply(
+        self,
+        audio: np.ndarray,
+        sr: int,
+        rng: np.random.Generator,
+    ) -> tuple[np.ndarray, int]:
+        arr, was_mono = _to_2d(audio)
+        n_samp = arr.shape[1]
+        if n_samp == 0:
+            return audio, sr
+
+        rate_hz = float(rng.uniform(self.rate_hz_range[0], self.rate_hz_range[1]))
+        depth = float(np.clip(rng.uniform(self.depth_range[0], self.depth_range[1]), 0.0, 1.0))
+        phase = float(rng.random() if self.phase == "random" else self.phase)
+        cycles = rate_hz * (np.arange(n_samp, dtype=np.float64) / float(sr)) + phase
+
+        if self.waveform == "sine":
+            lfo = 0.5 * (1.0 + np.sin(2.0 * np.pi * cycles))
+        elif self.waveform == "triangle":
+            lfo = 1.0 - np.abs(2.0 * (cycles % 1.0) - 1.0)
+        else:
+            lfo = (np.sin(2.0 * np.pi * cycles) >= 0.0).astype(np.float64)
+
+        envelope = (1.0 - depth) + depth * lfo
+        result = arr * envelope[np.newaxis, :]
+        return _from_2d(result.astype(audio.dtype, copy=False), was_mono), sr
+
+
+# ---------------------------------------------------------------------------
+# AudioDropout
+# ---------------------------------------------------------------------------
+
+
+class AudioDropout(Transform):
+    """Mute or replace short random bursts of audio.
+
+    Parameters
+    ----------
+    duration_s:
+        Fixed burst duration or ``(min_s, max_s)`` range.
+    count:
+        Fixed number of bursts or ``(min_count, max_count)`` inclusive range.
+    fill:
+        ``"zero"`` replaces bursts with silence, ``"noise"`` replaces them
+        with low-level noise.
+    fade_s:
+        Optional edge fade in seconds to reduce clicks around each burst.
+    noise_level:
+        RMS multiplier used when ``fill="noise"``.
+    p:
+        Probability of applying this transform.
+    """
+
+    def __init__(
+        self,
+        duration_s: float | tuple[float, float] = (0.02, 0.12),
+        count: int | tuple[int, int] = (1, 3),
+        fill: str = "zero",
+        fade_s: float = 0.002,
+        noise_level: float = 0.02,
+        p: float = 1.0,
+    ) -> None:
+        super().__init__(p=p)
+        if isinstance(duration_s, (int, float)):
+            self.duration_s_range: tuple[float, float] = (float(duration_s), float(duration_s))
+        else:
+            self.duration_s_range = (float(duration_s[0]), float(duration_s[1]))
+        if isinstance(count, int):
+            self.count_range: tuple[int, int] = (int(count), int(count))
+        else:
+            self.count_range = (int(count[0]), int(count[1]))
+        if fill not in ("zero", "noise"):
+            raise ValueError(f"fill must be 'zero' or 'noise', got {fill!r}")
+        self.fill = fill
+        self.fade_s = float(fade_s)
+        self.noise_level = float(noise_level)
+
+    @staticmethod
+    def _edge_envelope(length: int, fade: int) -> np.ndarray:
+        env = np.zeros(length, dtype=np.float32)
+        if fade <= 0:
+            return env
+        fade = min(fade, length // 2)
+        if fade == 0:
+            return env
+        ramp = np.linspace(1.0, 0.0, fade, endpoint=False, dtype=np.float32)
+        env[:fade] = ramp
+        env[-fade:] = ramp[::-1]
+        return env
+
+    def apply(
+        self,
+        audio: np.ndarray,
+        sr: int,
+        rng: np.random.Generator,
+    ) -> tuple[np.ndarray, int]:
+        arr, was_mono = _to_2d(audio)
+        n_samp = arr.shape[1]
+        if n_samp == 0:
+            return audio, sr
+
+        lo, hi = self.count_range
+        count = int(rng.integers(min(lo, hi), max(lo, hi) + 1))
+        result = arr.copy()
+        fade = max(0, int(round(self.fade_s * sr)))
+        base_rms = float(np.sqrt(np.mean(arr**2)) + 1e-12)
+
+        for _ in range(max(0, count)):
+            duration_s = float(rng.uniform(self.duration_s_range[0], self.duration_s_range[1]))
+            length = int(round(max(0.0, duration_s) * sr))
+            if length <= 0:
+                continue
+            length = min(length, n_samp)
+            start = int(rng.integers(0, n_samp - length + 1))
+            stop = start + length
+            env = self._edge_envelope(length, fade)[np.newaxis, :]
+            replacement = np.zeros_like(result[:, start:stop])
+            if self.fill == "noise":
+                replacement = (
+                    rng.standard_normal(replacement.shape).astype(result.dtype)
+                    * base_rms
+                    * self.noise_level
+                )
+            result[:, start:stop] = result[:, start:stop] * env + replacement * (1.0 - env)
+
+        return _from_2d(result.astype(audio.dtype, copy=False), was_mono), sr
+
+
+# ---------------------------------------------------------------------------
+# StereoWidener
+# ---------------------------------------------------------------------------
+
+
+class StereoWidener(Transform):
+    """Adjust stereo width with mid/side processing.
+
+    Parameters
+    ----------
+    width:
+        Fixed width or ``(min_width, max_width)`` range. ``0`` collapses to
+        mono, ``1`` preserves the original width, and values above ``1``
+        exaggerate the side signal.
+    preserve_peak:
+        Scale the output down when widening would exceed the input peak.
+    p:
+        Probability of applying this transform.
+    """
+
+    def __init__(
+        self,
+        width: float | tuple[float, float] = (0.7, 1.4),
+        preserve_peak: bool = True,
+        p: float = 1.0,
+    ) -> None:
+        super().__init__(p=p)
+        if isinstance(width, (int, float)):
+            self.width_range: tuple[float, float] = (float(width), float(width))
+        else:
+            self.width_range = (float(width[0]), float(width[1]))
+        self.preserve_peak = bool(preserve_peak)
+
+    def apply(
+        self,
+        audio: np.ndarray,
+        sr: int,
+        rng: np.random.Generator,
+    ) -> tuple[np.ndarray, int]:
+        arr, was_mono = _to_2d(audio)
+        if was_mono or arr.shape[0] != 2:
+            return audio, sr
+
+        width = float(rng.uniform(self.width_range[0], self.width_range[1]))
+        left = arr[0]
+        right = arr[1]
+        mid = 0.5 * (left + right)
+        side = 0.5 * (left - right) * width
+        result = np.stack((mid + side, mid - side)).astype(audio.dtype, copy=False)
+
+        if self.preserve_peak:
+            in_peak = float(np.max(np.abs(arr)))
+            out_peak = float(np.max(np.abs(result)))
+            if in_peak > 0.0 and out_peak > in_peak:
+                result = result * (in_peak / (out_peak + 1e-12))
+
+        return result, sr
+
+
+# ---------------------------------------------------------------------------
 # TrimSilence
 # ---------------------------------------------------------------------------
+
 
 class TrimSilence(Transform):
     """Trim leading and/or trailing silence.
@@ -395,6 +634,7 @@ class TrimSilence(Transform):
 # FixedLengthCrop
 # ---------------------------------------------------------------------------
 
+
 class FixedLengthCrop(Transform):
     """Crop or pad audio to a fixed duration.
 
@@ -451,7 +691,7 @@ class FixedLengthCrop(Transform):
                 start = 0
             else:
                 start = n_samp - target
-            result = arr[:, start: start + target]
+            result = arr[:, start : start + target]
         else:
             if self.pad_mode == "zero":
                 result = np.zeros((n_ch, target), dtype=arr.dtype)
@@ -467,10 +707,12 @@ class FixedLengthCrop(Transform):
 # Engine detection helper
 # ---------------------------------------------------------------------------
 
+
 def _has_torch() -> bool:
     """Return True if PyTorch is importable."""
     try:
         import torch  # noqa: F401
+
         return True
     except ImportError:
         return False
@@ -480,6 +722,17 @@ def _has_torchaudio() -> bool:
     """Return True if torchaudio is importable."""
     try:
         import torchaudio  # noqa: F401
+
+        return True
+    except ImportError:
+        return False
+
+
+def _has_pywavelets() -> bool:
+    """Return True if PyWavelets is importable."""
+    try:
+        import pywt  # noqa: F401
+
         return True
     except ImportError:
         return False
@@ -488,10 +741,12 @@ def _has_torchaudio() -> bool:
 def _resolve_engine(engine: str) -> str:
     """Resolve ``"auto"`` to the best available engine.
 
-    Returns ``"torchaudio"``, ``"pytorch"``, or ``"pvx-cli"``.
+    Returns ``"torchaudio"``, ``"pytorch"``, ``"wavelet"``, or ``"pvx-cli"``.
 
     Priority for ``"auto"``: torchaudio > pytorch > pvx-cli.
     """
+    if engine == "wavelet":
+        return "wavelet"
     if engine == "torchaudio":
         if not _has_torchaudio():
             raise RuntimeError(
@@ -508,12 +763,267 @@ def _resolve_engine(engine: str) -> str:
         return "pytorch"
     if engine == "pvx-cli":
         return "pvx-cli"
+    if engine != "auto":
+        raise ValueError(
+            f"engine must be auto/pytorch/torchaudio/wavelet/pvx-cli, got {engine!r}"
+        )
     # auto: prefer torchaudio > pytorch > pvx-cli
     if _has_torchaudio():
         return "torchaudio"
     if _has_torch():
         return "pytorch"
     return "pvx-cli"
+
+
+def _validate_positive_range(name: str, value_range: tuple[float, float]) -> None:
+    """Validate a sampled numeric range whose values must be positive."""
+    lo, hi = value_range
+    if not np.isfinite(lo) or not np.isfinite(hi) or lo <= 0.0 or hi <= 0.0:
+        raise ValueError(f"{name} values must be finite and > 0, got {value_range!r}")
+
+
+def _validate_finite_range(name: str, value_range: tuple[float, float]) -> None:
+    """Validate a sampled numeric range whose values must be finite."""
+    lo, hi = value_range
+    if not np.isfinite(lo) or not np.isfinite(hi):
+        raise ValueError(f"{name} values must be finite, got {value_range!r}")
+
+
+def _validate_wavelet_params(wavelet: str, levels: int) -> None:
+    """Validate experimental wavelet backend settings."""
+    if not isinstance(wavelet, str) or not wavelet:
+        raise ValueError(f"wavelet must be a non-empty string, got {wavelet!r}")
+    if levels < 0:
+        raise ValueError(f"wavelet_levels must be >= 0, got {levels!r}")
+
+
+def _resolve_wavelet(wavelet: str) -> str:
+    """Resolve ``wavelet='auto'`` to the best available wavelet family."""
+    _validate_wavelet_params(wavelet, 0)
+    if wavelet == "auto":
+        return "db4" if _has_pywavelets() else "haar"
+    return wavelet
+
+
+def _resample_1d(signal: np.ndarray, target_len: int) -> np.ndarray:
+    """Resample one 1-D array to *target_len* samples."""
+    from scipy.signal import resample
+
+    target_len = max(0, int(target_len))
+    if signal.size == target_len:
+        return signal.astype(np.float32, copy=True)
+    if target_len == 0:
+        return np.zeros(0, dtype=np.float32)
+    if signal.size == 0:
+        return np.zeros(target_len, dtype=np.float32)
+    return resample(signal.astype(np.float32, copy=False), target_len).astype(np.float32)
+
+
+def _match_length(signal: np.ndarray, target_len: int) -> np.ndarray:
+    """Crop or edge-pad a 1-D array to exactly *target_len* samples."""
+    target_len = max(0, int(target_len))
+    if signal.size == target_len:
+        return signal
+    if signal.size > target_len:
+        return signal[:target_len]
+    if target_len == 0:
+        return np.zeros(0, dtype=np.float32)
+    if signal.size == 0:
+        return np.zeros(target_len, dtype=np.float32)
+    return np.pad(signal, (0, target_len - signal.size), mode="edge")
+
+
+def _time_stretch_preserve_pitch_1d(signal: np.ndarray, stretch: float, target_len: int) -> np.ndarray:
+    """Pitch-preserving stretch for one coefficient/band sequence."""
+    if target_len == 0:
+        return np.zeros(0, dtype=np.float32)
+    if signal.size == 0:
+        return np.zeros(target_len, dtype=np.float32)
+    if signal.size < 64 or np.isclose(stretch, 1.0):
+        return _match_length(signal.astype(np.float32, copy=True), target_len)
+
+    import librosa
+
+    # librosa's rate > 1 speeds audio up, while pvx stretch > 1 slows it down.
+    stretched = librosa.effects.time_stretch(
+        signal.astype(np.float32, copy=False),
+        rate=1.0 / stretch,
+        n_fft=min(2048, 2 ** int(np.floor(np.log2(signal.size)))),
+    )
+    return _match_length(np.asarray(stretched, dtype=np.float32), target_len)
+
+
+def _haar_decompose_1d(signal: np.ndarray, levels: int) -> tuple[np.ndarray, list[tuple[np.ndarray, int]]]:
+    """Return Haar approximation and ``[(detail, original_len), ...]``."""
+    approx = signal.astype(np.float32, copy=False)
+    details: list[tuple[np.ndarray, int]] = []
+    inv_sqrt2 = np.float32(1.0 / np.sqrt(2.0))
+
+    for _ in range(max(0, int(levels))):
+        original_len = approx.size
+        if original_len < 2:
+            break
+        padded = approx
+        if original_len % 2:
+            padded = np.pad(approx, (0, 1), mode="edge")
+        even = padded[0::2]
+        odd = padded[1::2]
+        approx = (even + odd) * inv_sqrt2
+        detail = (even - odd) * inv_sqrt2
+        details.append((detail.astype(np.float32), original_len))
+
+    return approx.astype(np.float32), details
+
+
+def _haar_reconstruct_1d(
+    approx: np.ndarray,
+    details: list[tuple[np.ndarray, int]],
+    target_lengths: list[int],
+) -> np.ndarray:
+    """Reconstruct a 1-D signal from Haar coefficients."""
+    inv_sqrt2 = np.float32(1.0 / np.sqrt(2.0))
+    current = approx.astype(np.float32, copy=False)
+
+    for (detail, _original_len), target_len in zip(reversed(details), reversed(target_lengths)):
+        detail = _match_length(detail.astype(np.float32, copy=False), current.size)
+        out = np.empty(current.size * 2, dtype=np.float32)
+        out[0::2] = (current + detail) * inv_sqrt2
+        out[1::2] = (current - detail) * inv_sqrt2
+        current = out[: max(1, int(target_len))]
+
+    return current.astype(np.float32)
+
+
+def _haar_time_stretch_channel(signal: np.ndarray, rate: float, levels: int) -> np.ndarray:
+    """Experimental Haar-wavelet multiband time stretching for one channel."""
+    target_len = max(0, int(round(signal.size * rate)))
+    if signal.size == 0:
+        return np.zeros(0, dtype=np.float32)
+    if signal.size <= 1 or np.isclose(rate, 1.0):
+        return _match_length(signal.astype(np.float32, copy=True), target_len)
+
+    approx, details = _haar_decompose_1d(signal, levels)
+    if not details:
+        return _resample_1d(signal, target_len)
+
+    stretched_details: list[tuple[np.ndarray, int]] = []
+    target_lengths: list[int] = []
+    for detail, original_len in details:
+        scaled_original_len = max(1, int(round(original_len * rate)))
+        target_lengths.append(scaled_original_len)
+        scaled_detail_len = max(1, int(np.ceil(scaled_original_len / 2.0)))
+        stretched_details.append(
+            (_time_stretch_preserve_pitch_1d(detail, rate, scaled_detail_len), original_len)
+        )
+
+    approx_scale = max(1, int(round(approx.size * rate)))
+    stretched_approx = _time_stretch_preserve_pitch_1d(approx, rate, approx_scale)
+    reconstructed = _haar_reconstruct_1d(stretched_approx, stretched_details, target_lengths)
+    return _match_length(reconstructed, target_len).astype(np.float32)
+
+
+def _pywavelets_time_stretch_channel(
+    signal: np.ndarray,
+    rate: float,
+    levels: int,
+    wavelet: str,
+) -> np.ndarray:
+    """Experimental PyWavelets-backed multiband time stretching for one channel."""
+    try:
+        import pywt
+    except ImportError as exc:
+        raise RuntimeError(
+            f"wavelet={wavelet!r} requires PyWavelets. Install with: pip install PyWavelets"
+        ) from exc
+
+    target_len = max(0, int(round(signal.size * rate)))
+    if signal.size == 0:
+        return np.zeros(0, dtype=np.float32)
+    if signal.size <= 1 or np.isclose(rate, 1.0):
+        return _match_length(signal.astype(np.float32, copy=True), target_len)
+
+    max_level = pywt.dwt_max_level(signal.size, pywt.Wavelet(wavelet).dec_len)
+    use_level = min(levels, max_level)
+    if use_level <= 0:
+        return _resample_1d(signal, target_len)
+
+    coeffs = pywt.wavedec(signal.astype(np.float32, copy=False), wavelet, mode="symmetric", level=use_level)
+    scaled_coeffs = [
+        _time_stretch_preserve_pitch_1d(
+            np.asarray(coeff, dtype=np.float32),
+            rate,
+            max(1, int(round(len(coeff) * rate))),
+        )
+        for coeff in coeffs
+    ]
+    reconstructed = pywt.waverec(scaled_coeffs, wavelet, mode="symmetric")
+    return _match_length(np.asarray(reconstructed, dtype=np.float32), target_len)
+
+
+def _wavelet_time_stretch_channel(
+    signal: np.ndarray,
+    rate: float,
+    levels: int,
+    wavelet: str,
+) -> np.ndarray:
+    """Experimental wavelet multiband time stretching for one channel."""
+    wavelet = _resolve_wavelet(wavelet)
+    if wavelet == "haar":
+        return _haar_time_stretch_channel(signal, rate, levels)
+    return _pywavelets_time_stretch_channel(signal, rate, levels, wavelet)
+
+
+def _wavelet_time_stretch(
+    audio: np.ndarray,
+    sr: int,
+    rate: float,
+    levels: int = 4,
+    wavelet: str = "haar",
+) -> tuple[np.ndarray, int]:
+    """Experimental wavelet time stretching.
+
+    This backend decomposes audio into wavelet bands, resamples each band at
+    the requested time scale, then reconstructs the waveform. It is intended
+    as a creative/experimental backend rather than a transparent phase-vocoder
+    replacement. ``wavelet="haar"`` uses the built-in implementation,
+    ``wavelet="auto"`` selects PyWavelets ``"db4"`` when available and falls
+    back to Haar, and other wavelet names use PyWavelets when installed.
+    """
+    if not np.isfinite(rate) or rate <= 0.0:
+        raise ValueError(f"rate must be finite and > 0, got {rate!r}")
+    _validate_wavelet_params(wavelet, levels)
+
+    arr, was_mono = _to_2d(audio)
+    if arr.shape[1] == 0:
+        return audio.copy(), sr
+
+    channels = [
+        _wavelet_time_stretch_channel(arr[ch], rate, levels, wavelet)
+        for ch in range(arr.shape[0])
+    ]
+    max_len = max(ch.size for ch in channels)
+    result = np.stack([_match_length(ch, max_len) for ch in channels], axis=0)
+    return _from_2d(result.astype(audio.dtype, copy=False), was_mono), sr
+
+
+def _wavelet_pitch_shift(
+    audio: np.ndarray,
+    sr: int,
+    semitones: float,
+    levels: int = 4,
+    wavelet: str = "haar",
+) -> tuple[np.ndarray, int]:
+    """Experimental wavelet pitch shift via wavelet stretch + resampling."""
+    if not np.isfinite(semitones):
+        raise ValueError(f"semitones must be finite, got {semitones!r}")
+    pitch_ratio = 2.0 ** (semitones / 12.0)
+    stretched, _ = _wavelet_time_stretch(audio, sr, rate=pitch_ratio, levels=levels, wavelet=wavelet)
+    orig_len = audio.shape[-1]
+    if orig_len == 0:
+        return audio.copy(), sr
+    arr, was_mono = _to_2d(stretched)
+    result = np.stack([_resample_1d(arr[ch], orig_len) for ch in range(arr.shape[0])], axis=0)
+    return _from_2d(result.astype(audio.dtype, copy=False), was_mono), sr
 
 
 def _torchaudio_time_stretch(audio: np.ndarray, sr: int, rate: float) -> tuple[np.ndarray, int]:
@@ -542,8 +1052,11 @@ def _torchaudio_time_stretch(audio: np.ndarray, sr: int, rate: float) -> tuple[n
     channels = []
     for ch in range(tensor.shape[0]):
         spec = torch.stft(
-            tensor[ch], n_fft=n_fft, hop_length=hop_length,
-            window=window, return_complex=True,
+            tensor[ch],
+            n_fft=n_fft,
+            hop_length=hop_length,
+            window=window,
+            return_complex=True,
         )  # (n_bins, n_frames)
         # Use torchaudio's phase_vocoder
         stretched_spec = torchaudio.functional.phase_vocoder(
@@ -555,7 +1068,10 @@ def _torchaudio_time_stretch(audio: np.ndarray, sr: int, rate: float) -> tuple[n
         ).squeeze(0)  # (n_bins, n_out_frames)
         # iSTFT
         stretched = torch.istft(
-            stretched_spec, n_fft=n_fft, hop_length=hop_length, window=window,
+            stretched_spec,
+            n_fft=n_fft,
+            hop_length=hop_length,
+            window=window,
         )
         channels.append(stretched.numpy())
 
@@ -588,6 +1104,7 @@ def _torchaudio_pitch_shift(audio: np.ndarray, sr: int, semitones: float) -> tup
 def _pytorch_time_stretch(audio: np.ndarray, sr: int, rate: float) -> tuple[np.ndarray, int]:
     """Time-stretch using the native PyTorch phase vocoder."""
     import torch
+
     from .gpu import _torch_phase_vocoder
 
     was_mono = audio.ndim == 1
@@ -610,7 +1127,6 @@ def _pytorch_time_stretch(audio: np.ndarray, sr: int, rate: float) -> tuple[np.n
 
 def _pytorch_pitch_shift(audio: np.ndarray, sr: int, semitones: float) -> tuple[np.ndarray, int]:
     """Pitch-shift using the native PyTorch phase vocoder + resampling."""
-    import torch
     from scipy.signal import resample
 
     pitch_ratio = 2.0 ** (semitones / 12.0)
@@ -635,13 +1151,14 @@ def _pytorch_pitch_shift(audio: np.ndarray, sr: int, semitones: float) -> tuple[
 # TimeStretch — phase-vocoder time stretching
 # ---------------------------------------------------------------------------
 
+
 class TimeStretch(Transform):
-    """High-quality time-stretch via a phase-vocoder engine.
+    """High-quality time-stretch via a selectable DSP engine.
 
     By default (``engine="auto"``), uses the native PyTorch phase vocoder
     when PyTorch is installed, falling back to ``pvx voc`` (subprocess) if
-    not.  You can force a specific engine with ``engine="pytorch"`` or
-    ``engine="pvx-cli"``.
+    not. You can force a specific engine with ``engine="pytorch"``,
+    ``engine="torchaudio"``, ``engine="wavelet"``, or ``engine="pvx-cli"``.
 
     The ``pvx-cli`` engine leverages the full pvx DSP stack (transient
     handling, stereo coherence, formant preservation) but requires the
@@ -660,7 +1177,14 @@ class TimeStretch(Transform):
         pvx preset name (e.g. ``"vocal_studio"``, ``"drums_safe"``).
         Only used with ``engine="pvx-cli"``.
     engine:
-        ``"auto"`` (default — prefer pytorch), ``"pytorch"``, or ``"pvx-cli"``.
+        ``"auto"`` (default — prefer pytorch), ``"pytorch"``, ``"torchaudio"``,
+        ``"wavelet"`` (experimental wavelet backend), or ``"pvx-cli"``.
+    wavelet:
+        Wavelet family used with ``engine="wavelet"``. ``"haar"`` uses the
+        built-in backend, ``"auto"`` uses PyWavelets ``"db4"`` when available
+        and falls back to Haar, and other names require PyWavelets.
+    wavelet_levels:
+        Number of decomposition levels used with ``engine="wavelet"``.
     p:
         Probability of applying this transform.
 
@@ -680,6 +1204,8 @@ class TimeStretch(Transform):
         preserve_pitch: bool = True,
         preset: str = "default",
         engine: str = "auto",
+        wavelet: str = "haar",
+        wavelet_levels: int = 4,
         p: float = 1.0,
     ) -> None:
         super().__init__(p=p)
@@ -687,11 +1213,17 @@ class TimeStretch(Transform):
             self.rate_range: tuple[float, float] = (float(rate), float(rate))
         else:
             self.rate_range = (float(rate[0]), float(rate[1]))
+        _validate_positive_range("rate", self.rate_range)
         self.preserve_pitch = preserve_pitch
         self.preset = preset
-        if engine not in ("auto", "pytorch", "torchaudio", "pvx-cli"):
-            raise ValueError(f"engine must be auto/pytorch/torchaudio/pvx-cli, got {engine!r}")
+        if engine not in ("auto", "pytorch", "torchaudio", "wavelet", "pvx-cli"):
+            raise ValueError(
+                f"engine must be auto/pytorch/torchaudio/wavelet/pvx-cli, got {engine!r}"
+            )
         self.engine = engine
+        self.wavelet = wavelet
+        self.wavelet_levels = int(wavelet_levels)
+        _validate_wavelet_params(self.wavelet, self.wavelet_levels)
 
     def apply(
         self,
@@ -704,22 +1236,33 @@ class TimeStretch(Transform):
 
         if engine == "torchaudio":
             return _torchaudio_time_stretch(audio, sr, rate)
-        elif engine == "pytorch":
+        if engine == "pytorch":
             return _pytorch_time_stretch(audio, sr, rate)
-        else:
-            return _call_pvx_voc(
-                audio, sr, rng, stretch=rate,
-                pitch=0.0 if self.preserve_pitch else None,
-                preset=self.preset,
+        if engine == "wavelet":
+            return _wavelet_time_stretch(
+                audio,
+                sr,
+                rate,
+                levels=self.wavelet_levels,
+                wavelet=self.wavelet,
             )
+        return _call_pvx_voc(
+            audio,
+            sr,
+            rng,
+            stretch=rate,
+            pitch=0.0 if self.preserve_pitch else None,
+            preset=self.preset,
+        )
 
 
 # ---------------------------------------------------------------------------
 # PitchShift — phase-vocoder pitch shifting
 # ---------------------------------------------------------------------------
 
+
 class PitchShift(Transform):
-    """High-quality pitch shift via a phase-vocoder engine.
+    """High-quality pitch shift via a selectable DSP engine.
 
     By default (``engine="auto"``), uses the native PyTorch phase vocoder
     + resampling when PyTorch is installed, falling back to ``pvx voc``
@@ -742,7 +1285,14 @@ class PitchShift(Transform):
         pvx preset name.
         Only used with ``engine="pvx-cli"``.
     engine:
-        ``"auto"`` (default — prefer pytorch), ``"pytorch"``, or ``"pvx-cli"``.
+        ``"auto"`` (default — prefer pytorch), ``"pytorch"``, ``"torchaudio"``,
+        ``"wavelet"`` (experimental wavelet backend), or ``"pvx-cli"``.
+    wavelet:
+        Wavelet family used with ``engine="wavelet"``. ``"haar"`` uses the
+        built-in backend, ``"auto"`` uses PyWavelets ``"db4"`` when available
+        and falls back to Haar, and other names require PyWavelets.
+    wavelet_levels:
+        Number of decomposition levels used with ``engine="wavelet"``.
     p:
         Probability of applying this transform.
 
@@ -763,6 +1313,8 @@ class PitchShift(Transform):
         formant_mode: str = "formant-preserving",
         preset: str = "vocal_studio",
         engine: str = "auto",
+        wavelet: str = "haar",
+        wavelet_levels: int = 4,
         p: float = 1.0,
     ) -> None:
         super().__init__(p=p)
@@ -770,12 +1322,18 @@ class PitchShift(Transform):
             self.semitones_range: tuple[float, float] = (float(semitones), float(semitones))
         else:
             self.semitones_range = (float(semitones[0]), float(semitones[1]))
+        _validate_finite_range("semitones", self.semitones_range)
         self.preserve_duration = preserve_duration
         self.formant_mode = formant_mode
         self.preset = preset
-        if engine not in ("auto", "pytorch", "torchaudio", "pvx-cli"):
-            raise ValueError(f"engine must be auto/pytorch/torchaudio/pvx-cli, got {engine!r}")
+        if engine not in ("auto", "pytorch", "torchaudio", "wavelet", "pvx-cli"):
+            raise ValueError(
+                f"engine must be auto/pytorch/torchaudio/wavelet/pvx-cli, got {engine!r}"
+            )
         self.engine = engine
+        self.wavelet = wavelet
+        self.wavelet_levels = int(wavelet_levels)
+        _validate_wavelet_params(self.wavelet, self.wavelet_levels)
 
     def apply(
         self,
@@ -788,19 +1346,32 @@ class PitchShift(Transform):
 
         if engine == "torchaudio":
             return _torchaudio_pitch_shift(audio, sr, semitones)
-        elif engine == "pytorch":
+        if engine == "pytorch":
             return _pytorch_pitch_shift(audio, sr, semitones)
-        else:
-            stretch = 1.0 if self.preserve_duration else None
-            return _call_pvx_voc(
-                audio, sr, rng, stretch=stretch, pitch=semitones,
-                preset=self.preset, formant_mode=self.formant_mode,
+        if engine == "wavelet":
+            return _wavelet_pitch_shift(
+                audio,
+                sr,
+                semitones,
+                levels=self.wavelet_levels,
+                wavelet=self.wavelet,
             )
+        stretch = 1.0 if self.preserve_duration else None
+        return _call_pvx_voc(
+            audio,
+            sr,
+            rng,
+            stretch=stretch,
+            pitch=semitones,
+            preset=self.preset,
+            formant_mode=self.formant_mode,
+        )
 
 
 # ---------------------------------------------------------------------------
 # Internal helper: call pvx voc as subprocess
 # ---------------------------------------------------------------------------
+
 
 def _call_pvx_voc(
     audio: np.ndarray,
@@ -838,13 +1409,13 @@ def _call_pvx_voc(
                     f"stderr: {stderr_msg}"
                 )
             return load_audio(tmp_out)
-        except subprocess.TimeoutExpired:
+        except subprocess.TimeoutExpired as exc:
             raise RuntimeError(
                 "pvx voc timed out after 120 seconds. The input audio may be "
                 "too long for real-time processing."
-            )
-        except FileNotFoundError:
+            ) from exc
+        except FileNotFoundError as exc:
             raise RuntimeError(
                 "pvx CLI not found. TimeStretch and PitchShift require the pvx "
                 "CLI to be installed and accessible. Install with: pip install pvx"
-            )
+            ) from exc

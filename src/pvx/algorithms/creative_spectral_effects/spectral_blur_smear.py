@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """Spectral blur/smear.
 
@@ -28,9 +27,9 @@ if __package__ is None or __package__ == "":
 
 from pvx.algorithms.base import AlgorithmResult, run_algorithm
 
-ALGORITHM_ID = 'creative_spectral_effects.spectral_blur_smear'
-ALGORITHM_NAME = 'Spectral blur/smear'
-THEME = 'Creative Spectral Effects'
+ALGORITHM_ID = "creative_spectral_effects.spectral_blur_smear"
+ALGORITHM_NAME = "Spectral blur/smear"
+THEME = "Creative Spectral Effects"
 
 
 def process(audio: np.ndarray, sample_rate: int, **params: Any) -> AlgorithmResult:

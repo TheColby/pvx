@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """Generate GitHub-renderable theory docs (math foundations + window reference)."""
 
@@ -7,9 +6,9 @@ from __future__ import annotations
 
 import json
 import math
-from pathlib import Path
 import subprocess
 import sys
+from pathlib import Path
 
 import numpy as np
 
@@ -26,8 +25,8 @@ INTERPOLATION_ASSETS_DIR.mkdir(parents=True, exist_ok=True)
 FUNCTION_ASSETS_DIR.mkdir(parents=True, exist_ok=True)
 
 sys.path.insert(0, str(SRC_DIR))
-from pvx.core.attribution import ATTRIBUTION_DOC_PATH, COPYRIGHT_NOTICE  # noqa: E402
-from pvx.core import voc as voc_core  # noqa: E402
+from pvx.core import voc as voc_core
+from pvx.core.attribution import ATTRIBUTION_DOC_PATH, COPYRIGHT_NOTICE
 
 
 def git_commit_meta() -> tuple[str, str]:

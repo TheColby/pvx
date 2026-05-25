@@ -1,5 +1,3 @@
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
-
 """Stereo/multichannel helper utilities."""
 
 from __future__ import annotations

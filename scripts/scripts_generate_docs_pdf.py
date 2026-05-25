@@ -1,28 +1,27 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """Generate one combined PDF from all HTML documentation pages."""
 
 from __future__ import annotations
 
 import argparse
-from dataclasses import dataclass
-from datetime import datetime, timezone
-from html import escape
-from pathlib import Path
 import re
 import shutil
 import subprocess
 import sys
 import tempfile
-from typing import Callable
+from collections.abc import Callable
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from html import escape
+from pathlib import Path
 from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC_DIR = ROOT / "src"
 sys.path.insert(0, str(SRC_DIR))
 
-from pvx.core.attribution import ATTRIBUTION_DOC_PATH, COPYRIGHT_NOTICE  # noqa: E402
+from pvx.core.attribution import ATTRIBUTION_DOC_PATH, COPYRIGHT_NOTICE
 
 
 @dataclass(frozen=True)
@@ -505,7 +504,7 @@ def render_pdf_with_chromium(html_path: Path, output_pdf: Path, executable: str)
         "--no-sandbox",
         "--allow-file-access-from-files",
         "--print-to-pdf-no-header",
-        f"--print-to-pdf={str(output_pdf.resolve())}",
+        f"--print-to-pdf={output_pdf.resolve()!s}",
         uri,
     ]
 

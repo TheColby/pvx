@@ -1,5 +1,3 @@
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
-
 """pvx.augment — Audio data augmentation Python API.
 
 .. warning::
@@ -53,18 +51,28 @@ TensorFlow::
 
 from __future__ import annotations
 
+# Codec / degradation
+from .codec import (
+    BandwidthLimiter,
+    BitCrusher,
+    CodecDegradation,
+)
+
 # Core primitives
 from .core import (
-    Transform,
-    Pipeline,
-    OneOf,
-    SomeOf,
-    RandomApply,
     Identity,
+    OneOf,
+    Pipeline,
+    RandomApply,
+    SomeOf,
+    Transform,
     TransformResult,
-    load_audio,
-    save_audio,
     fingerprint_audio,
+    get_transform,
+    list_transforms,
+    load_audio,
+    register_transform,
+    save_audio,
 )
 
 # Noise
@@ -76,83 +84,80 @@ from .noise import (
 
 # Room / reverb
 from .room import (
-    RoomSimulator,
     ImpulseResponseConvolver,
-)
-
-# Codec / degradation
-from .codec import (
-    CodecDegradation,
-    BitCrusher,
-    BandwidthLimiter,
+    RoomSimulator,
 )
 
 # Spectral
 from .spectral import (
-    SpecAugment,
     EQPerturber,
-    SpectralNoise,
     PitchShiftSimple,
+    SpecAugment,
+    SpectralNoise,
 )
 
 # Time domain
 from .time_domain import (
+    AudioDropout,
+    ClippingSimulator,
+    Fade,
+    FixedLengthCrop,
     GainPerturber,
     Normalizer,
-    ClippingSimulator,
-    TimeShift,
-    Reverse,
-    Fade,
-    TrimSilence,
-    FixedLengthCrop,
-    TimeStretch,
     PitchShift,
+    Reverse,
+    StereoWidener,
+    TimeShift,
+    TimeStretch,
+    Tremolo,
+    TrimSilence,
 )
 
 __all__ = [
-    # Core
-    "Transform",
-    "Pipeline",
-    "OneOf",
-    "SomeOf",
-    "RandomApply",
-    "Identity",
-    "TransformResult",
-    "load_audio",
-    "save_audio",
-    "fingerprint_audio",
-    # Noise
     "AddNoise",
+    "AudioDropout",
     "BackgroundMixer",
-    "ImpulseNoise",
-    # Room
-    "RoomSimulator",
-    "ImpulseResponseConvolver",
-    # Codec
-    "CodecDegradation",
-    "BitCrusher",
     "BandwidthLimiter",
-    # Spectral
-    "SpecAugment",
-    "EQPerturber",
-    "SpectralNoise",
-    "PitchShiftSimple",
-    # Time domain
-    "GainPerturber",
-    "Normalizer",
+    "BitCrusher",
     "ClippingSimulator",
-    "TimeShift",
-    "Reverse",
+    "CodecDegradation",
+    "EQPerturber",
     "Fade",
-    "TrimSilence",
     "FixedLengthCrop",
-    "TimeStretch",
+    "GainPerturber",
+    "Identity",
+    "ImpulseNoise",
+    "ImpulseResponseConvolver",
+    "Normalizer",
+    "OneOf",
+    "Pipeline",
     "PitchShift",
+    "PitchShiftSimple",
+    "RandomApply",
+    "Reverse",
+    "RoomSimulator",
+    "SomeOf",
+    "SpecAugment",
+    "SpectralNoise",
+    "StereoWidener",
+    "TimeShift",
+    "TimeStretch",
+    "Transform",
+    "TransformResult",
+    "Tremolo",
+    "TrimSilence",
+    "fingerprint_audio",
+    "get_transform",
+    "list_transforms",
+    "load_audio",
+    "register_transform",
+    "save_audio",
 ]
 
 # ---------------------------------------------------------------------------
 # Convenience factory: intent presets
 # ---------------------------------------------------------------------------
+
 
 def asr_pipeline(seed: int = 42) -> Pipeline:
     """Return a ready-to-use augmentation pipeline tuned for ASR training.
@@ -176,7 +181,9 @@ def asr_pipeline(seed: int = 42) -> Pipeline:
             RoomSimulator(rt60_range=(0.05, 0.6), wet_range=(0.1, 0.5), p=0.4),
             AddNoise(snr_db=(15.0, 40.0), noise_type="pink", p=0.5),
             CodecDegradation(codec="random", p=0.2),
-            SpecAugment(freq_mask_param=20, time_mask_param=30, num_freq_masks=1, num_time_masks=1, p=0.5),
+            SpecAugment(
+                freq_mask_param=20, time_mask_param=30, num_freq_masks=1, num_time_masks=1, p=0.5
+            ),
         ],
         seed=seed,
     )
@@ -210,7 +217,9 @@ def music_pipeline(seed: int = 42) -> Pipeline:
                 ],
                 p=0.4,
             ),
-            SpecAugment(freq_mask_param=30, time_mask_param=50, num_freq_masks=2, num_time_masks=2, p=0.4),
+            SpecAugment(
+                freq_mask_param=30, time_mask_param=50, num_freq_masks=2, num_time_masks=2, p=0.4
+            ),
         ],
         seed=seed,
     )
@@ -269,6 +278,7 @@ def contrastive_pipeline(seed: int = 42) -> tuple[Pipeline, Pipeline]:
     tuple[Pipeline, Pipeline]
         ``(pipeline_a, pipeline_b)``
     """
+
     def _build(s: int) -> Pipeline:
         return Pipeline(
             [
@@ -276,7 +286,13 @@ def contrastive_pipeline(seed: int = 42) -> tuple[Pipeline, Pipeline]:
                 RoomSimulator(rt60_range=(0.05, 1.0), wet_range=(0.1, 0.6), p=0.5),
                 AddNoise(snr_db=(10.0, 35.0), noise_type="pink", p=0.5),
                 EQPerturber(n_bands=3, gain_db_range=(-6.0, 6.0), p=0.5),
-                SpecAugment(freq_mask_param=25, time_mask_param=40, num_freq_masks=2, num_time_masks=2, p=0.5),
+                SpecAugment(
+                    freq_mask_param=25,
+                    time_mask_param=40,
+                    num_freq_masks=2,
+                    num_time_masks=2,
+                    p=0.5,
+                ),
                 TimeShift(shift=(-0.1, 0.1), p=0.3),
             ],
             seed=s,
@@ -288,57 +304,64 @@ def contrastive_pipeline(seed: int = 42) -> tuple[Pipeline, Pipeline]:
 # GPU-accelerated transforms (optional — requires torch)
 # Guarded import: only available when PyTorch is installed.
 try:
-    from .gpu import (  # noqa: F401
-        TorchTransform,
-        TorchPipeline,
-        TorchGainPerturber,
+    from .gpu import (
+        NumpyTransformAdapter,
         TorchAddNoise,
-        TorchEQPerturber,
-        TorchSpecAugment,
-        TorchNormalizer,
         TorchClippingSimulator,
-        TorchTimeStretch,
+        TorchEQPerturber,
+        TorchGainPerturber,
+        TorchMixup,
+        TorchNormalizer,
+        TorchPipeline,
         TorchPitchShift,
         TorchRoomSimulator,
-        TorchMixup,
-        NumpyTransformAdapter,
+        TorchSpecAugment,
+        TorchTimeStretch,
+        TorchTransform,
+        batch_process_files,
     )
 
     __all__ += [
-        "TorchTransform",
-        "TorchPipeline",
-        "TorchGainPerturber",
+        "NumpyTransformAdapter",
         "TorchAddNoise",
-        "TorchEQPerturber",
-        "TorchSpecAugment",
-        "TorchNormalizer",
         "TorchClippingSimulator",
-        "TorchTimeStretch",
+        "TorchEQPerturber",
+        "TorchGainPerturber",
+        "TorchMixup",
+        "TorchNormalizer",
+        "TorchPipeline",
         "TorchPitchShift",
         "TorchRoomSimulator",
-        "TorchMixup",
-        "NumpyTransformAdapter",
+        "TorchSpecAugment",
+        "TorchTimeStretch",
+        "TorchTransform",
+        "batch_process_files",
     ]
 except ImportError:
     pass  # PyTorch not installed — GPU transforms unavailable
 
 # Streaming augmentation
-from .streaming import (  # noqa: F401
+from .streaming import (
     stream_augment,
-    stream_augment_file,
     stream_augment_directory,
+    stream_augment_file,
 )
 
 __all__ += [
     "stream_augment",
-    "stream_augment_file",
     "stream_augment_directory",
+    "stream_augment_file",
 ]
 
 # IR database (no extra dependencies)
-from .ir_database import IRDatabase  # noqa: F401
+from .ir_database import IRDatabase
 
 __all__ += ["IRDatabase"]
+
+# YAML/JSON pipeline configuration
+from .config import load_pipeline, load_torch_pipeline
+
+__all__ += ["load_pipeline", "load_torch_pipeline"]
 
 # Version
 __version__ = "0.1.0a1"

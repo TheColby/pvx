@@ -1,20 +1,19 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 """Apply centralized attribution references to Python and Markdown files."""
 
 from __future__ import annotations
 
 import argparse
 import os
-from pathlib import Path
 import re
 import sys
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC_DIR = ROOT / "src"
 sys.path.insert(0, str(SRC_DIR))
 
-from pvx.core.attribution import (  # noqa: E402
+from pvx.core.attribution import (
     ATTRIBUTION_DOC_PATH,
     COPYRIGHT_NOTICE,
     python_header_reference,

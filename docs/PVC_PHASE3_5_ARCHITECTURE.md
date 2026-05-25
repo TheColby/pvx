@@ -100,5 +100,3 @@ Key design choices:
 - Shared conventions are reused: progress/status, verbosity, metrics table, mastering chain.
 
 ## Attribution
-
-Copyright (c) 2026 Colby Leider and contributors. See [ATTRIBUTION.md](../ATTRIBUTION.md).

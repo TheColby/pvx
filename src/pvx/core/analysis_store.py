@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """Persistent phase-vocoder analysis artifact storage.
 
@@ -13,10 +12,10 @@ PVXAN schema:
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import datetime, timezone
 import hashlib
 import json
+from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -58,7 +57,9 @@ def _as_complex_spectrum(real: np.ndarray, imag: np.ndarray) -> np.ndarray:
     if real.shape != imag.shape:
         raise ValueError("PVXAN payload mismatch: spectrum_real and spectrum_imag shapes differ")
     if real.ndim != 3:
-        raise ValueError("PVXAN payload mismatch: expected 3D spectrum arrays (channels, frames, bins)")
+        raise ValueError(
+            "PVXAN payload mismatch: expected 3D spectrum arrays (channels, frames, bins)"
+        )
     return np.asarray(real, dtype=np.float64) + 1j * np.asarray(imag, dtype=np.float64)
 
 
@@ -96,7 +97,10 @@ def analysis_digest(artifact: AnalysisArtifact) -> str:
 def summarize_analysis_artifact(artifact: AnalysisArtifact) -> dict[str, Any]:
     duration_sec = 0.0
     if artifact.frames > 0 and artifact.sample_rate > 0:
-        duration_sec = float((max(0, artifact.frames - 1) * artifact.hop_size + artifact.n_fft) / artifact.sample_rate)
+        duration_sec = float(
+            (max(0, artifact.frames - 1) * artifact.hop_size + artifact.n_fft)
+            / artifact.sample_rate
+        )
     return {
         "schema": artifact.schema,
         "version": artifact.version,

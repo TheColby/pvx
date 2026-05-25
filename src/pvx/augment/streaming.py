@@ -1,5 +1,3 @@
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
-
 """Streaming / chunked augmentation for long-form audio.
 
 Processes audio files in overlapping chunks to keep memory usage bounded,
@@ -44,17 +42,17 @@ Notes
 
 from __future__ import annotations
 
+from collections.abc import Generator
 from pathlib import Path
-from typing import Generator
 
 import numpy as np
 
 from .core import Pipeline, Transform
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _hann_fade(length: int, dtype: np.dtype = np.float32) -> tuple[np.ndarray, np.ndarray]:
     """Return (fade_in, fade_out) Hann half-windows of *length* samples."""
@@ -69,6 +67,7 @@ def _hann_fade(length: int, dtype: np.dtype = np.float32) -> tuple[np.ndarray, n
 # ---------------------------------------------------------------------------
 # In-memory streaming
 # ---------------------------------------------------------------------------
+
 
 def stream_augment(
     audio: np.ndarray,
@@ -107,7 +106,7 @@ def stream_augment(
     else:
         arr = audio
 
-    n_ch, total_samples = arr.shape
+    _n_ch, total_samples = arr.shape
     chunk_samples = max(int(chunk_duration_s * sr), sr)  # at least 1 second
     overlap_samples = min(int(overlap_s * sr), chunk_samples // 4)
 
@@ -115,7 +114,7 @@ def stream_augment(
     if step <= 0:
         step = chunk_samples
 
-    fade_in, fade_out = _hann_fade(overlap_samples, dtype=arr.dtype)
+    _fade_in, _fade_out = _hann_fade(overlap_samples, dtype=arr.dtype)
 
     # Previous chunk's trailing overlap region (for crossfading)
     prev_tail: np.ndarray | None = None
@@ -146,7 +145,11 @@ def stream_augment(
                 blended = prev_tail[:, :xf_len] * fo + aug_chunk[:, :xf_len] * fi
                 # Emit: blended overlap + rest of chunk (minus overlap at end)
                 if aug_chunk.shape[1] > overlap_samples:
-                    body = aug_chunk[:, xf_len:-overlap_samples] if pos + chunk_samples < total_samples else aug_chunk[:, xf_len:]
+                    body = (
+                        aug_chunk[:, xf_len:-overlap_samples]
+                        if pos + chunk_samples < total_samples
+                        else aug_chunk[:, xf_len:]
+                    )
                     out = np.concatenate([blended, body], axis=1)
                 else:
                     out = blended
@@ -160,7 +163,11 @@ def stream_augment(
                 out = aug_chunk
 
         # Save tail for next crossfade
-        if pos + chunk_samples < total_samples and overlap_samples > 0 and aug_chunk.shape[1] >= overlap_samples:
+        if (
+            pos + chunk_samples < total_samples
+            and overlap_samples > 0
+            and aug_chunk.shape[1] >= overlap_samples
+        ):
             prev_tail = aug_chunk[:, -overlap_samples:]
         else:
             prev_tail = None
@@ -174,6 +181,7 @@ def stream_augment(
 # ---------------------------------------------------------------------------
 # File-based streaming
 # ---------------------------------------------------------------------------
+
 
 def stream_augment_file(
     input_path: str | Path,
@@ -224,15 +232,16 @@ def stream_augment_file(
 
     # Read full file (for now — future: use sf.blocks for truly streaming I/O)
     audio, sr = sf.read(str(input_path), dtype="float32", always_2d=False)
-    mono = audio.ndim == 1
 
     chunks_written = 0
     total_samples_written = 0
 
     # Collect all chunks (we need to know total length for the output file)
     output_chunks: list[np.ndarray] = []
-    for chunk_out, chunk_sr in stream_augment(
-        audio, sr, pipeline,
+    for chunk_out, _chunk_sr in stream_augment(
+        audio,
+        sr,
+        pipeline,
         chunk_duration_s=chunk_duration_s,
         overlap_s=overlap_s,
         seed=seed,
@@ -263,6 +272,7 @@ def stream_augment_file(
 # ---------------------------------------------------------------------------
 # CLI integration
 # ---------------------------------------------------------------------------
+
 
 def stream_augment_directory(
     input_dir: str | Path,
@@ -315,7 +325,9 @@ def stream_augment_directory(
         idx, src = args
         dst = output_dir / src.name
         return stream_augment_file(
-            src, dst, pipeline,
+            src,
+            dst,
+            pipeline,
             chunk_duration_s=chunk_duration_s,
             overlap_s=overlap_s,
             seed=seed + idx * 100003,

@@ -1,5 +1,3 @@
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
-
 """DSP unit tests for core vocoder and analysis primitives.
 
 These tests validate transform length behavior, F0 estimation, transient
@@ -7,8 +5,8 @@ handling, formant-preserving correction, Fourier-sync operation, runtime
 selection, and support for all registered analysis windows.
 """
 
-import unittest
 import sys
+import unittest
 from pathlib import Path
 
 import numpy as np
@@ -29,9 +27,9 @@ from pvx.core.voc import (
     configure_runtime,
     estimate_content_features,
     estimate_f0_autocorrelation,
-    phase_vocoder_time_stretch_multires_fusion,
     phase_vocoder_time_stretch,
     phase_vocoder_time_stretch_fourier_sync,
+    phase_vocoder_time_stretch_multires_fusion,
     resample_1d,
     runtime_config,
     suggest_quality_profile,

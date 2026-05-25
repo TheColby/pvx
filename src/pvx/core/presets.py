@@ -1,11 +1,8 @@
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
-
 """Preset definitions for pvx processing intent modes."""
 
 from __future__ import annotations
 
 from typing import Any
-
 
 # Backward-compatible + new intent-focused preset names.
 PRESET_CHOICES: tuple[str, ...] = (

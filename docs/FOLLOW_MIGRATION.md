@@ -55,5 +55,3 @@ pvx pitch-track A.wav --output - \
 4. Keep manual route examples in documentation for advanced control-bus users.
 
 ## Attribution
-
-Copyright (c) 2026 Colby Leider and contributors. See [ATTRIBUTION.md](../ATTRIBUTION.md).

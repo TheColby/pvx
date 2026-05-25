@@ -7,6 +7,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import numpy as np
 import soundfile as sf
@@ -87,6 +88,35 @@ class TestAugmentMode(unittest.TestCase):
             self.assertEqual(rows[0]["split"], rows[1]["split"])
             self.assertEqual(rows[0]["status"], "planned")
             self.assertEqual(rows[1]["status"], "planned")
+
+    def test_augment_dry_run_accepts_wavelet_engine(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="pvx-augment-wavelet-engine-") as tmp:
+            root = Path(tmp)
+            sr = 16000
+            t = np.arange(0, int(0.10 * sr), dtype=np.float64) / float(sr)
+            audio = (0.2 * np.sin(2.0 * np.pi * 220.0 * t))[:, None]
+            src = root / "clip.wav"
+            sf.write(str(src), audio, sr)
+
+            out_dir = root / "aug_out"
+            code = run_augment_mode(
+                [
+                    str(src),
+                    "--output-dir",
+                    str(out_dir),
+                    "--variants-per-input",
+                    "1",
+                    "--intent",
+                    "asr_robust",
+                    "--engine",
+                    "wavelet",
+                    "--dry-run",
+                    "--silent",
+                ]
+            )
+            self.assertEqual(code, 0)
+            row = json.loads((out_dir / "augment_manifest.jsonl").read_text(encoding="utf-8"))
+            self.assertEqual(row["engine"], "wavelet")
 
     def test_augment_pair_mode_emits_view_rows(self) -> None:
         with tempfile.TemporaryDirectory(prefix="pvx-augment-pair-") as tmp:
@@ -206,6 +236,86 @@ class TestAugmentMode(unittest.TestCase):
             self.assertEqual(len(seen), 1)
             self.assertIn("--limiter-threshold", seen[0])
             self.assertEqual(seen[0][seen[0].index("--limiter-threshold") + 1], "0.98")
+
+    def test_augment_pytorch_refuses_existing_output_without_overwrite(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="pvx-augment-overwrite-") as tmp:
+            root = Path(tmp)
+            sr = 16000
+            t = np.arange(0, int(0.08 * sr), dtype=np.float64) / float(sr)
+            tone = (0.2 * np.sin(2.0 * np.pi * 180.0 * t))[:, None]
+            src = root / "clip.wav"
+            sf.write(str(src), tone, sr)
+
+            out_dir = root / "aug_out"
+            out_dir.mkdir(parents=True, exist_ok=True)
+            existing = out_dir / "clip__aug_mir_music_001_5.wav"
+            sf.write(str(existing), tone, sr)
+
+            with patch("pvx.cli.pvx_augment._render_job_pytorch") as render_mock:
+                code = run_augment_mode_impl(
+                    [
+                        str(src),
+                        "--output-dir",
+                        str(out_dir),
+                        "--variants-per-input",
+                        "1",
+                        "--intent",
+                        "mir_music",
+                        "--seed",
+                        "5",
+                        "--engine",
+                        "pytorch",
+                        "--silent",
+                    ],
+                    dispatch_tool=lambda _tool, _args: 0,
+                )
+
+            self.assertEqual(code, 1)
+            render_mock.assert_not_called()
+
+    def test_augment_native_engine_refuses_existing_output_without_overwrite(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="pvx-augment-native-existing-") as tmp:
+            root = Path(tmp)
+            sr = 16000
+            t = np.arange(0, int(0.08 * sr), dtype=np.float64) / float(sr)
+            tone = (0.2 * np.sin(2.0 * np.pi * 180.0 * t))[:, None]
+            src = root / "clip.wav"
+            sf.write(str(src), tone, sr)
+            out_dir = root / "aug_out"
+            out_dir.mkdir(parents=True, exist_ok=True)
+            existing = out_dir / "clip__aug_asr_robust_001_5.wav"
+            sf.write(str(existing), tone * 0.5, sr)
+
+            with patch("pvx.cli.pvx_augment._render_job_pytorch") as render_native:
+                code = run_augment_mode_impl(
+                    [
+                        str(src),
+                        "--output-dir",
+                        str(out_dir),
+                        "--variants-per-input",
+                        "1",
+                        "--intent",
+                        "asr_robust",
+                        "--seed",
+                        "5",
+                        "--engine",
+                        "pytorch",
+                        "--silent",
+                    ],
+                    dispatch_tool=lambda _tool, _args: 0,
+                )
+
+            self.assertEqual(code, 1)
+            render_native.assert_not_called()
+            rows = [
+                json.loads(line)
+                for line in (out_dir / "augment_manifest.jsonl")
+                .read_text(encoding="utf-8")
+                .splitlines()
+                if line.strip()
+            ]
+            self.assertEqual(len(rows), 1)
+            self.assertEqual(rows[0]["status"], f"error:output exists:{existing.resolve()}")
 
 
 if __name__ == "__main__":

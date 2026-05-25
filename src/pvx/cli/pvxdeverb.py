@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """Spectral tail suppression for dereverberation-like cleanup."""
 
@@ -20,11 +19,11 @@ from pvx.core.common import (
     finalize_audio,
     log_error,
     log_message,
+    print_input_output_metrics_table,
     read_audio,
     resolve_inputs,
     validate_vocoder_args,
     write_output,
-    print_input_output_metrics_table,
 )
 from pvx.core.voc import istft, stft
 
@@ -74,7 +73,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     add_common_io_args(parser, default_suffix="_deverb")
     add_vocoder_args(parser, default_n_fft=2048, default_win_length=2048, default_hop_size=512)
-    parser.add_argument("--strength", type=float, default=0.45, help="Tail suppression strength 0..1")
+    parser.add_argument(
+        "--strength", type=float, default=0.45, help="Tail suppression strength 0..1"
+    )
     parser.add_argument("--decay", type=float, default=0.92, help="Tail memory decay 0..1")
     parser.add_argument("--floor", type=float, default=0.12, help="Per-bin floor multiplier")
     return parser
@@ -122,12 +123,14 @@ def main(argv: list[str] | None = None) -> int:
             )
             write_output(out_path, out, sr, args, input_path=path)
             log_message(args, f"[ok] {path} -> {out_path}", min_level="verbose")
-        except Exception as exc:
+        except (OSError, ValueError, RuntimeError) as exc:
             failures += 1
             log_error(args, f"[error] {path}: {exc}")
         status.step(idx, path.name)
     status.finish("done" if failures == 0 else f"errors={failures}")
-    log_message(args, f"[done] pvxdeverb processed={len(paths)} failed={failures}", min_level="normal")
+    log_message(
+        args, f"[done] pvxdeverb processed={len(paths)} failed={failures}", min_level="normal"
+    )
     return 1 if failures else 0
 
 

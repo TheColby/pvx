@@ -1,5 +1,3 @@
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
-
 """Shared output policy helpers for bit depth, dither, true-peak, and metadata sidecars."""
 
 from __future__ import annotations
@@ -12,7 +10,6 @@ from typing import Any
 
 import numpy as np
 import soundfile as sf
-
 
 BIT_DEPTH_CHOICES: tuple[str, ...] = ("inherit", "16", "24", "32f")
 DITHER_CHOICES: tuple[str, ...] = ("none", "tpdf")
@@ -90,7 +87,7 @@ def resolve_output_subtype(
     explicit_subtype: str | None = None,
 ) -> str | None:
     if getattr(args, "subtype", None):
-        return str(getattr(args, "subtype"))
+        return str(args.subtype)
     bit_depth = str(getattr(args, "bit_depth", "inherit") or "inherit").lower()
     if bit_depth in _BIT_DEPTH_TO_SUBTYPE:
         return _BIT_DEPTH_TO_SUBTYPE[bit_depth]
@@ -103,7 +100,9 @@ def subtype_bit_depth(subtype: str | None) -> int | None:
     return _SUBTYPE_TO_BITS.get(str(subtype).upper())
 
 
-def apply_dither_if_needed(audio: np.ndarray, args: argparse.Namespace, *, subtype: str | None) -> np.ndarray:
+def apply_dither_if_needed(
+    audio: np.ndarray, args: argparse.Namespace, *, subtype: str | None
+) -> np.ndarray:
     mode = str(getattr(args, "dither", "none") or "none").lower()
     if mode == "none":
         return np.asarray(audio, dtype=np.float64)
@@ -161,7 +160,7 @@ def source_metadata(path: Path | None) -> dict[str, Any]:
             "format": str(getattr(info, "format", "")),
             "subtype": str(getattr(info, "subtype", "")),
         }
-    except Exception as exc:  # pragma: no cover - defensive metadata path
+    except (OSError, RuntimeError, ValueError) as exc:  # pragma: no cover - defensive metadata path
         return {"path": str(path), "error": str(exc)}
 
 
@@ -193,7 +192,9 @@ def write_metadata_sidecar(
             "sample_rate": int(sample_rate),
             "channels": int(arr.shape[1]) if arr.ndim == 2 else 1,
             "samples": int(arr.shape[0]) if arr.ndim == 2 else int(arr.size),
-            "duration_s": float((arr.shape[0] if arr.ndim == 2 else arr.size) / max(1, int(sample_rate))),
+            "duration_s": float(
+                (arr.shape[0] if arr.ndim == 2 else arr.size) / max(1, int(sample_rate))
+            ),
             "subtype": subtype,
             "true_peak_dbtp": float(true_peak_dbtp(arr, int(sample_rate))),
         },
@@ -227,7 +228,7 @@ def validate_output_policy_args(args: argparse.Namespace, parser: argparse.Argum
         parser.error(f"--dither must be one of: {', '.join(DITHER_CHOICES)}")
     if dither != "none" and bit_depth == "32f":
         parser.error("--dither cannot be used with floating-point --bit-depth 32f")
-    if getattr(args, "dither_seed", None) is not None and int(getattr(args, "dither_seed")) < 0:
+    if getattr(args, "dither_seed", None) is not None and int(args.dither_seed) < 0:
         parser.error("--dither-seed must be >= 0")
     tp = getattr(args, "true_peak_max_dbtp", None)
     if tp is not None and not np.isfinite(float(tp)):

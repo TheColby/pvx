@@ -1,20 +1,19 @@
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
-
 """Tests for PVC parity benchmark runner and gate logic."""
 
 from __future__ import annotations
 
 import json
+import sys
 import tempfile
 import unittest
 from pathlib import Path
-import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from benchmarks.run_pvc_parity import _gate_failures, main as run_pvc_parity_main
+from benchmarks.run_pvc_parity import _gate_failures
+from benchmarks.run_pvc_parity import main as run_pvc_parity_main
 
 
 class TestPVCParityBenchmark(unittest.TestCase):

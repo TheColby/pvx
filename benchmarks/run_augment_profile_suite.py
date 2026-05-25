@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
 
 """Run all augmentation benchmark profiles and summarize regression status."""
 
@@ -22,7 +21,7 @@ def _load_profiles(path: Path) -> list[str]:
     profiles = payload.get("profiles", {}) if isinstance(payload, dict) else {}
     if not isinstance(profiles, dict):
         return []
-    return sorted(str(k) for k in profiles.keys())
+    return sorted(str(k) for k in profiles)
 
 
 def _load_json(path: Path) -> dict[str, Any]:
@@ -33,12 +32,16 @@ def _load_json(path: Path) -> dict[str, Any]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Run all augmentation benchmark profiles and gates.")
+    parser = argparse.ArgumentParser(
+        description="Run all augmentation benchmark profiles and gates."
+    )
     parser.add_argument("--profiles-file", type=Path, default=DEFAULT_PROFILES)
     parser.add_argument("--out-dir", type=Path, default=Path("benchmarks/out_augment_profiles"))
     parser.add_argument("--quick", action="store_true", help="Use quick per-profile runs")
     parser.add_argument("--gate", action="store_true", help="Enable profile gate checks")
-    parser.add_argument("--refresh-baselines", action="store_true", help="Refresh each profile baseline")
+    parser.add_argument(
+        "--refresh-baselines", action="store_true", help="Refresh each profile baseline"
+    )
     args = parser.parse_args(argv)
 
     profiles_file = Path(args.profiles_file).expanduser().resolve()
@@ -116,7 +119,9 @@ def main(argv: list[str] | None = None) -> int:
     lines.append(f"- Gate enabled: `{bool(args.gate)}`")
     lines.append(f"- Quick mode: `{bool(args.quick)}`")
     lines.append("")
-    lines.append("| Profile | Exit | Gate | Records | Req Errors | Split L1 | Clip Max | Pair Coverage |")
+    lines.append(
+        "| Profile | Exit | Gate | Records | Req Errors | Split L1 | Clip Max | Pair Coverage |"
+    )
     lines.append("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |")
     for row in summary:
         lines.append(

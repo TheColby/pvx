@@ -1,12 +1,10 @@
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
-
 """Tests for scripts/scripts_generate_docs_pdf.py helpers."""
 
 from __future__ import annotations
 
-from pathlib import Path
 import tempfile
 import unittest
+from pathlib import Path
 
 from scripts import scripts_generate_docs_pdf as pdfgen
 

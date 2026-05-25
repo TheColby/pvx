@@ -1,6 +1,3 @@
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
-# ruff: noqa: E402
-
 """Tests for shared audio metric table utilities."""
 
 from __future__ import annotations

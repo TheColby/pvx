@@ -1,5 +1,3 @@
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
-
 """TensorFlow / tf.data integration for pvx augmentation pipelines.
 
 Provides helpers to wrap pvx augmentation pipelines inside ``tf.data``
@@ -41,6 +39,7 @@ import numpy as np
 def _require_tf():
     try:
         import tensorflow as tf
+
         return tf
     except ImportError as exc:
         raise ImportError(
@@ -52,6 +51,7 @@ def _require_tf():
 # ---------------------------------------------------------------------------
 # make_tf_augment_fn
 # ---------------------------------------------------------------------------
+
 
 def make_tf_augment_fn(
     pipeline,
@@ -89,7 +89,7 @@ def make_tf_augment_fn(
     _counter = [0]
 
     def _augment_py(audio_np: np.ndarray) -> np.ndarray:
-        s = seed if seed is not None else (_counter[0] % (2 ** 31))
+        s = seed if seed is not None else (_counter[0] % (2**31))
         _counter[0] += 1
         audio_aug, _ = pipeline(audio_np.astype(np.float32), sample_rate, seed=s)
         return np.asarray(audio_aug, dtype=np.float32)
@@ -109,6 +109,7 @@ def make_tf_augment_fn(
 # ---------------------------------------------------------------------------
 # make_tf_augment_map_fn — for dict-based datasets
 # ---------------------------------------------------------------------------
+
 
 def make_tf_augment_map_fn(
     pipeline,
@@ -151,7 +152,7 @@ def make_tf_augment_map_fn(
 
     def _augment_py(audio_np: np.ndarray, sr_np: np.ndarray) -> np.ndarray:
         sr = int(sr_np) if sr_np.ndim == 0 else default_sr
-        s = seed if seed is not None else (_counter[0] % (2 ** 31))
+        s = seed if seed is not None else (_counter[0] % (2**31))
         _counter[0] += 1
         audio_aug, _ = pipeline(audio_np.astype(np.float32), sr, seed=s)
         return np.asarray(audio_aug, dtype=np.float32)
@@ -160,11 +161,14 @@ def make_tf_augment_map_fn(
         audio = features[audio_key]
         if sr_key and sr_key in features:
             sr_tensor = tf.cast(features[sr_key], tf.int32)
-            sr_np_fn = lambda: tf.py_function(
-                func=_augment_py,
-                inp=[audio, sr_tensor],
-                Tout=tf.float32,
-            )
+
+            def sr_np_fn():
+                return tf.py_function(
+                    func=_augment_py,
+                    inp=[audio, sr_tensor],
+                    Tout=tf.float32,
+                )
+
             result = sr_np_fn()
         else:
             sr_val = tf.constant(default_sr, dtype=tf.int32)
@@ -184,6 +188,7 @@ def make_tf_augment_map_fn(
 # ---------------------------------------------------------------------------
 # pvx_augment_tf_dataset — convenience wrapper
 # ---------------------------------------------------------------------------
+
 
 def pvx_augment_tf_dataset(
     dataset,
@@ -233,7 +238,9 @@ def pvx_augment_tf_dataset(
         is_dict = False
 
     if is_dict:
-        fn = make_tf_augment_map_fn(pipeline, audio_key=audio_key, default_sr=sample_rate, seed=seed)
+        fn = make_tf_augment_map_fn(
+            pipeline, audio_key=audio_key, default_sr=sample_rate, seed=seed
+        )
     else:
         fn = make_tf_augment_fn(pipeline, sample_rate=sample_rate, seed=seed)
 

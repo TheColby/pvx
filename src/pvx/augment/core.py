@@ -1,5 +1,3 @@
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
-
 """Core base classes for pvx augmentation transforms.
 
 All transforms operate on NumPy arrays with shape (channels, samples) or
@@ -10,18 +8,17 @@ fully composable.
 from __future__ import annotations
 
 import hashlib
-import json
-import time
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 import numpy as np
-
 
 # ---------------------------------------------------------------------------
 # Audio shape utilities
 # ---------------------------------------------------------------------------
+
 
 def _to_2d(audio: np.ndarray) -> tuple[np.ndarray, bool]:
     """Return ``(channels, samples)`` array and a flag for mono input."""
@@ -41,6 +38,7 @@ def _from_2d(audio: np.ndarray, was_mono: bool) -> np.ndarray:
 # ---------------------------------------------------------------------------
 # Base Transform
 # ---------------------------------------------------------------------------
+
 
 class Transform(ABC):
     """Abstract base class for a single augmentation transform.
@@ -100,17 +98,14 @@ class Transform(ABC):
 
     # ------------------------------------------------------------------
     def __repr__(self) -> str:
-        params = ", ".join(
-            f"{k}={v!r}"
-            for k, v in self.__dict__.items()
-            if not k.startswith("_")
-        )
+        params = ", ".join(f"{k}={v!r}" for k, v in self.__dict__.items() if not k.startswith("_"))
         return f"{self.__class__.__name__}({params})"
 
 
 # ---------------------------------------------------------------------------
 # Pipeline
 # ---------------------------------------------------------------------------
+
 
 class Pipeline:
     """Sequential composition of transforms applied left-to-right.
@@ -152,7 +147,7 @@ class Pipeline:
         if rng.random() > self.p:
             return audio, sr
         for t in self.transforms:
-            child_seed = int(rng.integers(0, 2 ** 31))
+            child_seed = int(rng.integers(0, 2**31))
             audio, sr = t(audio, sr, seed=child_seed)
         return audio, sr
 
@@ -164,14 +159,15 @@ class Pipeline:
     def __len__(self) -> int:
         return len(self.transforms)
 
-    def append(self, transform: Transform) -> "Pipeline":
+    def append(self, transform: Transform) -> Pipeline:
         """Return a new Pipeline with *transform* appended."""
-        return Pipeline(self.transforms + [transform], seed=self.seed, p=self.p)
+        return Pipeline([*self.transforms, transform], seed=self.seed, p=self.p)
 
 
 # ---------------------------------------------------------------------------
 # Combinators
 # ---------------------------------------------------------------------------
+
 
 class OneOf(Transform):
     """Apply exactly one transform chosen at random from a list.
@@ -210,7 +206,7 @@ class OneOf(Transform):
         rng: np.random.Generator,
     ) -> tuple[np.ndarray, int]:
         idx = int(rng.choice(len(self.transforms), p=self.weights))
-        child_seed = int(rng.integers(0, 2 ** 31))
+        child_seed = int(rng.integers(0, 2**31))
         return self.transforms[idx](audio, sr, seed=child_seed)
 
 
@@ -248,7 +244,7 @@ class SomeOf(Transform):
         k = min(k, len(self.transforms))
         idxs = rng.choice(len(self.transforms), size=k, replace=False)
         for idx in idxs:
-            child_seed = int(rng.integers(0, 2 ** 31))
+            child_seed = int(rng.integers(0, 2**31))
             audio, sr = self.transforms[int(idx)](audio, sr, seed=child_seed)
         return audio, sr
 
@@ -270,13 +266,14 @@ class RandomApply(Transform):
         sr: int,
         rng: np.random.Generator,
     ) -> tuple[np.ndarray, int]:
-        child_seed = int(rng.integers(0, 2 ** 31))
+        child_seed = int(rng.integers(0, 2**31))
         return self.transform(audio, sr, seed=child_seed)
 
 
 # ---------------------------------------------------------------------------
 # Identity / Passthrough
 # ---------------------------------------------------------------------------
+
 
 class Identity(Transform):
     """Pass audio through unchanged."""
@@ -294,10 +291,11 @@ class Identity(Transform):
 # TransformResult helper
 # ---------------------------------------------------------------------------
 
+
 class TransformResult:
     """Container returned when ``return_metadata=True`` is requested."""
 
-    __slots__ = ("audio", "sr", "params", "transform_name", "elapsed_s")
+    __slots__ = ("audio", "elapsed_s", "params", "sr", "transform_name")
 
     def __init__(
         self,
@@ -325,6 +323,7 @@ class TransformResult:
 # ---------------------------------------------------------------------------
 # Audio loading helper used by all submodules
 # ---------------------------------------------------------------------------
+
 
 def load_audio(
     path: str | Path,
@@ -361,8 +360,10 @@ def load_audio(
         audio = audio.mean(axis=0, keepdims=True)
 
     if target_sr is not None and target_sr != sr:
-        from scipy.signal import resample_poly
         from math import gcd
+
+        from scipy.signal import resample_poly
+
         g = gcd(target_sr, sr)
         up, down = target_sr // g, sr // g
         resampled = np.stack(
@@ -413,3 +414,124 @@ def fingerprint_audio(audio: np.ndarray, sr: int) -> str:
     h.update(sr.to_bytes(4, "little"))
     h.update(audio.tobytes())
     return h.hexdigest()[:16]
+
+
+# ---------------------------------------------------------------------------
+# Plugin registry for custom transforms
+# ---------------------------------------------------------------------------
+
+_TRANSFORM_REGISTRY: dict[str, type[Transform]] = {}
+
+
+def register_transform(
+    name: str | None = None,
+) -> type[Transform]:
+    """Register a custom Transform class in the global registry.
+
+    Can be used as a decorator or called directly.
+
+    Examples
+    --------
+    As a decorator::
+
+        @register_transform("my_reverb")
+        class MyReverb(Transform):
+            def apply(self, audio, sr, rng):
+                ...
+
+    Direct call::
+
+        register_transform("my_reverb")(MyReverb)
+
+    Parameters
+    ----------
+    name:
+        Registry key.  Defaults to the class name in snake_case.
+
+    Returns
+    -------
+    The original class, unmodified.
+    """
+
+    def decorator(cls: type[Transform]) -> type[Transform]:
+        key = name if name is not None else _to_snake_case(cls.__name__)
+        if not issubclass(cls, Transform):
+            raise TypeError(f"register_transform expects a Transform subclass, got {cls!r}")
+        _TRANSFORM_REGISTRY[key] = cls
+        return cls
+
+    return decorator
+
+
+def get_transform(name: str) -> type[Transform]:
+    """Look up a registered transform by name.
+
+    Parameters
+    ----------
+    name:
+        Registry key (as passed to :func:`register_transform`).
+
+    Returns
+    -------
+    type[Transform]
+        The registered Transform class.
+
+    Raises
+    ------
+    KeyError
+        If *name* is not in the registry.
+    """
+    if name not in _TRANSFORM_REGISTRY:
+        available = ", ".join(sorted(_TRANSFORM_REGISTRY)) or "(none)"
+        raise KeyError(f"Unknown transform: {name!r}. Registered: {available}")
+    return _TRANSFORM_REGISTRY[name]
+
+
+def list_transforms() -> dict[str, type[Transform]]:
+    """Return a copy of the current transform registry."""
+    return dict(_TRANSFORM_REGISTRY)
+
+
+def _load_entry_point_plugins() -> None:
+    """Discover and load transforms registered via setuptools entry points.
+
+    Third-party packages can register transforms by adding an entry point
+    in the ``pvx.augment.transforms`` group::
+
+        [project.entry-points."pvx.augment.transforms"]
+        my_reverb = "my_package.transforms:MyReverb"
+
+    Each entry point's value should be a :class:`Transform` subclass.
+    """
+    try:
+        from importlib.metadata import entry_points
+    except ImportError:
+        return  # Python < 3.10 fallback not needed (requires-python >=3.10)
+
+    eps = entry_points()
+    # Python 3.12+ returns SelectableGroups; 3.10-3.11 returns dict
+    if isinstance(eps, dict):
+        group = eps.get("pvx.augment.transforms", [])
+    else:
+        group = eps.select(group="pvx.augment.transforms")
+
+    for ep in group:
+        try:
+            cls = ep.load()
+            if isinstance(cls, type) and issubclass(cls, Transform):
+                _TRANSFORM_REGISTRY.setdefault(ep.name, cls)
+        except (ImportError, ModuleNotFoundError, AttributeError, TypeError):
+            pass  # Silently skip broken plugins
+
+
+def _to_snake_case(name: str) -> str:
+    """Convert CamelCase to snake_case."""
+    import re
+
+    s = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1_\2", name)
+    s = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", s)
+    return s.lower()
+
+
+# Auto-discover entry-point plugins at import time
+_load_entry_point_plugins()

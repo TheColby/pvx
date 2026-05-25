@@ -1,5 +1,3 @@
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
-
 """CLI regression tests for pvxvoc end-to-end workflows.
 
 Coverage includes:
@@ -10,19 +8,18 @@ Coverage includes:
 - a numeric DSP snapshot metric for drift detection
 """
 
-import subprocess
-import sys
-import tempfile
-import unittest
 import csv
 import io
 import json
 import os
+import subprocess
+import sys
+import tempfile
+import unittest
 from pathlib import Path
 
 import numpy as np
 import soundfile as sf
-
 
 ROOT = Path(__file__).resolve().parents[1]
 CLI = [sys.executable, "-m", "pvx.core.voc"]
@@ -40,14 +37,22 @@ def write_stereo_tone(path: Path, sr: int = 24000, duration: float = 0.5) -> tup
     return audio, sr
 
 
-def write_mono_tone(path: Path, sr: int = 24000, duration: float = 0.5, freq_hz: float = 220.0) -> tuple[np.ndarray, int]:
+def write_mono_tone(
+    path: Path, sr: int = 24000, duration: float = 0.5, freq_hz: float = 220.0
+) -> tuple[np.ndarray, int]:
     t = np.arange(int(sr * duration)) / sr
     audio = 0.35 * np.sin(2 * np.pi * freq_hz * t)
     sf.write(path, audio, sr)
     return audio.astype(np.float64), sr
 
 
-def write_mono_glide(path: Path, sr: int = 24000, duration: float = 0.6, f0_start: float = 180.0, f0_end: float = 360.0) -> tuple[np.ndarray, int]:
+def write_mono_glide(
+    path: Path,
+    sr: int = 24000,
+    duration: float = 0.6,
+    f0_start: float = 180.0,
+    f0_end: float = 360.0,
+) -> tuple[np.ndarray, int]:
     t = np.arange(int(sr * duration), dtype=np.float64) / float(sr)
     freq = np.linspace(float(f0_start), float(f0_end), num=t.size, dtype=np.float64)
     phase = 2.0 * np.pi * np.cumsum(freq) / float(sr)
@@ -56,7 +61,9 @@ def write_mono_glide(path: Path, sr: int = 24000, duration: float = 0.6, f0_star
     return audio.astype(np.float64), sr
 
 
-def write_mono_complex(path: Path, sr: int = 24000, duration: float = 0.5) -> tuple[np.ndarray, int]:
+def write_mono_complex(
+    path: Path, sr: int = 24000, duration: float = 0.5
+) -> tuple[np.ndarray, int]:
     t = np.arange(int(sr * duration), dtype=np.float64) / float(sr)
     audio = (
         0.22 * np.sin(2 * np.pi * 110.0 * t)
@@ -69,7 +76,9 @@ def write_mono_complex(path: Path, sr: int = 24000, duration: float = 0.5) -> tu
     return audio.astype(np.float64), sr
 
 
-def write_multichannel_ir(path: Path, sr: int = 24000, channels: int = 4, duration: float = 0.12) -> tuple[np.ndarray, int]:
+def write_multichannel_ir(
+    path: Path, sr: int = 24000, channels: int = 4, duration: float = 0.12
+) -> tuple[np.ndarray, int]:
     n = max(8, int(round(sr * duration)))
     ir = np.zeros((n, channels), dtype=np.float64)
     taps = [0, int(0.006 * sr), int(0.012 * sr), int(0.021 * sr)]
@@ -223,6 +232,27 @@ class TestCLIRegression(unittest.TestCase):
             self.assertEqual(out_sr, 24000)
             self.assertEqual(out_audio.shape[1], 2)
             self.assertGreater(out_audio.shape[0], 0)
+
+    def test_unified_cli_chain_refuses_existing_output_without_overwrite(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            in_path = tmp_path / "chain_existing.wav"
+            out_path = tmp_path / "chain_existing_out.wav"
+            write_stereo_tone(in_path, duration=0.22)
+            write_stereo_tone(out_path, duration=0.10)
+
+            cmd = [
+                *UNIFIED_CLI,
+                "chain",
+                str(in_path),
+                "--pipeline",
+                "voc --time-stretch 1.10",
+                "--output",
+                str(out_path),
+            ]
+            proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+            self.assertNotEqual(proc.returncode, 0)
+            self.assertIn("Use --overwrite to replace it", proc.stderr)
 
     def test_unified_cli_chain_lucky_runs(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -631,10 +661,7 @@ class TestCLIRegression(unittest.TestCase):
             b_audio, _ = write_mono_tone(b_path, duration=0.5, freq_hz=660.0)
             alpha_path = tmp_path / "alpha_curve.csv"
             alpha_path.write_text(
-                "time_sec,value\n"
-                "0.0,0.0\n"
-                "0.25,0.5\n"
-                "0.5,1.0\n",
+                "time_sec,value\n0.0,0.0\n0.25,0.5\n0.5,1.0\n",
                 encoding="utf-8",
             )
             out_path = tmp_path / "morph_traj.wav"
@@ -810,7 +837,9 @@ class TestCLIRegression(unittest.TestCase):
                 "--overwrite",
                 "--quiet",
             ]
-            voc = subprocess.run(voc_cmd, cwd=ROOT, input=track.stdout, capture_output=True, text=True)
+            voc = subprocess.run(
+                voc_cmd, cwd=ROOT, input=track.stdout, capture_output=True, text=True
+            )
             self.assertEqual(voc.returncode, 0, msg=voc.stderr)
             self.assertTrue(out_path.exists())
 
@@ -864,7 +893,9 @@ class TestCLIRegression(unittest.TestCase):
                 "--overwrite",
                 "--quiet",
             ]
-            voc = subprocess.run(voc_cmd, cwd=ROOT, input=track.stdout, capture_output=True, text=True)
+            voc = subprocess.run(
+                voc_cmd, cwd=ROOT, input=track.stdout, capture_output=True, text=True
+            )
             self.assertEqual(voc.returncode, 0, msg=voc.stderr)
             self.assertTrue(out_path.exists())
             output_audio, out_sr = sf.read(out_path, always_2d=True)
@@ -911,7 +942,9 @@ class TestCLIRegression(unittest.TestCase):
                 "--overwrite",
                 "--quiet",
             ]
-            voc = subprocess.run(voc_cmd, cwd=ROOT, input=track.stdout, capture_output=True, text=True)
+            voc = subprocess.run(
+                voc_cmd, cwd=ROOT, input=track.stdout, capture_output=True, text=True
+            )
             self.assertEqual(voc.returncode, 0, msg=voc.stderr)
             self.assertTrue(out_path.exists())
 
@@ -944,10 +977,7 @@ class TestCLIRegression(unittest.TestCase):
             input_audio, sr = write_mono_tone(in_path, duration=0.45, freq_hz=240.0)
             map_path = tmp_path / "stretch.csv"
             map_path.write_text(
-                "time_sec,value\n"
-                "0.0,1.0\n"
-                "0.22,1.6\n"
-                "0.45,2.0\n",
+                "time_sec,value\n0.0,1.0\n0.22,1.6\n0.45,2.0\n",
                 encoding="utf-8",
             )
             out_path = tmp_path / "dyn_stretch_out.wav"
@@ -1046,9 +1076,7 @@ class TestCLIRegression(unittest.TestCase):
             write_mono_tone(in_path, duration=0.35, freq_hz=220.0)
             map_path = tmp_path / "nfft_plan.csv"
             map_path.write_text(
-                "time_sec,value\n"
-                "0.0,1024\n"
-                "0.35,4096\n",
+                "time_sec,value\n0.0,1024\n0.35,4096\n",
                 encoding="utf-8",
             )
             cmd = [
@@ -1073,10 +1101,7 @@ class TestCLIRegression(unittest.TestCase):
             write_mono_tone(in_path, duration=0.4, freq_hz=220.0)
             lifter_path = tmp_path / "lifter.csv"
             lifter_path.write_text(
-                "time_sec,value\n"
-                "0.0,16\n"
-                "0.2,32\n"
-                "0.4,64\n",
+                "time_sec,value\n0.0,16\n0.2,32\n0.4,64\n",
                 encoding="utf-8",
             )
             out_path = tmp_path / "dyn_formant_out.wav"
@@ -1111,10 +1136,7 @@ class TestCLIRegression(unittest.TestCase):
             input_audio, sr = write_stereo_tone(in_path, duration=0.3)
             stretch_path = tmp_path / "stream_stretch.csv"
             stretch_path.write_text(
-                "time_sec,value\n"
-                "0.0,1.0\n"
-                "0.15,1.6\n"
-                "0.3,2.0\n",
+                "time_sec,value\n0.0,1.0\n0.15,1.6\n0.3,2.0\n",
                 encoding="utf-8",
             )
             out_path = tmp_path / "stream_dyn_out.wav"
@@ -1148,7 +1170,9 @@ class TestCLIRegression(unittest.TestCase):
             stretch_path = tmp_path / "stretch.csv"
             stretch_path.write_text("time_sec,value\n0.0,1.0\n0.3,1.4\n", encoding="utf-8")
             pitch_map = tmp_path / "legacy_map.csv"
-            pitch_map.write_text("start_sec,end_sec,stretch,pitch_ratio\n0.0,0.3,1.0,1.0\n", encoding="utf-8")
+            pitch_map.write_text(
+                "start_sec,end_sec,stretch,pitch_ratio\n0.0,0.3,1.0,1.0\n", encoding="utf-8"
+            )
             cmd = [
                 *CLI,
                 str(in_path),
@@ -1453,13 +1477,18 @@ class TestCLIRegression(unittest.TestCase):
                 "--quiet",
             ]
 
-            first = subprocess.run(base_cmd + ["--output", str(out_path_a)], cwd=ROOT, capture_output=True, text=True)
+            first = subprocess.run(
+                [*base_cmd, "--output", str(out_path_a)],
+                cwd=ROOT,
+                capture_output=True,
+                text=True,
+            )
             self.assertEqual(first.returncode, 0, msg=first.stderr)
             self.assertTrue(out_path_a.exists())
             self.assertTrue(any(checkpoint_dir.rglob("segment_*.npy")))
 
             second = subprocess.run(
-                base_cmd + ["--resume", "--output", str(out_path_b)],
+                [*base_cmd, "--resume", "--output", str(out_path_b)],
                 cwd=ROOT,
                 capture_output=True,
                 text=True,
@@ -1489,7 +1518,7 @@ class TestCLIRegression(unittest.TestCase):
 
     def test_cli_example_mode_outputs_command(self) -> None:
         cmd = [
-                *CLI,
+            *CLI,
             "--example",
             "basic",
         ]

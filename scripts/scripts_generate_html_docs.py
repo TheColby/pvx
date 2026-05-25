@@ -4,14 +4,14 @@
 from __future__ import annotations
 
 import ast
-from collections import Counter, OrderedDict
-from html import escape
 import json
-from pathlib import Path
 import re
 import subprocess
-from urllib.parse import quote_plus
 import sys
+from collections import Counter, OrderedDict
+from html import escape
+from pathlib import Path
+from urllib.parse import quote_plus
 
 import numpy as np
 
@@ -34,9 +34,9 @@ README_ALGO_BEGIN = "<!-- BEGIN ALGORITHM CATALOG -->"
 README_ALGO_END = "<!-- END ALGORITHM CATALOG -->"
 
 sys.path.insert(0, str(SRC_DIR))
-from pvx.core.attribution import ATTRIBUTION_DOC_PATH, html_notice  # noqa: E402
-from pvx.algorithms.registry import ALGORITHM_REGISTRY  # noqa: E402
-from pvx.core import voc as voc_core  # noqa: E402
+from pvx.algorithms.registry import ALGORITHM_REGISTRY
+from pvx.core import voc as voc_core
+from pvx.core.attribution import ATTRIBUTION_DOC_PATH, html_notice
 
 
 def git_commit_meta() -> tuple[str, str]:
@@ -1385,7 +1385,7 @@ def extract_algorithm_param_specs(base_path: Path) -> tuple[dict[str, list[str]]
 
     for line in lines:
         line_s = line.strip()
-        if line_s.startswith('if slug == "') or line_s.startswith('elif slug == "'):
+        if line_s.startswith(('if slug == "', 'elif slug == "')):
             if current_slug is not None:
                 commit()
             current_slug = line_s.split('"')[1]
@@ -1759,7 +1759,7 @@ def render_index(groups: OrderedDict[str, list[tuple[str, dict[str, str]]]], par
     content_parts: list[str] = []
 
     content_parts.append(
-        """
+        f"""
 <div class=\"card\">
   <p>
     This HTML documentation is organized by algorithm folder/theme and generated from
@@ -1771,19 +1771,13 @@ def render_index(groups: OrderedDict[str, list[tuple[str, dict[str, str]]]], par
   </p>
   <ul>
     <li><strong>{total_algorithms}</strong> algorithms</li>
-    <li><strong>{group_count}</strong> folders/themes</li>
-    <li><strong>{param_count}</strong> distinct algorithm parameter keys in dispatch</li>
-    <li><strong>{glossary_count}</strong> linked technical glossary concepts</li>
-    <li><strong>{paper_count}</strong> bibliography references</li>
+    <li><strong>{len(groups)}</strong> folders/themes</li>
+    <li><strong>{total_param_keys}</strong> distinct algorithm parameter keys in dispatch</li>
+    <li><strong>{unique_concepts}</strong> linked technical glossary concepts</li>
+    <li><strong>{len(PAPERS)}</strong> bibliography references</li>
   </ul>
 </div>
-""".format(
-            total_algorithms=total_algorithms,
-            group_count=len(groups),
-            param_count=total_param_keys,
-            glossary_count=unique_concepts,
-            paper_count=len(PAPERS),
-        )
+"""
     )
 
     content_parts.append(
@@ -1955,21 +1949,21 @@ def render_papers_page() -> None:
 
     sections: list[str] = []
     sections.append(
-        """
+        f"""
 <div class=\"card\">
   <p>
     This bibliography collects foundational and directly related literature that informed
     pvx's phase-vocoder-centric architecture and the broader DSP algorithm roadmap.
   </p>
   <p>
-    Total references: <strong>{count}</strong> across <strong>{categories}</strong> categories.
+    Total references: <strong>{len(PAPERS)}</strong> across <strong>{len(by_category)}</strong> categories.
   </p>
   <p class=\"small\">
     Links point to DOI pages, publisher archives, arXiv, standards documents, project docs,
     or Google Scholar queries where an official landing page can vary by publisher access.
   </p>
 </div>
-""".format(count=len(PAPERS), categories=len(by_category))
+"""
     )
 
     toc_items = "".join(
@@ -2043,7 +2037,7 @@ def render_glossary_page() -> None:
 
     sections: list[str] = []
     sections.append(
-        """
+        f"""
 <div class=\"card\">
   <p>
     Linked glossary for core concepts used throughout pvx algorithms, CLIs, and research docs.
@@ -2051,10 +2045,10 @@ def render_glossary_page() -> None:
     project docs, and canonical papers).
   </p>
   <p>
-    Total terms: <strong>{count}</strong> across <strong>{categories}</strong> categories.
+    Total terms: <strong>{len(TECHNICAL_GLOSSARY)}</strong> across <strong>{len(by_category)}</strong> categories.
   </p>
 </div>
-""".format(count=len(TECHNICAL_GLOSSARY), categories=len(by_category))
+"""
     )
 
     toc = "".join(
@@ -2994,7 +2988,7 @@ def write_docs_root_index() -> None:
 <body>
   <p style=\"text-align:center;\"><img src=\"../assets/pvx_logo.png\" alt=\"pvx logo\" style=\"height:48px;width:auto;\" /></p>
   <h1 style=\"text-align:center;\">pvx</h1>
-  <p>Copyright (c) 2026 Colby Leider and contributors. See <a href=\"../ATTRIBUTION.md\"><code>ATTRIBUTION.md</code></a>.</p>
+
   <p>Redirecting to <a href=\"html/index.html\">docs/html/index.html</a> ...</p>
 </body>
 </html>

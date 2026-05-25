@@ -1,5 +1,3 @@
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
-
 """Noise-based audio augmentation transforms.
 
 Provides additive noise injection at controlled SNR levels, background
@@ -10,17 +8,17 @@ spectral-shaped noise generation.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence
 
 import numpy as np
 
-from .core import Transform, _to_2d, _from_2d, load_audio
-
+from .core import Transform, _from_2d, _to_2d, load_audio
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _db_to_linear(db: float) -> float:
     return 10.0 ** (db / 20.0)
@@ -31,7 +29,7 @@ def _linear_to_db(linear: float) -> float:
 
 
 def _rms(x: np.ndarray) -> float:
-    return float(np.sqrt(np.mean(x ** 2) + 1e-12))
+    return float(np.sqrt(np.mean(x**2) + 1e-12))
 
 
 def _scale_to_snr(
@@ -89,6 +87,7 @@ def _generate_bandlimited_noise(
 ) -> np.ndarray:
     """Band-limited Gaussian noise via spectral masking."""
     from scipy.signal import butter, sosfiltfilt
+
     white = rng.standard_normal(n).astype(np.float32)
     nyq = sr / 2.0
     lo = max(low_hz / nyq, 1e-4)
@@ -104,6 +103,7 @@ def _generate_bandlimited_noise(
 # ---------------------------------------------------------------------------
 # AddNoise
 # ---------------------------------------------------------------------------
+
 
 class AddNoise(Transform):
     """Add synthetic noise to audio at a specified signal-to-noise ratio.
@@ -168,7 +168,9 @@ class AddNoise(Transform):
             elif self.noise_type == "brown":
                 noise = _generate_brown_noise(n_samp, rng)
             else:  # bandlimited
-                noise = _generate_bandlimited_noise(n_samp, sr, self.band_hz[0], self.band_hz[1], rng)
+                noise = _generate_bandlimited_noise(
+                    n_samp, sr, self.band_hz[0], self.band_hz[1], rng
+                )
             scaled_noise = _scale_to_snr(sig, noise, snr_db)
             noisy_channels.append((sig + scaled_noise).astype(arr.dtype))
 
@@ -179,6 +181,7 @@ class AddNoise(Transform):
 # ---------------------------------------------------------------------------
 # BackgroundMixer
 # ---------------------------------------------------------------------------
+
 
 class BackgroundMixer(Transform):
     """Mix a background audio clip into the signal at a target SNR.
@@ -237,7 +240,7 @@ class BackgroundMixer(Transform):
         snr_db = float(rng.uniform(self.snr_db_range[0], self.snr_db_range[1]))
 
         bg_path = self.background_files[int(rng.integers(len(self.background_files)))]
-        bg, bg_sr = load_audio(bg_path, target_sr=sr, mono=(n_ch == 1))
+        bg, _bg_sr = load_audio(bg_path, target_sr=sr, mono=(n_ch == 1))
         bg2d, _ = _to_2d(bg)
 
         # Match channel count
@@ -263,6 +266,7 @@ class BackgroundMixer(Transform):
 # ---------------------------------------------------------------------------
 # ImpulseNoise  (click / pop simulation)
 # ---------------------------------------------------------------------------
+
 
 class ImpulseNoise(Transform):
     """Insert random click/pop impulses into audio.

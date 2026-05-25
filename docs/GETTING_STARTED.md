@@ -591,5 +591,3 @@ pvx voc input.wav --stretch controls/stretch_tri.csv --interp linear --output in
 Run them in order, listen after each step, and resist changing ten parameters at once unless chaos is the objective.
 
 ## Attribution
-
-Copyright (c) 2026 Colby Leider and contributors. See [ATTRIBUTION.md](../ATTRIBUTION.md).

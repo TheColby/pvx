@@ -1,6 +1,3 @@
-# Copyright (c) 2026 Colby Leider and contributors. See ATTRIBUTION.md.
-# ruff: noqa: E402
-
 """Objective metrics for pvx benchmark comparisons."""
 
 from __future__ import annotations
@@ -112,7 +109,9 @@ def _onset_envelope(x: np.ndarray, *, n_fft: int = 1024, hop_size: int = 256) ->
 
 
 def _detect_onsets(x: np.ndarray, sample_rate: int, *, hop_size: int = 256) -> np.ndarray:
-    env = _onset_envelope(np.asarray(x, dtype=np.float64).reshape(-1), n_fft=1024, hop_size=hop_size)
+    env = _onset_envelope(
+        np.asarray(x, dtype=np.float64).reshape(-1), n_fft=1024, hop_size=hop_size
+    )
     if env.size < 3:
         return np.zeros(0, dtype=np.int64)
     smooth = np.convolve(env, np.array([0.2, 0.6, 0.2], dtype=np.float64), mode="same")
@@ -135,7 +134,9 @@ def _detect_onsets(x: np.ndarray, sample_rate: int, *, hop_size: int = 256) -> n
     return np.asarray(peaks, dtype=np.int64) * int(hop_size)
 
 
-def _match_events(reference: np.ndarray, candidate: np.ndarray, tolerance: int) -> list[tuple[int, int]]:
+def _match_events(
+    reference: np.ndarray, candidate: np.ndarray, tolerance: int
+) -> list[tuple[int, int]]:
     if reference.size == 0 or candidate.size == 0:
         return []
     ref = np.asarray(reference, dtype=np.int64)
@@ -162,7 +163,11 @@ def _attack_time_ms(x: np.ndarray, onset_sample: int, sample_rate: int) -> float
     seg = np.abs(mono[start:stop])
     if seg.size < 8:
         return float("nan")
-    env = np.convolve(seg, np.ones(max(1, int(round(0.001 * sample_rate)))) / max(1, int(round(0.001 * sample_rate))), mode="same")
+    env = np.convolve(
+        seg,
+        np.ones(max(1, int(round(0.001 * sample_rate)))) / max(1, int(round(0.001 * sample_rate))),
+        mode="same",
+    )
     peak = float(np.max(env))
     if peak <= EPS:
         return float("nan")
@@ -305,9 +310,13 @@ def _proxy_quality_scalar(
     env_corr: float | None = None,
 ) -> float:
     lsd_val = float(lsd if lsd is not None else log_spectral_distance(reference, candidate))
-    mod_val = float(modulation if modulation is not None else modulation_spectrum_distance(reference, candidate))
+    mod_val = float(
+        modulation if modulation is not None else modulation_spectrum_distance(reference, candidate)
+    )
     smear_val = float(smear if smear is not None else transient_smear_score(reference, candidate))
-    env_val = float(env_corr if env_corr is not None else envelope_correlation(reference, candidate))
+    env_val = float(
+        env_corr if env_corr is not None else envelope_correlation(reference, candidate)
+    )
     env_norm = float(np.clip((env_val + 1.0) * 0.5, 0.0, 1.0))
     spec = float(np.exp(-lsd_val / 18.0))
     mod = float(np.exp(-mod_val * 1.5))
@@ -404,7 +413,9 @@ def si_sdr_db(reference: np.ndarray, candidate: np.ndarray) -> float:
     return float(10.0 * np.log10(p_target / p_noise))
 
 
-def spectral_convergence(reference: np.ndarray, candidate: np.ndarray, *, n_fft: int = 2048, hop_size: int = 512) -> float:
+def spectral_convergence(
+    reference: np.ndarray, candidate: np.ndarray, *, n_fft: int = 2048, hop_size: int = 512
+) -> float:
     ref = np.asarray(reference, dtype=np.float64).reshape(-1)
     cand = np.asarray(candidate, dtype=np.float64).reshape(-1)
     ref, cand = _match_length(ref, cand)
@@ -449,7 +460,9 @@ def rms_level_delta_db(reference: np.ndarray, candidate: np.ndarray) -> float:
     return float(20.0 * np.log10(rms_cand / rms_ref))
 
 
-def crest_factor_delta_db(reference: np.ndarray, candidate: np.ndarray, *, sample_rate: int = 48000) -> float:
+def crest_factor_delta_db(
+    reference: np.ndarray, candidate: np.ndarray, *, sample_rate: int = 48000
+) -> float:
     ref = np.asarray(reference, dtype=np.float64).reshape(-1)
     cand = np.asarray(candidate, dtype=np.float64).reshape(-1)
     ref, cand = _match_length(ref, cand)
@@ -460,7 +473,9 @@ def crest_factor_delta_db(reference: np.ndarray, candidate: np.ndarray, *, sampl
     return float(s_cand.crest_db - s_ref.crest_db)
 
 
-def bandwidth_95_delta_hz(reference: np.ndarray, candidate: np.ndarray, *, sample_rate: int = 48000) -> float:
+def bandwidth_95_delta_hz(
+    reference: np.ndarray, candidate: np.ndarray, *, sample_rate: int = 48000
+) -> float:
     ref = np.asarray(reference, dtype=np.float64).reshape(-1)
     cand = np.asarray(candidate, dtype=np.float64).reshape(-1)
     ref, cand = _match_length(ref, cand)
@@ -491,7 +506,9 @@ def dc_offset_delta(reference: np.ndarray, candidate: np.ndarray) -> float:
     return float(np.mean(cand) - np.mean(ref))
 
 
-def clipping_ratio_delta(reference: np.ndarray, candidate: np.ndarray, *, threshold: float = 0.999) -> float:
+def clipping_ratio_delta(
+    reference: np.ndarray, candidate: np.ndarray, *, threshold: float = 0.999
+) -> float:
     ref = np.asarray(reference, dtype=np.float64).reshape(-1)
     cand = np.asarray(candidate, dtype=np.float64).reshape(-1)
     ref, cand = _match_length(ref, cand)
@@ -502,7 +519,9 @@ def clipping_ratio_delta(reference: np.ndarray, candidate: np.ndarray, *, thresh
     return cc - cr
 
 
-def integrated_lufs_delta_lu(reference: np.ndarray, candidate: np.ndarray, sample_rate: int) -> float:
+def integrated_lufs_delta_lu(
+    reference: np.ndarray, candidate: np.ndarray, sample_rate: int
+) -> float:
     def _integrated_lufs(x: np.ndarray) -> float:
         signal = np.asarray(x, dtype=np.float64).reshape(-1)
         try:
@@ -522,7 +541,9 @@ def integrated_lufs_delta_lu(reference: np.ndarray, candidate: np.ndarray, sampl
     return float(_integrated_lufs(cand) - _integrated_lufs(ref))
 
 
-def short_term_lufs_delta_lu(reference: np.ndarray, candidate: np.ndarray, sample_rate: int) -> float:
+def short_term_lufs_delta_lu(
+    reference: np.ndarray, candidate: np.ndarray, sample_rate: int
+) -> float:
     def _integrated_lufs_frame(signal: np.ndarray) -> float:
         try:
             import pyloudnorm as pyln  # type: ignore
@@ -555,7 +576,9 @@ def short_term_lufs_delta_lu(reference: np.ndarray, candidate: np.ndarray, sampl
     return float(_short_term_lufs(cand) - _short_term_lufs(ref))
 
 
-def loudness_range_delta_lu(reference: np.ndarray, candidate: np.ndarray, sample_rate: int) -> float:
+def loudness_range_delta_lu(
+    reference: np.ndarray, candidate: np.ndarray, sample_rate: int
+) -> float:
     def _lra(x: np.ndarray) -> float:
         signal = np.asarray(x, dtype=np.float64).reshape(-1)
         try:
@@ -625,7 +648,9 @@ def pesq_mos_lqo(
         score = float(pesq_api(target_sr, ref_rs, cand_rs, mode))
         return OptionalMetricValue(value=score, proxy_used=False)
     except Exception:
-        q = _proxy_quality_scalar(ref_rs, cand_rs, lsd=lsd, modulation=modulation, smear=smear, env_corr=env_corr)
+        q = _proxy_quality_scalar(
+            ref_rs, cand_rs, lsd=lsd, modulation=modulation, smear=smear, env_corr=env_corr
+        )
         return OptionalMetricValue(value=float(1.0 + 3.5 * q), proxy_used=True)
 
 
@@ -651,7 +676,9 @@ def stoi_score(
         score = float(stoi_api(ref, cand, sample_rate, extended=bool(extended)))
         return OptionalMetricValue(value=score, proxy_used=False)
     except Exception:
-        q = _proxy_quality_scalar(ref, cand, lsd=lsd, modulation=modulation, smear=smear, env_corr=env_corr)
+        q = _proxy_quality_scalar(
+            ref, cand, lsd=lsd, modulation=modulation, smear=smear, env_corr=env_corr
+        )
         if extended:
             q = float(np.clip(0.9 * q + 0.1 * np.exp(-float(modulation or 0.0)), 0.0, 1.0))
         return OptionalMetricValue(value=q, proxy_used=True)
@@ -687,7 +714,9 @@ def visqol_mos_lqo(
         )
         if score is not None and np.isfinite(score):
             return OptionalMetricValue(value=float(score), proxy_used=False)
-    q = _proxy_quality_scalar(ref, cand, lsd=lsd, modulation=modulation, smear=smear, env_corr=env_corr)
+    q = _proxy_quality_scalar(
+        ref, cand, lsd=lsd, modulation=modulation, smear=smear, env_corr=env_corr
+    )
     return OptionalMetricValue(value=float(1.0 + 4.0 * q), proxy_used=True)
 
 
@@ -721,7 +750,9 @@ def polqa_mos_lqo(
         )
         if score is not None and np.isfinite(score):
             return OptionalMetricValue(value=float(score), proxy_used=False)
-    q = _proxy_quality_scalar(ref, cand, lsd=lsd, modulation=modulation, smear=smear, env_corr=env_corr)
+    q = _proxy_quality_scalar(
+        ref, cand, lsd=lsd, modulation=modulation, smear=smear, env_corr=env_corr
+    )
     return OptionalMetricValue(value=float(1.0 + 4.0 * q), proxy_used=True)
 
 
@@ -755,7 +786,9 @@ def peaq_odg(
         )
         if score is not None and np.isfinite(score):
             return OptionalMetricValue(value=float(score), proxy_used=False)
-    q = _proxy_quality_scalar(ref, cand, lsd=lsd, modulation=modulation, smear=smear, env_corr=env_corr)
+    q = _proxy_quality_scalar(
+        ref, cand, lsd=lsd, modulation=modulation, smear=smear, env_corr=env_corr
+    )
     odg = float(-4.0 * (1.0 - q))
     return OptionalMetricValue(value=odg, proxy_used=True)
 
@@ -791,7 +824,9 @@ def voicing_f1_score(reference: np.ndarray, candidate: np.ndarray, sample_rate: 
     return float(2.0 * precision * recall / max(EPS, precision + recall))
 
 
-def harmonic_to_noise_ratio_drift_db(reference: np.ndarray, candidate: np.ndarray, sample_rate: int) -> float:
+def harmonic_to_noise_ratio_drift_db(
+    reference: np.ndarray, candidate: np.ndarray, sample_rate: int
+) -> float:
     h_ref = _hnr_track(reference, sample_rate)
     h_cand = _hnr_track(candidate, sample_rate)
     n = min(h_ref.size, h_cand.size)
@@ -826,7 +861,16 @@ def attack_time_error_ms(reference: np.ndarray, candidate: np.ndarray, sample_ra
     tol = max(1, int(round(0.03 * sample_rate)))
     matches = _match_events(ref_events, cand_events, tol)
     if not matches:
-        return float(np.mean(np.abs(ref_events[: min(ref_events.size, cand_events.size)] - cand_events[: min(ref_events.size, cand_events.size)])) * 1000.0 / max(1, sample_rate))
+        return float(
+            np.mean(
+                np.abs(
+                    ref_events[: min(ref_events.size, cand_events.size)]
+                    - cand_events[: min(ref_events.size, cand_events.size)]
+                )
+            )
+            * 1000.0
+            / max(1, sample_rate)
+        )
     errors: list[float] = []
     for ri, ci in matches:
         rt = _attack_time_ms(reference, int(ref_events[ri]), sample_rate)
@@ -924,7 +968,9 @@ def interchannel_phase_deviation_by_band(
     }
 
 
-def phasiness_index(reference: np.ndarray, candidate: np.ndarray, *, n_fft: int = 1024, hop_size: int = 256) -> float:
+def phasiness_index(
+    reference: np.ndarray, candidate: np.ndarray, *, n_fft: int = 1024, hop_size: int = 256
+) -> float:
     ref = np.asarray(reference, dtype=np.float64).reshape(-1)
     cand = np.asarray(candidate, dtype=np.float64).reshape(-1)
     ref, cand = _match_length(ref, cand)
@@ -936,12 +982,16 @@ def phasiness_index(reference: np.ndarray, candidate: np.ndarray, *, n_fft: int 
     frames = min(ref_spec.shape[1], cand_spec.shape[1])
     if bins == 0 or frames == 0:
         return 0.0
-    phase_diff = _principal_angle(np.angle(cand_spec[:bins, :frames]) - np.angle(ref_spec[:bins, :frames]))
+    phase_diff = _principal_angle(
+        np.angle(cand_spec[:bins, :frames]) - np.angle(ref_spec[:bins, :frames])
+    )
     coherence = np.abs(np.mean(np.exp(1j * phase_diff), axis=0))
     return float(np.mean(1.0 - coherence))
 
 
-def musical_noise_index(reference: np.ndarray, candidate: np.ndarray, *, n_fft: int = 1024, hop_size: int = 256) -> float:
+def musical_noise_index(
+    reference: np.ndarray, candidate: np.ndarray, *, n_fft: int = 1024, hop_size: int = 256
+) -> float:
     ref = np.asarray(reference, dtype=np.float64).reshape(-1)
     cand = np.asarray(candidate, dtype=np.float64).reshape(-1)
     ref, cand = _match_length(ref, cand)
