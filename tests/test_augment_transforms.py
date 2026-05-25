@@ -30,6 +30,13 @@ def _sine(freq: float = 440.0, sr: int = 16000, duration: float = 1.0) -> tuple[
     return np.sin(2 * np.pi * freq * t) * 0.5, sr
 
 
+def _dominant_freq(audio: np.ndarray, sr: int) -> float:
+    window = np.hanning(audio.shape[-1])
+    spectrum = np.abs(np.fft.rfft(audio * window))
+    freqs = np.fft.rfftfreq(audio.shape[-1], d=1.0 / sr)
+    return float(freqs[int(np.argmax(spectrum))])
+
+
 # ---------------------------------------------------------------------------
 # Core / Pipeline
 # ---------------------------------------------------------------------------
@@ -591,6 +598,12 @@ class TestEngineSelection(unittest.TestCase):
 
         self.assertEqual(_resolve_engine("pvx-cli"), "pvx-cli")
 
+    def test_resolve_engine_rejects_unknown(self):
+        from pvx.augment.time_domain import _resolve_engine
+
+        with self.assertRaises(ValueError):
+            _resolve_engine("mystery")
+
     def test_time_stretch_accepts_engine_param(self):
         from pvx.augment import TimeStretch
 
@@ -613,6 +626,14 @@ class TestEngineSelection(unittest.TestCase):
         self.assertEqual(out.shape[-1], int(round(audio.shape[-1] * 1.25)))
         self.assertGreater(float(np.sqrt(np.mean(out**2))), 0.01)
 
+    def test_time_stretch_wavelet_preserves_pitch_approximately(self):
+        from pvx.augment import TimeStretch
+
+        audio, sr = _sine(freq=440.0, sr=16000, duration=1.0)
+        ts = TimeStretch(rate=(1.5, 1.5), engine="wavelet", wavelet_levels=3, p=1.0)
+        out, _ = ts(audio, sr, seed=42)
+        self.assertAlmostEqual(_dominant_freq(out, sr), 440.0, delta=45.0)
+
     def test_time_stretch_wavelet_engine_stereo(self):
         from pvx.augment import TimeStretch
 
@@ -631,17 +652,50 @@ class TestEngineSelection(unittest.TestCase):
         self.assertEqual(out.shape, audio.shape)
         self.assertGreater(float(np.sqrt(np.mean(out**2))), 0.01)
 
+    def test_pitch_shift_wavelet_changes_pitch_approximately(self):
+        from pvx.augment import PitchShift
+
+        audio, sr = _sine(freq=440.0, sr=16000, duration=1.0)
+        ps = PitchShift(semitones=(12, 12), engine="wavelet", wavelet_levels=3, p=1.0)
+        out, _ = ps(audio, sr, seed=42)
+        self.assertAlmostEqual(_dominant_freq(out, sr), 880.0, delta=90.0)
+
+    def test_wavelet_backend_preserves_empty_audio(self):
+        from pvx.augment import PitchShift, TimeStretch
+
+        audio = np.zeros(0, dtype=np.float32)
+        stretched, _ = TimeStretch(rate=(1.25, 1.25), engine="wavelet")(audio, 16000, seed=0)
+        shifted, _ = PitchShift(semitones=(3, 3), engine="wavelet")(audio, 16000, seed=0)
+        self.assertEqual(stretched.shape, audio.shape)
+        self.assertEqual(shifted.shape, audio.shape)
+
+    def test_wavelet_backend_validates_params(self):
+        from pvx.augment import PitchShift, TimeStretch
+
+        with self.assertRaises(ValueError):
+            TimeStretch(rate=(0.0, 1.0), engine="wavelet")
+        with self.assertRaises(ValueError):
+            TimeStretch(rate=(1.0, 1.0), engine="wavelet", wavelet_levels=-1)
+        with self.assertRaises(ValueError):
+            PitchShift(semitones=(float("nan"), 1.0), engine="wavelet")
+
     def test_wavelet_engine_loads_from_config(self):
         from pvx.augment.config import _build_transform
 
         transform = _build_transform(
             {
                 "name": "time_stretch",
-                "params": {"rate": [1.1, 1.1], "engine": "wavelet", "wavelet_levels": 2},
+                "params": {
+                    "rate": [1.1, 1.1],
+                    "engine": "wavelet",
+                    "wavelet": "haar",
+                    "wavelet_levels": 2,
+                },
             },
             gpu=False,
         )
         self.assertEqual(transform.engine, "wavelet")
+        self.assertEqual(transform.wavelet, "haar")
         self.assertEqual(transform.wavelet_levels, 2)
 
     def test_time_stretch_pytorch_engine(self):
