@@ -19,6 +19,7 @@ def _string_literal(node: ast.AST) -> str | None:
 def _iter_cli_sources() -> list[Path]:
     sources = [
         ROOT / "src" / "pvx" / "core" / "voc.py",
+        ROOT / "src" / "pvx" / "core" / "voc_parser.py",
         ROOT / "src" / "pvx" / "core" / "voc_console.py",
     ]
     sources.extend(sorted((ROOT / "src" / "pvx" / "cli").glob("*.py")))
@@ -26,7 +27,7 @@ def _iter_cli_sources() -> list[Path]:
 
 
 def _tool_name_for_path(path: Path) -> str:
-    if path.name in {"voc.py", "voc_console.py"}:
+    if path.name in {"voc.py", "voc_parser.py", "voc_console.py"}:
         return "pvxvoc"
     if path.stem in {"pvx", "pvx_augment", "pvx_helpers", "pvx_pipeline"}:
         return "pvx"

@@ -26,6 +26,7 @@ If the Homebrew formula should track the tagged release instead of `--HEAD`, ref
 
 ```bash
 ./scripts/refresh_homebrew_formula.sh v0.1.0a1
+python3 scripts/scripts_sync_homebrew_tap_formula.py ../homebrew-pvx
 ```
 
 Optional baseline refresh (only when benchmark behavior intentionally changed):

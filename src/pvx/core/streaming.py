@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
-import soundfile as sf
+import soundfile as sf  # type: ignore[import-untyped]
 
 from pvx.core import voc as voc_core
 from pvx.core.audio_metrics import (

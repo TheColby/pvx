@@ -15,7 +15,6 @@ from pvx.core.voc import (
     DynamicControlRef,
     JobResult,
     apply_quality_profile_overrides,
-    build_parser,
     build_vocoder_config_from_args,
     configure_runtime_from_args,
     ensure_runtime_dependencies,
@@ -29,7 +28,6 @@ from pvx.core.voc import (
     resolve_transform_auto,
     runtime_config,
     suggest_quality_profile,
-    validate_args,
     write_manifest,
 )
 from pvx.core.voc_console import (
@@ -42,6 +40,7 @@ from pvx.core.voc_console import (
     log_message,
     print_cli_examples,
 )
+from pvx.core.voc_parser import build_parser, validate_args
 
 __all__ = ["build_parser", "expand_inputs", "main", "run_guided_mode"]
 

@@ -9,7 +9,8 @@ import warnings
 from pathlib import Path
 
 warnings.warn(
-    "`pvxalgorithms` is deprecated; import from `pvx.algorithms` instead.",
+    "`pvxalgorithms` is deprecated; import from `pvx.algorithms` instead. "
+    "The compatibility alias is planned for removal in v0.2.0.",
     DeprecationWarning,
     stacklevel=2,
 )

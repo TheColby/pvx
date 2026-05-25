@@ -15,10 +15,11 @@ The tap formula creates an isolated Python virtualenv, installs the runtime Pyth
 
 ## Stable Tagged Release Flow
 
-After a tag is published, stamp the formula with the tagged source tarball checksum. The helper updates the repo-local formula; then copy or commit that formula into the tap repository:
+After a tag is published, stamp the formula with the tagged source tarball checksum. The helper updates the repo-local formula; then sync that formula into the tap checkout before committing there:
 
 ```bash
 ./scripts/refresh_homebrew_formula.sh v0.1.0a1
+python3 scripts/scripts_sync_homebrew_tap_formula.py ../homebrew-pvx
 ```
 
 That updates `Formula/pvx.rb` with:
