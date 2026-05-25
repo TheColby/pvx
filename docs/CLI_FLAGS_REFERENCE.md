@@ -58,7 +58,7 @@ Total unique long flags: **338**
 | `--dry-run` | False | `` | `` | `store_true` | Plan manifest and filenames without rendering audio | `src/pvx/cli/pvx_augment.py` |
 | `--duration` | False | `0.3` | `` | `` | Synthetic input duration seconds (default: 0.30) | `src/pvx/cli/pvx_helpers.py` |
 | `--emit` | False | `pitch_to_stretch` | `pitch_map, stretch_map, pitch_to_stretch` | `` | Control map emit mode for the guide track (default: pitch_to_stretch) | `src/pvx/cli/pvx_pipeline.py` |
-| `--engine` | False | `auto` | `auto, pytorch, torchaudio, pvx-cli` | `` | DSP engine for time-stretch and pitch-shift transforms. 'auto' prefers torchaudio > pytorch > pvx-cli. 'torchaudio' uses torchaudio.functional.phase_vocoder. 'pytorch' uses native PyTorch phase vocoder. 'pvx-cli' always uses subprocess. (default: auto) | `src/pvx/cli/pvx_augment.py` |
+| `--engine` | False | `auto` | `auto, pytorch, torchaudio, wavelet, pvx-cli` | `` | DSP engine for time-stretch and pitch-shift transforms. 'auto' prefers torchaudio > pytorch > pvx-cli. 'torchaudio' uses torchaudio.functional.phase_vocoder. 'pytorch' uses native PyTorch phase vocoder. 'wavelet' uses the experimental wavelet backend. 'pvx-cli' always uses subprocess. (default: auto) | `src/pvx/cli/pvx_augment.py` |
 | `--example` | False | `` | `` | `` | Print follow example command(s) and exit. Use `--example` for basic or `--example all` for the full set. | `src/pvx/cli/pvx_pipeline.py` |
 | `--fail-if-exceeds` | False | `` | `` | `store_true` | Return non-zero when --requested-stretch does not fit the usable budget. | `src/pvx/cli/pvx_helpers.py` |
 | `--feature-set` | False | `all` | `none, basic, advanced, all` | `` | Feature columns emitted by pitch tracker (default: all) | `src/pvx/cli/pvx_pipeline.py` |

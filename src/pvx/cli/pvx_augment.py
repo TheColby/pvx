@@ -699,10 +699,14 @@ def run_augment_mode(
     )
     parser.add_argument(
         "--engine",
-        choices=["auto", "pytorch", "torchaudio", "pvx-cli"],
+        choices=["auto", "pytorch", "torchaudio", "wavelet", "pvx-cli"],
         default="auto",
         help=(
-            "DSP engine for time-stretch and pitch-shift transforms. 'auto' prefers torchaudio > pytorch > pvx-cli. 'torchaudio' uses torchaudio.functional.phase_vocoder. 'pytorch' uses native PyTorch phase vocoder. 'pvx-cli' always uses subprocess. (default: auto)"
+            "DSP engine for time-stretch and pitch-shift transforms. 'auto' prefers "
+            "torchaudio > pytorch > pvx-cli. 'torchaudio' uses "
+            "torchaudio.functional.phase_vocoder. 'pytorch' uses native PyTorch phase "
+            "vocoder. 'wavelet' uses the experimental wavelet backend. 'pvx-cli' always "
+            "uses subprocess. (default: auto)"
         ),
     )
     parser.add_argument("--quiet", action="store_true", help="Reduce logs")
@@ -906,7 +910,7 @@ def run_augment_mode(
         params = dict(record.get("params", {}))
         engine_choice = str(args.engine)
         resolved_engine: str | None = None
-        if engine_choice in ("pytorch", "torchaudio"):
+        if engine_choice in ("pytorch", "torchaudio", "wavelet"):
             resolved_engine = engine_choice
         elif engine_choice == "auto":
             try:
@@ -928,7 +932,7 @@ def run_augment_mode(
                 )
                 return record
             except Exception as exc:
-                if engine_choice in ("pytorch", "torchaudio"):
+                if engine_choice in ("pytorch", "torchaudio", "wavelet"):
                     record["status"] = f"error:{engine_choice}:{exc}"
                     return record
                 if not bool(args.silent):

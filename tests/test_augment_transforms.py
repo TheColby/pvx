@@ -592,6 +592,13 @@ class TestEngineSelection(unittest.TestCase):
 
         self.assertEqual(_resolve_engine("wavelet"), "wavelet")
 
+    def test_resolve_wavelet_auto(self):
+        from pvx.augment.time_domain import _has_pywavelets, _resolve_wavelet
+
+        expected = "db4" if _has_pywavelets() else "haar"
+        self.assertEqual(_resolve_wavelet("auto"), expected)
+        self.assertEqual(_resolve_wavelet("haar"), "haar")
+
     @unittest.skipUnless(True, "always runs")
     def test_resolve_engine_pvx_cli(self):
         from pvx.augment.time_domain import _resolve_engine
@@ -660,6 +667,55 @@ class TestEngineSelection(unittest.TestCase):
         out, _ = ps(audio, sr, seed=42)
         self.assertAlmostEqual(_dominant_freq(out, sr), 880.0, delta=90.0)
 
+    def test_wavelet_auto_backend_runs(self):
+        from pvx.augment import TimeStretch
+
+        audio, sr = _sine(freq=330.0, sr=16000, duration=0.5)
+        ts = TimeStretch(
+            rate=(1.1, 1.1),
+            engine="wavelet",
+            wavelet="auto",
+            wavelet_levels=2,
+            p=1.0,
+        )
+        out, _ = ts(audio, sr, seed=42)
+        self.assertEqual(out.shape[-1], int(round(audio.shape[-1] * 1.1)))
+        self.assertGreater(float(np.sqrt(np.mean(out**2))), 0.01)
+
+    def test_wavelet_extreme_golden_smoke(self):
+        from pvx.augment import PitchShift, TimeStretch
+
+        audio, sr = _sine(freq=220.0, sr=16000, duration=1.0)
+        stretched_a, _ = TimeStretch(
+            rate=(2.0, 2.0),
+            engine="wavelet",
+            wavelet="haar",
+            wavelet_levels=3,
+            p=1.0,
+        )(audio, sr, seed=123)
+        stretched_b, _ = TimeStretch(
+            rate=(2.0, 2.0),
+            engine="wavelet",
+            wavelet="haar",
+            wavelet_levels=3,
+            p=1.0,
+        )(audio, sr, seed=123)
+        shifted, _ = PitchShift(
+            semitones=(-12, -12),
+            engine="wavelet",
+            wavelet="haar",
+            wavelet_levels=3,
+            p=1.0,
+        )(audio, sr, seed=123)
+
+        self.assertEqual(stretched_a.shape[-1], 32000)
+        np.testing.assert_array_equal(stretched_a, stretched_b)
+        self.assertAlmostEqual(_dominant_freq(stretched_a, sr), 220.0, delta=35.0)
+        self.assertEqual(shifted.shape, audio.shape)
+        self.assertAlmostEqual(_dominant_freq(shifted, sr), 110.0, delta=25.0)
+        self.assertLessEqual(float(np.max(np.abs(stretched_a))), 1.0)
+        self.assertLessEqual(float(np.max(np.abs(shifted))), 1.0)
+
     def test_wavelet_backend_preserves_empty_audio(self):
         from pvx.augment import PitchShift, TimeStretch
 
@@ -688,14 +744,14 @@ class TestEngineSelection(unittest.TestCase):
                 "params": {
                     "rate": [1.1, 1.1],
                     "engine": "wavelet",
-                    "wavelet": "haar",
+                    "wavelet": "auto",
                     "wavelet_levels": 2,
                 },
             },
             gpu=False,
         )
         self.assertEqual(transform.engine, "wavelet")
-        self.assertEqual(transform.wavelet, "haar")
+        self.assertEqual(transform.wavelet, "auto")
         self.assertEqual(transform.wavelet_levels, 2)
 
     def test_time_stretch_pytorch_engine(self):

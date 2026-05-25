@@ -728,6 +728,16 @@ def _has_torchaudio() -> bool:
         return False
 
 
+def _has_pywavelets() -> bool:
+    """Return True if PyWavelets is importable."""
+    try:
+        import pywt  # noqa: F401
+
+        return True
+    except ImportError:
+        return False
+
+
 def _resolve_engine(engine: str) -> str:
     """Resolve ``"auto"`` to the best available engine.
 
@@ -785,6 +795,14 @@ def _validate_wavelet_params(wavelet: str, levels: int) -> None:
         raise ValueError(f"wavelet must be a non-empty string, got {wavelet!r}")
     if levels < 0:
         raise ValueError(f"wavelet_levels must be >= 0, got {levels!r}")
+
+
+def _resolve_wavelet(wavelet: str) -> str:
+    """Resolve ``wavelet='auto'`` to the best available wavelet family."""
+    _validate_wavelet_params(wavelet, 0)
+    if wavelet == "auto":
+        return "db4" if _has_pywavelets() else "haar"
+    return wavelet
 
 
 def _resample_1d(signal: np.ndarray, target_len: int) -> np.ndarray:
@@ -949,6 +967,7 @@ def _wavelet_time_stretch_channel(
     wavelet: str,
 ) -> np.ndarray:
     """Experimental wavelet multiband time stretching for one channel."""
+    wavelet = _resolve_wavelet(wavelet)
     if wavelet == "haar":
         return _haar_time_stretch_channel(signal, rate, levels)
     return _pywavelets_time_stretch_channel(signal, rate, levels, wavelet)
@@ -966,8 +985,9 @@ def _wavelet_time_stretch(
     This backend decomposes audio into wavelet bands, resamples each band at
     the requested time scale, then reconstructs the waveform. It is intended
     as a creative/experimental backend rather than a transparent phase-vocoder
-    replacement. ``wavelet="haar"`` uses the built-in implementation; other
-    wavelet names use PyWavelets when installed.
+    replacement. ``wavelet="haar"`` uses the built-in implementation,
+    ``wavelet="auto"`` selects PyWavelets ``"db4"`` when available and falls
+    back to Haar, and other wavelet names use PyWavelets when installed.
     """
     if not np.isfinite(rate) or rate <= 0.0:
         raise ValueError(f"rate must be finite and > 0, got {rate!r}")
@@ -1161,7 +1181,8 @@ class TimeStretch(Transform):
         ``"wavelet"`` (experimental wavelet backend), or ``"pvx-cli"``.
     wavelet:
         Wavelet family used with ``engine="wavelet"``. ``"haar"`` uses the
-        built-in backend; other names require PyWavelets.
+        built-in backend, ``"auto"`` uses PyWavelets ``"db4"`` when available
+        and falls back to Haar, and other names require PyWavelets.
     wavelet_levels:
         Number of decomposition levels used with ``engine="wavelet"``.
     p:
@@ -1268,7 +1289,8 @@ class PitchShift(Transform):
         ``"wavelet"`` (experimental wavelet backend), or ``"pvx-cli"``.
     wavelet:
         Wavelet family used with ``engine="wavelet"``. ``"haar"`` uses the
-        built-in backend; other names require PyWavelets.
+        built-in backend, ``"auto"`` uses PyWavelets ``"db4"`` when available
+        and falls back to Haar, and other names require PyWavelets.
     wavelet_levels:
         Number of decomposition levels used with ``engine="wavelet"``.
     p:

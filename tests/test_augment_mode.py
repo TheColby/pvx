@@ -89,6 +89,35 @@ class TestAugmentMode(unittest.TestCase):
             self.assertEqual(rows[0]["status"], "planned")
             self.assertEqual(rows[1]["status"], "planned")
 
+    def test_augment_dry_run_accepts_wavelet_engine(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="pvx-augment-wavelet-engine-") as tmp:
+            root = Path(tmp)
+            sr = 16000
+            t = np.arange(0, int(0.10 * sr), dtype=np.float64) / float(sr)
+            audio = (0.2 * np.sin(2.0 * np.pi * 220.0 * t))[:, None]
+            src = root / "clip.wav"
+            sf.write(str(src), audio, sr)
+
+            out_dir = root / "aug_out"
+            code = run_augment_mode(
+                [
+                    str(src),
+                    "--output-dir",
+                    str(out_dir),
+                    "--variants-per-input",
+                    "1",
+                    "--intent",
+                    "asr_robust",
+                    "--engine",
+                    "wavelet",
+                    "--dry-run",
+                    "--silent",
+                ]
+            )
+            self.assertEqual(code, 0)
+            row = json.loads((out_dir / "augment_manifest.jsonl").read_text(encoding="utf-8"))
+            self.assertEqual(row["engine"], "wavelet")
+
     def test_augment_pair_mode_emits_view_rows(self) -> None:
         with tempfile.TemporaryDirectory(prefix="pvx-augment-pair-") as tmp:
             root = Path(tmp)
