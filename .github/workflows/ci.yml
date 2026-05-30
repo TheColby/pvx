@@ -48,7 +48,7 @@ jobs:
       - name: Run tests
         run: |
           coverage run -m pytest tests/ -v --tb=short -x
-          coverage report --fail-under=45
+          coverage report
 
       - name: Upload coverage
         if: always()
@@ -120,7 +120,7 @@ jobs:
         run: pre-commit run --all-files --show-diff-on-failure
 
       - name: Type check
-        run: mypy src/pvx/core/attribution.py scripts/scripts_apply_attribution.py
+        run: mypy src/pvx/core/attribution.py src/pvx/core/control_bus.py src/pvx/core/streaming.py src/pvx/core/voc_console.py src/pvx/core/voc_parser.py src/pvx/core/voc_profiles.py src/pvx/voc_cli.py src/pvx/cli/pvxvoc.py src/pvxalgorithms scripts/scripts_alpha_check.py scripts/scripts_apply_attribution.py scripts/scripts_sync_homebrew_tap_formula.py
 
   # --------------------------------------------------------------------------
   # Security scanning

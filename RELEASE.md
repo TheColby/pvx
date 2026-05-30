@@ -18,7 +18,7 @@ uv run pytest -q
 uv run python benchmarks/run_augment_profile_suite.py --quick --gate --out-dir benchmarks/out_augment_profiles_release
 ```
 
-For alpha releases, also review [docs/ALPHA_RELEASE.md](docs/ALPHA_RELEASE.md) and make sure the stable/beta/experimental CLI surface in `pyproject.toml` still matches the README and release notes.
+For alpha releases, also review [docs/ALPHA_RELEASE.md](docs/ALPHA_RELEASE.md) and make sure the stable/beta/experimental CLI surface in `pyproject.toml` still matches the README and release notes. The supported-slice coverage gate must remain at 100%.
 
 `make alpha-check` remains as a convenience wrapper when local `make` is available.
 
@@ -28,6 +28,8 @@ If the Homebrew formula should track the tagged release instead of `--HEAD`, ref
 ./scripts/refresh_homebrew_formula.sh v0.1.0a1
 python3 scripts/scripts_sync_homebrew_tap_formula.py ../homebrew-pvx
 ```
+
+The tag-driven release workflow now validates the alpha gate, refreshes `Formula/pvx.rb`, checks it with `ruby -c`, and uploads the stamped formula alongside the build artifacts.
 
 Optional baseline refresh (only when benchmark behavior intentionally changed):
 

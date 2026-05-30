@@ -337,6 +337,28 @@ class TestCLIRegression(unittest.TestCase):
             expected_len = int(round(input_audio.shape[0] * 1.2))
             self.assertAlmostEqual(output_audio.shape[0], expected_len, delta=24)
 
+    def test_unified_cli_stream_rejects_resume_flags(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            in_path = tmp_path / "stream_resume.wav"
+            write_stereo_tone(in_path, duration=0.24)
+            out_path = tmp_path / "stream_resume_out.wav"
+
+            cmd = [
+                *UNIFIED_CLI,
+                "stream",
+                str(in_path),
+                "--output",
+                str(out_path),
+                "--checkpoint-dir",
+                str(tmp_path / "ckpt"),
+                "--resume",
+                "--quiet",
+            ]
+            proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+            self.assertNotEqual(proc.returncode, 0)
+            self.assertIn("does not support checkpoint/resume flags", proc.stderr)
+
     def test_unified_cli_follow_runs(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
@@ -1463,6 +1485,7 @@ class TestCLIRegression(unittest.TestCase):
             checkpoint_dir = tmp_path / "ckpt"
             out_path_a = tmp_path / "cp_a.wav"
             out_path_b = tmp_path / "cp_b.wav"
+            out_path_fresh = tmp_path / "cp_fresh.wav"
 
             base_cmd = [
                 *CLI,
@@ -1495,6 +1518,58 @@ class TestCLIRegression(unittest.TestCase):
             )
             self.assertEqual(second.returncode, 0, msg=second.stderr)
             self.assertTrue(out_path_b.exists())
+
+            fresh = subprocess.run(
+                [
+                    *CLI,
+                    str(in_path),
+                    "--auto-segment-seconds",
+                    "0.10",
+                    "--time-stretch",
+                    "1.25",
+                    "--output",
+                    str(out_path_fresh),
+                    "--overwrite",
+                    "--quiet",
+                ],
+                cwd=ROOT,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(fresh.returncode, 0, msg=fresh.stderr)
+            self.assertTrue(out_path_fresh.exists())
+
+            resumed_audio, resumed_sr = sf.read(out_path_b, always_2d=True)
+            fresh_audio, fresh_sr = sf.read(out_path_fresh, always_2d=True)
+            self.assertEqual(resumed_sr, fresh_sr)
+            self.assertEqual(resumed_audio.shape, fresh_audio.shape)
+            self.assertTrue(np.allclose(resumed_audio, fresh_audio, atol=1e-6))
+
+    def test_cli_target_duration_long_render_hits_requested_length(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            in_path = tmp_path / "target_duration.wav"
+            _, sr = write_stereo_tone(in_path, duration=0.35)
+            out_path = tmp_path / "target_duration_out.wav"
+
+            cmd = [
+                *CLI,
+                str(in_path),
+                "--target-duration",
+                "1.40",
+                "--output",
+                str(out_path),
+                "--overwrite",
+                "--quiet",
+            ]
+            proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+            self.assertEqual(proc.returncode, 0, msg=proc.stderr)
+            self.assertTrue(out_path.exists())
+
+            output_audio, out_sr = sf.read(out_path, always_2d=True)
+            self.assertEqual(out_sr, sr)
+            expected_len = int(round(1.40 * sr))
+            self.assertAlmostEqual(output_audio.shape[0], expected_len, delta=8)
 
     def test_cli_explain_plan_json(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

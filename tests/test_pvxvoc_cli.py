@@ -93,9 +93,8 @@ class TestPvxvocCli(unittest.TestCase):
             preset="none",
             device="auto",
         )
-        with patch("sys.stdin.isatty", return_value=False):
-            with self.assertRaises(ValueError):
-                pvxvoc.run_guided_mode(args)
+        with patch("sys.stdin.isatty", return_value=False), self.assertRaises(ValueError):
+            pvxvoc.run_guided_mode(args)
 
     def test_legacy_registry_alias_emits_deprecation_warning(self) -> None:
         with warnings.catch_warnings(record=True) as caught:

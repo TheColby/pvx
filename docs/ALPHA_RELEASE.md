@@ -43,5 +43,6 @@ Before tagging an alpha build:
 - prefer a smaller honest surface over a wider unstable one
 - keep compatibility shims explicit and noisy rather than magical
 - publish only the supported surface as the alpha contract; everything else is docs/reference, not a promise
+- keep the supported-slice coverage gate at 100%
 - treat docs source files as the review artifact; generated outputs are release artifacts
 - add direct seam tests when extracting modules from `pvx.py` or `pvx.core.voc`

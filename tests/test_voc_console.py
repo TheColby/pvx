@@ -13,6 +13,7 @@ from pvx.core.voc_console import (
     apply_named_preset,
     collect_cli_flags,
     console_level,
+    is_quiet,
     is_silent,
     log_error,
     log_message,
@@ -86,11 +87,16 @@ class TestVocConsole(unittest.TestCase):
         self.assertFalse(bar._finished)
 
         enabled = ProgressBar("demo", enabled=True)
-        with patch("pvx.core.voc_console.time.time", side_effect=[0.0, 0.01, 0.02]):
+        stream = io.StringIO()
+        with redirect_stderr(stream), patch("pvx.core.voc_console.time.time", side_effect=[0.0, 0.01, 0.02]):
             enabled.set(0.0, "start")
             last_fraction = enabled._last_fraction
             enabled.set(0.001, "tiny")
-        self.assertEqual(enabled._last_fraction, last_fraction)
+            self.assertEqual(enabled._last_fraction, last_fraction)
+            enabled.finish()
+        self.assertEqual(enabled._last_fraction, 1.0)
+        self.assertTrue(enabled._finished)
+        self.assertTrue(stream.getvalue().endswith("\n"))
 
     def test_log_helpers_respect_silence_and_stdout_routing(self) -> None:
         silent_args = argparse.Namespace(
@@ -109,8 +115,17 @@ class TestVocConsole(unittest.TestCase):
             silent=False,
             stdout=True,
         )
+        quiet_args = argparse.Namespace(
+            verbosity="quiet",
+            verbose=0,
+            no_progress=False,
+            quiet=False,
+            silent=False,
+            stdout=False,
+        )
 
         self.assertTrue(is_silent(silent_args))
+        self.assertTrue(is_quiet(quiet_args))
 
         out = io.StringIO()
         err = io.StringIO()

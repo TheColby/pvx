@@ -34,6 +34,8 @@ brew tap TheColby/pvx
 brew install TheColby/pvx/pvx
 ```
 
+The release workflow also uploads the validated `Formula/pvx.rb` artifact for each tagged release so the tap update has a single source of truth.
+
 ## Notes
 
 - The formula currently targets `python@3.12`.

@@ -15,6 +15,8 @@ import tomllib
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
 PYPROJECT = ROOT / "pyproject.toml"
+MAKEFILE = ROOT / "Makefile"
+RELEASE_WORKFLOW = ROOT / ".github" / "workflows" / "release.yml"
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 if str(SRC) not in sys.path:
@@ -36,6 +38,17 @@ from pvx.core.voc_jobs import _checkpoint_job_id
 
 
 class TestCLIHelperSeams(unittest.TestCase):
+    def test_makefile_enforces_supported_slice_coverage_at_100(self) -> None:
+        makefile = MAKEFILE.read_text(encoding="utf-8")
+        self.assertIn("--fail-under=100", makefile)
+
+    def test_release_workflow_runs_alpha_gate_and_formula_sync(self) -> None:
+        workflow = RELEASE_WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("python scripts/scripts_alpha_check.py", workflow)
+        self.assertIn("./scripts/refresh_homebrew_formula.sh", workflow)
+        self.assertIn("python scripts/scripts_sync_homebrew_tap_formula.py", workflow)
+        self.assertIn("ruby -c Formula/pvx.rb", workflow)
+
     def test_consume_lucky_options_preserves_non_lucky_args(self) -> None:
         clean, lucky_count, lucky_seed = _consume_lucky_options(
             ["clip.wav", "--lucky", "3", "--quiet", "--lucky-seed=17"]
@@ -93,6 +106,7 @@ class TestCLIHelperSeams(unittest.TestCase):
         payload = tomllib.loads(PYPROJECT.read_text(encoding="utf-8"))
         scripts = payload["project"]["scripts"]
         supported_surface = (ROOT / "docs" / "SUPPORTED_SURFACE.md").read_text(encoding="utf-8")
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
         stable_expected = [
             "pvx",
@@ -107,6 +121,7 @@ class TestCLIHelperSeams(unittest.TestCase):
         for name in stable_expected:
             self.assertIn(name, scripts)
             self.assertIn(f"`{name}`", supported_surface)
+            self.assertIn(f"`{name}`", readme)
 
 
 class TestVocCompatibilitySeams(unittest.TestCase):

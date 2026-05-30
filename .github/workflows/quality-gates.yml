@@ -36,18 +36,9 @@ jobs:
         run: |
           python scripts/scripts_check_dependency_sync.py
 
-      - name: Lint (critical rules)
+      - name: Alpha contract gate
         run: |
-          ruff check src/pvx src/pvxalgorithms scripts tests --select E9,F63,F7,F82
-
-      - name: Type check (maintainer-critical modules)
-        run: |
-          mypy src/pvx/core/attribution.py scripts/scripts_apply_attribution.py
-
-      - name: Coverage gate
-        run: |
-          coverage run -m unittest discover -s tests -p "test_*.py"
-          coverage report --fail-under=45
+          python scripts/scripts_alpha_check.py
 
       - name: Upload coverage artifact
         if: always()

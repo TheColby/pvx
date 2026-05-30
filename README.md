@@ -31,6 +31,8 @@ For `0.1.0a1`, treat these as the supported public surface:
 - beta CLIs: usable, but flags may still move in minor releases
 - compatibility imports: `pvxalgorithms*` remain available with deprecation warnings only to ease migration during `0.1.x`
 
+Generated references are inventory, not promise. If a tool or flag is not in the stable list above, treat it as beta or exploratory even if it appears in the longer reference docs.
+
 Release-validation commands live in [RELEASE.md](RELEASE.md), the alpha checklist in [docs/ALPHA_RELEASE.md](docs/ALPHA_RELEASE.md), and the surface contract in [docs/SUPPORTED_SURFACE.md](docs/SUPPORTED_SURFACE.md).
 
 ## Value Proposition

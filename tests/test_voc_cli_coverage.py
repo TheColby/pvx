@@ -319,9 +319,8 @@ class TestVocParserCoverage(unittest.TestCase):
 
 class TestVocCliCoverage(unittest.TestCase):
     def test_prompt_helpers_and_explain_plan(self) -> None:
-        with patch("builtins.input", return_value="bad"):
-            with self.assertRaises(ValueError):
-                voc_cli._prompt_choice("Mode", ("yes", "no"), "yes")
+        with patch("builtins.input", return_value="bad"), self.assertRaises(ValueError):
+            voc_cli._prompt_choice("Mode", ("yes", "no"), "yes")
 
         args = argparse.Namespace(
             _active_quality_profile="ambient",
@@ -401,13 +400,19 @@ class TestVocCliCoverage(unittest.TestCase):
         self.assertEqual(rc, 0)
         self.assertIn("pvx voc input.wav", out.getvalue())
 
-        with patch("pvx.voc_cli.print_cli_examples", side_effect=ValueError("bad example")):
-            with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
-                voc_cli.main(["--example", "basic"])
+        with (
+            patch("pvx.voc_cli.print_cli_examples", side_effect=ValueError("bad example")),
+            redirect_stderr(io.StringIO()),
+            self.assertRaises(SystemExit),
+        ):
+            voc_cli.main(["--example", "basic"])
 
-        with patch("pvx.voc_cli.run_guided_mode", side_effect=ValueError("bad")):
-            with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
-                voc_cli.main(["input.wav", "--guided"])
+        with (
+            patch("pvx.voc_cli.run_guided_mode", side_effect=ValueError("bad")),
+            redirect_stderr(io.StringIO()),
+            self.assertRaises(SystemExit),
+        ):
+            voc_cli.main(["input.wav", "--guided"])
 
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -429,17 +434,24 @@ class TestVocCliCoverage(unittest.TestCase):
                 ["-", "--auto-profile"],
             ]
             for argv in cases:
-                with self.subTest(argv=argv):
-                    with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
-                        voc_cli.main(argv)
+                with self.subTest(argv=argv), redirect_stderr(io.StringIO()), self.assertRaises(
+                    SystemExit
+                ):
+                    voc_cli.main(argv)
 
-            with patch("pvx.voc_cli.expand_inputs", return_value=[Path("-"), Path("-")]):
-                with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
-                    voc_cli.main(["input.wav"])
+            with (
+                patch("pvx.voc_cli.expand_inputs", return_value=[Path("-"), Path("-")]),
+                redirect_stderr(io.StringIO()),
+                self.assertRaises(SystemExit),
+            ):
+                voc_cli.main(["input.wav"])
 
-            with patch("pvx.voc_cli.expand_inputs", return_value=[Path("-"), audio.resolve()]):
-                with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
-                    voc_cli.main(["input.wav"])
+            with (
+                patch("pvx.voc_cli.expand_inputs", return_value=[Path("-"), audio.resolve()]),
+                redirect_stderr(io.StringIO()),
+                self.assertRaises(SystemExit),
+            ):
+                voc_cli.main(["input.wav"])
 
     def test_main_covers_resolve_and_transient_alias_paths(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -595,9 +607,10 @@ class TestVocCliCoverage(unittest.TestCase):
             with (
                 patch("pvx.voc_cli.ensure_runtime_dependencies"),
                 patch("pvx.voc_cli.read_audio_input", return_value=(np.zeros((0, 1)), 16000)),
+                redirect_stderr(io.StringIO()),
+                self.assertRaises(SystemExit),
             ):
-                with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
-                    voc_cli.main([str(input_path), "--auto-profile"])
+                voc_cli.main([str(input_path), "--auto-profile"])
 
             err = io.StringIO()
             with (
@@ -637,16 +650,16 @@ class TestVocCliCoverage(unittest.TestCase):
             with (
                 patch("pvx.voc_cli.main", return_value=0),
                 patch("sys.argv", ["pvxvoc.py"]),
+                self.assertRaises(SystemExit),
             ):
-                with self.assertRaises(SystemExit):
-                    runpy.run_path(str(Path("src/pvx/cli/pvxvoc.py")), run_name="__main__")
+                runpy.run_path(str(Path("src/pvx/cli/pvxvoc.py")), run_name="__main__")
 
             with (
                 patch("pvx.voc_cli.main", return_value=0),
                 patch("sys.argv", ["voc_cli.py"]),
+                self.assertRaises(SystemExit),
             ):
-                with self.assertRaises(SystemExit):
-                    runpy.run_path(str(Path("src/pvx/voc_cli.py")), run_name="__main__")
+                runpy.run_path(str(Path("src/pvx/voc_cli.py")), run_name="__main__")
 
             tap = root / "homebrew-pvx"
             formula = root / "pvx.rb"
@@ -654,12 +667,12 @@ class TestVocCliCoverage(unittest.TestCase):
             with (
                 patch("sys.argv", ["scripts_sync_homebrew_tap_formula.py", str(tap), "--formula", str(formula)]),
                 redirect_stdout(io.StringIO()),
+                self.assertRaises(SystemExit),
             ):
-                with self.assertRaises(SystemExit):
-                    runpy.run_path(
-                        str(Path("scripts/scripts_sync_homebrew_tap_formula.py")),
-                        run_name="__main__",
-                    )
+                runpy.run_path(
+                    str(Path("scripts/scripts_sync_homebrew_tap_formula.py")),
+                    run_name="__main__",
+                )
 
 
 if __name__ == "__main__":

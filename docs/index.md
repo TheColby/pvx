@@ -1,17 +1,23 @@
 # pvx
 
-**Phase-vocoder DSP toolkit with audio augmentation for ML**
+**Phase-vocoder DSP toolkit with a narrow alpha CLI contract and a broader experimental lab**
 
 pvx is a Python toolkit for high-quality time and pitch processing using a phase-vocoder/STFT core, plus a composable audio augmentation library for machine learning.
 
-## Features
+## Start with the supported surface
 
-- **30+ CLI tools** for time-stretching, pitch-shifting, formant processing, spectral morphing, and more
-- **Augmentation API** with 25+ NumPy-native transforms and GPU-accelerated PyTorch variants
-- **Framework integrations** for PyTorch, HuggingFace, and TensorFlow
-- **Plugin system** for custom transforms via entry points
-- **Streaming processing** for long-form audio with bounded memory
-- **Deterministic CPU paths** for reproducible runs
+For `0.1.0a1`, the stable scripted surface is intentionally narrow:
+
+- `pvx`
+- `pvxvoc`
+- `pvxfreeze`
+- `pvxwarp`
+- `pvxformant`
+- `pvxfilter`
+- `pvxretune`
+- `pvxanalysis`
+
+Everything else in the docs tree is either beta, experimental, or reference inventory unless [SUPPORTED_SURFACE.md](SUPPORTED_SURFACE.md) says otherwise.
 
 ## Quick Start
 
@@ -46,7 +52,7 @@ pvxrir speech.wav --ir-database echothief --category hall --output reverbed.wav
 
 ## Find what you need
 
-Before diving into the long generated references, check the short contract docs:
+Before diving into the long generated references, check the short contract docs first:
 
 - [Supported Surface](SUPPORTED_SURFACE.md)
 - [Getting Started](GETTING_STARTED.md)
@@ -68,4 +74,4 @@ Before diving into the long generated references, check the short contract docs:
 | …write a custom transform plugin | [Contributing](../CONTRIBUTING.md) |
 | …browse the Python API | [API Reference](api/augment.md) |
 
-New users: read **Getting Started** → **ML Integration Guide** → **Augmentation Cookbook** in that order. Everything else is reference material you can skip until you need it.
+New users: read **Getting Started** first. Reach for the generated references only when you need exhaustive flag or file inventory.

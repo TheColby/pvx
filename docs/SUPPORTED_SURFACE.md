@@ -2,6 +2,8 @@
 
 This page is the short version of what `pvx` expects alpha users to rely on.
 
+If a longer generated reference lists more commands or flags, treat that as inventory, not a broader compatibility promise.
+
 ## Stable in `0.1.x`
 
 These commands are the intended scripted/public alpha surface:

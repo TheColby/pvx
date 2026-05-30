@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import subprocess
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -19,6 +20,7 @@ ALPHA_PYTHON_PATHS: tuple[str, ...] = (
     "src/pvx/core/voc.py",
     "src/pvx/core/voc_parser.py",
     "src/pvx/core/voc_console.py",
+    "src/pvx/core/voc_profiles.py",
     "src/pvx/core/voc_jobs.py",
     "src/pvx/core/streaming.py",
     "src/pvxalgorithms",
@@ -26,26 +28,62 @@ ALPHA_PYTHON_PATHS: tuple[str, ...] = (
     "tests/test_alpha_release_ready.py",
     "tests/test_augment_bench_gate.py",
     "tests/test_voc_parser.py",
+    "tests/test_voc_cli_coverage.py",
     "tests/test_voc_console.py",
     "tests/test_pvxvoc_cli.py",
     "tests/test_augment_mode.py",
     "tests/test_cli_regression.py",
 )
 
+ALPHA_TYPECHECK_PATHS: tuple[str, ...] = (
+    "src/pvx/core/attribution.py",
+    "src/pvx/core/control_bus.py",
+    "src/pvx/core/streaming.py",
+    "src/pvx/core/voc_console.py",
+    "src/pvx/core/voc_parser.py",
+    "src/pvx/core/voc_profiles.py",
+    "src/pvx/voc_cli.py",
+    "src/pvx/cli/pvxvoc.py",
+    "src/pvxalgorithms",
+    "scripts/scripts_alpha_check.py",
+    "scripts/scripts_apply_attribution.py",
+    "scripts/scripts_sync_homebrew_tap_formula.py",
+)
+
 ALPHA_TEST_MODULES: tuple[str, ...] = (
     "tests.test_alpha_release_ready",
     "tests.test_augment_bench_gate",
     "tests.test_voc_parser",
+    "tests.test_voc_cli_coverage",
     "tests.test_voc_console",
     "tests.test_pvxvoc_cli",
     "tests.test_augment_mode",
     "tests.test_cli_regression",
 )
 
+SUPPORTED_SLICE_COVERAGE = (
+    "src/pvx/core/voc_console.py,"
+    "src/pvx/core/voc_parser.py,"
+    "src/pvx/voc_cli.py,"
+    "src/pvx/cli/pvxvoc.py,"
+    "scripts/scripts_sync_homebrew_tap_formula.py,"
+    "src/pvxalgorithms/*"
+)
+
 COMMANDS: tuple[list[str], ...] = (
-    ["uv", "run", "ruff", "check", *ALPHA_PYTHON_PATHS],
-    ["uv", "run", "python", "-m", "unittest", *ALPHA_TEST_MODULES, "-v"],
-    ["uv", "run", "pytest", "-q", "tests/test_docs_coverage.py"],
+    ["ruff", "check", *ALPHA_PYTHON_PATHS],
+    [sys.executable, "-m", "mypy", *ALPHA_TYPECHECK_PATHS],
+    [sys.executable, "-m", "coverage", "erase"],
+    [sys.executable, "-m", "coverage", "run", "-m", "unittest", *ALPHA_TEST_MODULES, "-v"],
+    [
+        sys.executable,
+        "-m",
+        "coverage",
+        "report",
+        f"--include={SUPPORTED_SLICE_COVERAGE}",
+        "--fail-under=100",
+    ],
+    [sys.executable, "-m", "pytest", "-q", "tests/test_docs_coverage.py"],
 )
 
 
