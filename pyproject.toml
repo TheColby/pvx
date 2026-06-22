@@ -81,7 +81,7 @@ huggingface = [
     "transformers>=4.35",
 ]
 tensorflow = [
-    "tensorflow>=2.13",
+    "tensorflow>=2.21.0",
 ]
 # Install all ML integrations at once
 ml = [
