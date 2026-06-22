@@ -44,7 +44,7 @@ dependencies = [
     "soundfile>=0.12.1",
     "scipy>=1.10",
     "librosa>=0.10.2",
-    "pyloudnorm>=0.1.1",
+    "pyloudnorm>=0.2.0",
 ]
 
 [project.urls]
