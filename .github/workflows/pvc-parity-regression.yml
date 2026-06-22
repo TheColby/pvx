@@ -36,7 +36,7 @@ jobs:
             --gate-tolerance 0.20
       - name: Upload PVC parity report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: pvc-parity-report
           path: benchmarks/out_pvc_parity/
