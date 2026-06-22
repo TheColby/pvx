@@ -77,7 +77,7 @@ torch = [
     "torchaudio>=2.0",
 ]
 huggingface = [
-    "datasets>=2.14",
+    "datasets>=4.8.4",
     "transformers>=4.35",
 ]
 tensorflow = [
@@ -87,7 +87,7 @@ tensorflow = [
 ml = [
     "torch>=2.0",
     "torchaudio>=2.0",
-    "datasets>=2.14",
+    "datasets>=4.8.4",
     "transformers>=4.35",
 ]
 
