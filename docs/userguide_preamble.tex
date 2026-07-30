@@ -1,0 +1,147 @@
+\usepackage{fontspec}
+\usepackage{unicode-math}
+\defaultfontfeatures{Ligatures=Common,Scale=MatchLowercase}
+\setmainfont{cmunrm.ttf}[
+  Path=/Users/cleider/Library/Fonts/,
+  BoldFont=cmunbx.ttf,
+  ItalicFont=cmunti.ttf,
+  BoldItalicFont=cmunbi.ttf
+]
+\setsansfont{cmunss.ttf}[
+  Path=/Users/cleider/Library/Fonts/,
+  BoldFont=cmunsx.ttf,
+  ItalicFont=cmunsi.ttf,
+  BoldItalicFont=cmunso.ttf
+]
+\setmonofont{cmuntt.ttf}[
+  Path=/Users/cleider/Library/Fonts/,
+  BoldFont=cmuntb.ttf,
+  ItalicFont=cmunit.ttf,
+  BoldItalicFont=cmuntx.ttf,
+  Ligatures=NoCommon
+]
+\setmathfont{STIXTwoMath.otf}[
+  Path=/System/Library/Fonts/Supplemental/
+]
+\usepackage{microtype}
+\usepackage{fancyhdr}
+\usepackage{emptypage}
+\usepackage{titlesec}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{xurl}
+\usepackage{caption}
+\usepackage{listings}
+\usepackage{upquote}
+\usepackage{fvextra}
+\usepackage{etoolbox}
+\usepackage{enumitem}
+\usepackage{tocloft}
+\usepackage{makeidx}
+\usepackage[columns=2]{idxlayout}
+\usepackage{needspace}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage{pdflscape}
+\usepackage{mdframed}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,decorations.pathreplacing}
+
+\makeindex
+
+\setlength{\parskip}{0.25em plus 0.1em minus 0.05em}
+\setlength{\parindent}{1.5em}
+\setlength{\emergencystretch}{2em}
+\raggedbottom
+\clubpenalty=10000
+\widowpenalty=10000
+\displaywidowpenalty=10000
+\brokenpenalty=10000
+\interfootnotelinepenalty=10000
+
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{2}
+
+\titleformat{\chapter}[display]
+  {\normalfont\huge\bfseries}
+  {\filright\MakeUppercase{\chaptername}\ \thechapter}
+  {0.8ex}
+  {\titlerule\vspace{1ex}\filright}
+
+\titlespacing*{\chapter}{0pt}{0pt}{3ex}
+
+\setlength{\cftbeforechapskip}{0.4em}
+\setlength{\cftbeforesecskip}{0.1em}
+\setlength{\cftchapnumwidth}{3.2em}
+\setlength{\cftsecnumwidth}{4.8em}
+\setlength{\cftsubsecnumwidth}{6.2em}
+
+\definecolor{terminalblack}{HTML}{050806}
+\definecolor{terminalgreen}{HTML}{70FF70}
+\definecolor{terminalborder}{HTML}{2A6A2A}
+
+\newmdenv[
+  backgroundcolor=terminalblack,
+  hidealllines=true,
+  innerleftmargin=1em,
+  innerrightmargin=0.5em,
+  innertopmargin=0.45em,
+  innerbottommargin=0.45em,
+  skipabove=0.8em,
+  skipbelow=0.8em,
+  splittopskip=0.45em,
+  splitbottomskip=0.45em
+]{pvxcodeblock}
+
+\BeforeBeginEnvironment{lstlisting}{\Needspace{8\baselineskip}\begin{pvxcodeblock}}
+\AfterEndEnvironment{lstlisting}{\end{pvxcodeblock}}
+
+\lstset{
+  basicstyle=\ttfamily\footnotesize\color{terminalgreen},
+  breaklines=true,
+  breakatwhitespace=false,
+  columns=fullflexible,
+  keepspaces=true,
+  frame=none,
+  framerule=0pt,
+  keywordstyle=\color{terminalgreen},
+  commentstyle=\color{terminalgreen},
+  stringstyle=\color{terminalgreen},
+  xleftmargin=0pt,
+  xrightmargin=0pt,
+  linewidth=\linewidth,
+  showstringspaces=false,
+  upquote=true,
+  aboveskip=0pt,
+  belowskip=0pt
+}
+
+\captionsetup{font=small,labelfont=bf,format=hang,skip=0.6em}
+\let\pvxtexttt\texttt
+\renewcommand{\texttt}[1]{{\color{black}\pvxtexttt{#1}}}
+
+\pagestyle{fancy}
+\fancyhf{}
+\makeatletter
+\renewcommand{\chaptermark}[1]{%
+  \if@mainmatter
+    \markboth{\thechapter.\ #1}{}%
+  \else
+    \markboth{#1}{}%
+  \fi
+}
+\makeatother
+\renewcommand{\sectionmark}[1]{\markright{\thesection.\ #1}}
+\fancyhead[LE]{\nouppercase{\leftmark}}
+\fancyhead[RO]{\nouppercase{\rightmark}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.3pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\fancypagestyle{plain}{
+  \fancyhf{}
+  \fancyfoot[C]{\thepage}
+  \renewcommand{\headrulewidth}{0pt}
+}

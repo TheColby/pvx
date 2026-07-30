@@ -23,3 +23,5 @@ docs/.nojekyll
 build/
 dist/
 *.egg-info/
+output/
+tmp/

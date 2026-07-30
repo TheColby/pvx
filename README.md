@@ -48,22 +48,22 @@ Release-validation commands live in [RELEASE.md](RELEASE.md), the alpha checklis
 
 Homebrew:
 
-Tap the formula repository:
+Install the tagged release from the project tap:
 
 ```bash
 brew tap TheColby/pvx
-brew install --HEAD TheColby/pvx/pvx
-pvx --help
-```
-
-For a tagged release formula, use the same tap without `--HEAD` after the release formula has been stamped into [`TheColby/homebrew-pvx`](https://github.com/TheColby/homebrew-pvx):
-
-```bash
 brew install TheColby/pvx/pvx
 pvx --help
 ```
 
-Homebrew installs `libsndfile` automatically for runtime audio I/O.
+To test the latest unreleased commit, install the explicit `HEAD` formula:
+
+```bash
+brew install --HEAD TheColby/pvx/pvx
+pvx --help
+```
+
+Homebrew installs `libsndfile` automatically for runtime audio I/O. Homebrew 6 may require formula-level trust for a third-party tap; the troubleshooting and trust commands are documented in the Homebrew chapter.
 
 Release/tap details live in [docs/HOMEBREW.md](docs/HOMEBREW.md).
 

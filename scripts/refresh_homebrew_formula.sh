@@ -29,6 +29,7 @@ SHA="$(shasum -a 256 "$TMP" | awk '{print $1}')"
 
 python3 - "$FORMULA_PATH" "$URL" "$SHA" "$VERSION" <<'PY'
 from pathlib import Path
+import re
 import sys
 
 formula_path = Path(sys.argv[1])
@@ -37,9 +38,15 @@ sha = sys.argv[3]
 version = sys.argv[4]
 
 text = formula_path.read_text(encoding="utf-8")
-text = text.replace("__PVX_STABLE_URL__", url)
-text = text.replace("__PVX_STABLE_SHA__", sha)
-text = text.replace("__PVX_STABLE_VERSION__", version)
+replacements = (
+    (r'(?m)^  url "[^"]+"$', f'  url "{url}"'),
+    (r'(?m)^  sha256 "[0-9a-f]{64}"$', f'  sha256 "{sha}"'),
+    (r'(?m)^  version "[^"]+"$', f'  version "{version}"'),
+)
+for pattern, replacement in replacements:
+    text, count = re.subn(pattern, replacement, text, count=1)
+    if count != 1:
+        raise SystemExit(f"could not update formula field matching {pattern!r}")
 formula_path.write_text(text, encoding="utf-8")
 PY
 

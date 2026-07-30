@@ -49,6 +49,17 @@ class TestCLIHelperSeams(unittest.TestCase):
         self.assertIn("python scripts/scripts_sync_homebrew_tap_formula.py", workflow)
         self.assertIn("ruby -c Formula/pvx.rb", workflow)
 
+    def test_homebrew_formula_has_an_installable_stable_release(self) -> None:
+        formula = (ROOT / "Formula" / "pvx.rb").read_text(encoding="utf-8")
+        self.assertRegex(
+            formula,
+            r'(?m)^  url "https://github\.com/TheColby/pvx/archive/refs/tags/v[^"]+\.tar\.gz"$',
+        )
+        self.assertRegex(formula, r'(?m)^  sha256 "[0-9a-f]{64}"$')
+        self.assertRegex(formula, r'(?m)^  version "[^"]+"$')
+        self.assertNotIn("__PVX_STABLE_", formula)
+        self.assertIn('head "https://github.com/TheColby/pvx.git"', formula)
+
     def test_consume_lucky_options_preserves_non_lucky_args(self) -> None:
         clean, lucky_count, lucky_seed = _consume_lucky_options(
             ["clip.wav", "--lucky", "3", "--quiet", "--lucky-seed=17"]
