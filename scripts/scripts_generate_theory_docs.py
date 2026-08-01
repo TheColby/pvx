@@ -410,6 +410,8 @@ def _downsample_series(ys: np.ndarray, max_points: int = 1024) -> np.ndarray:
 
 
 def write_line_svg(path: Path, ys: np.ndarray, *, title: str, y_min: float, y_max: float, x_label: str, y_label: str) -> None:
+    if not x_label.strip() or not y_label.strip() or "(" not in x_label or "(" not in y_label:
+        raise ValueError("graph axes require labels with explicit parenthesized units")
     width = 840
     height = 280
     margin = 36
@@ -468,6 +470,8 @@ def write_multiline_svg(
     y_min: float | None = None,
     y_max: float | None = None,
 ) -> None:
+    if not x_label.strip() or not y_label.strip() or "(" not in x_label or "(" not in y_label:
+        raise ValueError("graph axes require labels with explicit parenthesized units")
     width = 980
     height = 360
     margin = 42
@@ -560,8 +564,8 @@ def generate_function_assets() -> dict[str, object]:
         semitones,
         [("ratio", ratio_semitones, palette[0])],
         title="Pitch ratio vs semitone shift",
-        x_label="semitones",
-        y_label="ratio",
+        x_label="pitch shift (semitones)",
+        y_label="frequency ratio (dimensionless)",
     )
     entries.append(
         {
@@ -579,8 +583,8 @@ def generate_function_assets() -> dict[str, object]:
         cents,
         [("ratio", ratio_cents, palette[1])],
         title="Pitch ratio vs cent shift",
-        x_label="cents",
-        y_label="ratio",
+        x_label="pitch shift (cents)",
+        y_label="frequency ratio (dimensionless)",
     )
     entries.append(
         {
@@ -632,8 +636,8 @@ def generate_function_assets() -> dict[str, object]:
             ("cubic", soft_cubic, palette[6]),
         ],
         title="Soft-clip transfer functions (linear amplitude domain)",
-        x_label="input amplitude",
-        y_label="output amplitude",
+        x_label="input amplitude (normalized linear)",
+        y_label="output amplitude (normalized linear)",
         y_min=-1.2,
         y_max=1.2,
     )
@@ -666,8 +670,8 @@ def generate_function_assets() -> dict[str, object]:
             ("min_mag", min_mag_blend, palette[4]),
         ],
         title="Morph magnitude curves vs alpha (example magnitudes)",
-        x_label="alpha (0=A, 1=B)",
-        y_label="output magnitude",
+        x_label="blend coefficient alpha (dimensionless; 0=A, 1=B)",
+        y_label="output magnitude (normalized linear)",
     )
     entries.append(
         {
@@ -691,8 +695,8 @@ def generate_function_assets() -> dict[str, object]:
             ("p=1.4", mask_curve_p14, palette[6]),
         ],
         title="Carrier/modulator mask exponent curves",
-        x_label="normalized modulator magnitude",
-        y_label="mask gain",
+        x_label="modulator magnitude (normalized linear)",
+        y_label="mask gain (linear gain)",
     )
     entries.append(
         {
@@ -713,7 +717,7 @@ def generate_function_assets() -> dict[str, object]:
         phase_mix,
         [("output phase angle", phase_angle, palette[7])],
         title="Phase mix curve (example phase pair)",
-        x_label="phase mix (0=A phase, 1=B phase)",
+        x_label="phase mix (dimensionless; 0=A, 1=B)",
         y_label="output angle (radians)",
     )
     entries.append(
@@ -915,8 +919,8 @@ def _render_interpolation_svg(
   <circle cx=\"{legend_x + 34}\" cy=\"{legend_y + 56}\" r=\"3.2\" fill=\"#b42318\" />
   <text x=\"{legend_x + 66}\" y=\"{legend_y + 60}\" font-family=\"Arial, Helvetica, sans-serif\" font-size=\"10\" fill=\"#243b53\">control points p_i</text>
   <text x=\"{width / 2:.1f}\" y=\"22\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-size=\"15\" fill=\"#102a43\">{title}</text>
-  <text x=\"{width / 2:.1f}\" y=\"{height - 8}\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-size=\"12\" fill=\"#334e68\">normalized control time</text>
-  <text x=\"14\" y=\"{height / 2:.1f}\" transform=\"rotate(-90 14,{height / 2:.1f})\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-size=\"12\" fill=\"#334e68\">control value</text>
+  <text x=\"{width / 2:.1f}\" y=\"{height - 8}\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-size=\"12\" fill=\"#334e68\">control time (normalized, dimensionless)</text>
+  <text x=\"14\" y=\"{height / 2:.1f}\" transform=\"rotate(-90 14,{height / 2:.1f})\" text-anchor=\"middle\" font-family=\"Arial, Helvetica, sans-serif\" font-size=\"12\" fill=\"#334e68\">control value (dimensionless)</text>
   <text x=\"{margin}\" y=\"{height - margin + 18}\" font-family=\"Arial, Helvetica, sans-serif\" font-size=\"11\" fill=\"#486581\">0</text>
   <text x=\"{width - margin}\" y=\"{height - margin + 18}\" text-anchor=\"end\" font-family=\"Arial, Helvetica, sans-serif\" font-size=\"11\" fill=\"#486581\">1</text>
   <text x=\"{margin - 6}\" y=\"{margin + 4}\" text-anchor=\"end\" font-family=\"Arial, Helvetica, sans-serif\" font-size=\"11\" fill=\"#486581\">{y_max:.2f}</text>
@@ -1016,8 +1020,8 @@ def generate_window_assets_and_metrics(entries: list[dict[str, str]]) -> dict[st
             title=f"{name} window (time domain)",
             y_min=0.0,
             y_max=max(1.0, float(np.max(samples))),
-            x_label="normalized sample index",
-            y_label="amplitude",
+            x_label="sample position (normalized, dimensionless)",
+            y_label="window coefficient (linear gain)",
         )
 
         fft_len = 1
@@ -1034,7 +1038,7 @@ def generate_window_assets_and_metrics(entries: list[dict[str, str]]) -> dict[st
             title=f"{name} window (magnitude spectrum)",
             y_min=-160.0,
             y_max=0.0,
-            x_label="normalized frequency",
+            x_label="frequency (cycles/sample)",
             y_label="magnitude (dB)",
         )
 

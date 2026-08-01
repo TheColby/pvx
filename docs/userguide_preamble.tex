@@ -44,29 +44,39 @@
 \usepackage{needspace}
 \usepackage{xcolor}
 \usepackage{float}
+\usepackage{placeins}
 \usepackage{pdflscape}
 \usepackage{mdframed}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning,shapes.geometric,decorations.pathreplacing}
 
 \makeindex
+\let\cleardoublepage\clearpage
 
-\setlength{\parskip}{0.25em plus 0.1em minus 0.05em}
+\setlength{\parskip}{0pt plus 0.04em}
 \setlength{\parindent}{1.5em}
 \setlength{\emergencystretch}{2em}
-\raggedbottom
+\setlength{\abovedisplayskip}{0.55em plus 0.12em minus 0.08em}
+\setlength{\belowdisplayskip}{0.55em plus 0.12em minus 0.08em}
+\setlength{\abovedisplayshortskip}{0.35em plus 0.1em}
+\setlength{\belowdisplayshortskip}{0.35em plus 0.1em}
+\setlength{\textfloatsep}{0.8em plus 0.2em minus 0.15em}
+\setlength{\floatsep}{0.7em plus 0.2em minus 0.15em}
+\setlength{\intextsep}{0.7em plus 0.2em minus 0.15em}
+\flushbottom
 \clubpenalty=10000
 \widowpenalty=10000
 \displaywidowpenalty=10000
 \brokenpenalty=10000
 \interfootnotelinepenalty=10000
+\setlength{\emergencystretch}{2em}
 
-\setcounter{secnumdepth}{3}
+\setcounter{secnumdepth}{1}
 \setcounter{tocdepth}{2}
 
 \titleformat{\chapter}[display]
   {\normalfont\huge\bfseries}
-  {\filright\MakeUppercase{\chaptername}\ \thechapter}
+  {\filright\MakeUppercase{\chaptertitlename}\ \thechapter}
   {0.8ex}
   {\titlerule\vspace{1ex}\filright}
 

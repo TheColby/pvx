@@ -67,6 +67,7 @@ BOOK_PARTS: tuple[tuple[str, tuple[ChapterSpec, ...]], ...] = (
         "Workflow Cookbook",
         (
             ChapterSpec(ROOT / "docs" / "EXAMPLES.md"),
+            ChapterSpec(ROOT / "docs" / "ADVANCED_RECIPES.md"),
             ChapterSpec(ROOT / "docs" / "FEATURE_SIDECHAIN_EXAMPLES.md"),
             ChapterSpec(ROOT / "docs" / "FOLLOW_MIGRATION.md"),
             ChapterSpec(ROOT / "docs" / "CRAZY_100.md"),
@@ -111,13 +112,26 @@ SIMPLE_NUMBERED_HEADING_RE = re.compile(r"^(#{1,6}\s+)\d+(?:\.\d+)*(?:[.)])?\s+(
 RANGE_HEADING_RE = re.compile(r"^(#{1,6}\s+)\d+\s*-\s*\d+:\s+(.*)$")
 LIST_ITEM_RE = re.compile(r"^\s*(?:[-*+]|\d+[.)])\s+")
 DISPLAY_MATH_LINE_RE = re.compile(r"^\s*\$\$\s*$")
+MARKDOWN_TABLE_RULE_RE = re.compile(r"^\s*\|?(?:\s*:?-{3,}:?\s*\|)+\s*$")
 
 
 def index_key(value: str) -> str:
+    value = re.sub(r"\\href\{[^{}]*\}\{([^{}]*)\}", r"\1", value)
+    value = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", value)
+    value = re.sub(r"https?://\S+", " ", value)
+    value = re.sub(r"^\s*\d+[.)]\s*", "", value)
     value = re.sub(r"`|\*\*|__|\*|_", " ", value)
     value = re.sub(r"\\[A-Za-z]+(?:\{[^{}]*\})?", " ", value)
     value = re.sub(r"[^A-Za-z0-9+./() -]+", " ", value)
     return re.sub(r"\s+", " ", value).strip(" .-")
+
+
+def heading_topic(line: str) -> str:
+    value = line.lstrip("#").strip()
+    value = re.sub(r"\s+\{(?:\.?unnumbered|-)}\s*$", "", value)
+    value = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", value)
+    value = re.sub(r"[`*_]", "", value)
+    return re.sub(r"\s+", " ", value).strip(" .:-")
 
 
 def ensure_list_introductions(text: str) -> str:
@@ -131,21 +145,193 @@ def ensure_list_introductions(text: str) -> str:
         while cursor < len(lines) and not lines[cursor].strip():
             cursor += 1
         if cursor < len(lines) and LIST_ITEM_RE.match(lines[cursor]):
-            out.extend(
-                (
-                    "",
-                    "This section begins with the following points, which establish the context for the details that follow.",
-                )
+            topic = heading_topic(line) or "this topic"
+            templates = (
+                f"For {topic.lower()}, start with these practical details.",
+                f"{topic} depends on a few concrete choices.",
+                f"Before applying {topic.lower()}, keep these constraints in view.",
+                f"The working assumptions for {topic.lower()} are:",
+                f"A reliable approach to {topic.lower()} begins with these points.",
+                f"These are the details that matter for {topic.lower()}.",
             )
+            out.extend(("", templates[sum(map(ord, topic)) % len(templates)]))
     return "\n".join(out).strip() + "\n"
+
+
+def structural_content_kind(line: str) -> str:
+    stripped = line.strip()
+    if LIST_ITEM_RE.match(line):
+        return "list"
+    if stripped.startswith("|"):
+        return "table"
+    if stripped.startswith(("```", "~~~")):
+        return "code"
+    if stripped.startswith(("$$", r"\[")):
+        return "equation"
+    if stripped.startswith(("![", r"\begin{figure}", r"\includegraphics")):
+        return "figure"
+    if stripped.startswith((r"\begin{table}", r"\begin{longtable}")):
+        return "table"
+    if stripped.startswith("#"):
+        return "division"
+    return "material"
+
+
+def prose_topic(topic: str) -> str:
+    """Turn a title-style heading into a readable phrase while retaining acronyms."""
+    value = topic.lower()
+    for source, replacement in (
+        (r"\bstft\b", "STFT"),
+        (r"\bwola\b", "WOLA"),
+        (r"\bfft\b", "FFT"),
+        (r"\bcli\b", "CLI"),
+        (r"\bpath\b", "PATH"),
+        (r"\bi/o\b", "I/O"),
+        (r"\bai\b", "AI"),
+        (r"\bml\b", "ML"),
+        (r"\bcsv\b", "CSV"),
+        (r"\bjson\b", "JSON"),
+        (r"\bgpu\b", "GPU"),
+        (r"\bcpu\b", "CPU"),
+        (r"\bdsp\b", "DSP"),
+    ):
+        value = re.sub(source, replacement, value)
+    value = re.sub(r"\bstep ([a-z]):", lambda match: f"Step {match.group(1).upper()}:", value)
+    if value.startswith(("a ", "an ", "the ", "Step ")):
+        return value
+    return f"the {value}"
+
+
+def section_opening(topic: str, kind: str) -> str:
+    """Write a short lead-in for a section that otherwise starts structurally."""
+    lowered = topic.lower()
+    phrase = prose_topic(topic)
+    if "glossary" in lowered:
+        return "The glossary defines the technical language used throughout the book."
+    if "symbol" in lowered or "notation" in lowered:
+        return "The notation collected here provides a compact reference for the equations that follow."
+    if "bibliograph" in lowered or "paper" in lowered or "book" in lowered:
+        return "The sources gathered here provide the historical and technical basis for further study."
+    if "recipe" in lowered:
+        return "The recipes in this section turn the preceding ideas into repeatable working methods."
+    if "flag" in lowered or "command" in lowered or "reference" in lowered:
+        return f"This reference introduces {phrase} before presenting its individual entries."
+    if "figure" in lowered or "graph" in lowered or "plot" in lowered:
+        return f"The visual material in this section develops {phrase} through annotated examples."
+    if "table" in lowered or "record" in lowered or "catalog" in lowered:
+        return f"The entries in this section organize {phrase} for comparison and practical use."
+    variants = {
+        "list": (
+            f"The principal choices involved in {phrase} are collected below.",
+            f"A practical account of {phrase} begins with the following points.",
+            f"The details that matter most for {phrase} can be stated directly.",
+        ),
+        "table": (
+            f"The table below gathers the principal details of {phrase}.",
+            f"The relevant properties of {phrase} are compared in the following table.",
+            f"A tabular view makes the distinctions within {phrase} easier to inspect.",
+        ),
+        "code": (
+            f"The example below puts {phrase} into executable form.",
+            f"A working command makes {phrase} concrete.",
+            f"The following session demonstrates {phrase} in practice.",
+        ),
+        "equation": (
+            f"The relation below states {phrase} precisely.",
+            f"The mathematical form of {phrase} is given in the next equation.",
+            f"A compact equation captures the central relation in {phrase}.",
+        ),
+        "figure": (
+            f"The following figure gives a visual account of {phrase}.",
+            f"A diagram makes the structure of {phrase} easier to see.",
+            f"The visual example below clarifies how {phrase} is organized.",
+        ),
+        "division": (
+            f"The discussion of {phrase} begins by separating its main parts.",
+            f"Several distinct concerns meet in {phrase}; they are taken in turn below.",
+            f"The account of {phrase} proceeds through the topics that follow.",
+        ),
+        "material": (
+            f"The material below develops {phrase} in practical terms.",
+            f"A closer look at {phrase} clarifies the choices involved.",
+            f"The next example makes the role of {phrase} explicit.",
+        ),
+    }
+    choices = variants[kind]
+    return choices[sum(map(ord, topic)) % len(choices)]
+
+
+def line_begins_structural_content(line: str) -> bool:
+    stripped = line.strip()
+    if not stripped:
+        return False
+    if stripped.startswith(("#", "|", "```", "~~~", "$$", r"\[", "![", ">", "<")):
+        return True
+    if LIST_ITEM_RE.match(line):
+        return True
+    if stripped.startswith("**") and stripped.endswith("**"):
+        return True
+    if stripped.startswith("\\"):
+        return True
+    return False
+
+
+def ensure_section_introductions(text: str) -> str:
+    """Ensure every Markdown section and subsection opens with prose."""
+    lines = text.splitlines()
+    out: list[str] = []
+    for idx, line in enumerate(lines):
+        out.append(line)
+        match = re.match(r"^(#{2,})\s+", line)
+        if not match:
+            continue
+        cursor = idx + 1
+        while cursor < len(lines):
+            candidate = lines[cursor].strip()
+            if not candidate or candidate.startswith(
+                (r"\index{", r"\label{", r"\Needspace", r"\FloatBarrier", r"\newpage", r"\clearpage")
+            ):
+                cursor += 1
+                continue
+            break
+        if cursor >= len(lines) or line_begins_structural_content(lines[cursor]):
+            topic = heading_topic(line) or "the topic"
+            kind = "material" if cursor >= len(lines) else structural_content_kind(lines[cursor])
+            out.extend(("", section_opening(topic, kind)))
+    return "\n".join(out).strip() + "\n"
+
+
+def verify_section_introductions(text: str) -> None:
+    """Reject sections whose first substantive content is not prose."""
+    lines = text.splitlines()
+    failures: list[str] = []
+    for idx, line in enumerate(lines):
+        if not re.match(r"^(#{2,})\s+", line):
+            continue
+        cursor = idx + 1
+        while cursor < len(lines):
+            candidate = lines[cursor].strip()
+            if not candidate or candidate.startswith(
+                (r"\index{", r"\label{", r"\Needspace", r"\FloatBarrier", r"\newpage", r"\clearpage")
+            ):
+                cursor += 1
+                continue
+            break
+        if cursor >= len(lines) or line_begins_structural_content(lines[cursor]):
+            failures.append(f"line {idx + 1}: {line}")
+    if failures:
+        raise RuntimeError("sections without introductory prose:\n" + "\n".join(failures))
 
 
 def ensure_equation_where_clauses(text: str) -> str:
     lines = text.splitlines()
     out: list[str] = []
     in_math = False
+    topic = "the current derivation"
     for idx, line in enumerate(lines):
         out.append(line)
+        if line.lstrip().startswith("#"):
+            topic = heading_topic(line).lower() or topic
         if not DISPLAY_MATH_LINE_RE.match(line):
             continue
         if not in_math:
@@ -160,9 +346,112 @@ def ensure_equation_where_clauses(text: str) -> str:
             out.extend(
                 (
                     "",
-                    "where the symbols retain the meanings established in this section and subscripts identify samples, frames, channels, or spectral bins as applicable.",
+                    f"where symbols and units follow the definitions established for {topic}.",
                 )
             )
+    return "\n".join(out).strip() + "\n"
+
+
+def markdown_table_cells(line: str) -> list[str]:
+    return [cell.strip() for cell in re.split(r"(?<!\\)\|", line.strip().strip("|"))]
+
+
+def add_print_breaks(value: str) -> str:
+    """Normalize dense comma-separated prose without altering inline code."""
+    parts = re.split(r"(`[^`]*`)", value)
+    for index in range(0, len(parts), 2):
+        parts[index] = re.sub(r",(?!\s)", ", ", parts[index])
+    return "".join(parts)
+
+
+def reflow_wide_markdown_tables(text: str, *, min_columns: int = 6) -> str:
+    """Turn tables too wide for print into complete, wrapping records."""
+    lines = text.splitlines()
+    out: list[str] = []
+    i = 0
+    topic = "this section"
+    while i < len(lines):
+        if lines[i].lstrip().startswith("#"):
+            topic = heading_topic(lines[i]) or topic
+        if i + 1 >= len(lines) or "|" not in lines[i] or not MARKDOWN_TABLE_RULE_RE.match(lines[i + 1]):
+            out.append(lines[i])
+            i += 1
+            continue
+
+        headers = markdown_table_cells(lines[i])
+        rows: list[list[str]] = []
+        cursor = i + 2
+        while cursor < len(lines) and lines[cursor].lstrip().startswith("|"):
+            row = markdown_table_cells(lines[cursor])
+            if len(row) > len(headers) and len(headers) >= 2:
+                row = row[: len(headers) - 2] + [r" \| ".join(row[len(headers) - 2 : -1]), row[-1]]
+            elif len(row) < len(headers):
+                row.extend([""] * (len(headers) - len(row)))
+            rows.append(row)
+            cursor += 1
+
+        if len(headers) < min_columns or not rows or any(len(row) != len(headers) for row in rows):
+            out.extend(lines[i:cursor])
+            i = cursor
+            continue
+
+        if headers[0].casefold() == "flag":
+            introduction = f"{topic} accepts the options below; defaults and parser sources are included for reference."
+        elif "backend" in {header.casefold() for header in headers}:
+            introduction = f"The {topic.lower()} results pair each backend with its timing, quality, and resource measurements."
+        elif headers[0].casefold() in {"transform", "transformation"}:
+            introduction = f"The {topic.lower()} records summarize what each transform controls and where it is useful."
+        elif headers[0].casefold() == "signal":
+            introduction = f"The {topic.lower()} records identify each signal and the role it plays in the test set."
+        else:
+            introduction = f"The records for {topic.lower()} keep the relevant measurements and notes together."
+        out.extend((introduction, ""))
+        for row in rows:
+            fields = [
+                f"**{header}:** {'(none)' if value == '``' else add_print_breaks(value)}"
+                for header, value in zip(headers, row)
+                if value
+            ]
+            record = ". ".join(field.rstrip(".") for field in fields) + "."
+            out.extend((r"\Needspace{4\baselineskip}", "", record, ""))
+        i = cursor
+    return "\n".join(out).strip() + "\n"
+
+
+def label_bare_table_urls(text: str) -> str:
+    lines: list[str] = []
+    for line in text.splitlines():
+        if line.lstrip().startswith("|"):
+            line = re.sub(
+                r"(?<!\]\()https?://[^\s|]+",
+                lambda match: f"[catalog record]({match.group(0)})",
+                line,
+            )
+        lines.append(line)
+    return "\n".join(lines).strip() + "\n"
+
+
+def link_citation_table_titles(text: str) -> str:
+    """Embed citation-audit links in titles instead of printing a URL column."""
+    lines = text.splitlines()
+    out: list[str] = []
+    i = 0
+    while i < len(lines):
+        if i + 1 >= len(lines) or markdown_table_cells(lines[i]) != ["Year", "Authors", "Title", "URL"]:
+            out.append(lines[i])
+            i += 1
+            continue
+
+        out.extend(("| Year | Authors | Title |", "| --- | --- | --- |"))
+        i += 2
+        while i < len(lines) and lines[i].lstrip().startswith("|"):
+            row = markdown_table_cells(lines[i])
+            if len(row) == 4:
+                year, authors, title, url = row
+                out.append(f"| {year} | {authors} | [{title}]({url}) |")
+            else:
+                out.append(lines[i])
+            i += 1
     return "\n".join(out).strip() + "\n"
 
 
@@ -173,8 +462,9 @@ def add_index_entries(text: str) -> str:
     for line in lines:
         indexed.append(line)
         if line.lstrip().startswith("#"):
-            heading = index_key(line.lstrip("#").strip())
-            if heading:
+            raw_heading = line.lstrip("#").strip()
+            heading = index_key(raw_heading)
+            if heading and not re.match(r"\d+\.\s+.+:\s+", raw_heading):
                 indexed.append(rf"\index{{{heading}}}")
         terms.update(re.findall(r"--[a-z0-9][a-z0-9-]*", line))
         terms.update(re.findall(r"\bpvx[a-z0-9-]*\b", line))
@@ -263,6 +553,27 @@ WINDOW_FORMULAE: dict[str, tuple[str, str]] = {
         r"w[n]=\frac{I_0\left(\beta\sqrt{1-r_n^2}\right)}{I_0(\beta)},\qquad r_n=\frac{n-m}{m}",
         r"where \(I_0\) is the modified Bessel function, \(\beta\) controls taper strength, \(m=(N-1)/2\), and \(n\) is the sample index.",
     ),
+}
+
+WINDOW_FAMILY_NOTES = {
+    "Bohman": "Its smooth edge behavior favors low leakage over a compact main lobe.",
+    "Cauchy / Lorentzian": "Its long tails retain more distant samples than a Gaussian of similar center width.",
+    "Cosine power": "Raising the sine profile changes edge attenuation without introducing a new functional family.",
+    "Cosine series": "Its coefficients trade main-lobe width against sidelobe level in a controlled way.",
+    "Exponential": "Its cusp-like center and rapid decay make it unlike the smoother cosine tapers.",
+    "Gaussian": "The spread parameter directly controls how tightly the analysis is concentrated around frame center.",
+    "General Hamming": "Changing the constant term moves continuously through several familiar cosine tapers.",
+    "Generalized Gaussian": "Separate spread and shape controls make the shoulders independently adjustable.",
+    "Hann-Poisson": "Multiplying Hann by an exponential envelope strengthens edge decay while preserving a familiar center.",
+    "Hybrid taper": "It combines polynomial and cosine behavior rather than committing to either alone.",
+    "Kaiser-Bessel": "The beta parameter offers a direct and widely understood control over spectral concentration.",
+    "Polynomial": "Its piecewise polynomial contour reaches zero smoothly and suppresses distant frame samples.",
+    "Quadratic": "Its simple parabolic profile emphasizes the middle of the frame with modest computational cost.",
+    "Rectangular": "With no taper at all, it provides the sharpest baseline for seeing leakage caused by abrupt edges.",
+    "Sinc": "Its sampled sinc contour connects window design to interpolation and band-limited reconstruction ideas.",
+    "Sinusoidal": "The half-sine contour is smooth, symmetric, and easy to reason about under overlap.",
+    "Triangular": "Its linear slopes make the time-domain weighting obvious and the spectral compromise easy to hear.",
+    "Tukey": "A flat center and adjustable cosine shoulders let it move between rectangular and Hann-like behavior.",
 }
 
 
@@ -359,7 +670,7 @@ The following landscape table is deliberately limited to the quantities most use
 \begin{landscape}
 \small
 \setlength{\tabcolsep}{3pt}
-\begin{longtable}{@{}p{0.15\linewidth}p{0.13\linewidth}p{0.07\linewidth}p{0.08\linewidth}p{0.09\linewidth}p{0.10\linewidth}p{0.30\linewidth}@{}}
+\begin{longtable}{@{}p{0.22\linewidth}p{0.13\linewidth}p{0.07\linewidth}p{0.08\linewidth}p{0.09\linewidth}p{0.10\linewidth}p{0.23\linewidth}@{}}
 \caption{Comparison of all pvx analysis windows.}\\
 \toprule
 Window & Family & CG & ENBW & Main lobe & Sidelobe & Recommended use \\
@@ -384,7 +695,9 @@ Window & Family & CG & ENBW & Main lobe & Sidelobe & Recommended use \\
 
 ## Complete Window Atlas
 
-Each entry begins with the exact formula family and parameters, followed by calibrated metrics, a time-domain graph, a frequency-domain graph, and listening guidance. The repeated structure is intentional: it supports direct comparison without forcing the reader to shuttle between a catalog and a distant plate section.
+Each entry gives the formula, measured properties, two plots, and a short listening note. Read the time-domain plot as a map of which samples influence a frame. Read the spectrum as the cost of that choice: narrow main lobes help separate nearby partials, while low sidelobes keep strong components from masking weak ones.
+
+For listening tests, hold the FFT size and hop constant and compare the candidate against Hann. Use a short passage that contains both attacks and sustained tones. Listen for attack shape, tonal focus, high-frequency haze, and stereo stability, then verify overlap-add behavior before adopting the window for a long render.
 """
     )
     for spec in specs:
@@ -392,13 +705,14 @@ Each entry begins with the exact formula family and parameters, followed by cali
         display_name = spec.name.replace("_", " ")
         time_path = f"docs/assets/windows/print/{spec.name}_time.svg.png"
         freq_path = f"docs/assets/windows/print/{spec.name}_freq.svg.png"
+        family_note = WINDOW_FAMILY_NOTES[spec.family]
         chunks.append(
             rf"""
-\clearpage
+\Needspace{{0.42\textheight}}
 ### {display_name}
 \index{{windows!{display_name}}}
 
-The `{spec.name}` window belongs to the {spec.family.lower()} family. Its configured parameters are `{spec.parameters}`. This entry presents the mathematical definition before the graphs so the visible shape can be connected to the coefficients that produce it.
+`{spec.name}` is a {spec.family.lower()} design with `{spec.parameters}`. {family_note} Its coherent gain is {spec.coherent_gain}, and its equivalent noise bandwidth is {spec.enbw} bins.
 
 $$
 {equation}
@@ -422,30 +736,27 @@ Peak sidelobe & {spec.sidelobe} dB \\
 \end{{tabular}}
 \end{{table}}
 
-\clearpage
-\begin{{figure}}[p]
+\begin{{figure}}[H]
 \centering
-\includegraphics[width=0.94\textwidth,height=0.78\textheight,keepaspectratio]{{{time_path}}}
-\caption{{Time-domain shape of the {latex_escape(display_name)} window.}}
-\end{{figure}}
-\clearpage
-
-\begin{{figure}}[p]
+\begin{{minipage}}[t]{{0.49\textwidth}}
 \centering
-\includegraphics[width=0.94\textwidth,height=0.78\textheight,keepaspectratio]{{{freq_path}}}
-\caption{{Magnitude spectrum of the {latex_escape(display_name)} window.}}
+\includegraphics[width=\linewidth,trim=0 950 0 0,clip]{{{time_path}}}
+\captionof{{figure}}{{Time-domain shape of the {latex_escape(display_name)} window.}}
+\end{{minipage}}\hfill
+\begin{{minipage}}[t]{{0.49\textwidth}}
+\centering
+\includegraphics[width=\linewidth,trim=0 950 0 0,clip]{{{freq_path}}}
+\captionof{{figure}}{{Magnitude spectrum of the {latex_escape(display_name)} window.}}
+\end{{minipage}}
 \end{{figure}}
-\clearpage
 
 #### Interpretation and use
 
-The principal strength of this window is straightforward: {spec.strengths} That advantage should be weighed against its main limitation: {spec.limitations}
+**Strength.** {spec.strengths}
 
-In a phase-vocoder render, the time-domain shape controls how strongly samples near the frame edges participate in the analysis. The frequency-domain graph shows the corresponding compromise between main-lobe width and sidelobe rejection. A narrower main lobe separates nearby stable partials more readily, while lower sidelobes reduce leakage from strong components into weaker neighbours.
+**Limitation.** {spec.limitations}
 
-The practical recommendation is: {spec.advice} Start with a short representative passage, compare against Hann at matched FFT and hop sizes, and listen separately for attack definition, tonal focus, high-frequency haze, and stereo stability. A window should be selected for the material and the requested transformation, not for a single attractive metric.
-
-The reported measurements describe the window itself. They do not replace overlap-add verification. The synthesis hop, normalization policy, phase mode, and transient strategy can change the audible result even when the analysis window is held constant.
+**Recommendation.** {spec.advice}
 """
         )
     return "\n".join(chunks).strip() + "\n"
@@ -474,6 +785,28 @@ def graph_atlas_appendix() -> str:
         ("polynomial order 3", "interp_polynomial_order_3"),
         ("polynomial order 5", "interp_polynomial_order_5"),
     )
+    function_notes = {
+        "pitch_ratio_vs_semitones": "Semitones map exponentially to ratio: twelve semitones doubles frequency, while minus twelve halves it.",
+        "pitch_ratio_vs_cents": "The cents scale uses the same exponential law at finer resolution; 1200 cents is one octave.",
+        "dynamics_transfer_curves": "The identity, compressor, expander, and limiter curves reveal where gain departs from a one-to-one response.",
+        "softclip_transfer_functions": "These curves compare how the available soft clippers bend peaks before they reach a hard limit.",
+        "morph_blend_magnitude_curves": "The blend rules agree at the endpoints but take distinct paths through intermediate magnitudes.",
+        "mask_exponent_curves": "The exponent changes how sharply a normalized mask favors strong bins over weak ones.",
+        "phase_mix_angle_curve": "Complex-vector interpolation does not produce a linear angle sweep; the curve shows the resulting phase path.",
+    }
+    interpolation_notes = {
+        "interp_none": "Sample-and-hold keeps each value unchanged until the next control point, where it jumps immediately.",
+        "interp_nearest": "Nearest-neighbour interpolation switches at each segment midpoint rather than at the authored point.",
+        "interp_linear": "Linear interpolation moves at constant speed and introduces a corner wherever the segment slope changes.",
+        "interp_cubic": "The cubic curve smooths the path through the control points, with curvature determined by neighboring values.",
+        "interp_exponential": "Exponential interpolation changes by proportion rather than by a fixed increment, which suits ratio-like controls.",
+        "interp_s_curve": "Smoothstep reaches each endpoint with zero slope, softening the joins between segments.",
+        "interp_smootherstep": "Smootherstep also flattens the second derivative at the endpoints, producing gentler acceleration.",
+        "interp_polynomial_order_1": "First-order polynomial interpolation is the linear reference case.",
+        "interp_polynomial_order_2": "The quadratic case biases motion toward one side of the segment and introduces visible curvature.",
+        "interp_polynomial_order_3": "The cubic polynomial provides a stronger ease while remaining comparatively compact.",
+        "interp_polynomial_order_5": "The fifth-order curve spends more time near the endpoints and moves fastest through the middle.",
+    }
     chunks = [
         r"""# Transfer-Function and Automation Graph Atlas
 
@@ -494,18 +827,17 @@ where \(r_s\) is the pitch ratio for \(s\) semitones and \(r_c\) is the pitch ra
         path = f"docs/assets/functions/print/{stem}.svg.png"
         chunks.append(
             rf"""
-\clearpage
+\Needspace{{0.34\textheight}}
 ### {title}
 \index{{graphs!{title}}}
 
-The following graph presents the {title} relationship at full print scale. Read the horizontal axis as the controlling value and the vertical axis as the resulting ratio, gain, magnitude, or angle identified by the labels.
+{function_notes[stem]}
 
-\begin{{figure}}[p]
+\begin{{figure}}[H]
 \centering
-\includegraphics[width=0.95\textwidth,height=0.80\textheight,keepaspectratio]{{{path}}}
+\includegraphics[width=0.88\textwidth,height=0.22\textheight,trim=0 950 0 0,clip,keepaspectratio]{{{path}}}
 \caption{{{title.capitalize()}.}}
 \end{{figure}}
-\clearpage
 """
         )
     chunks.append(
@@ -530,15 +862,15 @@ where \(h(\lambda)\) is the smoothstep easing function, \(\lambda\) is normalize
         path = f"docs/assets/interpolation/print/{stem}.svg.png"
         chunks.append(
             rf"""
-\Needspace{{0.45\textheight}}
+\Needspace{{0.32\textheight}}
 ### {title}
 \index{{interpolation!{title}}}
 
-The following graph shows {title} interpolation between a fixed set of control points. The comparison is most useful when the curve near each point and the continuity of its slope are examined together.
+{interpolation_notes[stem]}
 
 \begin{{figure}}[H]
 \centering
-\includegraphics[width=0.88\textwidth,height=0.24\textheight,trim=0 1000 0 0,clip,keepaspectratio]{{{path}}}
+\includegraphics[width=0.88\textwidth,height=0.20\textheight,trim=0 1000 0 0,clip,keepaspectratio]{{{path}}}
 \caption{{{title.capitalize()} interpolation.}}
 \end{{figure}}
 """
@@ -547,9 +879,87 @@ The following graph shows {title} interpolation between a fixed set of control p
 
 
 def youtube_search_url(query: str) -> str:
-    """Return a durable ASCII YouTube catalog-search URL."""
+    """Return a durable ASCII YouTube search URL."""
     normalized = re.sub(r"[^A-Za-z0-9]+", "+", query).strip("+")
     return f"https://www.youtube.com/results?search_query={normalized}"
+
+
+MUSICAL_REFERENCE_EXTRAS = {
+    "Transfigured Wind": "Roger Reynolds",
+    "Verblendungen": "Kaija Saariaho",
+    "Nymphea": "Kaija Saariaho",
+}
+
+NON_PERSON_ARTISTS = {
+    "Anonymous",
+    "Aphex Twin",
+    "Autechre",
+    "Bjork",
+    "Boards of Canada",
+    "Cocteau Twins",
+    "Dave Brubeck Quartet",
+    "Kraftwerk",
+    "My Bloody Valentine",
+    "Oneohtrix Point Never",
+    "Pink Floyd",
+    "Public Enemy",
+    "Radiohead",
+    "Squarepusher",
+    "The Beatles",
+    "The Orb",
+}
+
+
+def person_index_key(name: str) -> str:
+    """Return an index sort key while preserving ensembles and mononyms."""
+    clean = index_key(name)
+    parts = clean.split()
+    if clean in NON_PERSON_ARTISTS or len(parts) < 2:
+        return clean
+    return f"{parts[-1]}, {' '.join(parts[:-1])}"
+
+
+def musical_reference_queries() -> dict[str, str]:
+    """Return every musical title cited by the guide and its search artist."""
+    import json
+
+    catalog_path = ROOT / "docs" / "phase_vocoder_listening_catalog.json"
+    catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+    references = {row[2]: row[1] for row in catalog}
+    references.update(MUSICAL_REFERENCE_EXTRAS)
+    return references
+
+
+def link_musical_references(text: str) -> str:
+    """Italicize and link every catalogued musical-work citation."""
+    index_lines: dict[str, str] = {}
+    protected_lines: list[str] = []
+    for line_number, line in enumerate(text.splitlines()):
+        if line.lstrip().startswith(r"\index{"):
+            placeholder = f"PVXINDEXLINE{line_number:05d}TOKEN"
+            index_lines[placeholder] = line
+            protected_lines.append(placeholder)
+        else:
+            protected_lines.append(line)
+    text = "\n".join(protected_lines)
+    replacements: list[tuple[str, str]] = []
+    for number, (title, artist) in enumerate(sorted(
+        musical_reference_queries().items(), key=lambda item: len(item[0]), reverse=True
+    )):
+        url = youtube_search_url(f"{artist} {title} complete performance recording")
+        linked_title = rf"\href{{{url}}}{{\textit{{{latex_escape(title)}}}}}"
+        placeholder = f"PVXMUSICALWORK{number:03d}TOKEN"
+        markdown_link = re.compile(rf"\[\*?{re.escape(title)}\*?\]\([^)]+\)")
+        text = markdown_link.sub(placeholder, text)
+        text = text.replace(rf"\textit{{{latex_escape(title)}}}", placeholder)
+        text = text.replace(f"*{title}*", placeholder)
+        text = text.replace(title, placeholder)
+        replacements.append((placeholder, linked_title))
+    for placeholder, linked_title in replacements:
+        text = text.replace(placeholder, linked_title)
+    for placeholder, index_line in index_lines.items():
+        text = text.replace(placeholder, index_line)
+    return text
 
 
 def phase_vocoder_listening_appendix() -> str:
@@ -564,11 +974,11 @@ def phase_vocoder_listening_appendix() -> str:
         r"""# A Phase-Vocoder Listening Library: 100 Musical Works
 
 \index{listening guide}
-\index{YouTube catalog searches}
+\index{YouTube searches}
 
 This appendix is a guided listening and processing curriculum. It combines a small set of historically grounded phase-vocoder precedents with a much larger laboratory of famous works chosen because their voices, attacks, resonances, textures, or large-scale timing make particular transform behaviors easy to hear. The label attached to each entry matters. **Documented** identifies direct phase-vocoder practice supported by the historical literature. **Historical context** identifies related spectral and computer-music practice without claiming that every sound in the named work was made by a phase vocoder. **Listening laboratory** means that the work is recommended as source material or as a perceptual reference; it is not a claim about the production of the original recording.
 
-YouTube changes individual upload URLs, regional availability, editions, and rights status frequently. For that reason, every entry supplies catalog-search links rather than endorsing one upload. The first search favors complete performances or recordings. The second favors scores, analyses, composer interviews, and demonstrations. Readers should choose lawful sources, respect recording and composition rights, and use public-domain or properly licensed audio for exported experiments.
+YouTube changes individual upload URLs, regional availability, editions, and rights status frequently. For that reason, each musical title links to a search for complete performances or recordings rather than endorsing one upload. Readers should choose lawful sources, respect recording and composition rights, and use public-domain or properly licensed audio for exported experiments.
 
 The historically grounded group is supported by Trevor Wishart's retrospective on twenty-five years of phase-vocoder practice, the Library of Congress genealogy of Roger Reynolds's *Transfigured Wind*, IRCAM's analysis of Jonathan Harvey's *Mortuos Plango, Vivos Voco*, and the broader phase-vocoder literature cited in Chapter 1. These sources can be consulted through \href{https://doi.org/10.13128/Music_Tec-13207}{Wishart's retrospective}, the \href{https://www.loc.gov/collections/roger-reynolds/articles-and-essays/the-genealogy-of-transfigured-wind/introduction/}{Library of Congress essay}, and the \href{https://ressources.ircam.fr/fr/analysis/}{IRCAM analysis collection}.
 
@@ -591,38 +1001,39 @@ Each entry proposes one focused experiment. Begin with a short, legally obtained
             current_category = category
             chunks.append(
                 f"""
-\\clearpage
+\\Needspace{{0.24\\textheight}}
 ## {category}
 
 The works in this group emphasize {category.lower()}. Read each note before listening, then use the proposed experiment as a controlled comparison rather than a recipe that must produce one correct sound.
 """
             )
         performance_url = youtube_search_url(f"{composer} {title} complete performance recording")
-        study_url = youtube_search_url(f"{composer} {title} score analysis interview")
         safe_composer = latex_escape(composer)
-        safe_title = latex_escape(title)
         safe_year = latex_escape(year)
         safe_focus = latex_escape(focus)
         safe_experiment = latex_escape(experiment)
         safe_label = latex_escape(evidence_labels[evidence])
+        person_key = person_index_key(composer)
+        title_key = index_key(title)
+        title_display = latex_escape(title)
         chunks.append(
             rf"""
-\Needspace{{0.28\textheight}}
-### {number}. {composer}: {title}
+\Needspace{{8\baselineskip}}
+### {number}. {composer}: [{title}]({performance_url}) {{-}}
 
-\index{{listening guide!{index_key(composer)}!{index_key(title)}}}
-\index{{composers!{index_key(composer)}}}
+**{safe_label}.** {safe_composer}: *{title}* ({safe_year}). {safe_focus}
 
-\textbf{{{safe_label}.}} \textit{{{safe_composer}: {safe_title}}} ({safe_year}). {safe_focus}
+\index{{listening guide!{person_key}!{title_key}@\textit{{{title_display}}}}}
+\index{{composers!{person_key}}}
+\index{{{person_key}}}
+\index{{{title_key}@\textit{{{title_display}}}}}
 
 {safe_experiment}
-
-Catalog searches provide two starting points: \href{{{performance_url}}}{{YouTube performance search}} and \href{{{study_url}}}{{YouTube score, analysis, and interview search}}.
 """
         )
     chunks.append(
         r"""
-\clearpage
+\Needspace{0.32\textheight}
 ## Comparative listening worksheet
 
 The catalog becomes more useful when impressions are recorded consistently. For each experiment, note the source and edition, time range, rights status, pvx command, window and hop, stretch or pitch trajectory, phase mode, transient policy, normalization method, and monitoring level. Then rate attack definition, tonal focus, formant credibility, ambience continuity, stereo stability, noise coloration, and overall musical usefulness. A failed transformation is still useful evidence when its settings and source are documented.
@@ -637,11 +1048,7 @@ def cli_reference_index_entries() -> str:
     import json
 
     data = json.loads((ROOT / "docs" / "cli_flags_reference.json").read_text(encoding="utf-8"))
-    lines = [
-        r"\chapter*{Index Registration Notes}",
-        r"\addcontentsline{toc}{chapter}{Index Registration Notes}",
-        "The following invisible index registrations connect the alphabetical index to the generated CLI inventory.",
-    ]
+    lines: list[str] = []
     for entry in data["entries"]:
         tool = index_key(entry["tool"])
         flag = entry["flag"]
@@ -746,10 +1153,269 @@ def clean_markdown(spec: ChapterSpec) -> tuple[str, str]:
                 line = f"{match.group(1)}{match.group(2)}"
         normalized_lines.append(line)
     body = "\n".join(normalized_lines).strip() + "\n"
+    if spec.source.name == "CITATION_QUALITY.md":
+        body = link_citation_table_titles(body)
+    body = label_bare_table_urls(body)
+    reflow_threshold = 4 if spec.source.name in {
+        "AI_AUGMENTATION.md",
+        "BENCHMARKS.md",
+        "CLI_FLAGS_REFERENCE.md",
+        "ML_INTEGRATION.md",
+    } else 6
+    body = reflow_wide_markdown_tables(body, min_columns=reflow_threshold)
     body = ensure_list_introductions(body)
     body = ensure_equation_where_clauses(body)
     body = add_index_entries(body)
     return title, body
+
+
+def list_of_symbols() -> str:
+    return r"""
+\chapter*{List of Symbols}
+\addcontentsline{toc}{chapter}{List of Symbols}
+\markboth{List of Symbols}{List of Symbols}
+
+This register collects the mathematical notation used throughout the guide. A symbol may acquire a more specific meaning inside a local derivation; when that happens, the accompanying where clause takes precedence. Frequencies are in hertz unless angular frequency is indicated, phase is in radians, time is in seconds unless indexed by samples or frames, and ratios are dimensionless.
+
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{@{}p{0.18\textwidth}p{0.53\textwidth}p{0.21\textwidth}@{}}
+\caption{Symbols and notation used in this guide.}\\
+\toprule
+Symbol & Meaning & Units or domain \\
+\midrule
+\endfirsthead
+\toprule
+Symbol & Meaning & Units or domain \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+
+\multicolumn{3}{@{}l}{\textbf{Indices, sets, and elementary quantities}} \\
+\addlinespace
+$n$ & Discrete-time sample index & integer \\
+$m$ & Frame, segment, or synthesis-grain index & integer \\
+$t$ & Continuous time or, when subscripted, frame index & seconds or integer \\
+$k$ & Fourier-bin index & $0\leq k<N$ \\
+$i,j$ & Generic item, control-point, partial, or matrix indices & integer \\
+$c$ & Audio-channel index & integer \\
+$q$ & Quantization, scale-step, or transform-order index & integer \\
+$\ell$ & Summation index or generalized-cosine coefficient index & integer \\
+$\mathbb{R}$ & Set of real numbers & set \\
+$\mathbb{C}$ & Set of complex numbers & set \\
+$j=\sqrt{-1}$ & Imaginary unit used in complex exponentials & complex \\
+$\lceil z\rceil$ & Smallest integer greater than or equal to $z$ & integer \\
+$|z|$ & Absolute value or complex magnitude of $z$ & nonnegative real \\
+$\arg z$ & Principal complex angle of $z$ & radians \\
+
+\addlinespace
+\multicolumn{3}{@{}l}{\textbf{Signals, sampling, and duration}} \\
+\addlinespace
+$x[n]$ & Input discrete-time signal & amplitude \\
+$y[n]$ & Output discrete-time signal & amplitude \\
+$x_c[n]$ & Input signal in channel $c$ & amplitude \\
+$y_c[n]$ & Output signal in channel $c$ & amplitude \\
+$x(t)$ & Continuous-time signal model & amplitude \\
+$f_s$ & Sampling frequency & samples per second \\
+$T_s=1/f_s$ & Sampling interval & seconds \\
+$L$ & Signal length & samples \\
+$T$ & Signal or requested render duration & seconds \\
+$N_s$ & Total number of samples in a signal or render & samples \\
+$x_{\max}$ & Peak absolute sample magnitude & amplitude \\
+$x_{\mathrm{rms}}$ & Root-mean-square signal magnitude & amplitude \\
+$\delta[n]$ & Unit impulse & sequence \\
+$\ast$ & Convolution operator & operation \\
+
+\addlinespace
+\multicolumn{3}{@{}l}{\textbf{Frames, transforms, and the STFT}} \\
+\addlinespace
+$N$ & FFT or transform size & samples \\
+$M$ & Window length when distinguished from $N$ & samples \\
+$H_a$ & Analysis hop size & samples per frame \\
+$H_s$ & Synthesis hop size & samples per frame \\
+$R=N/H_a$ & Analysis overlap factor when $N$ is divisible by $H_a$ & dimensionless \\
+$F$ & Number of analysis frames or transforms, as defined locally & count \\
+$w[n]$ & Analysis-window coefficient & dimensionless \\
+$g[n]$ & Synthesis-window coefficient & dimensionless \\
+$X_t[k]$ & Complex STFT coefficient at frame $t$, bin $k$ & complex amplitude \\
+$Y_t[k]$ & Modified or synthesized complex spectrum & complex amplitude \\
+$A_t[k]=|X_t[k]|$ & STFT magnitude & amplitude \\
+$P_t[k]=|X_t[k]|^2$ & STFT power & amplitude squared \\
+$\phi_t[k]$ & Observed input phase & radians \\
+$\widehat{\phi}_t[k]$ & Reconstructed output phase & radians \\
+$\Delta\phi_t[k]$ & Wrapped phase residual after expected advance is removed & radians \\
+$\operatorname{princarg}(\theta)$ & Wrapping of angle $\theta$ to a principal interval & radians \\
+$\omega_k=2\pi k/N$ & Nominal digital angular frequency of bin $k$ & radians per sample \\
+$\widehat{\omega}_t[k]$ & Estimated instantaneous angular frequency & radians per sample \\
+$f_k=kf_s/N$ & Nominal frequency of bin $k$ & hertz \\
+$f_{\mathrm{Nyq}}=f_s/2$ & Nyquist frequency & hertz \\
+$\mathcal{F}\{x\}$ & Fourier transform of $x$ & transform \\
+$\mathcal{F}^{-1}\{X\}$ & Inverse Fourier transform of $X$ & transform \\
+$\operatorname{DFT}_N$ & Length-$N$ discrete Fourier transform & transform \\
+$\operatorname{IDFT}_N$ & Length-$N$ inverse discrete Fourier transform & transform \\
+
+\addlinespace
+\multicolumn{3}{@{}l}{\textbf{Time scaling, remapping, and reconstruction}} \\
+\addlinespace
+$\alpha$ & Global output-duration or time-scale ratio & $\alpha>0$ \\
+$a(t)$ & Time-varying stretch ratio & positive real \\
+$\tau(t)$ & Mapping between source and output time, as stated locally & seconds \\
+$d\tau/dt$ & Local slope of a time map & dimensionless \\
+$\rho=H_s/H_a$ & Hop ratio in a basic phase-vocoder schedule & positive real \\
+$C[n]$ & Overlap-add normalization sum & dimensionless \\
+$\sum_m w[n-mH]$ & Constant-overlap-add window sum & dimensionless \\
+$\sum_m w^2[n-mH]$ & Squared-window overlap normalization sum & dimensionless \\
+$\epsilon$ & Small positive numerical floor & positive real \\
+$B$ & Chunk, block, or streaming-buffer length & samples \\
+$D$ & Analysis frame rate in historical PVC notation & frames per second \\
+
+\addlinespace
+\multicolumn{3}{@{}l}{\textbf{Window analysis and design}} \\
+\addlinespace
+$W(\omega)$ & Discrete-time Fourier transform of a window & complex response \\
+$CG$ & Coherent gain of a window & dimensionless \\
+$ENBW$ & Equivalent noise bandwidth & FFT bins \\
+$SL$ & Scalloping loss & decibels \\
+$\beta$ & Kaiser-window shape parameter & nonnegative real \\
+$\sigma$ & Gaussian-window standard deviation & samples or ratio \\
+$\alpha_w$ & Window-specific taper or shape parameter & dimensionless \\
+$a_\ell$ & Generalized-cosine window coefficient & dimensionless \\
+$I_0$ & Modified Bessel function of the first kind, order zero & function \\
+$\Gamma(z)$ & Gamma function & function \\
+$K$ & Highest cosine-series order in a generalized window & integer \\
+$\Delta f=f_s/N$ & FFT-bin spacing & hertz \\
+$B_{\mathrm{ML}}$ & Main-lobe width & FFT bins or hertz \\
+$A_{\mathrm{SL}}$ & Peak sidelobe level & decibels \\
+
+\addlinespace
+\multicolumn{3}{@{}l}{\textbf{Pitch, tuning, partials, and formants}} \\
+\addlinespace
+$f_0(t)$ & Fundamental-frequency trajectory & hertz \\
+$f_{\mathrm{ref}}$ & Reference or tuning frequency & hertz \\
+$f_{A4}$ & Frequency assigned to concert A4 & hertz \\
+$r$ & Pitch-shift or frequency ratio & positive real \\
+$s$ & Pitch displacement & semitones \\
+$c_{\mathrm{cent}}$ & Pitch displacement & cents \\
+$r=2^{s/12}$ & Equal-tempered ratio for $s$ semitones & dimensionless \\
+$r=2^{c_{\mathrm{cent}}/1200}$ & Ratio for a displacement in cents & dimensionless \\
+$p/q$ & Rational tuning interval & positive rational \\
+$E$ & Number of equal divisions of an octave & integer \\
+$f_i(t)$ & Frequency of partial or tracked component $i$ & hertz \\
+$A_i(t)$ & Amplitude trajectory of partial $i$ & amplitude \\
+$F_i$ & Center frequency of formant $i$ & hertz \\
+$B_i$ & Bandwidth of formant $i$ & hertz \\
+$E_t[k]$ & Spectral-envelope estimate & amplitude \\
+$h$ & Harmonic number & positive integer \\
+$\eta$ & Inharmonicity coefficient & nonnegative real \\
+$v(t)$ & Voicing probability or voiced-state measure & $0\leq v\leq1$ \\
+$\kappa(t)$ & Pitch-confidence measure & $0\leq\kappa\leq1$ \\
+
+\addlinespace
+\multicolumn{3}{@{}l}{\textbf{Control curves, routing, and interpolation}} \\
+\addlinespace
+$u(t)$ & Generic time-varying control signal & parameter-dependent \\
+$u_i$ & Control value at point $i$ & parameter-dependent \\
+$t_i$ & Timestamp of control point $i$ & seconds \\
+$\lambda$ & Normalized position between two control points & $0\leq\lambda\leq1$ \\
+$h(\lambda)$ & Easing or interpolation-shape function & $[0,1]\rightarrow[0,1]$ \\
+$3\lambda^2-2\lambda^3$ & Smoothstep interpolation polynomial & dimensionless \\
+$6\lambda^5-15\lambda^4+10\lambda^3$ & Smootherstep interpolation polynomial & dimensionless \\
+$p$ & Polynomial interpolation order in that context & integer, $p\geq1$ \\
+$a,b$ & Scale and offset in an affine route $au+b$ & parameter-dependent \\
+$u_{\min},u_{\max}$ & Lower and upper control clamps & parameter-dependent \\
+$r_c$ & Control sampling rate & values per second \\
+$\mathcal{R}(u)$ & Generic route or control transformation & function \\
+
+\addlinespace
+\multicolumn{3}{@{}l}{\textbf{Spectral filtering, morphing, and cross-synthesis}} \\
+\addlinespace
+$H[k]$ & Static complex frequency response & complex gain \\
+$R_t[k]$ & Time-varying response or reference spectrum & complex gain \\
+$M_t[k]$ & Spectral mask & nonnegative real \\
+$\gamma$ & Mask exponent, spectral-warp exponent, or coherence value as defined locally & dimensionless \\
+$\mu$ & Morph, mix, or phase-interpolation amount & $0\leq\mu\leq1$ \\
+$X_A,X_B$ & Spectra of source A and source B & complex amplitude \\
+$A_A,A_B$ & Magnitudes of source A and source B & amplitude \\
+$\phi_A,\phi_B$ & Phases of source A and source B & radians \\
+$G_t[k]$ & Applied spectral gain & nonnegative real \\
+$\theta_t[k]$ & Output phase angle after phase mixing & radians \\
+$\mathcal{P}$ & Set of detected spectral peaks & index set \\
+$k_p$ & Bin index of a spectral peak & integer \\
+$\mathcal{N}(k_p)$ & Bin neighborhood associated with peak $k_p$ & index set \\
+$Q$ & Resonator quality factor & positive real \\
+$f_r$ & Resonance center frequency & hertz \\
+$\tau_r$ & Resonance or feedback decay time & seconds \\
+
+\addlinespace
+\multicolumn{3}{@{}l}{\textbf{Dynamics, levels, and mastering}} \\
+\addlinespace
+$A$ & Linear amplitude or gain when unambiguous locally & nonnegative real \\
+$A_{\mathrm{dB}}$ & Amplitude level in decibels & dB \\
+$20\log_{10}|A|$ & Linear-amplitude to decibel conversion & dB \\
+$P_{\mathrm{dB}}$ & Power level in decibels & dB \\
+$10\log_{10}P$ & Linear-power to decibel conversion & dB \\
+$\theta$ & Compressor, expander, limiter, or gate threshold & dB \\
+$R_c$ & Compression ratio & ratio \\
+$R_e$ & Expansion ratio & ratio \\
+$G_{\mathrm{dB}}$ & Gain reduction or makeup gain & dB \\
+$\tau_a$ & Attack time constant & seconds \\
+$\tau_d$ & Decay or release time constant & seconds \\
+$L_K$ & K-weighted loudness quantity & LUFS-related \\
+$L_{\mathrm{target}}$ & Requested integrated loudness target & LUFS \\
+$P_{\mathrm{true}}$ & True-peak level & dBTP \\
+$c_{\mathrm{clip}}$ & Soft-clip or hard-clip ceiling & amplitude \\
+
+\addlinespace
+\multicolumn{3}{@{}l}{\textbf{Stereo, multichannel, and spatial quantities}} \\
+\addlinespace
+$L[n],R[n]$ & Left and right channel signals & amplitude \\
+$M[n]=(L[n]+R[n])/2$ & Mid signal & amplitude \\
+$S[n]=(L[n]-R[n])/2$ & Side signal & amplitude \\
+$\Gamma_{xy}(k)$ & Complex coherence between channels $x$ and $y$ & complex; magnitude $[0,1]$ \\
+$\operatorname{IPD}(k)$ & Interchannel phase difference & radians \\
+$\operatorname{ILD}$ & Interaural or interchannel level difference & decibels \\
+$\operatorname{ITD}$ & Interaural or interchannel time difference & seconds \\
+$c_{\mathrm{ref}}$ & Reference channel used for phase or coherence locking & channel index \\
+$\zeta$ & Coherence-strength control & $0\leq\zeta\leq1$ \\
+$C$ & Number of channels when used as a count & positive integer \\
+
+\addlinespace
+\multicolumn{3}{@{}l}{\textbf{Features, statistics, and evaluation}} \\
+\addlinespace
+$\operatorname{RMS}$ & Root-mean-square level or feature & amplitude \\
+$\operatorname{SNR}$ & Signal-to-noise ratio & decibels \\
+$\operatorname{SI\!\text{-}\!SDR}$ & Scale-invariant signal-to-distortion ratio & decibels \\
+$\operatorname{LSD}$ & Log-spectral distance & decibels \\
+$\operatorname{MAE}$ & Mean absolute error & parameter-dependent \\
+$\operatorname{RMSE}$ & Root-mean-square error & parameter-dependent \\
+$\bar{x}$ & Arithmetic mean of observations & same as $x$ \\
+$\widetilde{x}$ & Median or robust central estimate & same as $x$ \\
+$\sigma_x$ & Standard deviation of $x$ & same as $x$ \\
+$\operatorname{cov}(x,y)$ & Covariance of $x$ and $y$ & product units \\
+$\operatorname{corr}(x,y)$ & Correlation coefficient & $[-1,1]$ \\
+$z_d(t)$ & Feature dimension $d$ at time $t$ & feature-dependent \\
+$\mathbf{z}(t)$ & Feature vector at time $t$ & real vector \\
+$d$ & Feature-vector dimension & positive integer \\
+$\mathcal{D}$ & Dataset, corpus, or evaluation collection & set \\
+$\mathcal{L}$ & Loss or objective function & nonnegative real \\
+
+\addlinespace
+\multicolumn{3}{@{}l}{\textbf{Computational and reproducibility notation}} \\
+\addlinespace
+$\mathcal{O}(\cdot)$ & Asymptotic computational complexity & order notation \\
+$N\log_2N$ & Characteristic FFT operation-count scale & operations \\
+$s_{\mathrm{seed}}$ & Deterministic random or dither seed & integer \\
+$h_{\mathrm{SHA256}}$ & SHA-256 content digest & 256-bit value \\
+$v_{\mathrm{schema}}$ & Artifact or manifest schema version & identifier \\
+$b$ & Output bit depth in export context & bits per sample \\
+$r_b$ & Bit rate & bits per second \\
+$\Delta t_c$ & Streaming chunk duration & seconds \\
+$N_c$ & Samples per chunk & samples \\
+
+\end{longtable}
+\normalsize
+""".strip() + "\n"
 
 
 def frontmatter(today: date) -> str:
@@ -786,7 +1452,6 @@ pass for musicians and engineers who want useful results quickly, a deeper pass 
 to understand the phase-vocoder model, and a reference pass for people building repeatable workflows,
 augmentation pipelines, or release processes around the tool.
 
-\\vspace{{1em}}
 The supported public surface for the current alpha remains intentionally narrow:
 \\texttt{{pvx}}, \\texttt{{pvxvoc}}, \\texttt{{pvxfreeze}}, \\texttt{{pvxwarp}}, \\texttt{{pvxformant}},
 \\texttt{{pvxfilter}}, \\texttt{{pvxretune}}, and \\texttt{{pvxanalysis}}.
@@ -954,19 +1619,7 @@ If you are using `pvx` as a production or research tool, add:
 3. *ML Integration*
 4. *CLI Flags Reference*
 
-\\clearpage
-\\chapter*{{List of Symbols}}
-\\addcontentsline{{toc}}{{chapter}}{{List of Symbols}}
-\\begin{{tabular}}{{ll}}
-$N$ & FFT size, in samples \\\\
-$H_a$ & Analysis hop, in samples \\\\
-$H_s$ & Synthesis hop, in samples \\\\
-$t$ & Frame index \\\\
-$k$ & Frequency-bin index \\\\
-$X_t[k]$ & Complex spectrum for frame $t$, bin $k$ \\\\
-$\\phi_t[k]$ & Observed phase for frame $t$, bin $k$ \\\\
-$\\widehat{{\\phi}}_t[k]$ & Reconstructed output phase \\\\
-\\end{{tabular}}
+{list_of_symbols()}
 
 \\clearpage
 \\tableofcontents
@@ -997,6 +1650,33 @@ def phase_vocoder_chapter() -> str:
 A phase vocoder is an analysis-and-resynthesis instrument for recorded sound. It listens to a signal through a sequence of short, overlapping windows, estimates how each frequency component is moving, and rebuilds the signal on a new time grid. That one change of grid is what makes duration and pitch independently controllable. The result may be transparent, deliberately unreal, or somewhere wonderfully in between.
 
 The name can be misleading. A conventional vocoder divides speech into broad frequency bands and transfers their envelopes to a carrier. A phase vocoder also measures frequency content, but its central concern is the phase advance of thousands of narrow spectral bins from one frame to the next. This lets it infer local frequency and re-schedule time without throwing away continuity.
+
+## Vocoder versus phase vocoder
+
+The shared word *vocoder* describes an important family resemblance: both systems analyze sound into changing spectral information and use that information during synthesis. Their signal paths, purposes, and characteristic sounds are nevertheless different. A conventional channel vocoder is principally a source-filter instrument. It extracts slowly varying envelopes from a *modulator*, often speech, and applies those envelopes to a separate *carrier*, often a synthesizer or noise source. The carrier supplies excitation while the modulator supplies broad spectral articulation. This is the familiar talking-synthesizer effect. \index{vocoder!compared with phase vocoder}\index{carrier signal}\index{modulator signal}\index{source-filter model}
+
+A phase vocoder does not normally require a separate carrier. It converts successive overlapping frames of the input into complex short-time spectra, tracks phase change between frames, modifies the spectral representation, and resynthesizes a waveform. Its best-known uses are time stretching, pitch shifting, spectral freezing, and transformations that preserve or deliberately alter the input's own partials. The following comparison keeps the two meanings distinct.
+
+\begin{table}[H]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.17\textwidth}>{\raggedright\arraybackslash}p{0.36\textwidth}>{\raggedright\arraybackslash}p{0.36\textwidth}}
+\toprule
+\textbf{Question} & \textbf{Conventional vocoder} & \textbf{Phase vocoder} \\
+\midrule
+What enters the system? & A modulator plus a separate carrier. & Usually one signal to analyze, modify, and resynthesize. \\
+What is measured? & Broad-band amplitude envelopes, often with voiced and unvoiced information. & Complex STFT bins containing magnitude and phase, with phase change used to estimate local frequency. \\
+What drives synthesis? & The measured envelopes shape bands of the carrier. & Modified magnitudes and propagated phases reconstruct the input on a synthesis timeline. \\
+What is the usual goal? & Transfer speech-like articulation or spectral shape to another source. & Change duration, pitch, phase behavior, or spectral structure. \\
+What is the characteristic sound? & A carrier that speaks, sings, or follows another sound's articulation. & The original sound stretched or transformed, sometimes with phasiness or transient blur. \\
+Is phase central? & Not usually in the classic channel-vocoder design. & Yes. Inter-frame phase advance is the defining measurement. \\
+\bottomrule
+\end{tabular}
+\caption{The practical differences between a conventional channel vocoder and a phase vocoder.}
+\end{table}
+
+The quickest practical test is to ask where the excitation comes from. If speech envelopes make a synthesizer pad appear to speak, the process is conventional vocoding. If one recording is made longer while its pitch remains stable, the process is phase-vocoder time scaling. Cross-synthesis can blur this boundary because a phase-vocoder system may combine spectral information from two sounds, but its complex-bin analysis and phase propagation still distinguish the underlying method from a classic envelope-controlled filter bank. Product names are not reliable evidence: plug-ins sometimes use *vocoder* as a broad label for any spectral resynthesis effect, so the documented signal path matters more than the name on the interface.
 
 ## A quick mental model
 
@@ -1031,16 +1711,286 @@ The word *phase* matters because magnitude alone is not enough to make a stable 
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[x=1.15cm,y=0.8cm, arrow/.style={-{Stealth[length=2mm]}, thick}]
-\draw[->] (0,0) -- (8,0) node[right] {time};
+\draw[->] (0,0) -- (8,0) node[right] {frame position (samples)};
 \foreach \x in {0.5,1.5,...,7.5} {\draw[fill=black!12] (\x,-0.14) rectangle +(1.5,0.28);}
 \node[anchor=east] at (0,0) {analysis frames};
-\draw[->] (0,-1.2) -- (8,-1.2) node[right] {time};
+\draw[->] (0,-1.2) -- (8,-1.2) node[right] {frame position (samples)};
 \foreach \x in {0.5,2.0,3.5,5.0,6.5} {\draw[fill=black!12] (\x,-1.34) rectangle +(1.5,0.28);}
 \node[anchor=east] at (0,-1.2) {stretched synthesis};
 \draw[arrow] (3.7,-0.25) -- (3.7,-1.0) node[midway,right,align=left] {larger synthesis\\hop};
 \end{tikzpicture}
 \caption{Time stretching changes the distance between reconstructed frames while preserving their spectral content.}
 \end{figure}
+
+## From waveform to WOLA frames
+
+The working core of a phase vocoder is a weighted overlap-add short-time Fourier transform, usually abbreviated WOLA STFT. The phrase names three operations at once. *Short-time* means that the signal is examined in finite frames. *Weighted* means that each frame is multiplied by a smooth analysis window and, in a general WOLA system, by a synthesis window after the inverse transform. *Overlap-add* means that neighboring reconstructed frames are placed on an output timeline and summed where they overlap. The FFT is important, but the FFT alone is not the phase vocoder. The surrounding frame schedule, phase measurements, and reconstruction weights make the transform usable for sound.
+
+Let the frame beginning at analysis time $tH_a$ be written as:
+
+$$
+x_t[n]=x[n+tH_a]w_a[n],\qquad 0\leq n<N
+$$
+
+where $x[n]$ is the input signal, $t$ is the frame index, $H_a$ is the analysis hop in samples, $w_a[n]$ is the analysis window, $n$ is the local sample index, and $N$ is the transform size.
+
+The frame is local in two senses. It covers only $N$ samples, and its samples are measured relative to the frame origin. Successive origins are separated by $H_a$, which is usually smaller than $N$. If $N=2048$ and $H_a=512$, each new frame advances by one quarter of a window and therefore overlaps the preceding frame by 75 percent.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[x=0.92cm,y=0.88cm,font=\small]
+\draw[->] (0,0) -- (11.2,0) node[right] {input position (samples)};
+\draw[->] (0,-0.62) -- (0,3.18);
+\node[rotate=90] at (-0.48,1.3) {amplitude / coefficient (linear)};
+\draw[thick] plot[smooth] coordinates {(0,0.12)(0.5,0.35)(1,0.1)(1.5,-0.3)(2,-0.1)(2.5,0.55)(3,0.8)(3.5,0.15)(4,-0.55)(4.5,-0.2)(5,0.45)(5.5,0.25)(6,-0.4)(6.5,-0.1)(7,0.62)(7.5,0.38)(8,-0.32)(8.5,-0.58)(9,0.05)(9.5,0.42)(10,0.18)(10.6,-0.2)};
+\foreach \s/\c in {0/black,2/black!70,4/black!45,6/black!25} {
+  \draw[\c,very thick] plot[smooth] coordinates {(\s,0)(\s+0.5,0.38)(\s+1,1.25)(\s+1.5,2.25)(\s+2,2.8)(\s+2.5,2.25)(\s+3,1.25)(\s+3.5,0.38)(\s+4,0)};
+}
+\draw[<->] (0,-0.75) -- (2,-0.75) node[midway,below] {$H_a$};
+\draw[<->] (0,3.25) -- (4,3.25) node[midway,above] {$N$ samples};
+\node[anchor=west,align=left] at (7.2,2.7) {each curve is an\\analysis window};
+\end{tikzpicture}
+\caption{WOLA analysis framing. The waveform remains continuous, while overlapping windows select smoothly weighted local views.}
+\end{figure}
+
+The picture also explains why a hard rectangular cut is rarely the default. A discontinuity at either frame edge would look to the transform like broadband energy. A tapered window lowers the edge toward zero, reducing spectral leakage. Overlap then ensures that samples suppressed near one window edge receive useful weight from neighboring windows.
+
+## The STFT creates a time-frequency lattice
+
+Each weighted frame is transformed into complex Fourier coefficients. The analysis STFT is:
+
+$$
+X_t[k]=\sum_{n=0}^{N-1}x[n+tH_a]w_a[n]e^{-j2\pi kn/N}
+$$
+
+where $X_t[k]$ is the complex coefficient at frame $t$ and bin $k$, $x[n+tH_a]$ is the input sample under the frame, $w_a[n]$ is the analysis-window coefficient, $N$ is the transform size, and $j=\sqrt{-1}$ is the imaginary unit.
+
+Every coefficient has a magnitude and an angle:
+
+$$
+X_t[k]=A_t[k]e^{j\phi_t[k]},\qquad A_t[k]=|X_t[k]|,\qquad \phi_t[k]=\arg X_t[k]
+$$
+
+where $A_t[k]$ is the nonnegative magnitude of bin $k$, $\phi_t[k]$ is its wrapped phase in radians, and $X_t[k]$ is the complex coefficient being represented in polar form.
+
+Stacking the frames produces a lattice. Moving horizontally changes time. Moving vertically changes nominal frequency. Magnitude can be imagined as the darkness or height of each cell, while phase is an angle stored inside the same cell. A conventional spectrogram displays mostly magnitude, so it hides the information that a phase vocoder must preserve and propagate.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[x=1.0cm,y=0.72cm,font=\small]
+\draw[->] (0,0) -- (8.2,0) node[right] {frame index $t$ (frames)};
+\draw[->] (0,0) -- (0,6.4) node[above] {frequency-bin index $k$ (bins)};
+\foreach \x in {0,...,7} {
+  \foreach \y in {0,...,5} {
+    \pgfmathtruncatemacro{\shade}{8+mod(17*\x+29*\y+11,58)}
+    \fill[black!\shade] (\x+0.12,\y+0.12) rectangle (\x+0.88,\y+0.88);
+    \draw[black!30] (\x+0.12,\y+0.12) rectangle (\x+0.88,\y+0.88);
+  }
+}
+\draw[very thick] (3.5,3.5) circle (0.42);
+\draw[-{Stealth[length=2mm]},very thick] (3.5,3.5) -- (3.83,3.72);
+\node[anchor=west,align=left] at (4.2,6.0) {one complex cell: magnitude plus phase};
+\draw[-{Stealth[length=2mm]}] (5.4,5.72) -- (3.9,3.9);
+\node at (1.5,-0.45) {$t-1$};
+\node at (3.5,-0.45) {$t$};
+\node at (5.5,-0.45) {$t+1$};
+\end{tikzpicture}
+\caption{The STFT lattice. Each cell $X_t[k]$ contains both magnitude and phase, even though a spectrogram normally displays only magnitude.}
+\end{figure}
+
+The nominal center frequency of bin $k$ is:
+
+$$
+f_k=\frac{k f_s}{N}
+$$
+
+where $f_k$ is the bin-center frequency in hertz, $k$ is the bin index, $f_s$ is the sampling frequency, and $N$ is the transform size.
+
+Real musical partials seldom land exactly at those centers. A sinusoid at 443 Hz, for example, may distribute energy among bins whose centers lie on either side of 443 Hz. Its true frequency is revealed by how phase changes from one frame to the next. This is the key step that distinguishes a phase vocoder from a sequence of unrelated spectral snapshots.
+
+## Reading frequency from phase advance
+
+Suppose a sinusoid sits exactly at bin center $k$. Advancing the input by $H_a$ samples should advance its phase by the predictable amount:
+
+$$
+\Omega_k H_a=\frac{2\pi kH_a}{N}
+$$
+
+where $\Omega_k=2\pi k/N$ is the nominal angular frequency in radians per sample, $H_a$ is the analysis hop, $k$ is the bin index, and $N$ is the transform size.
+
+The measured phase difference contains that expected rotation plus a residual caused by the component's displacement from the bin center. Because an angle reported by $\arg$ is known only modulo $2\pi$, the residual must be wrapped into a principal interval:
+
+$$
+\Delta\phi_t[k]=\operatorname{princarg}\!\left(\phi_t[k]-\phi_{t-1}[k]-\Omega_kH_a\right)
+$$
+
+where $\Delta\phi_t[k]$ is the wrapped residual phase advance, $\phi_t[k]$ and $\phi_{t-1}[k]$ are consecutive observed phases, $\Omega_kH_a$ is the expected bin-center advance, and $\operatorname{princarg}$ maps an angle to $(-\pi,\pi]$.
+
+The estimated instantaneous angular frequency is then:
+
+$$
+\widehat{\omega}_t[k]=\Omega_k+\frac{\Delta\phi_t[k]}{H_a}
+$$
+
+where $\widehat{\omega}_t[k]$ is the estimated angular frequency in radians per sample, $\Omega_k$ is the nominal bin-center angular frequency, $\Delta\phi_t[k]$ is the wrapped residual, and $H_a$ is the analysis hop.
+
+\begin{figure}[H]
+\centering
+\resizebox{0.96\linewidth}{!}{%
+\begin{tikzpicture}[x=1.0cm,y=1.0cm,font=\small]
+\draw[-{Stealth[length=2mm]},thick] (0,0) -- (2.0,0) node[midway,below] {previous phase $\phi_{t-1}$};
+\draw[-{Stealth[length=2mm]},thick] (3.0,0) -- (4.55,1.25) node[midway,below right] {expected advance};
+\draw[-{Stealth[length=2mm]},very thick] (6.0,0) -- (7.05,1.70) node[midway,right] {observed phase $\phi_t$};
+\draw[densely dashed,thick] (6.0,0) -- (7.38,1.12);
+\draw[->] (7.0,1.54) arc[start angle=58,end angle=39,radius=1.0];
+\node[anchor=west] at (7.25,1.45) {residual $\Delta\phi$};
+\node at (1.0,-0.8) {frame $t-1$};
+\node at (3.9,-0.8) {bin-center prediction};
+\node at (6.9,-0.8) {frame $t$};
+\draw[-{Stealth[length=2mm]}] (2.1,-0.25) -- (2.8,-0.25);
+\draw[-{Stealth[length=2mm]}] (4.9,-0.25) -- (5.7,-0.25);
+\end{tikzpicture}
+}
+\caption{Phase advance as a frequency measurement. The residual between predicted and observed rotation estimates the offset from the nominal bin center.}
+\end{figure}
+
+Wrapping is not an optional cosmetic operation. Without it, the same physical angle could appear to jump by nearly $2\pi$ when the reported phase crosses from $+\pi$ to $-\pi$. The principal-argument operation chooses the locally plausible residual. That choice relies on sufficient temporal sampling: if the phase can move too far between frames, the estimate becomes ambiguous. Smaller analysis hops reduce that risk at the cost of more frames and more computation.
+
+## Moving the frames without moving their pitch
+
+Time stretching begins when analysis and synthesis use different frame schedules. The input is read every $H_a$ samples, but reconstructed frames are written every $H_s$ samples. For a constant stretch ratio $\alpha$, the basic schedule is:
+
+$$
+H_s=\alpha H_a
+$$
+
+where $H_s$ is the synthesis hop, $H_a$ is the analysis hop, and $\alpha$ is the output-duration ratio, with $\alpha>1$ producing a longer output and $0<\alpha<1$ producing a shorter output.
+
+Simply copying the input phase into frames placed at the new spacing would change or disorder frequency. Instead, the measured instantaneous frequency is integrated over the synthesis hop:
+
+$$
+\theta_t[k]=\theta_{t-1}[k]+\widehat{\omega}_t[k]H_s
+$$
+
+where $\theta_t[k]$ is the accumulated synthesis phase, $\theta_{t-1}[k]$ is its previous value, $\widehat{\omega}_t[k]$ is the estimated instantaneous angular frequency, and $H_s$ is the synthesis hop.
+
+The output spectrum combines the current magnitude with that newly propagated phase:
+
+$$
+Y_t[k]=A_t[k]e^{j\theta_t[k]}
+$$
+
+where $Y_t[k]$ is the output spectrum, $A_t[k]$ is the selected analysis magnitude, and $\theta_t[k]$ is the accumulated synthesis phase.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=6mm and 7mm,font=\footnotesize,
+box/.style={draw,minimum width=23mm,minimum height=9mm,align=center,fill=black!3},
+arrow/.style={-{Stealth[length=2mm]},thick}]
+\node[box] (frame) {frame at\\$tH_a$};
+\node[box,right=of frame] (fft) {window\\and FFT};
+\node[box,right=of fft] (polar) {$A_t[k]$\\and $\phi_t[k]$};
+\node[box,right=of polar] (freq) {unwrap residual\\$\widehat{\omega}_t[k]$};
+\node[box,below=of freq] (acc) {accumulate at\\$H_s$};
+\node[box,left=of acc] (spec) {$A_t[k]e^{j\theta_t[k]}$};
+\node[box,left=of spec] (ifft) {inverse FFT\\and window};
+\node[box,left=of ifft] (ola) {weighted\\overlap-add};
+\draw[arrow] (frame) -- (fft);
+\draw[arrow] (fft) -- (polar);
+\draw[arrow] (polar) -- (freq);
+\draw[arrow] (freq) -- (acc);
+\draw[arrow] (acc) -- (spec);
+\draw[arrow] (spec) -- (ifft);
+\draw[arrow] (ifft) -- (ola);
+\draw[arrow,densely dashed] (polar.south) |- node[pos=0.35,left] {magnitude path} (spec.north);
+\end{tikzpicture}
+\caption{A complete phase-vocoder frame path. Magnitude follows the current analysis frame, while frequency estimates drive a new phase trajectory on the synthesis timeline.}
+\end{figure}
+
+For a concrete example, take $H_a=256$ samples and request a two-times stretch. Then $H_s=512$ samples. Analysis frame 10 begins at input sample 2560, while synthesis frame 10 begins at output sample 5120. A component estimated at 440 Hz is still advanced as a 440 Hz component, but it is advanced across the longer 512-sample synthesis interval. This is how the algorithm expands time without halving pitch.
+
+\begin{figure}[H]
+\centering
+\resizebox{0.96\linewidth}{!}{%
+\begin{tikzpicture}[x=0.012cm,y=1cm,font=\small]
+\draw[->] (0,0) -- (1150,0) node[right] {frame position (samples)};
+\foreach \x/\lab in {0/0,256/256,512/512,768/768,1024/1024} {
+  \draw[thick] (\x,-0.12) -- (\x,0.12);
+  \node[below] at (\x,-0.12) {\lab};
+}
+\node[anchor=east] at (-40,0.65) {analysis};
+\foreach \x in {0,256,512,768,1024} {\fill[black] (\x,0.58) circle (2.2pt);}
+\node[anchor=east] at (-40,-1.15) {synthesis};
+\foreach \x in {0,512,1024} {\fill[black] (\x,-1.15) circle (2.2pt);}
+\draw[<->] (0,1.15) -- (256,1.15) node[midway,above] {$H_a=256$};
+\draw[<->] (0,-1.72) -- (512,-1.72) node[midway,below] {$H_s=512$};
+\draw[-{Stealth[length=2mm]},densely dashed] (512,0.48) -- (1024,-1.02);
+\end{tikzpicture}
+}
+\caption{A two-times stretch. The same sequence of analyzed states is reconstructed at twice the frame spacing.}
+\end{figure}
+
+## Inverse STFT and weighted overlap-add
+
+After phase propagation, each output spectrum is transformed back into a time-domain frame:
+
+$$
+\widetilde{x}_t[n]=\frac{1}{N}\sum_{k=0}^{N-1}Y_t[k]e^{j2\pi kn/N}
+$$
+
+where $\widetilde{x}_t[n]$ is the inverse-transformed frame, $Y_t[k]$ is the complex output spectrum, $N$ is the transform size, $k$ is the bin index, and $n$ is the local time index.
+
+Those frames still have local coordinates. WOLA places frame $t$ at output position $tH_s$, multiplies it by a synthesis window, and adds every overlapping contribution. A robust normalized form is:
+
+$$
+\widehat{x}[n]=
+\frac{\sum_t \widetilde{x}_t[n-tH_s]w_s[n-tH_s]}
+{\sum_t w_a[n-tH_s]w_s[n-tH_s]+\varepsilon}
+$$
+
+where $\widehat{x}[n]$ is the reconstructed output sample, $\widetilde{x}_t$ is inverse-transformed frame $t$, $w_a$ and $w_s$ are the analysis and synthesis windows, $H_s$ is the synthesis hop, and $\varepsilon$ is a small positive value that prevents division by zero near boundaries.
+
+When the same window is used for analysis and synthesis, the denominator becomes a sum of squared window values. This normalization is what keeps overlap from causing a periodic level ripple. In a compatible constant-overlap-add configuration, the accumulated weighting is constant through the interior of the signal. Near the beginning and end, padding and explicit normalization handle the incomplete set of neighbors.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[x=0.95cm,y=0.82cm,font=\small]
+\foreach \s/\c in {0/black,2/black!70,4/black!45,6/black!25} {
+  \draw[\c,thick] plot[smooth] coordinates {(\s,0)(\s+0.5,0.12)(\s+1,0.5)(\s+1.5,1.15)(\s+2,1.55)(\s+2.5,1.15)(\s+3,0.5)(\s+3.5,0.12)(\s+4,0)};
+}
+\draw[very thick] plot coordinates {(1,1.7)(2,1.7)(3,1.7)(4,1.7)(5,1.7)(6,1.7)(7,1.7)(8,1.7)(9,1.7)};
+\node[anchor=west] at (8.2,1.95) {normalized sum};
+\draw[->] (0,-0.15) -- (10.7,-0.15) node[right] {output position (samples)};
+\draw[->] (0,-0.15) -- (0,2.25);
+\node[rotate=90] at (-0.48,1.0) {window coefficient (linear gain)};
+\node[anchor=west,align=left] at (0,2.35) {overlapping synthesis weights};
+\end{tikzpicture}
+\caption{Weighted overlap-add reconstruction. Individual frame weights rise and fall, while their normalized sum remains level through the well-covered region.}
+\end{figure}
+
+Perfect reconstruction is easiest to understand as a bookkeeping promise. If the spectra are left unchanged, the phase path is left unchanged, the windows and hops are compatible, and normalization is correct, the reconstructed samples should match the input apart from numerical roundoff and boundary policy. Once magnitudes, phases, or the synthesis schedule are edited, WOLA still provides smooth assembly, but it cannot guarantee perceptual transparency by itself.
+
+## Why basic phase propagation can still sound wrong
+
+The derivation treats every bin as an independent sinusoidal tracker. Musical sounds are not independent bins. One partial spreads across several bins because of the window response, an attack excites many bins at once, and stereo channels encode a shared acoustic event. Independent phase propagation can preserve each bin's horizontal continuity while damaging the vertical relationships among neighboring bins.
+
+The most common improvements therefore restore relationships that the basic model ignores. Peak or identity phase locking makes bins around a spectral peak move with a common reference. Transient resets prevent old steady-state phase trajectories from being dragged through a new attack. Hybrid processing may route attacks through waveform-similarity overlap-add while reserving the phase vocoder for sustained regions. Stereo locking preserves selected interchannel phase differences. None of these changes replaces WOLA; each changes the spectra or phase trajectories that WOLA reconstructs.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[x=1.05cm,y=0.85cm,font=\small]
+\draw[->] (0,0) -- (8.2,0) node[right] {frequency-bin index (bins)};
+\draw[->] (0,0) -- (0,4.2) node[above] {magnitude (normalized linear)};
+\draw[thick] plot[smooth] coordinates {(0.2,0.1)(1,0.25)(1.8,0.65)(2.5,2.7)(3.1,1.15)(3.8,0.3)(4.6,0.2)(5.3,0.7)(6.0,3.45)(6.7,0.8)(7.5,0.15)};
+\fill (2.5,2.7) circle (2pt);
+\fill (6.0,3.45) circle (2pt);
+\draw[decorate,decoration={brace,amplitude=5pt}] (1.3,3.15) -- (3.7,3.15) node[midway,above=6pt] {peak-centered phase group};
+\draw[decorate,decoration={brace,amplitude=5pt}] (4.8,3.85) -- (7.2,3.85) node[midway,above=6pt] {peak-centered phase group};
+\end{tikzpicture}
+\caption{Vertical phase coherence. Phase locking treats the bins around a spectral peak as a related group rather than as unrelated oscillators.}
+\end{figure}
+
+The complete mental model is therefore larger than “FFT, modify, inverse FFT.” A phase vocoder observes overlapping local spectra, estimates frequency from phase motion, writes those frequencies onto a new time grid, repairs important within-frame and cross-channel relationships, and reconstructs the weighted frames through overlap-add. The quality of a result depends on every link in that chain.
 
 ## The historical thread
 
@@ -1189,8 +2139,8 @@ Dolson also helped establish a vocabulary for practical applications: time scali
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[x=1.05cm,y=1.0cm]
-\draw[->] (0,0) -- (8,0) node[right] {analysis time};
-\draw[->] (0,0) -- (0,3.2) node[above] {parameter value};
+\draw[->] (0,0) -- (8,0) node[right] {analysis position (frames)};
+\draw[->] (0,0) -- (0,3.2) node[above] {parameter value (normalized)};
 \draw[thick] plot[smooth] coordinates {(0.2,0.6) (1.2,1.2) (2.2,1.0) (3.2,2.4) (4.2,2.0) (5.2,2.7) (6.2,1.8) (7.2,2.2)};
 \foreach \x in {0.2,1.2,2.2,3.2,4.2,5.2,6.2,7.2} {\draw[densely dotted] (\x,0) -- (\x,3);}
 \node[align=left,anchor=west] at (4.7,0.55) {analysis trajectories can be\\sampled on a new time grid};
@@ -1240,8 +2190,8 @@ The subtraction retains the analysis-frame phase offset between the neighbour an
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[x=0.7cm,y=1.1cm,font=\small]
-\draw[->] (0,0) -- (12,0) node[right] {frequency bin};
-\draw[->] (0,0) -- (0,4) node[above] {magnitude};
+\draw[->] (0,0) -- (12,0) node[right] {frequency-bin index (bins)};
+\draw[->] (0,0) -- (0,4) node[above] {magnitude (normalized linear)};
 \draw[thick] plot[smooth] coordinates {(0,0.1)(1,0.25)(2,0.8)(3,2.8)(4,1.0)(5,0.3)(6,0.2)(7,0.6)(8,3.4)(9,1.1)(10,0.35)(11,0.1)};
 \fill (3,2.8) circle (2pt) node[above] {peak \(p_1\)};
 \fill (8,3.4) circle (2pt) node[above] {peak \(p_2\)};
@@ -1280,7 +2230,8 @@ These equations state the musical target, not the full spectral operation. A pra
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[x=0.9cm,y=0.7cm,font=\small]
-\draw[->] (0,0) -- (10,0) node[right] {frequency};
+\draw[->] (0,0) -- (10,0) node[right] {frequency-bin index (bins)};
+\draw[->] (0,0) -- (0,3.5) node[above] {magnitude (normalized linear)};
 \foreach \x/\h in {1/1.2,2/2.2,3/1.6,4/2.8,5/1.4} {\draw[very thick] (\x,0) -- (\x,\h);}
 \foreach \x/\h in {4.2/1.2,5.4/2.2,6.6/1.6,7.8/2.8,9/1.4} {\draw[very thick,green!40!black] (\x,0) -- (\x,\h);}
 \draw[-{Stealth[length=2mm]},thick] (3.2,3.2) -- (6.0,3.2) node[midway,above] {spectral translation};
@@ -1307,8 +2258,8 @@ where \(SF_t\) is positive spectral flux at frame \(t\), \(X_t[k]\) is the compl
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[x=1.0cm,y=0.9cm,font=\small]
-\draw[->] (0,0) -- (8,0) node[right] {time};
-\draw[->] (0,0) -- (0,3.4) node[above] {energy};
+\draw[->] (0,0) -- (8,0) node[right] {analysis position (frames)};
+\draw[->] (0,0) -- (0,3.4) node[above] {spectral flux (normalized)};
 \draw[thick] plot[smooth] coordinates {(0,0.15)(1,0.2)(2,0.18)(3,0.25)(3.5,3.0)(3.8,1.3)(4.3,0.7)(5,0.4)(6,0.25)(7,0.2)};
 \draw[densely dashed] (3.5,0) -- (3.5,3.1);
 \node[anchor=west] at (3.7,2.7) {detected onset};
@@ -1342,8 +2293,8 @@ pvx inherits all three lessons. It treats the phase vocoder as a practical engin
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[x=1.0cm,y=1.0cm, arrow/.style={-{Stealth[length=2mm]}, thick}]
-\draw[->] (0,0) -- (7,0) node[right] {render time};
-\draw[->] (0,0) -- (0,3) node[above] {parameter value};
+\draw[->] (0,0) -- (7,0) node[right] {render progress (\%)};
+\draw[->] (0,0) -- (0,3) node[above] {parameter value (normalized)};
 \draw[very thick] plot[smooth] coordinates {(0,0.25) (1,0.32) (2,0.65) (3,1.55) (4,2.45) (5,2.72) (6.5,2.78)};
 \foreach \x/\y in {0/0.25,2/0.65,4/2.45,6.5/2.78} {\fill (\x,\y) circle (1.6pt);}
 \end{tikzpicture}
@@ -1363,8 +2314,8 @@ The window $w[n]$ softens frame boundaries. Overlap between windows lets the rec
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[x=1.0cm,y=1.0cm, arrow/.style={-{Stealth[length=2mm]}, thick}]
-\draw[->] (0,0) -- (7,0) node[right] {frequency};
-\draw[->] (0,0) -- (0,3) node[above] {relative level};
+\draw[->] (0,0) -- (7,0) node[right] {frequency (cycles/sample)};
+\draw[->] (0,0) -- (0,3) node[above] {relative magnitude (normalized linear)};
 \draw[very thick] plot[smooth] coordinates {(0,2.7) (0.7,2.45) (1.4,1.75) (2.1,0.7) (2.5,0.15) (2.9,0.38) (3.3,0.12) (3.8,0.24) (4.3,0.08) (4.8,0.16) (5.5,0.05) (6.5,0.03)};
 \draw[densely dashed] (2.5,0) -- (2.5,2.75);
 \node[align=center,anchor=west] at (3.0,2.3) {main lobe and\\side lobes};
@@ -1435,7 +2386,7 @@ def glossary_chapter() -> str:
             rf"""
 \Needspace{{4\baselineskip}}
 \index{{{index_key(term)}}}
-\noindent\textbf{{{latex_escape(term)}.}} {latex_escape(definition)}
+\noindent\textbf{{{latex_escape(term)}.}} {latex_escape(definition)}\par\addvspace{{0.55\baselineskip}}
 """
         )
     return "\n".join(chunks).strip() + "\n"
@@ -1492,9 +2443,7 @@ def bibliography_chapter() -> str:
     }
 
     chunks = [
-        r"""\clearpage
-
-# Bibliography
+        r"""# Bibliography
 
 \index{bibliography}
 
@@ -1533,7 +2482,7 @@ The one hundred entries in this section are alphabetized by the first named auth
 
     chunks.append(
         r"""
-\clearpage
+\Needspace{0.32\textheight}
 \section*{Books}
 \markright{Bibliography: Books}
 \index{bibliography!books}
@@ -1561,7 +2510,6 @@ def backmatter() -> str:
 
 The historical illustrations in Chapter 1 are reproduced from Homer Dudley's 1940 paper, *The Carrier Nature of Speech*, via Internet Archive Book Images and Wikimedia Commons. Wikimedia Commons records them as public-domain or no-known-copyright-restrictions scans. Source records: Voder demonstration, voice-mechanism block diagram, and vocoder schematic: \url{https://commons.wikimedia.org/wiki/Category:Vocoder}. The analytical plots and window diagrams are original pvx project assets and are included with the project documentation.
 
-\clearpage
 \printindex
 """.strip() + "\n"
 
@@ -1591,8 +2539,11 @@ def build_book_markdown(today: date) -> str:
     chunks.append(cli_reference_index_entries())
     chunks.append(backmatter())
     book = "\n".join(chunks).strip() + "\n"
+    book = link_musical_references(book)
     book = book.replace(" — ", ", ").replace("—", ",").replace("–", "-")
     book = book.replace(r"\(", "$").replace(r"\)", "$")
+    book = ensure_section_introductions(book)
+    verify_section_introductions(book)
     return book
 
 
@@ -1600,6 +2551,30 @@ def run(cmd: list[str], cwd: Path = ROOT) -> None:
     proc = subprocess.run(cmd, cwd=cwd)
     if proc.returncode != 0:
         raise SystemExit(proc.returncode)
+
+
+def verify_no_blank_pages(pdf_path: Path) -> None:
+    """Reject visually empty pages when Ghostscript is available."""
+    ghostscript = shutil.which("gs")
+    if ghostscript is None:
+        print("[warn] skipped blank-page check: Ghostscript is unavailable")
+        return
+
+    proc = subprocess.run(
+        [ghostscript, "-o", "-", "-sDEVICE=inkcov", "-q", str(pdf_path)],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    blank_pages: list[int] = []
+    for page_number, line in enumerate(proc.stdout.splitlines(), start=1):
+        fields = line.split()
+        if len(fields) >= 4 and all(float(value) == 0.0 for value in fields[:4]):
+            blank_pages.append(page_number)
+    if blank_pages:
+        pages = ", ".join(str(page) for page in blank_pages)
+        raise RuntimeError(f"USERGUIDE.pdf contains blank pages: {pages}")
+    print("[ok] blank-page check passed")
 
 
 def parse_args() -> argparse.Namespace:
@@ -1645,6 +2620,8 @@ def main() -> int:
         "-V",
         "documentclass=book",
         "-V",
+        "classoption=openany",
+        "-V",
         "papersize=letter",
         "-V",
         "geometry:margin=1in",
@@ -1666,6 +2643,7 @@ def main() -> int:
     run(["makeindex", "USERGUIDE.idx"], cwd=TMP_DIR)
     run(["xelatex", "-interaction=nonstopmode", "-halt-on-error", f"-output-directory={TMP_DIR}", str(tex_out)])
     run(["xelatex", "-interaction=nonstopmode", "-halt-on-error", f"-output-directory={TMP_DIR}", str(tex_out)])
+    verify_no_blank_pages(TMP_DIR / "USERGUIDE.pdf")
     (TMP_DIR / "USERGUIDE.pdf").replace(output_pdf)
     root_pdf = ROOT / "USERGUIDE.pdf"
     if root_pdf != output_pdf:

@@ -514,8 +514,7 @@ pvx pitch-track A.wav --feature-set all --mfcc-count 13 --output - \
       --output B_feature_follow.wav
 ```
 
-More feature-follow and feature-vector routing recipes:
-- [docs/FEATURE_SIDECHAIN_EXAMPLES.md](FEATURE_SIDECHAIN_EXAMPLES.md)
+The feature sidechain recipes provide more routing examples and complex control combinations.
 
 Built-in `pvx follow` recipe printer:
 
@@ -2148,7 +2147,7 @@ pvx analysis inspect input.pvxan.npz
 
 ---
 
-## 77) Derive and Inspect a Reusable Response Artifact (PVXRF)
+## 77) Reusable Response Artifact (PVXRF)
 
 **Command**
 ```bash

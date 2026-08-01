@@ -7,11 +7,15 @@ local function latex_escape(value)
     ["&"] = "\\&",
     ["#"] = "\\#",
     ["%"] = "\\%",
-    ["_"] = "\\_",
+    ["_"] = "\\_\\allowbreak{}",
     ["^"] = "\\textasciicircum{}",
     ["~"] = "\\textasciitilde{}",
   }
-  return (value:gsub("[\\{}$&#%%_^~]", replacements))
+  value = value:gsub("[\\{}$&#%%_^~]", replacements)
+  value = value:gsub("/", "/\\allowbreak{}")
+  value = value:gsub("%-", "-\\allowbreak{}")
+  value = value:gsub("%.", ".\\allowbreak{}")
+  return value
 end
 
 function Code(element)

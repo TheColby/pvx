@@ -67,13 +67,179 @@ The ethical context should not disappear from the technical story. Communication
 
 ### Tape music and independent control by segmentation
 
-The tape studio approached time and pitch through physical media. Ordinary varispeed couples them: faster playback raises pitch and shortens duration, while slower playback lowers pitch and lengthens duration. Composers embraced that coupling as an effect, but film, broadcasting, and speech work often demanded more independent control.
+The tape studio approached time and pitch through physical motion. Ordinary varispeed couples the two quantities because recorded wavelength is fixed on the medium. Faster playback raises pitch and shortens duration. Slower playback lowers pitch and lengthens duration. Composers embraced this coupling as an effect, but broadcasting, film synchronization, language research, and post-production often demanded independent control. A commercial might need to lose three seconds without making its announcer sound excited and small. A film voice might need to descend without making every phrase proportionally slower.
 
-Rotating-head and segmented-tape devices changed duration by rearranging short pieces of continuously moving tape. The Eltro information rate changer became a well-known example. Such machines could compress or expand speech while approximately retaining pitch. Their quality depended on segment length, head motion, overlap, and the periodicity of the source. Joins could flutter, repeat, or interrupt transients.
+If a signal is recorded at tape speed $v_r$ and reproduced by a stationary head at speed $v_p$, the elementary varispeed relationships are:
 
-This family of methods established several practical ideas later rediscovered in software. First, time modification could be accomplished by changing the schedule of local units. Second, units should overlap or be chosen at compatible waveform positions to hide joins. Third, a unit length appropriate for voiced speech might be poor for noise or percussion. Fourth, artifacts could become stylistic marks rather than mere failures.
+$$
+\frac{f_{\mathrm{out}}}{f_{\mathrm{in}}}=\frac{v_p}{v_r},
+\qquad
+\frac{T_{\mathrm{out}}}{T_{\mathrm{in}}}=\frac{v_r}{v_p}.
+$$
 
-Tape studios added another crucial practice: repeated audition. A transformation was judged in relation to material, not only by a generic specification. Engineers marked tape, rehearsed edits, and compared versions. The command-line render inherits this iterative studio method. A phase-vocoder parameter is historically continuous with a physical splice decision in the sense that both become meaningful only in a particular sound.
+where $f_{\mathrm{in}}$ is the recorded frequency, $f_{\mathrm{out}}$ is the reproduced frequency, $T_{\mathrm{in}}$ is the recorded duration, $T_{\mathrm{out}}$ is the reproduced duration, $v_r$ is recording speed, and $v_p$ is playback speed. The two ratios are reciprocals. A one-octave rise obtained by doubling playback speed necessarily halves the duration.
+
+This coupling was useful rather than merely restrictive. Disc and tape musicians used it to transpose voices, reveal high-frequency detail at slower rates, turn attacks into gestures, and produce instrumental registers unavailable to the original performer. Les Paul's multitrack practice made speed transposition part of popular studio craft. Pierre Schaeffer's studio used the phonogène family to play tape loops at selected speeds. The chromatic phonogène offered capstans associated with tempered pitch steps, while the continuously variable version permitted glissandi. These were powerful transposition instruments, but changing capstan speed still changed duration with pitch. They should not be mistaken for independent time-scale processors.
+
+**Physical editing as time compression.** \index{time compression!physical editing}
+
+The most literal way to shorten recorded speech without raising its pitch is to remove pieces of tape. An editor can cut out pauses, but that changes rhetoric and may soon become audible. A more systematic machine removes many short intervals distributed across the recording. If each omission is shorter than a syllable and the remaining boundaries join tolerably, the message can become faster while local waveform pitch remains approximately unchanged.
+
+Expansion reverses the operation. Short intervals are repeated to create additional duration. Both procedures preserve the local speed at which tape crosses the playback head, so the pitch inside each retained segment stays close to the original. The global schedule changes because segments have been discarded or repeated.
+
+For an input divided into segments of nominal duration $L$, a simple duration approximation is:
+
+$$
+T_{\mathrm{out}} \approx N_kL,
+$$
+
+where $T_{\mathrm{out}}$ is output duration, $N_k$ is the number of segments kept or emitted after deletion or repetition, and $L$ is nominal segment duration. This expression hides the difficult part: finding joins that do not click, flutter, duplicate an attack, or interrupt a periodic waveform at an incompatible phase.
+
+The mechanical sampling method anticipated later overlap-add and granular procedures. It did not analyze a spectrum, estimate instantaneous frequency, or propagate phase. Its unit of control was a short physical portion of recorded waveform. The phase relationships that mattered were present implicitly at the joins.
+
+**Rotating heads before the Springer machine.** \index{rotating-head playback}\index{Springer machine}
+
+Rotating-head playback has a complicated ancestry. Eduard Schüller patented an early rotating-head principle in 1938, and a wartime AEG Tonschreiber used related mechanics to slow rapid telegraphic or speech material for monitoring. Its purpose and operating conditions differed from later studio time regulators. The historical importance is that head motion could alter effective scanning speed without requiring the entire tape transport to move at that same speed.
+
+Postwar speech researchers pursued related sampling machines. Grant Fairbanks, Wilbur L. Everitt, and Robert P. Jaeger described a rotating-head method for time or frequency compression and expansion of speech in 1954. Research interest was practical and perceptual: faster speech could reduce transmission or listening time, but ordinary acceleration raised pitch and distorted voice quality. The rotating assembly automated the removal or repetition of short intervals that a human tape editor could never cut at sufficient density.
+
+These developments should not be reduced to one clean line of invention. Patents, laboratory prototypes, communications devices, and commercial machines overlapped. Some altered effective playback velocity; some sampled speech in short intervals; some were designed for intelligence or transmission rather than music. Anton Springer's achievement belongs inside this field but became distinctive through a practical regulator suitable for sustained program material.
+
+**Anton Springer, the Tempophon, and the Eltro.** \index{Springer, Anton Marian}\index{Tempophon}\index{Eltro information rate changer}
+
+Anton Marian Springer developed the machine variously marketed as the *Tempophon*, *Acoustic Time Regulator*, *Information Rate Changer*, and *Springer machine*. Eltro GmbH later marketed versions internationally. Early forms emphasized time compression and expansion, while subsequent machines also provided direct pitch shifting. The multiplicity of names partly explains why the device is often missing from simplified histories.
+
+At the center of the machine was a rotating column carrying four small magnetic playback heads at 90-degree intervals. Tape contacted the head assembly over a limited arc. As one head left the tape, the next entered contact and took over playback. The tape transport controlled how quickly the recording as a whole passed through the machine. Rotation controlled head-to-tape velocity inside each short scan.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm,font=\small,>=Stealth]
+\draw[very thick,->] (0,0) -- (12.2,0) node[right] {tape transport direction};
+\draw[very thick] (0,-0.18) -- (12.2,-0.18);
+\draw[fill=black!5,thick] (6,0.75) circle (1.35);
+\draw[->,thick] (6,0.75) ++(35:0.75) arc[start angle=35,end angle=300,radius=0.75];
+\node at (6,0.75) {rotating drum};
+\foreach \a in {0,90,180,270} {
+  \draw[fill=black] (6,0.75) ++(\a:1.35) circle (0.08);
+}
+\node[align=center] at (6,2.75) {four playback heads\\spaced by $90^\circ$};
+\draw[->] (6,2.35) -- (6,2.1);
+\node[align=center] at (1.9,1.25) {transport sets\\program duration};
+\draw[->] (2.7,0.8) -- (3.7,0.1);
+\node[align=center] at (10,1.25) {head rotation sets\\effective scan velocity};
+\draw[->] (9.2,0.8) -- (7.35,0.65);
+\draw[dashed] (4.65,-0.45) rectangle (7.35,0.25);
+\node at (6,-0.78) {one short modulation segment};
+\end{tikzpicture}
+\caption{Operating principle of a Springer-type rotating-head regulator. The drawing is schematic: transport velocity and head rotation provide two mechanical degrees of freedom that ordinary fixed-head varispeed does not have.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\begin{minipage}[t]{0.46\textwidth}
+\centering
+\includegraphics[width=\linewidth]{docs/assets/userguide/history/springer_patent_sheet_2.png}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.46\textwidth}
+\centering
+\includegraphics[width=\linewidth]{docs/assets/userguide/history/springer_patent_sheet_3.png}
+\end{minipage}
+\caption{Anton Marian Springer's rotating multipolar transducer, left, and its geared tape-playback application, right. Figures 4 through 6 from \href{https://patents.google.com/patent/US3064088A/en}{United States Patent 3,064,088}, filed in 1959 and issued in 1962. United States patent drawings, public domain.}
+\end{figure}
+
+The useful separation can be expressed by distinguishing tape velocity from relative scan velocity:
+
+$$
+\frac{f_{\mathrm{out}}}{f_{\mathrm{in}}}
+=\frac{v_{\mathrm{rel}}}{v_r},
+\qquad
+\frac{T_{\mathrm{out}}}{T_{\mathrm{in}}}
+=\frac{v_r}{v_t},
+\qquad
+v_{\mathrm{rel}}=v_t\mathbin{\pm}v_h.
+$$
+
+where $v_{\mathrm{rel}}$ is effective head-to-tape scan velocity, $v_t$ is tape transport velocity, $v_h$ is tangential head velocity, $v_r$ is the original recording speed, and the sign depends on whether the active head moves with or against tape motion. The idealized equations omit head handoff and segment repetition, but they reveal the machine's conceptual breakthrough: pitch and duration depend on separately adjustable motions.
+
+In pitch mode, the host transport could move tape at its normal rate while drum rotation changed relative scan speed. The same recorded length then occupied approximately its normal duration, but its cycles crossed the active head faster or slower and emerged at a new pitch. In tempo mode, differential gearing coordinated capstan and drum so tape moved faster or slower while relative scan speed stayed near the recorded value. Duration changed while pitch remained approximately stable.
+
+The head handoff was not a negligible detail. Springer's system divided the recording into modulation segments of roughly 40 milliseconds. Repeated segments filled time during expansion; omitted segments removed time during compression. Contact angle influenced overlap between one head and the next, and engineers adjusted it for speech, music, or effects. Too little overlap exposed a gap or discontinuity. Too much overlap mixed neighboring scans and produced coloration.
+
+The result had a recognizable mechanical signature. Regular head changes could impose flutter or a buzzing periodicity. Sustained tones exposed crossover modulation. Percussive events could be duplicated or truncated. Speech often tolerated these defects because intelligibility survives many local omissions, while dense music could make the splice rhythm more obvious. The artifact depended on source material, setting, tape condition, alignment, and operator judgment.
+
+**Studio work and the voice of HAL.** \index{2001: A Space Odyssey}\index{HAL 9000}\index{Carlos, Wendy}
+
+The Eltro's ordinary work was often utilitarian. Radio and television spots had to fit fixed durations. Educational projects investigated speeded listening. Film dialogue had to follow edits or altered picture rates. The machine processed one mono pass that was commonly recorded onto another tape machine, so a transformation was also a transfer generation.
+
+Wendy Carlos's account of using an Eltro Mark II at Gotham Recording Studios provides unusually concrete operating testimony. She describes separate pitch and tempo modes, a calibrated control marked in musical intervals and percentage duration, and physical adjustment of the tape-wrap angle around the four-head drum. Her account also identifies the Eltro in Stanley Kubrick's [*2001: A Space Odyssey*](https://www.wendycarlos.com/other/Eltro-1967/). Douglas Rain's performance as HAL received a subtle global time expansion, and the computer's final decline combined a more extreme downward pitch pass with a separate duration-expansion pass.
+
+That example demonstrates why independent controls matter artistically. Ordinary tape slowing would force pitch and duration to fall by reciprocal amounts. HAL needed two trajectories with different shapes and degrees. Processing in separate passes let pitch approach collapse while speech duration expanded less drastically. The machine turned a post-production correction technology into a dramatic model of failing cognition.
+
+**Gabor, grains, and an optical neighbor.** \index{Gabor, Dennis}\index{acoustical quanta}
+
+Dennis Gabor's 1946 and 1947 work on communication and acoustical quanta provided another route toward local time-frequency thinking. A finite packet of sound has both temporal extent and spectral spread. Gabor's experimental kinematical frequency-conversion work used short acoustic units in an electromechanical or optical setting rather than an FFT. The historical connection to granular synthesis and later time-frequency processing is conceptual as well as technical: continuous sound can be treated as a succession of bounded events.
+
+The Springer regulator and Gabor's acoustic quanta are sometimes described together as ancestors of granular processing. That description is useful if kept precise. The Springer machine physically scanned short tape segments and handed playback among rotating heads. Gabor developed a general language of localized quanta and an experimental converter. Neither was a phase vocoder, and neither computed a short-time complex spectrum. Both weakened the assumption that recorded sound must be reproduced as one indivisible, uniformly moving object.
+
+**Analog delay lines and Doppler transposition.** \index{analog delay lines}\index{Doppler transposition}
+
+Mechanical tape was not the only pre-software route. A continuously changing analog delay produces a Doppler-like pitch change. For a delay trajectory $d(t)$, an ideal variable-delay output is:
+
+$$
+y(t)=x\bigl(t-d(t)\bigr),
+\qquad
+f_{\mathrm{out}}(t)=f_{\mathrm{in}}(t)\left(1-\frac{d}{dt}d(t)\right).
+$$
+
+where $x(t)$ is the input, $y(t)$ is the output, $d(t)$ is time-varying delay, $f_{\mathrm{in}}(t)$ is local input frequency, and $f_{\mathrm{out}}(t)$ is the resulting local output frequency under the idealized delay model. Increasing delay makes the read point fall behind and lowers pitch. Decreasing delay makes it catch up and raises pitch.
+
+A finite delay cannot ramp forever. It reaches an endpoint and must reset, which would create a discontinuity. Practical transposers use multiple read paths whose ramps are staggered and crossfaded. While one path resets, another carries the output. Magnetic delay, rotating storage, and later bucket-brigade or digital delay technologies implemented variations of this strategy. The repeated crossfade has the same family resemblance as rotating-head handoff and waveform overlap-add.
+
+Tape flanging and chorus use related delay modulation but are not constant pitch transposition. Their delay trajectories oscillate, so pitch deviation rises and falls while delayed and direct signals interfere. A Leslie cabinet uses physical motion to create changing Doppler shift and amplitude, again producing modulation rather than a fixed musical interval. These effects belong to the history because they made time variation audible, but they solve a different problem from independent file-length control.
+
+**Frequency shifting is not pitch shifting.** \index{frequency shifting!compared with pitch shifting}\index{Bode, Harald}
+
+Analog frequency shifters form another neighboring lineage. Harald Bode described frequency shifters based on single-sideband techniques, quadrature phase networks, multipliers, and quadrature oscillators. Such a device adds or subtracts a fixed number of hertz from every spectral component:
+
+$$
+f_k' = f_k \mathbin{\pm} f_s.
+$$
+
+where $f_k$ is input partial frequency $k$, $f_k'$ is its shifted output frequency, and $f_s$ is the fixed frequency-shift amount. A musical pitch transposer instead approximately multiplies every partial by one ratio, $f_k'=\rho f_k$, where $\rho$ is the transposition ratio. Constant addition destroys ordinary harmonic spacing except in special cases; constant multiplication preserves it.
+
+Bode's historical account explicitly distinguished the Springer apparatus from frequency shifting. The rotating-head machine demonstrated transposition by dividing program material into short splices, compressing or expanding them, and recombining them. The electronic frequency shifter used heterodyning or quadrature cancellation. Both could make a voice or instrument uncanny, but their spectra moved according to different laws.
+
+**What analog methods taught digital audio.** \index{analog time stretching}\index{analog pitch shifting}
+
+The analog and electromechanical era established a vocabulary of problems that later software inherited. Ordinary varispeed demonstrated the coupled baseline. Distributed cutting and repetition demonstrated time modification by local scheduling. Rotating heads supplied separate transport and scan velocities. Variable delays demonstrated pitch change through a moving read point. Crossfades hid finite read-window resets. Frequency shifters clarified the difference between additive and multiplicative spectral motion.
+
+The following comparison keeps these mechanisms separate:
+
+\begin{table}[H]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.21\textwidth}>{\raggedright\arraybackslash}p{0.30\textwidth}>{\raggedright\arraybackslash}p{0.35\textwidth}}
+\toprule
+\textbf{Method} & \textbf{Primary mechanism} & \textbf{Pitch and duration} \\
+\midrule
+Fixed-head varispeed & Change tape or disc speed & Necessarily coupled. \\
+Physical splice compression & Remove short waveform intervals & Duration changes; local pitch is mostly retained. \\
+Springer or Eltro regulator & Coordinate tape transport and rotating heads & Independently adjustable within mechanical limits. \\
+Phonogène & Select or vary capstan speed & Coupled, often calibrated musically. \\
+Variable analog delay & Move a delayed read point and crossfade resets & Pitch changes while the program clock can remain fixed. \\
+Analog frequency shifter & Use single-sideband or quadrature translation & Frequencies move by a fixed hertz offset. \\
+Phase vocoder & Estimate and reschedule short-time spectral trajectories & Independently adjustable in a numerical model. \\
+\bottomrule
+\end{tabular}
+\caption{Mechanical, analog, and digital approaches to controlling recorded pitch and duration.}
+\end{table}
+
+The comparison also reveals why no single analog precursor is simply a phase vocoder made of metal. The Springer machine most closely anticipates waveform segmentation and overlap-add. Gabor's work anticipates localized time-frequency representation. Filter-bank vocoders anticipate analysis and resynthesis. Analog frequency shifters anticipate direct spectral transformation. The digital phase vocoder assembled different parts of this inheritance around complex short-time phase.
+
+This family of methods established practical lessons that remain current. Time modification can be accomplished by changing the schedule of local units. Units must overlap or meet at compatible waveform positions to hide joins. A unit length appropriate for voiced speech may be poor for noise or percussion. Periodic switching leaves periodic artifacts. Controls that seem independent mathematically can still interact perceptually.
+
+Tape studios added another crucial practice: repeated audition. A transformation was judged in relation to material, not only by a generic specification. Engineers aligned heads, marked tape, rehearsed edits, and compared transfers. The command-line render inherits this iterative studio method. A phase-vocoder parameter is historically continuous with a physical adjustment in the sense that both become meaningful only in a particular sound.
 
 ### Sampling, digital audio, and the FFT threshold
 
@@ -389,7 +555,7 @@ Puckette's phase-locked approach and Laroche and Dolson's later analysis bring t
 
 Roebel's transient research extends that perceptual turn. The attack is no longer treated as a difficult exception to an otherwise uniform signal. It becomes a component with its own detection, preservation, and reconstruction problem. Later multiresolution research continues this shift by asking whether analysis scale itself should follow the material. The documents thus trace a widening ontology: first channels, then bins, then peaks, then transient and noise classes, and finally adaptive regions with different models.
 
-\begin{figure}[p]
+\begin{figure}[htbp]
 \centering
 \begin{tikzpicture}[font=\small,
 era/.style={draw,rounded corners=2pt,minimum width=0.78\textwidth,minimum height=13mm,align=left,inner xsep=6mm},
@@ -421,11 +587,13 @@ Real-time processing changed the epistemology again. A performer could learn a t
 
 Contemporary machines support much larger transforms and more elaborate classifiers, but abundance introduces its own historical condition. A modern user may audition hundreds of settings without recording why one worked. Reproducible command lines, manifests, and checkpoints restore some of the documentary discipline imposed by scarce computing. pvx belongs to this later culture: computation is relatively cheap, while preserving intention remains difficult.
 
-\begin{figure}[p]
+\begin{figure}[htbp]
 \centering
 \begin{tikzpicture}[x=1.25cm,y=1.0cm,font=\small]
-\draw[->,thick] (0,0) -- (10.5,0) node[right] {historical time};
-\draw[->,thick] (0,0) -- (0,6.2) node[above,align=center] {iteration\\speed};
+\draw[->,thick] (0,0) -- (10.5,0);
+\node[below] at (5.25,-0.15) {historical progress (normalized)};
+\draw[->,thick] (0,0) -- (0,6.2);
+\node[rotate=90] at (-0.55,3.1) {iteration speed (normalized)};
 \draw[very thick] plot[smooth] coordinates {(0.4,0.5) (2,0.7) (3.5,1.1) (5,1.8) (6.5,3.0) (8,4.6) (10,5.6)};
 \foreach \x/\y/\label in {
 0.7/0.5/{scheduled\\mainframe},
@@ -439,6 +607,7 @@ Contemporary machines support much larger transforms and more elaborate classifi
 \caption{The shrinking audition loop altered compositional method as profoundly as increases in nominal signal quality.}
 \end{figure}
 
+\FloatBarrier
 ### A fuller genealogy of phase-vocoder software
 
 Software lineage is harder to narrate than publication history because code is mutable. A program may be copied, translated, optimized, renamed, or partly rewritten. Documentation may survive while source code disappears, or source may survive without a reliable account of local use. The following genealogy therefore emphasizes working cultures and documented relationships rather than claiming one unbroken family tree.
@@ -446,6 +615,39 @@ Software lineage is harder to narrate than publication history because code is m
 Early laboratory implementations were inseparable from institutional computing. Bell Labs systems supported speech research. Stanford, UCSD, MIT, and other centers developed computer-music programs around the machines and converters they possessed. A phase vocoder was often not one portable application. It was a pipeline of analysis, transformation, and synthesis programs embedded in local formats and job-control conventions.
 
 At UCSD, CARL software helped establish a Unix-oriented audio culture. Small programs could be composed into larger processes, and files allowed analysis to persist between stages. This architecture encouraged users to treat spectral information as a durable medium. It also made errors inspectable. One could examine headers, compare stages, or rerun only the transformation rather than repeat the analysis.
+
+Paul Koonce's PVC package preserved and extended this command-line tradition in a particularly revealing form. Koonce described PVC 1.0 as a collection of phase-vocoder signal-processing routines and accompanying shell scripts, written in C for Unix. He located the package within a practical lineage that included Eric Lyon, Chris Penrose, F. Richard Moore, and Mark Dolson. The \href{https://www.cs.princeton.edu/courses/archive/spr99/cs325/koonce.html}{archived PVC manual} is valuable historical evidence because it records not only algorithms, but also installation, file formats, parameter conventions, and the working habits expected of a late twentieth-century computer-music user. \index{Koonce, Paul}\index{PVC package}
+
+PVC joined a generic phase vocoder, \texttt{plainpv}, to a broad family of specialized spectral tools. Its catalog included time warping, noise filtering, spectral companding, band-amplitude selection, harmonization, chord mapping, static and time-varying filtering, convolution, spectral resonance, envelope extraction, and control-function reshaping. The range matters historically. It presents the phase vocoder not as one time-stretching effect, but as an engine from which additive, subtractive, cross-synthetic, and deliberately experimental processes could be assembled.
+
+The package also made time-varying control a first-class part of the Unix workflow. Parameters marked as functions could read headerless streams of 32-bit floating-point values. PVC fitted each stream to the requested duration and interpolated it for continuity, while the bundled CMUSIC generation utilities created the control data. Shell scripts stored large parameter sets and connected preliminary analyses to later synthesis commands. This arrangement anticipated later automation curves, reproducible command manifests, and analysis-driven control routing, even though its interface depended on files and scripts rather than a graphical timeline.
+
+Koonce's documentation distinguished two resynthesis routes. Magnitude-only changes could use the faster overlap-add method, while frequency modification required an oscillator bank because the altered spectrum no longer retained the structure expected by direct inverse transformation. PVC also separated analysis from reuse through \texttt{pvanalysis} files, which supplied \texttt{twarp}, convolution, and time-varying filtering. These choices make the package an instructive bridge between laboratory phase-vocoder programs and contemporary command-line systems: implementation policy remained visible, and the user was expected to understand how a requested transformation changed the appropriate synthesis method.
+
+PVC's first release deliberately included only routines Koonce considered stable, useful, and moderately transparent, while more speculative routines remained outside the release. That distinction between a dependable surface and an experimental edge is not merely modern release vocabulary. It reflects a long-standing problem in musical signal processing: exploratory algorithms invite discovery, but tools used in sustained compositional work also need repeatable behavior, documented limits, and an interface that can preserve decisions.
+
+The organization of PVC's commands reveals how the package divided spectral work into reusable representations. The following table groups representative routines by the kind of intermediate object they created or transformed. It is not a complete command inventory; its purpose is to show the conceptual architecture that made the collection composable.
+
+\begin{table}[H]
+\centering
+\small
+\caption{Representative PVC tool families and their working representations.}
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.24\textwidth}>{\raggedright\arraybackslash}p{0.27\textwidth}>{\raggedright\arraybackslash}p{0.37\textwidth}}
+\toprule
+PVC family & Working representation & Principal operation \\
+\midrule
+\texttt{plainpv}, \texttt{twarp} & spectral frames and time functions & resynthesize on an altered time or frequency schedule \\
+\texttt{pvanalysis} & persistent complex analysis frames & prepare reusable source data for later transformations \\
+\texttt{freqresponse}, \texttt{chordresponsemaker} & static spectral response & derive or synthesize a frequency-domain template \\
+\texttt{filter}, \texttt{tvfilter}, \texttt{convolver} & static or evolving source spectra & filter or cross-synthesize one sound with another representation \\
+\texttt{harmonizer}, \texttt{chordmapper} & spectral replication and mapping rules & construct harmonies or remap harmonic components \\
+\texttt{ring}, \texttt{ringfilter}, \texttt{ringtvfilter} & spectral feedback and response data & create resonances shaped by source or filter spectra \\
+\texttt{envelope}, \texttt{reshape} & scalar control streams & extract, transform, and reuse time-varying parameter functions \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Seen this way, PVC treated analysis frames, frequency responses, mapping specifications, and scalar functions as different kinds of musical documents. A response could outlive the sound segment from which it was measured. A time function could be reshaped and assigned to another parameter. An analysis could support several readings through filtering, warping, convolution, or resonance. The package therefore belongs to a history of representation design as much as to a history of individual effects.
 
 Csound offered another path. Its score-and-orchestra model placed analysis-based processing beside synthesis, sampling, and control-rate composition. Phase-vocoder opcodes and analysis formats allowed a sound file to participate in a notated computational instrument. Csound's portability helped techniques travel beyond the institutions where they were first developed.
 
@@ -463,22 +665,22 @@ Open-source libraries later supplied reusable primitives for STFT processing, re
 
 pvx inherits several branches of this history. Its command-line form recalls CARL and CDP. Its explicit analysis and transform stages recall laboratory pipelines. Its concern with stable manifests and resumable work responds to long offline renders. Its phase, transient, formant, and multichannel policies reflect later perceptual research. The result is not a museum reconstruction. It is a contemporary arrangement of ideas whose origins remain legible.
 
-\begin{figure}[p]
+\begin{figure}[htbp]
 \centering
-\begin{tikzpicture}[font=\footnotesize,
-box/.style={draw,minimum width=27mm,minimum height=8mm,align=center},
+\begin{tikzpicture}[x=3.3cm,y=1.35cm,font=\footnotesize,
+box/.style={draw,text width=27mm,minimum height=9mm,align=center,inner sep=2pt},
 line/.style={-{Stealth[length=2mm]},thick}]
-\node[box] (labs) {speech and\\acoustics labs};
-\node[box,right=12mm of labs] (early) {early digital\\implementations};
-\node[box,below left=13mm and -2mm of early] (carl) {CARL and Unix\\audio tools};
-\node[box,below=13mm of early] (ircam) {IRCAM\\SuperVP};
-\node[box,below right=13mm and -2mm of early] (cmusic) {computer-music\\languages};
-\node[box,below=14mm of carl] (cdp) {CDP and desktop\\command tools};
-\node[box,below=14mm of ircam] (as) {AudioSculpt and\\real-time modules};
-\node[box,below=14mm of cmusic] (max) {Max, Pd, Csound,\\SuperCollider};
-\node[box,below=15mm of cdp] (open) {open libraries and\\research code};
-\node[box,below=15mm of as] (commercial) {workstations and\\plug-ins};
-\node[box,below=15mm of max] (pvx) {reproducible\\CLI systems};
+\node[box] (labs) at (-0.85,3.6) {speech and\\acoustics labs};
+\node[box] (early) at (0.55,3.6) {early digital\\implementations};
+\node[box] (carl) at (-1.55,2.4) {CARL and Unix\\audio tools};
+\node[box] (ircam) at (0,2.4) {IRCAM\\SuperVP};
+\node[box] (cmusic) at (1.55,2.4) {computer-music\\languages};
+\node[box] (cdp) at (-1.55,1.2) {PVC, CDP, and desktop\\command tools};
+\node[box] (as) at (0,1.2) {AudioSculpt and\\real-time modules};
+\node[box] (max) at (1.55,1.2) {Max, Pd, Csound,\\SuperCollider};
+\node[box] (open) at (-1.55,0) {open libraries and\\research code};
+\node[box] (commercial) at (0,0) {workstations and\\plug-ins};
+\node[box] (pvx) at (1.55,0) {reproducible\\CLI systems};
 \draw[line] (labs) -- (early);
 \draw[line] (early) -- (carl);
 \draw[line] (early) -- (ircam);
@@ -489,8 +691,8 @@ line/.style={-{Stealth[length=2mm]},thick}]
 \draw[line] (cdp) -- (open);
 \draw[line] (as) -- (commercial);
 \draw[line] (max) -- (pvx);
-\draw[line,dashed] (open) -- (pvx);
 \draw[line,dashed] (commercial) -- (pvx);
+\draw[line,dashed] (open.south) .. controls +(0,-0.45) and +(0,-0.45) .. (pvx.south);
 \end{tikzpicture}
 \caption{A conservative software genealogy. Solid lines indicate broad institutional or interface continuities; dashed lines indicate contemporary exchange rather than direct descent.}
 \end{figure}
@@ -533,7 +735,7 @@ Natasha Barrett's electroacoustic and spatial work demonstrates how transformati
 
 These neighboring practices prevent a narrow great-inventor narrative. The algorithm developed because engineers solved technical problems, but its musical meaning developed across studios, concerts, teaching, criticism, and repeated listening. Composers who selected, rejected, combined, or deliberately exposed its artifacts participated in that history even when they did not publish an equation.
 
-\begin{figure}[p]
+\begin{figure}[htbp]
 \centering
 \begin{tikzpicture}[font=\small,
 circlebox/.style={draw,circle,minimum size=27mm,align=center},
@@ -636,7 +838,7 @@ IRCAM Forum distribution and Max integrations widened the community around these
 
 The archive of works and technical notes also permits unusually careful reconstruction. For Harvey's *Mortuos Plango, Vivos Voco* or Reynolds's *Transfigured Wind*, one can compare compositional statements, source descriptions, algorithm names, and audible results. This evidence helps resist the habit of attributing an entire work to one famous process.
 
-\begin{figure}[p]
+\begin{figure}[htbp]
 \centering
 \begin{tikzpicture}[font=\small,
 inst/.style={draw,minimum width=34mm,minimum height=12mm,align=center},
@@ -731,11 +933,13 @@ Composers including JoAnn Kuchera-Morin and many later ambient and experimental 
 
 A millionfold stretch reaches beyond ordinary rendering into installation, data, and archival questions. Output size and time become dominant. The process may require stages, checkpoints, sparse audition, and alternate representations. At that scale, software architecture is part of the composition.
 
-\begin{figure}[p]
+\begin{figure}[htbp]
 \centering
 \begin{tikzpicture}[x=1.18cm,y=1cm,font=\small]
-\draw[->,thick] (0,0) -- (10.4,0) node[right] {increasing stretch};
-\draw[->,thick] (0,0) -- (0,6.1) node[above,align=center] {dominant\\listening scale};
+\draw[->,thick] (0,0) -- (10.4,0);
+\node[below] at (5.2,-0.15) {stretch ratio (dimensionless)};
+\draw[->,thick] (0,0) -- (0,6.1);
+\node[rotate=90] at (-0.65,3.05) {listening scale (normalized duration)};
 \draw[thick] (0.6,0.7) .. controls (2.2,0.8) and (2.8,1.6) .. (4.0,2.2)
   .. controls (5.3,3.0) and (5.6,4.0) .. (7.0,4.5)
   .. controls (8.2,5.0) and (9.1,5.4) .. (10,5.6);
@@ -779,11 +983,13 @@ In the 2020s, learned models increasingly surround classical transforms. Separat
 
 The imagined user is now plural. A dialogue editor wants transparent duration correction. A composer wants unstable spectral matter. A researcher wants inspectable intermediate data. A performer wants low latency. An archivist wants deterministic reconstruction. A durable tool must state which of these promises it supports rather than hiding incompatibilities behind the word *quality*.
 
-### Annotated chronology
+\subsection{Annotated chronology}
+\index{Annotated chronology}
 
 The following chronology is selective. It emphasizes events that changed representation, implementation, dissemination, or musical use. Dates of compositions indicate completion or first realization where generally documented; software lineages often span several years.
 
-\begin{longtable}{p{0.12\textwidth}p{0.24\textwidth}p{0.54\textwidth}}
+\small
+\begin{longtable}{@{}p{0.10\textwidth}p{0.18\textwidth}p{0.32\textwidth}@{}}
 \caption{Selected chronology of phase-vocoder history and its neighboring lineages.}\\
 \toprule
 Date & Person, work, or system & Historical significance \\
@@ -831,6 +1037,7 @@ Early 1980s & Mark Dolson & Investigated tracking phase vocoders, ensemble analy
 2023 & Akaishi, Yatabe, Oikawa & Applied time-directional spectrogram squeezing to improve long phase-vocoder stretches of percussive material. \\
 \bottomrule
 \end{longtable}
+\normalsize
 
 ### Reading the history through software design
 
@@ -843,6 +1050,8 @@ This perspective prevents parameter lists from becoming arbitrary. Options are n
 The design of pvx continues that lineage through explicit commands, reproducible settings, checkpoints, and analysis artifacts. Its contribution is not to erase history behind a button. It is to make historical choices available in a coherent working environment.
 
 ### Source notes for the expanded history
+
+The analog and electromechanical account draws on Fabian Voigtschild, Jonathan Sterne, and Mara Mills's [history of Anton Springer and the time and pitch regulator](https://soundandscience.net/contributor-essays/anton-springer-and-the-time-and-pitch-regulator/), Wendy Carlos's first-person [account of the Eltro Mark II and the voice of HAL](https://www.wendycarlos.com/other/Eltro-1967/), Grant Fairbanks, Wilbur L. Everitt, and Robert P. Jaeger's 1954 paper *Method for Time or Frequency Compression-Expansion of Speech*, Dennis Gabor's 1946 and 1947 work on communication and acoustical quanta, and Harald Bode's 1984 *History of Electronic Sound Modification*. These sources distinguish ordinary varispeed, the phonogène, rotating-head regulation, variable delay, and single-sideband frequency shifting rather than treating them as one technique.
 
 The principal technical lineage in this account is documented by Flanagan and Golden's 1966 paper, Portnoff's 1976 and 1980 papers, Moorer's 1978 computer-music article, Dolson's 1986 tutorial, Puckette's 1995 phase-locked vocoder, Laroche and Dolson's 1997 and 1999 work, Roebel's transient and spectral-envelope research, and later multiresolution studies. Full bibliographic records appear in the Bibliography.
 
